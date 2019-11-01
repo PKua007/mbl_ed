@@ -6,7 +6,7 @@
 
 #include "FockBaseGenerator.h"
 
-TEST_CASE("3 bosons in 3 sites") {
+TEST_CASE("FockBaseGenerator: 3 bosons in 3 sites") {
     FockBaseGenerator generator;
 
     auto base = generator.generate(3, 3);
