@@ -7,9 +7,11 @@
 
 #include <vector>
 
+#include "FockBase.h"
+
 class FockBaseGenerator {
 public:
-    std::vector<std::vector<int>> generate(int M, int N) const;
+    FockBase generate(int M, int N) const;
 };
 
 
