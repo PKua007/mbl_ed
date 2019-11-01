@@ -53,8 +53,15 @@ FockBase::const_iterator FockBase::end() const {
 }
 
 double FockBase::computeHash(const FockBase::Vector &vector) const {
+    // https://arxiv.org/pdf/1102.4006.pdf says, that sqrt(100*i + 3) is linearly independent over radicals, so
+    // each distinct vector will end up with a unique hash
     double hash{};
     for (std::size_t i = 0; i < vector.size(); i++)
         hash += std::sqrt(100*i + 3) * vector[i];
     return hash;
+}
+
+std::size_t FockBase::getNumberOfSites() const {
+    Expects(this->size() > 0);
+    return this->theBase.front().size();
 }

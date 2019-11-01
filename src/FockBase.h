@@ -31,6 +31,7 @@ public:
     iterator end();
     [[nodiscard]] const_iterator begin() const;
     [[nodiscard]] const_iterator end() const;
+    [[nodiscard]] std::size_t getNumberOfSites() const;
 };
 
 
