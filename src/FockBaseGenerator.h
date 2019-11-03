@@ -11,7 +11,7 @@
 
 class FockBaseGenerator {
 public:
-    FockBase generate(int numberOfSites, int numberOfParticles) const;
+    [[nodiscard]] FockBase generate(int numberOfSites, int numberOfParticles) const;
 };
 
 

@@ -11,6 +11,8 @@
 
 class HamiltonianGenerator {
 private:
+    const bool usePBC;
+
     [[nodiscard]] std::optional<std::pair<FockBase::Vector, double>>
     hoppingAction(const FockBase::Vector &vector, std::size_t fromSiteIndex, std::size_t toSiteIndex) const;
 
@@ -18,7 +20,7 @@ protected:
     const FockBase &fockBase;
 
 public:
-    explicit HamiltonianGenerator(const FockBase &fockBase) : fockBase{fockBase} { }
+    explicit HamiltonianGenerator(const FockBase &fockBase, bool usePBC = true) : usePBC{usePBC}, fockBase{fockBase} { }
 
     [[nodiscard]] arma::mat generate() const;
 
