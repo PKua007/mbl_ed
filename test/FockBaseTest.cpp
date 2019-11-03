@@ -24,7 +24,7 @@ TEST_CASE("FockBase: basic operations") {
         REQUIRE(base[1] == FockBase::Vector{4, 5, 6});
     }
 
-    SECTION("adding not equally sized elements shold throw") {
+    SECTION("adding not equally sized elements should throw") {
         FockBase base;
         base.add(FockBase::Vector{1, 2, 3});
 
@@ -72,5 +72,22 @@ TEST_CASE("FockBase: searching") {
         REQUIRE(index0 == std::nullopt);
         REQUIRE(index1 == std::nullopt);
         REQUIRE(index2 == std::nullopt);
+    }
+}
+
+TEST_CASE("FockBase: number of sites") {
+    SECTION("get number of sites") {
+        FockBase base;
+
+        base.add(FockBase::Vector{1, 2, 3});
+        base.add(FockBase::Vector{4, 5, 6});
+
+        REQUIRE(base.getNumberOfSites() == 3);
+    }
+
+    SECTION("if no vectors added it should throw") {
+        FockBase base;
+
+        REQUIRE_THROWS(base.getNumberOfSites());
     }
 }

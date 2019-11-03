@@ -12,7 +12,7 @@
 
 #define S(x) #x
 #define S_(x) S(x)
-#define __WHERE__ __FILE__ "@" S_(__LINE__)
+#define __WHERE__ __FILE__ ":" S_(__LINE__)
 
 // Preconditions check (argument validation)
 #define Expects(cond) if (!(cond)) throw std::invalid_argument(__WHERE__ ": Precondition " #cond " failed")
