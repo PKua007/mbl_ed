@@ -13,7 +13,7 @@ namespace {
     public:
         mutable bool periodicUsed = false;
 
-        explicit MockPeriodicHamiltonianGenerator(const FockBase &fockBase) : HamiltonianGenerator(fockBase) { }
+        explicit MockPeriodicHamiltonianGenerator(const FockBase &fockBase) : HamiltonianGenerator(fockBase, true) { }
 
         [[nodiscard]] double getDiagonalElement(const FockBase::Vector &vector) const override {
             return *(this->fockBase.findIndex(vector));
@@ -73,7 +73,7 @@ TEST_CASE("HamiltonianGenerator: 2 bosons in 3 sites") {
     REQUIRE(arma::any(arma::vectorise(result - expected) < 0.000001));
 }
 
-TEST_CASE("PBC") {
+TEST_CASE("HamiltonianGenerator: PBC") {
     SECTION("Periodic BC - periodic hopping should be present") {
         FockBaseGenerator baseGenerator;
         FockBase fockBase = baseGenerator.generate(3, 2);
@@ -90,5 +90,59 @@ TEST_CASE("PBC") {
         MockNonPeriodicHamiltonianGenerator hamiltonianGenerator(fockBase);
 
         REQUIRE_NOTHROW(hamiltonianGenerator.generate());
+    }
+}
+
+TEST_CASE("HamiltonianGenerator: site distance") {
+    FockBaseGenerator baseGenerator;
+    FockBase evenBase = baseGenerator.generate(6, 1);
+    FockBase oddBase = baseGenerator.generate(7, 1);
+
+    SECTION("Periodic BC - site distance calculated normally") {
+        SECTION("even size") {
+            MockPeriodicHamiltonianGenerator hamiltonianGenerator(evenBase);
+
+            REQUIRE(hamiltonianGenerator.getSiteDistance(0, 1) == 1);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(4, 5) == 1);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 3) == 2);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 4) == 3);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 5) == 2);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(0, 5) == 1);
+        }
+
+        SECTION("odd size") {
+            MockPeriodicHamiltonianGenerator hamiltonianGenerator(oddBase);
+
+            REQUIRE(hamiltonianGenerator.getSiteDistance(0, 1) == 1);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(5, 6) == 1);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 3) == 2);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 4) == 3);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 5) == 3);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(0, 6) == 1);
+        }
+    }
+
+    SECTION("Non-periodic BC - site distance calculated periodically") {
+        SECTION("even size") {
+            MockNonPeriodicHamiltonianGenerator hamiltonianGenerator(evenBase);
+
+            REQUIRE(hamiltonianGenerator.getSiteDistance(0, 1) == 1);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(4, 5) == 1);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 3) == 2);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 4) == 3);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 5) == 4);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(0, 5) == 5);
+        }
+
+        SECTION("odd size") {
+            MockNonPeriodicHamiltonianGenerator hamiltonianGenerator(oddBase);
+
+            REQUIRE(hamiltonianGenerator.getSiteDistance(0, 1) == 1);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(5, 6) == 1);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 3) == 2);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 4) == 3);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(1, 5) == 4);
+            REQUIRE(hamiltonianGenerator.getSiteDistance(0, 6) == 6);
+        }
     }
 }
