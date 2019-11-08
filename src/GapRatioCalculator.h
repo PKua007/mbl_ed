@@ -20,6 +20,8 @@ public:
 
     void addEigenenergies(const std::vector<double> &eigenenergies);
     Quantity calculateMean();
+
+    std::vector<double> getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const;
 };
 
 

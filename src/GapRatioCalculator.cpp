@@ -15,16 +15,7 @@ GapRatioCalculator::GapRatioCalculator(double relativeMiddleEnergy, double relat
 }
 
 void GapRatioCalculator::addEigenenergies(const std::vector<double> &eigenenergies) {
-    double groundLevel = eigenenergies.front();
-    double highestLevel = eigenenergies.back();
-    Expects(groundLevel < highestLevel);
-
-    std::vector<double> normalizedEnergies;
-    normalizedEnergies.reserve(eigenenergies.size());
-    auto normalizer = [groundLevel, highestLevel](auto energy) {
-        return (energy - groundLevel) / (highestLevel - groundLevel);
-    };
-    std::transform(eigenenergies.begin(), eigenenergies.end(), std::back_inserter(normalizedEnergies), normalizer);
+    std::vector<double> normalizedEnergies = this->getNormalizedEigenenergies(eigenenergies);
 
     double relativeFrom = this->relativeMiddleEnergy - this->relativeMargin/2;
     double relativeTo = this->relativeMiddleEnergy + this->relativeMargin/2;
@@ -40,6 +31,20 @@ void GapRatioCalculator::addEigenenergies(const std::vector<double> &eigenenergi
         double gap2 = *(fromIt + 1) - *fromIt;
         this->gapRatios.push_back(gap1 < gap2 ? gap1/gap2 : gap2/gap1);
     }
+}
+
+std::vector<double> GapRatioCalculator::getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const {
+    double groundLevel = eigenenergies.front();
+    double highestLevel = eigenenergies.back();
+    Expects(groundLevel < highestLevel);
+
+    std::vector<double> normalizedEnergies;
+    normalizedEnergies.reserve(eigenenergies.size());
+    auto normalizer = [groundLevel, highestLevel](auto energy) {
+        return (energy - groundLevel) / (highestLevel - groundLevel);
+    };
+    std::transform(eigenenergies.begin(), eigenenergies.end(), std::back_inserter(normalizedEnergies), normalizer);
+    return normalizedEnergies;
 }
 
 Quantity GapRatioCalculator::calculateMean() {
