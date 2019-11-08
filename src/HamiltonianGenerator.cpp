@@ -2,6 +2,7 @@
 // Created by pkua on 01.11.2019.
 //
 
+#include "CavityHamiltonianGenerator.h"
 #include "HamiltonianGenerator.h"
 #include "Assertions.h"
 
@@ -51,4 +52,13 @@ arma::mat HamiltonianGenerator::generate() const {
     }
 
     return result;
+}
+
+size_t HamiltonianGenerator::getSiteDistance(size_t fromSiteIndex, size_t toSiteIndex) const {
+    Expects(fromSiteIndex < this->fockBase.getNumberOfSites());
+    Expects(toSiteIndex < this->fockBase.getNumberOfSites());
+    std::size_t distance = abs(static_cast<int>(fromSiteIndex) - static_cast<int>(toSiteIndex));
+    if (this->usePBC && distance > this->fockBase.getNumberOfSites() / 2)
+        distance = this->fockBase.getNumberOfSites() - distance;
+    return distance;
 }

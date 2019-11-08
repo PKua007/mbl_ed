@@ -10,9 +10,9 @@
 // Cpp Core Guidelines-style assertions for design by contract
 // https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#i6-prefer-expects-for-expressing-preconditions
 
-#define S(x) #x
-#define S_(x) S(x)
-#define __WHERE__ __FILE__ ":" S_(__LINE__)
+#define ASSERTIONS_S(x) #x
+#define ASSERTIONS_S_(x) ASSERTIONS_S(x)
+#define __WHERE__ __FILE__ ":" ASSERTIONS_S_(__LINE__)
 
 // Preconditions check (argument validation)
 #define Expects(cond) if (!(cond)) throw std::invalid_argument(__WHERE__ ": Precondition " #cond " failed")
