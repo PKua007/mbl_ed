@@ -10,6 +10,10 @@
 #include "Assertions.h"
 #include "HamiltonianGenerator.h"
 
+/**
+ * @brief Generator of boson hamiltonian from https://arxiv.org/pdf/1902.00357.pdf
+ * @tparam DisorderGenerator class whose operator() returns random energies as double
+ */
 template<typename DisorderGenerator>
 class CavityHamiltonianGenerator : public HamiltonianGenerator {
 private:
@@ -17,6 +21,39 @@ private:
     double U{};
     double U1{};
     std::vector<double> onsiteEnergies;
+
+    /* Sum of E_j n_j, where j = 0, ..., [number of sites]; n_j - number of particles in j-th site and E_j - random site
+     * energies from the constructor */
+    [[nodiscard]] double getOnsiteEnergy(const FockBase::Vector &vector) const {
+        std::vector<double> elementwiseEnergies;
+        elementwiseEnergies.reserve(vector.size());
+        std::transform(vector.begin(), vector.end(), onsiteEnergies.begin(), elementwiseEnergies.begin(),
+                       std::multiplies<>());
+        double onsiteEnergy = std::accumulate(elementwiseEnergies.begin(), elementwiseEnergies.end(), 1.,
+                                              std::multiplies<>());
+        return onsiteEnergy;
+    }
+
+    /* Sum of U * n_j * (n_j - 1), where j = 0, ..., [number of sites]; n_j - number of particles in j-th site */
+    [[nodiscard]] double getShortInteractionEnergy(const FockBase::Vector &vector) const {
+        auto bosonAccumulator = [](auto sum, auto numberOfParticles) {
+            return sum + numberOfParticles*(numberOfParticles - 1);
+        };
+        double shortInteractionEnergy = U * std::accumulate(vector.begin(), vector.end(), 0., bosonAccumulator);
+        return shortInteractionEnergy;
+    }
+
+    /* -U1/[number of sites] * (sum of (-1)^j n_j)^2, where j = 0, ..., [number of sites]; n_j - number of particles in
+     * j-th site */
+    [[nodiscard]] double getLongInteractionEnergy(const FockBase::Vector &vector) const {
+        int multiplier = -1;
+        auto plusMinusAccumulator = [&multiplier](auto sum, auto element) {
+            return sum + (multiplier *= -1) * element;
+        };
+        double populationImbalance = std::accumulate(vector.begin(), vector.end(), 0., plusMinusAccumulator);
+        double longInteractionEnergy = -U1 / vector.size() * populationImbalance * populationImbalance;
+        return longInteractionEnergy;
+    }
 
 public:
     CavityHamiltonianGenerator(const FockBase &fockBase, double J, double U, double U1,
@@ -28,26 +65,7 @@ public:
     }
 
     [[nodiscard]] double getDiagonalElement(const FockBase::Vector &vector) const override {
-        std::vector<double> elementwiseEnergies;
-        elementwiseEnergies.reserve(vector.size());
-        std::transform(vector.begin(), vector.end(), this->onsiteEnergies.begin(), elementwiseEnergies.begin(),
-                       std::multiplies<>());
-        double onsiteEnergy = std::accumulate(elementwiseEnergies.begin(), elementwiseEnergies.end(), 1.,
-                                              std::multiplies<>());
-
-        auto bosonInteractionAccumulator = [](auto sum, auto numberOfParticles) {
-            return sum + numberOfParticles*(numberOfParticles - 1);
-        };
-        double shortInteractionEnergy = U * std::accumulate(vector.begin(), vector.end(), 0., bosonInteractionAccumulator);
-
-        int multiplier = -1;
-        auto plusMinusAccumulator = [&multiplier](auto sum, auto element) {
-            return sum + (multiplier *= -1) * element;
-        };
-        double populationImbalance = std::accumulate(vector.begin(), vector.end(), 0., plusMinusAccumulator);
-        double longInteractionEnergy = -this->U1/vector.size() * populationImbalance*populationImbalance;
-
-        return onsiteEnergy + shortInteractionEnergy + longInteractionEnergy;
+        return getOnsiteEnergy(vector) + getShortInteractionEnergy(vector) + getLongInteractionEnergy(vector);
     }
 
     [[nodiscard]] double getHoppingTerm(std::size_t fromSiteIndex, std::size_t toSiteIndex) const override {
