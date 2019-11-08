@@ -27,11 +27,10 @@ private:
     [[nodiscard]] double getOnsiteEnergy(const FockBase::Vector &vector) const {
         std::vector<double> elementwiseEnergies;
         elementwiseEnergies.reserve(vector.size());
-        std::transform(vector.begin(), vector.end(), onsiteEnergies.begin(), elementwiseEnergies.begin(),
+        std::transform(vector.begin(), vector.end(), this->onsiteEnergies.begin(), elementwiseEnergies.begin(),
                        std::multiplies<>());
-        double onsiteEnergy = std::accumulate(elementwiseEnergies.begin(), elementwiseEnergies.end(), 1.,
-                                              std::multiplies<>());
-        return onsiteEnergy;
+        return std::accumulate(elementwiseEnergies.begin(), elementwiseEnergies.end(), 1.,
+                               std::multiplies<>());
     }
 
     /* Sum of U * n_j * (n_j - 1), where j = 0, ..., [number of sites]; n_j - number of particles in j-th site */
@@ -39,8 +38,7 @@ private:
         auto bosonAccumulator = [](auto sum, auto numberOfParticles) {
             return sum + numberOfParticles*(numberOfParticles - 1);
         };
-        double shortInteractionEnergy = U * std::accumulate(vector.begin(), vector.end(), 0., bosonAccumulator);
-        return shortInteractionEnergy;
+        return this->U * std::accumulate(vector.begin(), vector.end(), 0., bosonAccumulator);
     }
 
     /* -U1/[number of sites] * (sum of (-1)^j n_j)^2, where j = 0, ..., [number of sites]; n_j - number of particles in
@@ -51,8 +49,7 @@ private:
             return sum + (multiplier *= -1) * element;
         };
         double populationImbalance = std::accumulate(vector.begin(), vector.end(), 0., plusMinusAccumulator);
-        double longInteractionEnergy = -U1 / vector.size() * populationImbalance * populationImbalance;
-        return longInteractionEnergy;
+        return -this->U1 / vector.size() * populationImbalance * populationImbalance;
     }
 
 public:
