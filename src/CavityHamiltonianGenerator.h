@@ -6,6 +6,7 @@
 #define MBL_ED_CAVITYHAMILTONIANGENERATOR_H
 
 #include <random>
+#include <memory>
 
 #include "Assertions.h"
 #include "HamiltonianGenerator.h"
@@ -21,6 +22,7 @@ private:
     double U{};
     double U1{};
     std::vector<double> onsiteEnergies;
+    std::unique_ptr<DisorderGenerator> disorderGenerator;
 
     /* Sum of E_j n_j, where j = 0, ..., [number of sites]; n_j - number of particles in j-th site and E_j - random site
      * energies from the constructor */
@@ -54,11 +56,16 @@ private:
 
 public:
     CavityHamiltonianGenerator(const FockBase &fockBase, double J, double U, double U1,
-                               DisorderGenerator &&disorderGenerator, bool usePbc = true)
-            : HamiltonianGenerator(fockBase, usePbc), J(J), U(U), U1(U1)
+                               std::unique_ptr<DisorderGenerator> disorderGenerator, bool usePbc = true)
+            : HamiltonianGenerator(fockBase, usePbc), J(J), U(U), U1(U1),
+              disorderGenerator(std::move(disorderGenerator))
     {
-        this->onsiteEnergies.resize(fockBase.getNumberOfSites());
-        std::generate(this->onsiteEnergies.begin(), this->onsiteEnergies.end(), disorderGenerator);
+        this->resampleOnsiteEnergies();
+    }
+
+    void resampleOnsiteEnergies() {
+        this->onsiteEnergies.resize(this->fockBase.getNumberOfSites());
+        std::generate(this->onsiteEnergies.begin(), this->onsiteEnergies.end(), *(this->disorderGenerator));
     }
 
     [[nodiscard]] double getDiagonalElement(const FockBase::Vector &vector) const override {
