@@ -6,6 +6,8 @@
 #define MBL_ED_CAVITYHAMILTONIANGENERATOR_H
 
 #include <random>
+#include <memory>
+#include <iterator>
 
 #include "Assertions.h"
 #include "HamiltonianGenerator.h"
@@ -21,19 +23,19 @@ private:
     double U{};
     double U1{};
     std::vector<double> onsiteEnergies;
+    std::unique_ptr<DisorderGenerator> disorderGenerator;
 
     /* Sum of E_j n_j, where j = 0, ..., [number of sites]; n_j - number of particles in j-th site and E_j - random site
      * energies from the constructor */
     [[nodiscard]] double getOnsiteEnergy(const FockBase::Vector &vector) const {
         std::vector<double> elementwiseEnergies;
         elementwiseEnergies.reserve(vector.size());
-        std::transform(vector.begin(), vector.end(), this->onsiteEnergies.begin(), elementwiseEnergies.begin(),
-                       std::multiplies<>());
-        return std::accumulate(elementwiseEnergies.begin(), elementwiseEnergies.end(), 1.,
-                               std::multiplies<>());
+        std::transform(vector.begin(), vector.end(), this->onsiteEnergies.begin(),
+                       std::back_inserter(elementwiseEnergies), std::multiplies<>());
+        return std::accumulate(elementwiseEnergies.begin(), elementwiseEnergies.end(), 0., std::plus<>());
     }
 
-    /* Sum of U * n_j * (n_j - 1), where j = 0, ..., [number of sites]; n_j - number of particles in j-th site */
+    /* Sum of U * n_j * (n_j - 1), where j = 1, ..., [number of sites]; n_j - number of particles in j-th site */
     [[nodiscard]] double getShortInteractionEnergy(const FockBase::Vector &vector) const {
         auto bosonAccumulator = [](auto sum, auto numberOfParticles) {
             return sum + numberOfParticles*(numberOfParticles - 1);
@@ -41,7 +43,7 @@ private:
         return this->U * std::accumulate(vector.begin(), vector.end(), 0., bosonAccumulator);
     }
 
-    /* -U1/[number of sites] * (sum of (-1)^j n_j)^2, where j = 0, ..., [number of sites]; n_j - number of particles in
+    /* -U1/[number of sites] * (sum of (-1)^j n_j)^2, where j = 1, ..., [number of sites]; n_j - number of particles in
      * j-th site */
     [[nodiscard]] double getLongInteractionEnergy(const FockBase::Vector &vector) const {
         int multiplier = -1;
@@ -54,11 +56,16 @@ private:
 
 public:
     CavityHamiltonianGenerator(const FockBase &fockBase, double J, double U, double U1,
-                               DisorderGenerator &&disorderGenerator, bool usePbc = true)
-            : HamiltonianGenerator(fockBase, usePbc), J(J), U(U), U1(U1)
+                               std::unique_ptr<DisorderGenerator> disorderGenerator, bool usePbc = true)
+            : HamiltonianGenerator(fockBase, usePbc), J(J), U(U), U1(U1),
+              disorderGenerator(std::move(disorderGenerator))
     {
-        this->onsiteEnergies.resize(fockBase.getNumberOfSites());
-        std::generate(this->onsiteEnergies.begin(), this->onsiteEnergies.end(), disorderGenerator);
+        this->resampleOnsiteEnergies();
+    }
+
+    void resampleOnsiteEnergies() {
+        this->onsiteEnergies.resize(this->fockBase.getNumberOfSites());
+        std::generate(this->onsiteEnergies.begin(), this->onsiteEnergies.end(), std::ref(*(this->disorderGenerator)));
     }
 
     [[nodiscard]] double getDiagonalElement(const FockBase::Vector &vector) const override {

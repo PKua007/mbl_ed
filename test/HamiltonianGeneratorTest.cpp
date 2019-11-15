@@ -4,6 +4,7 @@
 
 #include <catch2/catch.hpp>
 
+#include "ArmaMatrixApproxEqualMatcher.h"
 #include "FockBaseGenerator.h"
 #include "HamiltonianGenerator.h"
 #include "Assertions.h"
@@ -69,8 +70,7 @@ TEST_CASE("HamiltonianGenerator: 2 bosons in 3 sites") {
                           { 0,       -M_SQRT2,  0,  3,       -M_SQRT2,  0},
                           { 0,        0,       -1, -M_SQRT2,  4,       -M_SQRT2},
                           { 0,        0,        0,  0,       -M_SQRT2,  5}};
-    REQUIRE(arma::any(arma::vectorise(result - expected) > -0.000001));
-    REQUIRE(arma::any(arma::vectorise(result - expected) < 0.000001));
+    REQUIRE_THAT(result, IsApproxEqual(expected, 1e-8));
 }
 
 TEST_CASE("HamiltonianGenerator: PBC") {

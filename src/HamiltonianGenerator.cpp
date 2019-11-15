@@ -2,7 +2,6 @@
 // Created by pkua on 01.11.2019.
 //
 
-#include "CavityHamiltonianGenerator.h"
 #include "HamiltonianGenerator.h"
 #include "Assertions.h"
 
