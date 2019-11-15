@@ -12,8 +12,9 @@
 #include <armadillo>
 
 #include "Quantity.h"
+#include "GapRatioCalculator.h"
 
-template<typename ConcreteHamiltonianGenerator, typename GapRatioCalculator>
+template<typename ConcreteHamiltonianGenerator, typename ConcreteGapRatioCalculator = GapRatioCalculator>
 class Simulation {
 private:
     std::unique_ptr<ConcreteHamiltonianGenerator> hamiltonianGenerator;
@@ -47,7 +48,7 @@ public:
     }
 
     void perform(std::ostream &logger) {
-        GapRatioCalculator calculator(this->relativeMiddleEnergy, this->relativeMargin);
+        ConcreteGapRatioCalculator calculator(this->relativeMiddleEnergy, this->relativeMargin);
 
         for (std::size_t i = 0; i < this->numberOfSimulations; i++) {
             logger << "[Simulation::perform] Performing simulation " << i << "... " << std::flush;
