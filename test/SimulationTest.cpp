@@ -3,6 +3,8 @@
 //
 
 #include <catch2/catch.hpp>
+#include <sstream>
+#include <HamiltonianGenerator.h>
 
 #include "Simulation.h"
 
@@ -44,6 +46,10 @@ namespace {
         void resampleOnsiteEnergies() {
             this->timesResampled++;
         }
+
+        std::string fileSignature() const {
+            return "";
+        }
     };
 
     class MockGapRatioCalculator {
@@ -75,12 +81,21 @@ namespace {
             return Quantity{};
         }
     };
+
+    struct DummyOstreamProvider {
+    public:
+        static std::ostringstream openFile(const std::string &filename) {
+            static_cast<void>(filename);
+            return std::ostringstream{};
+        }
+    };
 }
 
-TEST_CASE("Simulation: 3 'random' hamiltonians") {
-    Simulation<MockHamiltonianGenerator, MockGapRatioCalculator> simulation(std::make_unique<MockHamiltonianGenerator>(),
-                                                                            3, 0.5, 0.99);
-    std::ostringstream dummy;
 
-    simulation.perform(dummy);
+TEST_CASE("Simulation: 3 'random' hamiltonians") {
+    using TestSimulation = Simulation<MockHamiltonianGenerator, MockGapRatioCalculator, DummyOstreamProvider>;
+    TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(),3, 0.5, 0.99);
+    std::ostringstream dummyLogger;
+
+    simulation.perform(dummyLogger);
 }

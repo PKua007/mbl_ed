@@ -68,6 +68,10 @@ public:
         std::generate(this->onsiteEnergies.begin(), this->onsiteEnergies.end(), std::ref(*(this->disorderGenerator)));
     }
 
+    [[nodiscard]] const std::vector<double> &getOnsiteEnergies() const {
+        return this->onsiteEnergies;
+    }
+
     [[nodiscard]] double getDiagonalElement(const FockBase::Vector &vector) const override {
         return getOnsiteEnergy(vector) + getShortInteractionEnergy(vector) + getLongInteractionEnergy(vector);
     }
@@ -76,6 +80,12 @@ public:
         Expects(this->getSiteDistance(fromSiteIndex, toSiteIndex) == 1);
 
         return -this->J;
+    }
+
+    std::string fileSignature() const {
+        std::ostringstream filename;
+        filename << "J_" << this->J << "_U_" << this->U << "_U1_" << this->U1 << "_K_" << this->fockBase.getNumberOfSites();
+        return filename.str();
     }
 };
 

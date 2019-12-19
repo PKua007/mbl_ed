@@ -9,15 +9,31 @@
 #include <iosfwd>
 #include <random>
 #include <memory>
+#include <fstream>
+#include <iterator>
+
 #include <armadillo>
 
 #include "Quantity.h"
 #include "GapRatioCalculator.h"
 
-template<typename ConcreteHamiltonianGenerator, typename ConcreteGapRatioCalculator = GapRatioCalculator>
+namespace {
+    struct FileOstreamProvider {
+    public:
+        static std::ofstream openFile(const std::string &filename) {
+            std::ofstream out(filename);
+            if (!out)
+                throw std::runtime_error("Cannot open " + filename + " to store eigenvalues");
+            return out;
+        }
+    };
+}
+
+template<typename HamiltonianGenerator_t, typename GapRatioCalculator_t = GapRatioCalculator,
+         typename FstreamProvider_t = FileOstreamProvider>
 class Simulation {
 private:
-    std::unique_ptr<ConcreteHamiltonianGenerator> hamiltonianGenerator;
+    std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;
     std::size_t numberOfSimulations{};
     double relativeMiddleEnergy{};
     double relativeMargin{};
@@ -36,8 +52,17 @@ private:
         return eigenenergies;
     }
 
+    void saveEigenenergies(const std::vector<double> &eigenenergies, std::size_t index) const {
+        std::ostringstream filenameStream;
+        filenameStream << this->hamiltonianGenerator->fileSignature() << "_" << index << "_nrg.dat";
+        std::string filename = filenameStream.str();
+        auto out = FstreamProvider_t::openFile(filename);
+
+        std::copy(eigenenergies.begin(), eigenenergies.end(), std::ostream_iterator<double>(out, "\n"));
+    }
+
 public:
-    Simulation(std::unique_ptr<ConcreteHamiltonianGenerator> hamiltonianGenerator, size_t numberOfSimulations,
+    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, size_t numberOfSimulations,
                double relativeMiddleEnergy, double relativeMargin)
             : hamiltonianGenerator(std::move(hamiltonianGenerator)), numberOfSimulations{numberOfSimulations},
               relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
@@ -48,12 +73,13 @@ public:
     }
 
     void perform(std::ostream &logger) {
-        ConcreteGapRatioCalculator calculator(this->relativeMiddleEnergy, this->relativeMargin);
+        GapRatioCalculator_t calculator(this->relativeMiddleEnergy, this->relativeMargin);
 
         for (std::size_t i = 0; i < this->numberOfSimulations; i++) {
             logger << "[Simulation::perform] Performing simulation " << i << "... " << std::flush;
             auto eigenenergies = this->performSingleSimulation();
             calculator.addEigenenergies(eigenenergies);
+            this->saveEigenenergies(eigenenergies, i);
             logger << "done." << std::endl;
         }
 

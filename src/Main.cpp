@@ -56,10 +56,10 @@ namespace {
 
             Validate(numberOfSites > 0);
             Validate(numberOfBosons > 0);
-            Validate(J > 0);
-            Validate(W > 0);
-            Validate(U > 0);
-            Validate(U1 > 0);
+            Validate(J >= 0);
+            Validate(W >= 0);
+            Validate(U >= 0);
+            Validate(U1 >= 0);
             Validate(numberOfSimulations > 0);
         }
 
@@ -87,14 +87,14 @@ int main(int argc, char **argv) {
     using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
     auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed);
     auto hamiltonianGenerator = std::make_unique<TheHamiltonianGenerator>(base, params.J, params.U, params.U1,
-                                                                          std::move(disorderGenerator));
+                                                                          std::move(disorderGenerator), true);
     Simulation<TheHamiltonianGenerator> simulation(std::move(hamiltonianGenerator), params.numberOfSimulations, 0.5,
                                                    0.1);
 
     simulation.perform(std::cout);
-    Quantity result = simulation.getMeanGapRatio();
-    result.separator = Quantity::Separator::PLUS_MINUS;
-    std::cout << "Final result: " << result << std::endl;
+    Quantity meanGapRatio = simulation.getMeanGapRatio();
+    meanGapRatio.separator = Quantity::Separator::PLUS_MINUS;
+    std::cout << "Mean gap ratio: " << meanGapRatio << std::endl;
 
     return EXIT_SUCCESS;
 }
