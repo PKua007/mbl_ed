@@ -2,7 +2,7 @@
 // Created by pkua on 08.11.2019.
 //
 
-#include <catch2/catch.hpp>
+#include <Catch2/catch.hpp>
 
 #include "GapRatioCalculator.h"
 

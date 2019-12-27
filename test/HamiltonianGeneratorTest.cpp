@@ -2,7 +2,7 @@
 // Created by pkua on 01.11.2019.
 //
 
-#include <catch2/catch.hpp>
+#include <Catch2/catch.hpp>
 
 #include "ArmaMatrixApproxEqualMatcher.h"
 #include "FockBaseGenerator.h"

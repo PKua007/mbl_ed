@@ -5,7 +5,7 @@
 #ifndef MBL_ED_ARMAMATRIXAPPROXEQUALMATCHER_H
 #define MBL_ED_ARMAMATRIXAPPROXEQUALMATCHER_H
 
-#include <catch2/catch.hpp>
+#include <Catch2/catch.hpp>
 #include <armadillo>
 #include <ostream>
 #include <utility>

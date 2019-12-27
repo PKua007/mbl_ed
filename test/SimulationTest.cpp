@@ -2,7 +2,7 @@
 // Created by pkua on 13.11.2019.
 //
 
-#include <catch2/catch.hpp>
+#include <Catch2/catch.hpp>
 #include <sstream>
 #include <HamiltonianGenerator.h>
 
