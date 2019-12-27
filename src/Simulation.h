@@ -54,7 +54,7 @@ private:
 
     void saveEigenenergies(const std::vector<double> &eigenenergies, std::size_t index) const {
         std::ostringstream filenameStream;
-        filenameStream << this->hamiltonianGenerator->fileSignature() << "_" << index << "_nrg.dat";
+        filenameStream << this->hamiltonianGenerator->fileSignature() << "__" << index << "_nrg.dat";
         std::string filename = filenameStream.str();
         auto out = FstreamProvider_t::openFile(filename);
 

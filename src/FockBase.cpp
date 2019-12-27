@@ -3,6 +3,8 @@
 //
 
 #include <cmath>
+#include <iterator>
+#include <numeric>
 
 #include "FockBase.h"
 #include "Assertions.h"
@@ -64,4 +66,9 @@ double FockBase::computeHash(const FockBase::Vector &vector) const {
 std::size_t FockBase::getNumberOfSites() const {
     Expects(this->size() > 0);
     return this->theBase.front().size();
+}
+
+std::size_t FockBase::getNumberOfParticles() const {
+    Expects(this->size() > 0);
+    return std::accumulate(this->theBase.front().begin(), this->theBase.front().end(), 0);
 }

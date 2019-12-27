@@ -32,6 +32,7 @@ public:
     [[nodiscard]] const_iterator begin() const;
     [[nodiscard]] const_iterator end() const;
     [[nodiscard]] std::size_t getNumberOfSites() const;
+    [[nodiscard]] std::size_t getNumberOfParticles() const;
 };
 
 

@@ -21,6 +21,7 @@ protected:
 
 public:
     explicit HamiltonianGenerator(const FockBase &fockBase, bool usePBC) : usePBC{usePBC}, fockBase{fockBase} { }
+    virtual ~HamiltonianGenerator() = default;
 
     [[nodiscard]] arma::mat generate() const;
     [[nodiscard]] size_t getSiteDistance(size_t fromSiteIndex, size_t toSiteIndex) const;

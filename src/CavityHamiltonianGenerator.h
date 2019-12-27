@@ -82,9 +82,10 @@ public:
         return -this->J;
     }
 
-    std::string fileSignature() const {
+    [[nodiscard]] std::string fileSignature() const {
         std::ostringstream filename;
-        filename << "J_" << this->J << "_U_" << this->U << "_U1_" << this->U1 << "_K_" << this->fockBase.getNumberOfSites();
+        filename << "J." << this->J << "_U." << this->U << "_U1." << this->U1;
+        filename << "_N." << this->fockBase.getNumberOfParticles() << "_K." << this->fockBase.getNumberOfSites();
         return filename.str();
     }
 };
