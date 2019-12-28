@@ -4,11 +4,12 @@
 #include <memory>
 #include <random>
 
-#include "Assertions.h"
 #include "CavityHamiltonianGenerator.h"
 #include "GapRatioCalculator.h"
 #include "FockBaseGenerator.h"
 #include "Simulation.h"
+#include "Utils.h"
+#include "Parameters.h"
 
 namespace {
     class UniformGenerator {
@@ -26,61 +27,18 @@ namespace {
             return this->distribution(this->generator);
         }
     };
-
-    class Parameters {
-    public:
-        std::size_t numberOfSites{};
-        std::size_t numberOfBosons{};
-        double J{};
-        double W{};
-        double U{};
-        double U1{};
-        bool usePeriodicBC{};
-        std::size_t numberOfSimulations{};
-        std::size_t seed{};
-
-        Parameters(int argc, char **argv) {
-            if (argc != 10) {
-                std::cerr << "Usage: " << argv[0] << " [number of sites] [number of bosons] [J] [W] [U] [U1] ";
-                std::cerr << "[use periodic BC true/false] [number of simulations] [seed]" << std::endl;
-                exit(EXIT_FAILURE);
-            }
-
-            this->numberOfSites = std::stoul(argv[1]);
-            this->numberOfBosons = std::stoul(argv[2]);
-            this->J = std::stod(argv[3]);
-            this->W = std::stod(argv[4]);
-            this->U = std::stod(argv[5]);
-            this->U1 = std::stod(argv[6]);
-            this->usePeriodicBC = (std::string(argv[7]) == "true");
-            this->numberOfSimulations = std::stoul(argv[8]);
-            this->seed = std::stoul(argv[9]);
-
-            Validate(numberOfSites > 0);
-            Validate(numberOfBosons > 0);
-            Validate(J >= 0);
-            Validate(W >= 0);
-            Validate(U >= 0);
-            Validate(U1 >= 0);
-            Validate(numberOfSimulations > 0);
-        }
-
-        void print(std::ostream &out) const {
-            out << "number of sites       : " << this->numberOfSites << std::endl;
-            out << "number of bosons      : " << this->numberOfBosons << std::endl;
-            out << "J                     : " << this->J << std::endl;
-            out << "W                     : " << this->W << std::endl;
-            out << "U                     : " << this->U << std::endl;
-            out << "U1                    : " << this->U1 << std::endl;
-            out << "usePeriodicBC         : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
-            out << "number of simulations : " << this->numberOfSimulations << std::endl;
-            out << "seed                  : " << this->seed << std::endl;
-        }
-    };
 }
 
 int main(int argc, char **argv) {
-    Parameters params(argc, argv);
+    if (argc != 2)
+        die(std::string("Usage: ") + argv[0] + " [input file]");
+
+    std::string filename(argv[1]);
+    std::ifstream input(filename);
+    if (!input)
+        die("Cannot open " + filename + " to read input parameters");
+
+    Parameters params(input);
     params.print(std::cout);
     std::cout << std::endl;
 
@@ -89,7 +47,13 @@ int main(int argc, char **argv) {
 
     using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
     auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed);
-    auto hamiltonianGenerator = std::make_unique<TheHamiltonianGenerator>(base, params.J, params.U, params.U1,
+    TheHamiltonianGenerator::Parameters hamiltonianParams;
+    hamiltonianParams.J = params.J;
+    hamiltonianParams.U = params.U;
+    hamiltonianParams.U1 = params.U1;
+    hamiltonianParams.beta = params.beta;
+    hamiltonianParams.phi0 = params.phi0;
+    auto hamiltonianGenerator = std::make_unique<TheHamiltonianGenerator>(base, hamiltonianParams,
                                                                           std::move(disorderGenerator),
                                                                           params.usePeriodicBC);
     Simulation<TheHamiltonianGenerator> simulation(std::move(hamiltonianGenerator), params.numberOfSimulations, 0.5,

@@ -18,12 +18,19 @@
  */
 template<typename DisorderGenerator>
 class CavityHamiltonianGenerator : public HamiltonianGenerator {
+public:
+    struct Parameters {
+        double J{};
+        double U{};
+        double U1{};
+        double beta{0.5};
+        double phi0{};
+    };
+
 private:
-    double J{};
-    double U{};
-    double U1{};
     std::vector<double> onsiteEnergies;
     std::unique_ptr<DisorderGenerator> disorderGenerator;
+    CavityHamiltonianGenerator::Parameters params;
 
     /* Sum of E_j n_j, where j = 0, ..., [number of sites]; n_j - number of particles in j-th site and E_j - random site
      * energies from the constructor */
@@ -40,25 +47,25 @@ private:
         auto bosonAccumulator = [](auto sum, auto numberOfParticles) {
             return sum + numberOfParticles*(numberOfParticles - 1);
         };
-        return this->U * std::accumulate(vector.begin(), vector.end(), 0., bosonAccumulator);
+        return this->params.U * std::accumulate(vector.begin(), vector.end(), 0., bosonAccumulator);
     }
 
     /* -U1/[number of sites] * (sum of (-1)^j n_j)^2, where j = 1, ..., [number of sites]; n_j - number of particles in
      * j-th site */
     [[nodiscard]] double getLongInteractionEnergy(const FockBase::Vector &vector) const {
-        int multiplier = -1;
-        auto plusMinusAccumulator = [&multiplier](auto sum, auto element) {
-            return sum + (multiplier *= -1) * element;
+        std::size_t elementIndex{};
+        auto plusMinusAccumulator = [&elementIndex, this](auto sum, auto element) {
+            return sum + std::cos(2*M_PI*params.beta*(elementIndex++) + params.phi0) * element;
         };
         double populationImbalance = std::accumulate(vector.begin(), vector.end(), 0., plusMinusAccumulator);
-        return -this->U1 / vector.size() * populationImbalance * populationImbalance;
+        return -this->params.U1 / vector.size() * populationImbalance * populationImbalance;
     }
 
 public:
-    CavityHamiltonianGenerator(const FockBase &fockBase, double J, double U, double U1,
+    CavityHamiltonianGenerator(const FockBase &fockBase, CavityHamiltonianGenerator::Parameters params,
                                std::unique_ptr<DisorderGenerator> disorderGenerator, bool usePbc = true)
-            : HamiltonianGenerator(fockBase, usePbc), J(J), U(U), U1(U1),
-              disorderGenerator(std::move(disorderGenerator))
+            : HamiltonianGenerator(fockBase, usePbc), disorderGenerator(std::move(disorderGenerator)),
+              params{params}
     {
         this->resampleOnsiteEnergies();
     }
@@ -79,13 +86,14 @@ public:
     [[nodiscard]] double getHoppingTerm(std::size_t fromSiteIndex, std::size_t toSiteIndex) const override {
         Expects(this->getSiteDistance(fromSiteIndex, toSiteIndex) == 1);
 
-        return -this->J;
+        return -this->params.J;
     }
 
     [[nodiscard]] std::string fileSignature() const {
         std::ostringstream filename;
-        filename << "J." << this->J << "_U." << this->U << "_U1." << this->U1;
+        filename << "J." << this->params.J << "_U." << this->params.U << "_U1." << this->params.U1;
         filename << "_N." << this->fockBase.getNumberOfParticles() << "_K." << this->fockBase.getNumberOfSites();
+        filename << "_beta." << this->params.beta << "_phi0." << this->params.phi0;
         return filename.str();
     }
 };
