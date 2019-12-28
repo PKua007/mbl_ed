@@ -89,7 +89,11 @@ int main(int argc, char **argv) {
 
     using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
     auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed);
-    auto hamiltonianGenerator = std::make_unique<TheHamiltonianGenerator>(base, params.J, params.U, params.U1,
+    TheHamiltonianGenerator::Parameters hamiltonianParams;
+    hamiltonianParams.J = params.J;
+    hamiltonianParams.U = params.U;
+    hamiltonianParams.U1 = params.U1;
+    auto hamiltonianGenerator = std::make_unique<TheHamiltonianGenerator>(base, hamiltonianParams,
                                                                           std::move(disorderGenerator),
                                                                           params.usePeriodicBC);
     Simulation<TheHamiltonianGenerator> simulation(std::move(hamiltonianGenerator), params.numberOfSimulations, 0.5,
