@@ -93,6 +93,7 @@ public:
         std::ostringstream filename;
         filename << "J." << this->params.J << "_U." << this->params.U << "_U1." << this->params.U1;
         filename << "_N." << this->fockBase.getNumberOfParticles() << "_K." << this->fockBase.getNumberOfSites();
+        filename << "_beta." << this->params.beta << "_phi0." << this->params.phi0;
         return filename.str();
     }
 };

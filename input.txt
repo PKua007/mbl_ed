@@ -1,0 +1,11 @@
+numberOfSites = 6
+numberOfBosons = 6
+J = 1
+W = 2
+U = 3
+U1 = 4
+beta = 5
+phi0 = 6
+usePeriodicBC = true
+numberOfSimulations = 5
+seed = 1234
