@@ -8,6 +8,9 @@
 #include <iosfwd>
 
 class Parameters {
+private:
+    void validate() const;
+
 public:
     std::size_t numberOfSites{};
     std::size_t numberOfBosons{};

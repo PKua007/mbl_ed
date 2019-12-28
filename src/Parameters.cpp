@@ -3,7 +3,7 @@
 //
 
 #include <string>
-#include <iostream>
+#include <ostream>
 
 #include "Parameters.h"
 #include "Config.h"
@@ -38,6 +38,10 @@ Parameters::Parameters(std::istream &input) {
             throw std::runtime_error("[Parameters::Parameters] Unknown parameter " + key);
     }
 
+    this->validate();
+}
+
+void Parameters::validate() const {
     Validate(numberOfSites > 0);
     Validate(numberOfBosons > 0);
     Validate(J >= 0);
