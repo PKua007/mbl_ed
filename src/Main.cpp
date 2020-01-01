@@ -40,12 +40,10 @@ namespace {
         }
     };
 
-    template<typename DisorderGenerator>
+    template<typename HamiltonianGenerator_t>
     class Phi0AveragingModel {
     public:
-        using TheHamiltonianGenerator = CavityHamiltonianGenerator<DisorderGenerator>;
-
-        static void setupHamiltonianGenerator(TheHamiltonianGenerator &hamiltonianGenerator,
+        static void setupHamiltonianGenerator(HamiltonianGenerator_t &hamiltonianGenerator,
                                               std::size_t simulationIndex, std::size_t numberOfSimulations)
         {
             Expects(numberOfSimulations > 0);
@@ -56,6 +54,16 @@ namespace {
             hamiltonianGenerator.setPhi0(phi0);
         }
     };
+
+    template<typename AveragingModel_t, typename HamiltonianGenerator_t>
+    Quantity perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+                                 std::size_t numberOfSimulations)
+    {
+        using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t>;
+        TheSimulation simulation(std::move(hamiltonianGenerator), numberOfSimulations, 0.5, 0.1);
+        simulation.perform(std::cout);
+        return simulation.getMeanGapRatio();
+    }
 }
 
 int main(int argc, char **argv) {
@@ -82,28 +90,28 @@ int main(int argc, char **argv) {
     hamiltonianParams.U1 = params.U1;
     hamiltonianParams.beta = params.beta;
 
-    Quantity meanGapRatio;
+    bool changePhi0ForAverage = false;
     if (params.phi0 == "changeForAverage") {
-        auto hamiltonianGenerator = std::make_unique<TheHamiltonianGenerator>(base, hamiltonianParams,
-                                                                              std::move(disorderGenerator),
-                                                                              params.usePeriodicBC);
-        using TheAveragingModel = Phi0AveragingModel<UniformGenerator>;
-        using TheSimulation = Simulation<TheHamiltonianGenerator, TheAveragingModel>;
-        TheSimulation simulation(std::move(hamiltonianGenerator), params.numberOfSimulations, 0.5, 0.1);
-        simulation.perform(std::cout);
-        meanGapRatio = simulation.getMeanGapRatio();
+        changePhi0ForAverage = true;
     } else {
         hamiltonianParams.phi0 = std::stod(params.phi0);
-        auto hamiltonianGenerator = std::make_unique<TheHamiltonianGenerator>(base, hamiltonianParams,
-                                                                              std::move(disorderGenerator),
-                                                                              params.usePeriodicBC);
-        using TheAveragingModel = OnsiteDisorderAveragingModel<TheHamiltonianGenerator>;
-        using TheSimulation = Simulation<TheHamiltonianGenerator, TheAveragingModel>;
-        TheSimulation simulation(std::move(hamiltonianGenerator), params.numberOfSimulations, 0.5, 0.1);
-        simulation.perform(std::cout);
-        meanGapRatio = simulation.getMeanGapRatio();
+        changePhi0ForAverage = false;
     }
 
+    auto hamiltonianGenerator = std::make_unique<TheHamiltonianGenerator>(base, hamiltonianParams,
+                                                                          std::move(disorderGenerator),
+                                                                          params.usePeriodicBC);
+
+    Quantity meanGapRatio;
+    if (changePhi0ForAverage) {
+        using TheAveragingModel = Phi0AveragingModel<TheHamiltonianGenerator>;
+        meanGapRatio = perform_simulations<TheAveragingModel>(std::move(hamiltonianGenerator),
+                                                              params.numberOfSimulations);
+    } else {
+        using TheAveragingModel = OnsiteDisorderAveragingModel<TheHamiltonianGenerator>;
+        meanGapRatio = perform_simulations<TheAveragingModel>(std::move(hamiltonianGenerator),
+                                                              params.numberOfSimulations);
+    }
     meanGapRatio.separator = Quantity::Separator::PLUS_MINUS;
     std::cout << "Mean gap ratio: " << meanGapRatio << std::endl;
 
