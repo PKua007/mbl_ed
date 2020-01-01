@@ -27,6 +27,18 @@ namespace {
             return this->distribution(this->generator);
         }
     };
+
+    template<typename HamiltonianGenerator_t>
+    class OnsiteDisorderAveragingModel {
+    public:
+        static void setupHamiltonianGenerator(HamiltonianGenerator_t &hamiltonianGenerator, std::size_t simulationIndex,
+                                              std::size_t numberOfSimulations)
+        {
+            static_cast<void>(simulationIndex);
+            static_cast<void>(numberOfSimulations);
+            hamiltonianGenerator.resampleOnsiteEnergy();
+        }
+    };
 }
 
 int main(int argc, char **argv) {
@@ -56,8 +68,9 @@ int main(int argc, char **argv) {
     auto hamiltonianGenerator = std::make_unique<TheHamiltonianGenerator>(base, hamiltonianParams,
                                                                           std::move(disorderGenerator),
                                                                           params.usePeriodicBC);
-    Simulation<TheHamiltonianGenerator> simulation(std::move(hamiltonianGenerator), params.numberOfSimulations, 0.5,
-                                                   0.1);
+    using TheAveragingModel = OnsiteDisorderAveragingModel<TheHamiltonianGenerator>;
+    using TheSimulation = Simulation<TheHamiltonianGenerator, TheAveragingModel>;
+    TheSimulation simulation(std::move(hamiltonianGenerator), params.numberOfSimulations, 0.5, 0.1);
 
     simulation.perform(std::cout);
     Quantity meanGapRatio = simulation.getMeanGapRatio();

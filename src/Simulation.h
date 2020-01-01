@@ -29,7 +29,8 @@ namespace {
     };
 }
 
-template<typename HamiltonianGenerator_t, typename GapRatioCalculator_t = GapRatioCalculator,
+template<typename HamiltonianGenerator_t, typename AveragingModel_t,
+         typename GapRatioCalculator_t = GapRatioCalculator,
          typename FstreamProvider_t = FileOstreamProvider>
 class Simulation {
 private:
@@ -40,8 +41,8 @@ private:
 
     Quantity meanGapRatio{};
 
-    std::vector<double> performSingleSimulation() {
-        this->hamiltonianGenerator->resampleOnsiteEnergies();
+    std::vector<double> performSingleSimulation(std::size_t i) {
+        AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, i, this->numberOfSimulations);
         arma::mat hamiltonian = this->hamiltonianGenerator->generate();
         arma::vec armaEigenenergies = arma::eig_sym(hamiltonian);
 
@@ -54,7 +55,7 @@ private:
 
     void saveEigenenergies(const std::vector<double> &eigenenergies, std::size_t index) const {
         std::ostringstream filenameStream;
-        filenameStream << this->hamiltonianGenerator->fileSignature() << "__" << index << "_nrg.dat";
+        filenameStream << this->hamiltonianGenerator->fileSignature() << "_" << index << "_nrg.dat";
         std::string filename = filenameStream.str();
         auto out = FstreamProvider_t::openFile(filename);
 
@@ -77,7 +78,7 @@ public:
 
         for (std::size_t i = 0; i < this->numberOfSimulations; i++) {
             logger << "[Simulation::perform] Performing simulation " << i << "... " << std::flush;
-            auto eigenenergies = this->performSingleSimulation();
+            auto eigenenergies = this->performSingleSimulation(i);
             calculator.addEigenenergies(eigenenergies);
             this->saveEigenenergies(eigenenergies, i);
             logger << "done." << std::endl;
