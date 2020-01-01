@@ -6,12 +6,13 @@
 #define CAVITY_MBL_FOCKBASEGENERATOR_H
 
 #include <vector>
+#include <memory>
 
 #include "FockBase.h"
 
 class FockBaseGenerator {
 public:
-    [[nodiscard]] FockBase generate(int numberOfSites, int numberOfParticles) const;
+    [[nodiscard]] std::unique_ptr<FockBase> generate(int numberOfSites, int numberOfParticles) const;
 };
 
 

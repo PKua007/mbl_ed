@@ -12,25 +12,24 @@
 #include "Assertions.h"
 #include "HamiltonianGenerator.h"
 
+struct CavityHamiltonianGeneratorParameters {
+    double J{};
+    double U{};
+    double U1{};
+    double beta{0.5};
+    double phi0{};
+};
+
 /**
  * @brief Generator of boson hamiltonian from https://arxiv.org/pdf/1902.00357.pdf
  * @tparam DisorderGenerator class whose operator() returns random energies as double
  */
 template<typename DisorderGenerator>
 class CavityHamiltonianGenerator : public HamiltonianGenerator {
-public:
-    struct Parameters {
-        double J{};
-        double U{};
-        double U1{};
-        double beta{0.5};
-        double phi0{};
-    };
-
 private:
     std::vector<double> onsiteEnergies;
     std::unique_ptr<DisorderGenerator> disorderGenerator;
-    CavityHamiltonianGenerator::Parameters params;
+    CavityHamiltonianGeneratorParameters params;
 
     /* Sum of E_j n_j, where j = 0, ..., [number of sites]; n_j - number of particles in j-th site and E_j - random site
      * energies from the constructor */
@@ -62,16 +61,16 @@ private:
     }
 
 public:
-    CavityHamiltonianGenerator(const FockBase &fockBase, CavityHamiltonianGenerator::Parameters params,
+    CavityHamiltonianGenerator(std::unique_ptr<FockBase> fockBase, CavityHamiltonianGeneratorParameters params,
                                std::unique_ptr<DisorderGenerator> disorderGenerator, bool usePbc = true)
-            : HamiltonianGenerator(fockBase, usePbc), disorderGenerator(std::move(disorderGenerator)),
+            : HamiltonianGenerator(std::move(fockBase), usePbc), disorderGenerator(std::move(disorderGenerator)),
               params{params}
     {
         this->resampleOnsiteEnergies();
     }
 
     void resampleOnsiteEnergies() {
-        this->onsiteEnergies.resize(this->fockBase.getNumberOfSites());
+        this->onsiteEnergies.resize(this->fockBase->getNumberOfSites());
         std::generate(this->onsiteEnergies.begin(), this->onsiteEnergies.end(), std::ref(*(this->disorderGenerator)));
     }
 
@@ -92,7 +91,7 @@ public:
     [[nodiscard]] std::string fileSignature() const {
         std::ostringstream filename;
         filename << "J." << this->params.J << "_U." << this->params.U << "_U1." << this->params.U1;
-        filename << "_N." << this->fockBase.getNumberOfParticles() << "_K." << this->fockBase.getNumberOfSites();
+        filename << "_N." << this->fockBase->getNumberOfParticles() << "_K." << this->fockBase->getNumberOfSites();
         filename << "_beta." << this->params.beta << "_phi0." << this->params.phi0;
         return filename.str();
     }
