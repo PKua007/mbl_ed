@@ -96,6 +96,10 @@ public:
         filename << "_beta." << this->params.beta << "_phi0." << this->params.phi0;
         return filename.str();
     }
+
+    void setPhi0(double phi0) {
+        this->params.phi0 = phi0;
+    }
 };
 
 #endif //MBL_ED_CAVITYHAMILTONIANGENERATOR_H

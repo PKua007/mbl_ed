@@ -27,7 +27,7 @@ Parameters::Parameters(std::istream &input) {
         else if (key == "beta")
             this->beta = config.getDouble("beta");
         else if (key == "phi0")
-            this->phi0 = config.getDouble("phi0");
+            this->phi0 = config.getString("phi0");
         else if (key == "usePeriodicBC")
             this->usePeriodicBC = config.getBoolean("usePeriodicBC");
         else if (key == "numberOfSimulations")

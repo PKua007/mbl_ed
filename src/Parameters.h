@@ -19,7 +19,7 @@ public:
     double U{};
     double U1{};
     double beta{};
-    double phi0{};
+    std::string phi0;
     bool usePeriodicBC{};
     std::size_t numberOfSimulations{};
     std::size_t seed{};
