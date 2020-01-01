@@ -20,8 +20,10 @@ namespace {
 
     class MockHamiltonianGenerator {
     private:
-        std::size_t timesResampled{};
+        std::size_t simulationIndex{};
         std::vector<arma::mat> matrices{};
+
+        friend class MockAveragingModel;
 
     public:
         MockHamiltonianGenerator() {
@@ -40,15 +42,22 @@ namespace {
         }
 
         [[nodiscard]] arma::mat generate() const {
-            return this->matrices.at(timesResampled - 1);
-        }
-
-        void resampleOnsiteEnergies() {
-            this->timesResampled++;
+            return this->matrices.at(simulationIndex);
         }
 
         std::string fileSignature() const {
             return "";
+        }
+    };
+
+    class MockAveragingModel {
+    public:
+        static void setupHamiltonianGenerator(MockHamiltonianGenerator &hamiltonianGenerator,
+                                              std::size_t simulationIndex, std::size_t numberOfSimulations)
+        {
+            REQUIRE(simulationIndex <= 2);
+            REQUIRE(numberOfSimulations == 3);
+            hamiltonianGenerator.simulationIndex = simulationIndex;
         }
     };
 
@@ -93,7 +102,8 @@ namespace {
 
 
 TEST_CASE("Simulation: 3 'random' hamiltonians") {
-    using TestSimulation = Simulation<MockHamiltonianGenerator, MockGapRatioCalculator, DummyOstreamProvider>;
+    using TestSimulation = Simulation<MockHamiltonianGenerator, MockAveragingModel, MockGapRatioCalculator,
+                                      DummyOstreamProvider>;
     TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(),3, 0.5, 0.99);
     std::ostringstream dummyLogger;
 

@@ -7,6 +7,7 @@
 
 #include <armadillo>
 #include <random>
+#include <memory>
 
 #include "FockBase.h"
 
@@ -17,10 +18,12 @@ private:
 
 protected:
     const bool usePBC;
-    const FockBase &fockBase;
+    std::unique_ptr<FockBase> fockBase;
 
 public:
-    explicit HamiltonianGenerator(const FockBase &fockBase, bool usePBC) : usePBC{usePBC}, fockBase{fockBase} { }
+    explicit HamiltonianGenerator(std::unique_ptr<FockBase> fockBase, bool usePBC)
+            : usePBC{usePBC}, fockBase{std::move(fockBase)}
+    { }
     virtual ~HamiltonianGenerator() = default;
 
     [[nodiscard]] arma::mat generate() const;

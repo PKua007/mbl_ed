@@ -27,6 +27,62 @@ namespace {
             return this->distribution(this->generator);
         }
     };
+
+    template<typename HamiltonianGenerator_t>
+    class OnsiteDisorderAveragingModel {
+    public:
+        static void setupHamiltonianGenerator(HamiltonianGenerator_t &hamiltonianGenerator, std::size_t simulationIndex,
+                                              std::size_t numberOfSimulations)
+        {
+            static_cast<void>(simulationIndex);
+            static_cast<void>(numberOfSimulations);
+            hamiltonianGenerator.resampleOnsiteEnergies();
+        }
+    };
+
+    template<typename HamiltonianGenerator_t>
+    class Phi0AveragingModel {
+    public:
+        static void setupHamiltonianGenerator(HamiltonianGenerator_t &hamiltonianGenerator,
+                                              std::size_t simulationIndex, std::size_t numberOfSimulations)
+        {
+            Expects(numberOfSimulations > 0);
+            Expects(simulationIndex < numberOfSimulations);
+
+            double phi0 = 2*M_PI*simulationIndex/numberOfSimulations;
+            hamiltonianGenerator.resampleOnsiteEnergies();
+            hamiltonianGenerator.setPhi0(phi0);
+        }
+    };
+
+    auto build_hamiltonian_generator(const Parameters &params, bool changePhi0ForAverage) {
+        FockBaseGenerator baseGenerator;
+        auto base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
+
+        using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
+        auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed);
+
+        CavityHamiltonianGeneratorParameters hamiltonianParams;
+        hamiltonianParams.J = params.J;
+        hamiltonianParams.U = params.U;
+        hamiltonianParams.U1 = params.U1;
+        hamiltonianParams.beta = params.beta;
+        if (!changePhi0ForAverage)
+            hamiltonianParams.phi0 = std::stod(params.phi0);
+
+        return std::make_unique<TheHamiltonianGenerator>(std::move(base), hamiltonianParams,
+                                                         std::move(disorderGenerator), params.usePeriodicBC);
+    }
+
+    template<template<typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
+    Quantity perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+                                 std::size_t numberOfSimulations)
+    {
+        using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
+        TheSimulation simulation(std::move(hamiltonianGenerator), numberOfSimulations, 0.5, 0.1);
+        simulation.perform(std::cout);
+        return simulation.getMeanGapRatio();
+    }
 }
 
 int main(int argc, char **argv) {
@@ -42,26 +98,18 @@ int main(int argc, char **argv) {
     params.print(std::cout);
     std::cout << std::endl;
 
-    FockBaseGenerator baseGenerator;
-    FockBase base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
+    bool changePhi0ForAverage = (params.phi0 == "changeForAverage");
+    auto hamiltonianGenerator = build_hamiltonian_generator(params, changePhi0ForAverage);
 
-    using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
-    auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed);
-    TheHamiltonianGenerator::Parameters hamiltonianParams;
-    hamiltonianParams.J = params.J;
-    hamiltonianParams.U = params.U;
-    hamiltonianParams.U1 = params.U1;
-    hamiltonianParams.beta = params.beta;
-    hamiltonianParams.phi0 = params.phi0;
-    auto hamiltonianGenerator = std::make_unique<TheHamiltonianGenerator>(base, hamiltonianParams,
-                                                                          std::move(disorderGenerator),
-                                                                          params.usePeriodicBC);
-    Simulation<TheHamiltonianGenerator> simulation(std::move(hamiltonianGenerator), params.numberOfSimulations, 0.5,
-                                                   0.1);
-
-    simulation.perform(std::cout);
-    Quantity meanGapRatio = simulation.getMeanGapRatio();
+    Quantity meanGapRatio;
     meanGapRatio.separator = Quantity::Separator::PLUS_MINUS;
+    if (changePhi0ForAverage) {
+        meanGapRatio = perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator),
+                                                               params.numberOfSimulations);
+    } else {
+        meanGapRatio = perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator),
+                                                                         params.numberOfSimulations);
+    }
     std::cout << "Mean gap ratio: " << meanGapRatio << std::endl;
 
     return EXIT_SUCCESS;
