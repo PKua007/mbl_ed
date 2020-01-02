@@ -84,6 +84,22 @@ namespace {
         simulation.perform(std::cout);
         return simulation.getMeanGapRatio();
     }
+
+    void save_mean_gap_ratio(const Parameters &params, const Quantity &meanGapRatio, const std::string &outputFilename)
+    {
+        bool fileExists = std::filesystem::exists(outputFilename);
+        std::ofstream output(outputFilename, std::fstream::app);
+        if (!output)
+            die("Cannot open " + outputFilename + " to write mean gap ratio");
+        if (!fileExists) {
+            output << R"("number of sites" "number of bosons" "J" "W" "U" "U1" "beta" "phi0" "mean gap ratio" )";
+            output << R"("mean gap ratio error")" << std::endl;
+        }
+
+        output << params.numberOfSites << " " << params.numberOfBosons << " " << params.J << " " << params.W << " ";
+        output << params.U << " " << params.U1 << " " << params.beta << " " << params.phi0 << " " << meanGapRatio;
+        output << std::endl;
+    }
 }
 
 int main(int argc, char **argv) {
@@ -114,18 +130,9 @@ int main(int argc, char **argv) {
     std::cout << "Mean gap ratio: " << meanGapRatio << std::endl;
 
     std::string outputFilename(argv[2]);
-    bool fileExists = std::filesystem::exists(outputFilename);
-    std::ofstream output(argv[2], std::fstream::app);
-    if (!output)
-        die("Cannot open " + outputFilename + " to write mean gap ratio");
-    if (!fileExists) {
-        output << R"("number of sites" "number of bosons" "J" "W" "U" "U1" "beta" "phi0" "mean gap ratio" )";
-        output << R"("mean gap ratio error")" << std::endl;
-    }
-
-    output << params.numberOfSites << " " << params.numberOfBosons << " " << params.J << " " << params.W << " ";
-    output << params.U << " " << params.U1 << " " << params.beta << " " << params.phi0 << " " << meanGapRatio;
-    output << std::endl;
+    save_mean_gap_ratio(params, meanGapRatio, outputFilename);
 
     return EXIT_SUCCESS;
 }
+
+
