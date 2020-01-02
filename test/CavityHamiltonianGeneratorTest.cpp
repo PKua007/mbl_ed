@@ -49,7 +49,7 @@ TEST_CASE("CavityHamiltonianGenerator: short interactions") {
     FockBaseGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 4);
     CavityHamiltonianGeneratorParameters params{};
-    params.U = 1;
+    params.U = 2;
     CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params,
                                                     std::make_unique<ConstantDisorderGenerator>(0));
 

@@ -59,7 +59,6 @@ namespace {
         FockBaseGenerator baseGenerator;
         auto base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
 
-        using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
         auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed);
 
         CavityHamiltonianGeneratorParameters hamiltonianParams;
@@ -70,6 +69,7 @@ namespace {
         if (!changePhi0ForAverage)
             hamiltonianParams.phi0 = std::stod(params.phi0);
 
+        using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
         return std::make_unique<TheHamiltonianGenerator>(std::move(base), hamiltonianParams,
                                                          std::move(disorderGenerator), params.usePeriodicBC);
     }

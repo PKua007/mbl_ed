@@ -46,7 +46,7 @@ private:
         auto bosonAccumulator = [](auto sum, auto numberOfParticles) {
             return sum + numberOfParticles*(numberOfParticles - 1);
         };
-        return this->params.U * std::accumulate(vector.begin(), vector.end(), 0., bosonAccumulator);
+        return this->params.U / 2 * std::accumulate(vector.begin(), vector.end(), 0., bosonAccumulator);
     }
 
     /* -U1/[number of sites] * (sum of (-1)^j n_j)^2, where j = 1, ..., [number of sites]; n_j - number of particles in
