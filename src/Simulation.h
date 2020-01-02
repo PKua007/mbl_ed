@@ -38,6 +38,7 @@ private:
     std::size_t numberOfSimulations{};
     double relativeMiddleEnergy{};
     double relativeMargin{};
+    bool saveEigenenergies{};
 
     Quantity meanGapRatio{};
 
@@ -53,7 +54,7 @@ private:
         return eigenenergies;
     }
 
-    void saveEigenenergies(const std::vector<double> &eigenenergies, std::size_t index) const {
+    void doSaveEigenenergies(const std::vector<double> &eigenenergies, std::size_t index) const {
         std::ostringstream filenameStream;
         filenameStream << this->hamiltonianGenerator->fileSignature() << "_" << index << "_nrg.dat";
         std::string filename = filenameStream.str();
@@ -64,9 +65,10 @@ private:
 
 public:
     Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, size_t numberOfSimulations,
-               double relativeMiddleEnergy, double relativeMargin)
+               double relativeMiddleEnergy, double relativeMargin, bool saveEigenenergies)
             : hamiltonianGenerator(std::move(hamiltonianGenerator)), numberOfSimulations{numberOfSimulations},
-              relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
+              relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin},
+              saveEigenenergies{saveEigenenergies}
     { }
 
     [[nodiscard]] Quantity getMeanGapRatio() const {
@@ -80,7 +82,8 @@ public:
             logger << "[Simulation::perform] Performing simulation " << i << "... " << std::flush;
             auto eigenenergies = this->performSingleSimulation(i);
             calculator.addEigenenergies(eigenenergies);
-            this->saveEigenenergies(eigenenergies, i);
+            if (this->saveEigenenergies)
+                this->doSaveEigenenergies(eigenenergies, i);
             logger << "done." << std::endl;
         }
 

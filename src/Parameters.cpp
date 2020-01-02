@@ -30,6 +30,8 @@ Parameters::Parameters(std::istream &input) {
             this->phi0 = config.getString("phi0");
         else if (key == "usePeriodicBC")
             this->usePeriodicBC = config.getBoolean("usePeriodicBC");
+        else if (key == "saveEigenenergies")
+            this->saveEigenenergies = config.getBoolean("saveEigenenergies");
         else if (key == "numberOfSimulations")
             this->numberOfSimulations = config.getUnsignedLong("numberOfSimulations");
         else if (key == "seed")
@@ -61,6 +63,7 @@ void Parameters::print(std::ostream &out) const {
     out << "beta                  : " << this->beta << std::endl;
     out << "phi0                  : " << this->phi0 << std::endl;
     out << "usePeriodicBC         : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
+    out << "saveEigenenergies     : " << (this->saveEigenenergies ? "true" : "false") << std::endl;
     out << "number of simulations : " << this->numberOfSimulations << std::endl;
     out << "seed                  : " << this->seed << std::endl;
 }

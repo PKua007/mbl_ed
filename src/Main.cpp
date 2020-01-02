@@ -77,10 +77,10 @@ namespace {
 
     template<template<typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
     Quantity perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
-                                 std::size_t numberOfSimulations)
+                                 std::size_t numberOfSimulations, bool saveEigenenergies)
     {
         using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
-        TheSimulation simulation(std::move(hamiltonianGenerator), numberOfSimulations, 0.5, 0.1);
+        TheSimulation simulation(std::move(hamiltonianGenerator), numberOfSimulations, 0.5, 0.1, saveEigenenergies);
         simulation.perform(std::cout);
         return simulation.getMeanGapRatio();
     }
@@ -121,10 +121,12 @@ int main(int argc, char **argv) {
     Quantity meanGapRatio;
     if (changePhi0ForAverage) {
         meanGapRatio = perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator),
-                                                               params.numberOfSimulations);
+                                                               params.numberOfSimulations,
+                                                               params.saveEigenenergies);
     } else {
         meanGapRatio = perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator),
-                                                                         params.numberOfSimulations);
+                                                                         params.numberOfSimulations,
+                                                                         params.saveEigenenergies);
     }
     meanGapRatio.separator = Quantity::Separator::SPACE;
     std::cout << "Mean gap ratio: " << meanGapRatio << std::endl;

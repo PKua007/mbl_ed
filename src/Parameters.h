@@ -21,6 +21,7 @@ public:
     double beta{};
     std::string phi0;
     bool usePeriodicBC{};
+    bool saveEigenenergies{};
     std::size_t numberOfSimulations{};
     std::size_t seed{};
 
