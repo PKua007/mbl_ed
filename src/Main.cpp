@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 #include <random>
+#include <filesystem>
 
 #include "CavityHamiltonianGenerator.h"
 #include "GapRatioCalculator.h"
@@ -86,13 +87,13 @@ namespace {
 }
 
 int main(int argc, char **argv) {
-    if (argc != 2)
-        die(std::string("Usage: ") + argv[0] + " [input file]");
+    if (argc != 3)
+        die(std::string("Usage: ") + argv[0] + " [input file] [output file]");
 
-    std::string filename(argv[1]);
-    std::ifstream input(filename);
+    std::string inputFilename(argv[1]);
+    std::ifstream input(inputFilename);
     if (!input)
-        die("Cannot open " + filename + " to read input parameters");
+        die("Cannot open " + inputFilename + " to read input parameters");
 
     Parameters params(input);
     params.print(std::cout);
@@ -102,7 +103,6 @@ int main(int argc, char **argv) {
     auto hamiltonianGenerator = build_hamiltonian_generator(params, changePhi0ForAverage);
 
     Quantity meanGapRatio;
-    meanGapRatio.separator = Quantity::Separator::PLUS_MINUS;
     if (changePhi0ForAverage) {
         meanGapRatio = perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator),
                                                                params.numberOfSimulations);
@@ -110,7 +110,22 @@ int main(int argc, char **argv) {
         meanGapRatio = perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator),
                                                                          params.numberOfSimulations);
     }
+    meanGapRatio.separator = Quantity::Separator::SPACE;
     std::cout << "Mean gap ratio: " << meanGapRatio << std::endl;
+
+    std::string outputFilename(argv[2]);
+    bool fileExists = std::filesystem::exists(outputFilename);
+    std::ofstream output(argv[2], std::fstream::app);
+    if (!output)
+        die("Cannot open " + outputFilename + " to write mean gap ratio");
+    if (!fileExists) {
+        output << R"("number of sites" "number of bosons" "J" "W" "U" "U1" "beta" "phi0" "mean gap ratio" )";
+        output << R"("mean gap ratio error")" << std::endl;
+    }
+
+    output << params.numberOfSites << " " << params.numberOfBosons << " " << params.J << " " << params.W << " ";
+    output << params.U << " " << params.U1 << " " << params.beta << " " << params.phi0 << " " << meanGapRatio;
+    output << std::endl;
 
     return EXIT_SUCCESS;
 }

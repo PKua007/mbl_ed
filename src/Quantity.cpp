@@ -87,6 +87,8 @@ std::string Quantity::getSeparatorString() const {
     switch (this->separator) {
         case TABULATOR:
             return "\t";
+        case SPACE:
+            return " ";
         case PLUS_MINUS:
             return " +- ";
     }

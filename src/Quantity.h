@@ -23,6 +23,7 @@ public:
      */
     enum Separator {
         TABULATOR,
+        SPACE,
         PLUS_MINUS
     };
 
