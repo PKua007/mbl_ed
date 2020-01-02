@@ -3,7 +3,6 @@
 #include <iostream>
 #include <memory>
 #include <random>
-#include <filesystem>
 
 #include "CavityHamiltonianGenerator.h"
 #include "GapRatioCalculator.h"
@@ -87,7 +86,7 @@ namespace {
 
     void save_mean_gap_ratio(const Parameters &params, const Quantity &meanGapRatio, const std::string &outputFilename)
     {
-        bool fileExists = std::filesystem::exists(outputFilename);
+        bool fileExists = std::ifstream(outputFilename).is_open();
         std::ofstream output(outputFilename, std::fstream::app);
         if (!output)
             die("Cannot open " + outputFilename + " to write mean gap ratio");
