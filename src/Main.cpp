@@ -119,9 +119,40 @@ namespace {
     }
 }
 
+Analyzer prepare_analyzer(const std::string &onTheFlyTasks) {
+    auto tasks = explode(onTheFlyTasks, ';');
+    std::for_each(tasks.begin(), tasks.end(), trim);
+    tasks.erase(std::remove_if(tasks.begin(), tasks.end(), std::mem_fn(&std::string::empty)), tasks.end());
+
+    Analyzer analyzer;
+    for (const auto &task : tasks) {
+        std::istringstream taskStream(task);
+        std::string taskName;
+        taskStream >> taskName;
+        if (taskName == "mgr") {
+            double mgrCenter, mgrMargin;
+            taskStream >> mgrCenter >> mgrMargin;
+            ValidateMsg(taskStream, "Wrong format, use: mgr [epsilon center] [epsilon margin]");
+            Validate(mgrCenter > 0 && mgrCenter < 1);
+            Validate(mgrMargin > 0 && mgrMargin <= 1);
+            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
+            analyzer.addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
+        } else if (taskName == "cdf") {
+            std::size_t bins;
+            taskStream >> bins;
+            ValidateMsg(taskStream, "Wrong format, use: cdf [number of bins]");
+            Validate(bins >= 2);
+            analyzer.addTask(std::make_unique<CDF>(bins));
+        } else {
+            throw ValidationException("Unknown analyzer task: " + taskName);
+        }
+    }
+    return analyzer;
+}
+
 int main(int argc, char **argv) {
-    if (argc != 3)
-        die(std::string("Usage: ") + argv[0] + " [input file] [output file]");
+    if (argc != 4)
+        die(std::string("Usage: ") + argv[0] + " [input file] [on the fly tasks] [output file]");
 
     std::string inputFilename(argv[1]);
     std::ifstream input(inputFilename);
@@ -135,9 +166,9 @@ int main(int argc, char **argv) {
     bool changePhi0ForAverage = (params.phi0 == "changeForAverage");
     auto hamiltonianGenerator = build_hamiltonian_generator(params, changePhi0ForAverage);
 
-    Analyzer analyzer;
-    analyzer.addTask(std::make_unique<MeanGapRatio>(0.5, 0.1));
-    analyzer.addTask(std::make_unique<CDF>(101));
+    std::string onTheFlyTasks(argv[2]);
+
+    Analyzer analyzer = prepare_analyzer(onTheFlyTasks);
     std::string fileSignature = hamiltonianGenerator->fileSignature();
     if (changePhi0ForAverage) {
         perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer, params.numberOfSimulations,
@@ -150,11 +181,12 @@ int main(int argc, char **argv) {
     std::string header = generate_header(analyzer);
     std::string fields = generate_fields(params, analyzer);
     std::cout << std::endl << header << std::endl << fields << std::endl;
-
-    std::string outputFilename(argv[2]);
+    std::string outputFilename(argv[3]);
     save_output_to_file(header, fields, outputFilename);
 
+    std::cout << std::endl << "Storing bulk results... " << std::flush;
     analyzer.storeBulkResults(fileSignature);
+    std::cout << "done." << std::endl;
 
     return EXIT_SUCCESS;
 }
