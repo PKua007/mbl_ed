@@ -4,9 +4,9 @@
 
 #include <catch2/catch.hpp>
 #include <sstream>
-#include <HamiltonianGenerator.h>
+#include <simulation/HamiltonianGenerator.h>
 
-#include "Simulation.h"
+#include "simulation/Simulation.h"
 
 namespace {
     bool approxVectorsEqual(std::vector<double> first, std::vector<double> second) {
@@ -61,21 +61,16 @@ namespace {
         }
     };
 
-    class MockGapRatioCalculator {
+    class MockAnalyzer {
     private:
         std::size_t index{};
 
     public:
-        MockGapRatioCalculator(double relativeMiddleEnergy, double relativeMargin) {
-            REQUIRE(relativeMiddleEnergy == 0.5);
-            REQUIRE(relativeMargin == 0.99);
-        }
-
-        ~MockGapRatioCalculator() {
+        ~MockAnalyzer() {
             REQUIRE(index == 3);
         }
 
-        void addEigenenergies(const std::vector<double> &eigenenergies) {
+        void analyze(const std::vector<double> &eigenenergies) {
             REQUIRE(index < 3);
             if (index == 0)
                 REQUIRE(approxVectorsEqual(eigenenergies, std::vector<double>{-1, 0, 9}));
@@ -85,27 +80,24 @@ namespace {
                 REQUIRE(approxVectorsEqual(eigenenergies, std::vector<double>{1, 2, 3}));
             index++;
         }
-
-        Quantity calculateMean() {
-            return Quantity{};
-        }
     };
 
-    struct DummyOstreamProvider {
+    struct DummyOstreamProvider : public FileOstreamProvider {
     public:
-        static std::ostringstream openFile(const std::string &filename) {
-            static_cast<void>(filename);
-            return std::ostringstream{};
+        [[nodiscard]] std::unique_ptr<std::ostream> openFile(const std::string &filename) const override {
+            FAIL("tried to open file: " + filename);
+            return nullptr;
         }
     };
 }
 
 
 TEST_CASE("Simulation: 3 'random' hamiltonians") {
-    using TestSimulation = Simulation<MockHamiltonianGenerator, MockAveragingModel, MockGapRatioCalculator,
-                                      DummyOstreamProvider>;
-    TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(), 3, 0.5, 0.99, false);
+    using TestSimulation = Simulation<MockHamiltonianGenerator, MockAveragingModel, MockAnalyzer>;
+    TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(), std::make_unique<DummyOstreamProvider>(),
+                              3, false);
+    MockAnalyzer mockAnalyzer;
     std::ostringstream dummyLogger;
 
-    simulation.perform(dummyLogger);
+    simulation.perform(dummyLogger, mockAnalyzer);
 }

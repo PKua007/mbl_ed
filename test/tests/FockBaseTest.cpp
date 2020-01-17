@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "FockBase.h"
+#include "simulation/FockBase.h"
 
 TEST_CASE("FockBase: basic operations") {
     SECTION("empty base") {

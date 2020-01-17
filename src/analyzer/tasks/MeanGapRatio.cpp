@@ -3,18 +3,19 @@
 //
 
 #include <algorithm>
+#include <sstream>
 
-#include "GapRatioCalculator.h"
-#include "Quantity.h"
+#include "MeanGapRatio.h"
+#include "utils/Quantity.h"
 
-GapRatioCalculator::GapRatioCalculator(double relativeMiddleEnergy, double relativeMargin)
+MeanGapRatio::MeanGapRatio(double relativeMiddleEnergy, double relativeMargin)
         : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
 {
     Expects(relativeMargin > 0);
     Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
 }
 
-void GapRatioCalculator::addEigenenergies(const std::vector<double> &eigenenergies) {
+void MeanGapRatio::analyze(const std::vector<double> &eigenenergies) {
     std::vector<double> normalizedEnergies = this->getNormalizedEigenenergies(eigenenergies);
 
     double relativeFrom = this->relativeMiddleEnergy - this->relativeMargin/2;
@@ -33,7 +34,7 @@ void GapRatioCalculator::addEigenenergies(const std::vector<double> &eigenenergi
     }
 }
 
-std::vector<double> GapRatioCalculator::getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const {
+std::vector<double> MeanGapRatio::getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const {
     double groundLevel = eigenenergies.front();
     double highestLevel = eigenenergies.back();
     Expects(groundLevel < highestLevel);
@@ -47,9 +48,26 @@ std::vector<double> GapRatioCalculator::getNormalizedEigenenergies(const std::ve
     return normalizedEnergies;
 }
 
-Quantity GapRatioCalculator::calculateMean() {
+Quantity MeanGapRatio::calculateMean() const {
     Quantity result;
     result.calculateFromSamples(this->gapRatios);
-    this->gapRatios.clear();
     return result;
+}
+
+std::string MeanGapRatio::getName() const {
+    return "mean_gap_ratio";
+}
+
+std::vector<std::string> MeanGapRatio::getResultHeader() const {
+    return {"mean gap ratio", "mean gap ratio error"};
+}
+
+std::vector<std::string> MeanGapRatio::getResultFields() const {
+    Quantity result = this->calculateMean();
+    result.separator = Quantity::Separator::SPACE;
+    std::stringstream resultStream;
+    resultStream << result;
+    std::string quantityValue, quantityError;
+    resultStream >> quantityValue >> quantityError;
+    return {quantityValue, quantityError};
 }

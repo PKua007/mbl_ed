@@ -14,33 +14,17 @@
 
 #include <armadillo>
 
-#include "Quantity.h"
-#include "GapRatioCalculator.h"
+#include "utils/Quantity.h"
+#include "analyzer/tasks/MeanGapRatio.h"
+#include "analyzer/Analyzer.h"
 
-namespace {
-    struct FileOstreamProvider {
-    public:
-        static std::ofstream openFile(const std::string &filename) {
-            std::ofstream out(filename);
-            if (!out)
-                throw std::runtime_error("Cannot open " + filename + " to store eigenvalues");
-            return out;
-        }
-    };
-}
-
-template<typename HamiltonianGenerator_t, typename AveragingModel_t,
-         typename GapRatioCalculator_t = GapRatioCalculator,
-         typename FstreamProvider_t = FileOstreamProvider>
+template<typename HamiltonianGenerator_t, typename AveragingModel_t, typename Analyzer_t = Analyzer>
 class Simulation {
 private:
     std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;
+    std::unique_ptr<FileOstreamProvider> ostreamProvider;
     std::size_t numberOfSimulations{};
-    double relativeMiddleEnergy{};
-    double relativeMargin{};
     bool saveEigenenergies{};
-
-    Quantity meanGapRatio{};
 
     std::vector<double> performSingleSimulation(std::size_t i) {
         AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, i, this->numberOfSimulations);
@@ -58,36 +42,34 @@ private:
         std::ostringstream filenameStream;
         filenameStream << this->hamiltonianGenerator->fileSignature() << "_" << index << "_nrg.dat";
         std::string filename = filenameStream.str();
-        auto out = FstreamProvider_t::openFile(filename);
+        auto out = this->ostreamProvider->openFile(filename);
 
-        std::copy(eigenenergies.begin(), eigenenergies.end(), std::ostream_iterator<double>(out, "\n"));
+        std::copy(eigenenergies.begin(), eigenenergies.end(), std::ostream_iterator<double>(*out, "\n"));
     }
 
 public:
-    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, size_t numberOfSimulations,
-               double relativeMiddleEnergy, double relativeMargin, bool saveEigenenergies)
-            : hamiltonianGenerator(std::move(hamiltonianGenerator)), numberOfSimulations{numberOfSimulations},
-              relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin},
-              saveEigenenergies{saveEigenenergies}
+    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+               std::unique_ptr<FileOstreamProvider> ostreamProvider, size_t numberOfSimulations,
+               bool saveEigenenergies)
+            : hamiltonianGenerator{std::move(hamiltonianGenerator)}, ostreamProvider{std::move(ostreamProvider)},
+              numberOfSimulations{numberOfSimulations}, saveEigenenergies{saveEigenenergies}
     { }
 
-    [[nodiscard]] Quantity getMeanGapRatio() const {
-        return meanGapRatio;
-    }
+    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, size_t numberOfSimulations,
+               bool saveEigenenergies)
+            : Simulation(std::move(hamiltonianGenerator), std::make_unique<FileOstreamProvider>(), numberOfSimulations,
+                         saveEigenenergies)
+    { }
 
-    void perform(std::ostream &logger) {
-        GapRatioCalculator_t calculator(this->relativeMiddleEnergy, this->relativeMargin);
-
+    void perform(std::ostream &logger, Analyzer_t &analyzer) {
         for (std::size_t i = 0; i < this->numberOfSimulations; i++) {
             logger << "[Simulation::perform] Performing simulation " << i << "... " << std::flush;
             auto eigenenergies = this->performSingleSimulation(i);
-            calculator.addEigenenergies(eigenenergies);
+            analyzer.analyze(eigenenergies);
             if (this->saveEigenenergies)
                 this->doSaveEigenenergies(eigenenergies, i);
             logger << "done." << std::endl;
         }
-
-        this->meanGapRatio = calculator.calculateMean();
     }
 };
 

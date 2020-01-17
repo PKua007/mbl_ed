@@ -4,11 +4,11 @@
 #include <memory>
 #include <random>
 
-#include "CavityHamiltonianGenerator.h"
-#include "GapRatioCalculator.h"
-#include "FockBaseGenerator.h"
-#include "Simulation.h"
-#include "Utils.h"
+#include "simulation/CavityHamiltonianGenerator.h"
+#include "analyzer/tasks/MeanGapRatio.h"
+#include "simulation/FockBaseGenerator.h"
+#include "simulation/Simulation.h"
+#include "utils/Utils.h"
 #include "Parameters.h"
 
 namespace {
@@ -75,29 +75,46 @@ namespace {
     }
 
     template<template<typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
-    Quantity perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
-                                 std::size_t numberOfSimulations, bool saveEigenenergies)
+    void perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, Analyzer &analyzer,
+                             std::size_t numberOfSimulations, bool saveEigenenergies)
     {
         using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
-        TheSimulation simulation(std::move(hamiltonianGenerator), numberOfSimulations, 0.5, 0.1, saveEigenenergies);
-        simulation.perform(std::cout);
-        return simulation.getMeanGapRatio();
+        TheSimulation simulation(std::move(hamiltonianGenerator), numberOfSimulations, saveEigenenergies);
+        simulation.perform(std::cout, analyzer);
     }
 
-    void save_mean_gap_ratio(const Parameters &params, const Quantity &meanGapRatio, const std::string &outputFilename)
-    {
+    void save_output_to_file(const std::string &header, const std::string &fields, const std::string &outputFilename) {
         bool fileExists = std::ifstream(outputFilename).is_open();
         std::ofstream output(outputFilename, std::fstream::app);
         if (!output)
-            die("Cannot open " + outputFilename + " to write mean gap ratio");
-        if (!fileExists) {
-            output << R"("number of sites" "number of bosons" "J" "W" "U" "U1" "beta" "phi0" "mean gap ratio" )";
-            output << R"("mean gap ratio error")" << std::endl;
-        }
+            die("Cannot open " + outputFilename + " to write analyzer output");
+        if (!fileExists)
+            output << header << std::endl;
 
-        output << params.numberOfSites << " " << params.numberOfBosons << " " << params.J << " " << params.W << " ";
-        output << params.U << " " << params.U1 << " " << params.beta << " " << params.phi0 << " " << meanGapRatio;
-        output << std::endl;
+        output << fields << std::endl;
+    }
+
+    std::string generate_header(Analyzer &analyzer) {
+        std::ostringstream headerStream;
+        headerStream << R"("number of sites" "number of bosons" J W U U1 beta phi0 )";
+
+        auto header = analyzer.getInlineResultsHeader();
+        std::for_each(header.begin(), header.end(), [](auto &headerField) {
+            headerField = "\"" + headerField + "\"";
+        });
+        std::copy(header.begin(), header.end(), std::ostream_iterator<std::string>(headerStream, " "));
+        return headerStream.str();
+    }
+
+    std::string generate_fields(const Parameters &params, Analyzer &analyzer) {
+        std::ostringstream fieldsStream;
+        fieldsStream << params.numberOfSites << " " << params.numberOfBosons << " " << params.J << " ";
+        fieldsStream << params.W << " " << params.U << " " << params.U1 << " " << params.beta << " " << params.phi0;
+        fieldsStream << " ";
+
+        auto fields = analyzer.getInlineResultsFields();
+        std::copy(fields.begin(), fields.end(), std::ostream_iterator<std::string>(fieldsStream, " "));
+        return fieldsStream.str();
     }
 }
 
@@ -117,21 +134,22 @@ int main(int argc, char **argv) {
     bool changePhi0ForAverage = (params.phi0 == "changeForAverage");
     auto hamiltonianGenerator = build_hamiltonian_generator(params, changePhi0ForAverage);
 
-    Quantity meanGapRatio;
+    Analyzer analyzer;
+    analyzer.addTask(std::make_unique<MeanGapRatio>(0.5, 0.1));
     if (changePhi0ForAverage) {
-        meanGapRatio = perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator),
-                                                               params.numberOfSimulations,
-                                                               params.saveEigenenergies);
+        perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer, params.numberOfSimulations,
+                                                params.saveEigenenergies);
     } else {
-        meanGapRatio = perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator),
-                                                                         params.numberOfSimulations,
-                                                                         params.saveEigenenergies);
+        perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer,
+                                                          params.numberOfSimulations, params.saveEigenenergies);
     }
-    meanGapRatio.separator = Quantity::Separator::SPACE;
-    std::cout << "Mean gap ratio: " << meanGapRatio << std::endl;
+
+    std::string header = generate_header(analyzer);
+    std::string fields = generate_fields(params, analyzer);
+    std::cout << std::endl << header << std::endl << fields << std::endl;
 
     std::string outputFilename(argv[2]);
-    save_mean_gap_ratio(params, meanGapRatio, outputFilename);
+    save_output_to_file(header, fields, outputFilename);
 
     return EXIT_SUCCESS;
 }
