@@ -15,7 +15,7 @@
 #include <armadillo>
 
 #include "utils/Quantity.h"
-#include "analyzer/tasks/GapRatioCalculator.h"
+#include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/Analyzer.h"
 
 template<typename HamiltonianGenerator_t, typename AveragingModel_t, typename Analyzer_t = Analyzer>

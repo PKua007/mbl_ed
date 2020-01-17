@@ -5,7 +5,7 @@
 #include <random>
 
 #include "simulation/CavityHamiltonianGenerator.h"
-#include "analyzer/tasks/GapRatioCalculator.h"
+#include "analyzer/tasks/MeanGapRatio.h"
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/Simulation.h"
 #include "utils/Utils.h"
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
     auto hamiltonianGenerator = build_hamiltonian_generator(params, changePhi0ForAverage);
 
     Analyzer analyzer;
-    analyzer.addTask(std::make_unique<GapRatioCalculator>(0.5, 0.1));
+    analyzer.addTask(std::make_unique<MeanGapRatio>(0.5, 0.1));
     if (changePhi0ForAverage) {
         perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer, params.numberOfSimulations,
                                                 params.saveEigenenergies);
