@@ -6,6 +6,7 @@
 
 #include "simulation/CavityHamiltonianGenerator.h"
 #include "analyzer/tasks/MeanGapRatio.h"
+#include "analyzer/tasks/CDF.h"
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/Simulation.h"
 #include "utils/Utils.h"
@@ -136,6 +137,8 @@ int main(int argc, char **argv) {
 
     Analyzer analyzer;
     analyzer.addTask(std::make_unique<MeanGapRatio>(0.5, 0.1));
+    analyzer.addTask(std::make_unique<CDF>(101));
+    std::string fileSignature = hamiltonianGenerator->fileSignature();
     if (changePhi0ForAverage) {
         perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer, params.numberOfSimulations,
                                                 params.saveEigenenergies);
@@ -150,6 +153,8 @@ int main(int argc, char **argv) {
 
     std::string outputFilename(argv[2]);
     save_output_to_file(header, fields, outputFilename);
+
+    analyzer.storeBulkResults(fileSignature);
 
     return EXIT_SUCCESS;
 }
