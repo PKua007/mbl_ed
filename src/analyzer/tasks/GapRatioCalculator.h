@@ -8,8 +8,8 @@
 
 #include <vector>
 
-#include "Quantity.h"
-#include "InlineAnalyzerTask.h"
+#include "utils/Quantity.h"
+#include "analyzer/InlineAnalyzerTask.h"
 
 class GapRatioCalculator : public InlineAnalyzerTask {
 private:

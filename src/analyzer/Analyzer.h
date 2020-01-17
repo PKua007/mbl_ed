@@ -10,7 +10,7 @@
 #include <memory>
 
 #include "AnalyzerTask.h"
-#include "FileUtils.h"
+#include "utils/FileUtils.h"
 
 class Analyzer {
 private:

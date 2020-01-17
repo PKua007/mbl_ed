@@ -4,9 +4,9 @@
 
 #include <catch2/catch.hpp>
 #include <sstream>
-#include <HamiltonianGenerator.h>
+#include <simulation/HamiltonianGenerator.h>
 
-#include "Simulation.h"
+#include "simulation/Simulation.h"
 
 namespace {
     bool approxVectorsEqual(std::vector<double> first, std::vector<double> second) {

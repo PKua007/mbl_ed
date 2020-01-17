@@ -9,7 +9,7 @@
 #include <memory>
 #include <iterator>
 
-#include "Assertions.h"
+#include "utils/Assertions.h"
 #include "HamiltonianGenerator.h"
 
 struct CavityHamiltonianGeneratorParameters {

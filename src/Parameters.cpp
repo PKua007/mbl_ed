@@ -6,8 +6,8 @@
 #include <ostream>
 
 #include "Parameters.h"
-#include "Config.h"
-#include "Assertions.h"
+#include "utils/Config.h"
+#include "utils/Assertions.h"
 
 Parameters::Parameters(std::istream &input) {
     auto config = Config::parse(input, '=', true);

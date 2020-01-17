@@ -7,7 +7,7 @@
 
 #include <catch2/trompeloeil.hpp>
 
-#include "InlineAnalyzerTask.h"
+#include "analyzer/InlineAnalyzerTask.h"
 
 class InlineAnalyzerTaskMock  : public trompeloeil::mock_interface<InlineAnalyzerTask> {
 public:

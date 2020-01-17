@@ -7,7 +7,7 @@
 
 #include <catch2/trompeloeil.hpp>
 
-#include "BulkAnalyzerTask.h"
+#include "analyzer/BulkAnalyzerTask.h"
 
 
 class BulkAnalyzerTaskMock : public trompeloeil::mock_interface<BulkAnalyzerTask> {

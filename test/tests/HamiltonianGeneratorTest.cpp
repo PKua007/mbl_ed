@@ -5,9 +5,9 @@
 #include <catch2/catch.hpp>
 
 #include "matchers/ArmaMatrixApproxEqualMatcher.h"
-#include "FockBaseGenerator.h"
-#include "HamiltonianGenerator.h"
-#include "Assertions.h"
+#include "simulation/FockBaseGenerator.h"
+#include "simulation/HamiltonianGenerator.h"
+#include "utils/Assertions.h"
 
 namespace {
     class MockPeriodicHamiltonianGenerator : public HamiltonianGenerator {

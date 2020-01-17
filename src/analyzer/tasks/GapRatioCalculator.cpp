@@ -6,7 +6,7 @@
 #include <sstream>
 
 #include "GapRatioCalculator.h"
-#include "Quantity.h"
+#include "utils/Quantity.h"
 
 GapRatioCalculator::GapRatioCalculator(double relativeMiddleEnergy, double relativeMargin)
         : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}

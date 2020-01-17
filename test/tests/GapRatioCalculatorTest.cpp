@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "GapRatioCalculator.h"
+#include "analyzer/tasks/GapRatioCalculator.h"
 
 TEST_CASE("GapRadioCalculator: names") {
     GapRatioCalculator ratioCalculator(0.5, 0.1);

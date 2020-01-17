@@ -4,10 +4,10 @@
 
 #include <catch2/catch.hpp>
 #include <utility>
-#include <FockBaseGenerator.h>
+#include <simulation/FockBaseGenerator.h>
 
 #include "matchers/ArmaMatrixApproxEqualMatcher.h"
-#include "CavityHamiltonianGenerator.h"
+#include "simulation/CavityHamiltonianGenerator.h"
 
 namespace {
     class ConstantDisorderGenerator {

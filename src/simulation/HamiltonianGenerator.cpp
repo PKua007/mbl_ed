@@ -3,7 +3,7 @@
 //
 
 #include "HamiltonianGenerator.h"
-#include "Assertions.h"
+#include "utils/Assertions.h"
 
 std::optional<std::pair<FockBase::Vector, double>>
 HamiltonianGenerator::hoppingAction(const FockBase::Vector &vector, std::size_t fromSiteIndex,

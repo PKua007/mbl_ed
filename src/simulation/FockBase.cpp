@@ -3,11 +3,10 @@
 //
 
 #include <cmath>
-#include <iterator>
 #include <numeric>
 
 #include "FockBase.h"
-#include "Assertions.h"
+#include "utils/Assertions.h"
 
 void FockBase::add(FockBase::Vector vector) {
     if (this->size() != 0)

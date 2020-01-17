@@ -4,11 +4,11 @@
 #include <memory>
 #include <random>
 
-#include "CavityHamiltonianGenerator.h"
-#include "GapRatioCalculator.h"
-#include "FockBaseGenerator.h"
-#include "Simulation.h"
-#include "Utils.h"
+#include "simulation/CavityHamiltonianGenerator.h"
+#include "analyzer/tasks/GapRatioCalculator.h"
+#include "simulation/FockBaseGenerator.h"
+#include "simulation/Simulation.h"
+#include "utils/Utils.h"
 #include "Parameters.h"
 
 namespace {

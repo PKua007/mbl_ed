@@ -5,9 +5,9 @@
 #ifndef MBL_ED_FILEUTILSMOCK_H
 #define MBL_ED_FILEUTILSMOCK_H
 
-#include "../../extern/trompeloeil/include/catch2/trompeloeil.hpp"
+#include <catch2/trompeloeil.hpp>
 
-#include "FileUtils.h"
+#include "utils/FileUtils.h"
 
 class FileOstreamProviderMock : public FileOstreamProvider {
 public:

@@ -1,14 +1,14 @@
-//re
+//
 // Created by PKua on 25.12.17.
 //
 
-#include "Quantity.h"
 #include <iomanip>
 #include <vector>
 #include <numeric>
 #include <cmath>
 #include <sstream>
 
+#include "Quantity.h"
 
 namespace {
     /* Rounds a value to a specific order, ex. 1.254 -> 1.3 if order = -1 or 1233.435 -> 1200 if order = 2 */

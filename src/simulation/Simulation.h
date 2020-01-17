@@ -14,9 +14,9 @@
 
 #include <armadillo>
 
-#include "Quantity.h"
-#include "GapRatioCalculator.h"
-#include "Analyzer.h"
+#include "utils/Quantity.h"
+#include "analyzer/tasks/GapRatioCalculator.h"
+#include "analyzer/Analyzer.h"
 
 template<typename HamiltonianGenerator_t, typename AveragingModel_t, typename Analyzer_t = Analyzer>
 class Simulation {

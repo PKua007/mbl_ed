@@ -5,7 +5,7 @@
 #include <catch2/catch.hpp>
 #include <catch2/trompeloeil.hpp>
 
-#include "Analyzer.h"
+#include "analyzer/Analyzer.h"
 
 #include "mocks/AnalyzerTaskMock.h"
 #include "mocks/InlineAnalyzerTaskMock.h"
