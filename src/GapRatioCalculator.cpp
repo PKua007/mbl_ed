@@ -3,6 +3,7 @@
 //
 
 #include <algorithm>
+#include <sstream>
 
 #include "GapRatioCalculator.h"
 #include "Quantity.h"
@@ -14,7 +15,7 @@ GapRatioCalculator::GapRatioCalculator(double relativeMiddleEnergy, double relat
     Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
 }
 
-void GapRatioCalculator::addEigenenergies(const std::vector<double> &eigenenergies) {
+void GapRatioCalculator::analyze(const std::vector<double> &eigenenergies) {
     std::vector<double> normalizedEnergies = this->getNormalizedEigenenergies(eigenenergies);
 
     double relativeFrom = this->relativeMiddleEnergy - this->relativeMargin/2;
@@ -47,9 +48,26 @@ std::vector<double> GapRatioCalculator::getNormalizedEigenenergies(const std::ve
     return normalizedEnergies;
 }
 
-Quantity GapRatioCalculator::calculateMean() {
+Quantity GapRatioCalculator::calculateMean() const {
     Quantity result;
     result.calculateFromSamples(this->gapRatios);
-    this->gapRatios.clear();
     return result;
+}
+
+std::string GapRatioCalculator::getName() const {
+    return "mean_gap_ratio";
+}
+
+std::vector<std::string> GapRatioCalculator::getResultHeader() const {
+    return {"mean gap ratio", "mean gap ratio error"};
+}
+
+std::vector<std::string> GapRatioCalculator::getResultFields() const {
+    Quantity result = this->calculateMean();
+    result.separator = Quantity::Separator::SPACE;
+    std::stringstream resultStream;
+    resultStream << result;
+    std::string quantityValue, quantityError;
+    resultStream >> quantityValue >> quantityError;
+    return {quantityValue, quantityError};
 }

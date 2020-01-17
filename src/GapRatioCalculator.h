@@ -7,21 +7,26 @@
 
 
 #include <vector>
-#include "Quantity.h"
 
-class GapRatioCalculator {
+#include "Quantity.h"
+#include "InlineAnalyzerTask.h"
+
+class GapRatioCalculator : public InlineAnalyzerTask {
 private:
     double relativeMiddleEnergy{};
     double relativeMargin{};
     std::vector<double> gapRatios{};
 
+    [[nodiscard]] std::vector<double> getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const;
+    [[nodiscard]] Quantity calculateMean() const;
+
 public:
     GapRatioCalculator(double relativeMiddleEnergy, double relativeMargin);
 
-    void addEigenenergies(const std::vector<double> &eigenenergies);
-    Quantity calculateMean();
-
-    std::vector<double> getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const;
+    void analyze(const std::vector<double> &eigenenergies) override;
+    [[nodiscard]] std::string getName() const override;
+    [[nodiscard]] std::vector<std::string> getResultHeader() const override;
+    [[nodiscard]] std::vector<std::string> getResultFields() const override;
 };
 
 
