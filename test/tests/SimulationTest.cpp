@@ -86,6 +86,7 @@ namespace {
     public:
         [[nodiscard]] std::unique_ptr<std::ostream> openFile(const std::string &filename) const override {
             FAIL("tried to open file: " + filename);
+            return nullptr;
         }
     };
 }
