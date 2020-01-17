@@ -6,7 +6,7 @@
 #include <utility>
 #include <FockBaseGenerator.h>
 
-#include "ArmaMatrixApproxEqualMatcher.h"
+#include "matchers/ArmaMatrixApproxEqualMatcher.h"
 #include "CavityHamiltonianGenerator.h"
 
 namespace {

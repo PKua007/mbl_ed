@@ -6,14 +6,13 @@
 #define MBL_ED_ANALYZERTASK_H
 
 #include <vector>
-#include <ostream>
+#include <string>
 
 class AnalyzerTask {
 public:
     virtual ~AnalyzerTask() = default;
 
     virtual void analyze(const std::vector<double> &eigenenergies) = 0;
-    virtual void printResult(std::ostream &out) const = 0;
     [[nodiscard]] virtual std::string getName() const = 0;
 };
 

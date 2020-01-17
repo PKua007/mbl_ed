@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "ArmaMatrixApproxEqualMatcher.h"
+#include "matchers/ArmaMatrixApproxEqualMatcher.h"
 #include "FockBaseGenerator.h"
 #include "HamiltonianGenerator.h"
 #include "Assertions.h"

@@ -12,7 +12,6 @@
 class AnalyzerTaskMock : public trompeloeil::mock_interface<AnalyzerTask> {
 public:
     IMPLEMENT_MOCK1(analyze);
-    IMPLEMENT_CONST_MOCK1(printResult);
     IMPLEMENT_CONST_MOCK0(getName);
 };
 

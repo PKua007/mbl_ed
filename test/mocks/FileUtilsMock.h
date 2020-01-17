@@ -5,7 +5,7 @@
 #ifndef MBL_ED_FILEUTILSMOCK_H
 #define MBL_ED_FILEUTILSMOCK_H
 
-#include <catch2/trompeloeil.hpp>
+#include "../../extern/trompeloeil/include/catch2/trompeloeil.hpp"
 
 #include "FileUtils.h"
 

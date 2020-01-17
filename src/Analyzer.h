@@ -25,8 +25,9 @@ public:
 
     void addTask(std::unique_ptr<AnalyzerTask> task);
     void analyze(const std::vector<double> &eigenenergies);
-    void printResults(std::ostream &out) const;
-    void storeResults(const std::string &fileSignature) const;
+    [[nodiscard]] std::vector<std::string> getInlineResultsHeader() const;
+    [[nodiscard]] std::vector<std::string> getInlineResultsFields() const;
+    void storeBulkResults(const std::string &fileSignature) const;
 };
 
 
