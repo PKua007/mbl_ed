@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <ostream>
 #include <numeric>
+#include <functional>
 
 #include "utils/Assertions.h"
 #include "CDF.h"
