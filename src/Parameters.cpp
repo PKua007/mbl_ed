@@ -4,6 +4,7 @@
 
 #include <string>
 #include <ostream>
+#include <sstream>
 
 #include "Parameters.h"
 #include "utils/Config.h"
@@ -37,7 +38,7 @@ Parameters::Parameters(std::istream &input) {
         else if (key == "seed")
             this->seed = config.getUnsignedLong("seed");
         else
-            throw std::runtime_error("[Parameters::Parameters] Unknown parameter " + key);
+            throw UnknownParameterException("Unknown parameter " + key);
     }
 
     this->validate();
@@ -54,16 +55,51 @@ void Parameters::validate() const {
 }
 
 void Parameters::print(std::ostream &out) const {
-    out << "number of sites       : " << this->numberOfSites << std::endl;
-    out << "number of bosons      : " << this->numberOfBosons << std::endl;
-    out << "J                     : " << this->J << std::endl;
-    out << "W                     : " << this->W << std::endl;
-    out << "U                     : " << this->U << std::endl;
-    out << "U1                    : " << this->U1 << std::endl;
-    out << "beta                  : " << this->beta << std::endl;
-    out << "phi0                  : " << this->phi0 << std::endl;
-    out << "usePeriodicBC         : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
-    out << "saveEigenenergies     : " << (this->saveEigenenergies ? "true" : "false") << std::endl;
-    out << "number of simulations : " << this->numberOfSimulations << std::endl;
-    out << "seed                  : " << this->seed << std::endl;
+    out << "numberOfSites       : " << this->numberOfSites << std::endl;
+    out << "numbeOfBosons       : " << this->numberOfBosons << std::endl;
+    out << "J                   : " << this->J << std::endl;
+    out << "W                   : " << this->W << std::endl;
+    out << "U                   : " << this->U << std::endl;
+    out << "U1                  : " << this->U1 << std::endl;
+    out << "beta                : " << this->beta << std::endl;
+    out << "phi0                : " << this->phi0 << std::endl;
+    out << "usePeriodicBC       : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
+    out << "saveEigenenergies   : " << (this->saveEigenenergies ? "true" : "false") << std::endl;
+    out << "numberOfSimulations : " << this->numberOfSimulations << std::endl;
+    out << "seed                : " << this->seed << std::endl;
+}
+
+std::string Parameters::getByName(const std::string &name) const {
+    if (name == "numberOfSites")
+        return this->doubleToString(this->numberOfSites);
+    else if (name == "numberOfBosons")
+        return this->doubleToString(this->numberOfBosons);
+    else if (name == "J")
+        return this->doubleToString(this->J);
+    else if (name == "W")
+        return this->doubleToString(this->W);
+    else if (name == "U")
+        return this->doubleToString(this->U);
+    else if (name == "U1")
+        return this->doubleToString(this->U1);
+    else if (name == "beta")
+        return this->doubleToString(this->beta);
+    else if (name == "phi0")
+        return this->phi0;
+    else if (name == "usePeriodicBC")
+        return this->usePeriodicBC ? "true" : "false";
+    else if (name == "saveEigenenergies")
+        return this->saveEigenenergies ? "true" : "false";
+    else if (name == "numberOfSimulations")
+        return std::to_string(this->numberOfSimulations);
+    else if (name == "seed")
+        return std::to_string(this->seed);
+    else
+        throw UnknownParameterException("Unknown parameter " + name);
+}
+
+std::string Parameters::doubleToString(double d) const {
+    std::ostringstream ostream;
+    ostream << d;
+    return ostream.str();
 }

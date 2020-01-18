@@ -55,11 +55,11 @@ Quantity MeanGapRatio::calculateMean() const {
 }
 
 std::string MeanGapRatio::getName() const {
-    return "mean_gap_ratio";
+    return "mgr";
 }
 
 std::vector<std::string> MeanGapRatio::getResultHeader() const {
-    return {"mean gap ratio", "mean gap ratio error"};
+    return {"meanGapRatio", "meanGapRatioError"};
 }
 
 std::vector<std::string> MeanGapRatio::getResultFields() const {
