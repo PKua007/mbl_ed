@@ -6,10 +6,17 @@
 #define MBL_ED_PARAMETERS_H
 
 #include <iosfwd>
+#include <exception>
+
+struct UnknownParameterException : public std::runtime_error {
+public:
+    explicit UnknownParameterException(const std::string &what) : std::runtime_error(what) { }
+};
 
 class Parameters {
 private:
     void validate() const;
+    std::string doubleToString(double d) const;
 
 public:
     std::size_t numberOfSites{};
@@ -28,6 +35,7 @@ public:
     explicit Parameters(std::istream &input);
 
     void print(std::ostream &out) const;
+    [[nodiscard]] std::string getByName(const std::string &name) const;
 };
 
 

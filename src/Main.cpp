@@ -95,28 +95,45 @@ namespace {
         output << fields << std::endl;
     }
 
-    std::string generate_header(Analyzer &analyzer) {
-        std::ostringstream headerStream;
-        headerStream << R"("number of sites" "number of bosons" J W U U1 beta phi0 )";
+    class InlineResultsPrinter {
+    private:
+        std::vector<std::string> header;
+        std::vector<std::string> fields;
 
-        auto header = analyzer.getInlineResultsHeader();
-        std::for_each(header.begin(), header.end(), [](auto &headerField) {
-            headerField = "\"" + headerField + "\"";
-        });
-        std::copy(header.begin(), header.end(), std::ostream_iterator<std::string>(headerStream, " "));
-        return headerStream.str();
-    }
+        [[nodiscard]] std::string stringifyRow(std::vector<std::string> row) const {
+            auto csvEscaper = [](std::string &entry) {
+                if (entry.find(' ') != std::string::npos)
+                    entry = "\"" + entry + "\"";
+            };
 
-    std::string generate_fields(const Parameters &params, Analyzer &analyzer) {
-        std::ostringstream fieldsStream;
-        fieldsStream << params.numberOfSites << " " << params.numberOfBosons << " " << params.J << " ";
-        fieldsStream << params.W << " " << params.U << " " << params.U1 << " " << params.beta << " " << params.phi0;
-        fieldsStream << " ";
+            std::for_each(row.begin(), row.end(), csvEscaper);
+            std::ostringstream ostream;
+            std::copy(row.begin(), row.end(), std::ostream_iterator<std::string>(ostream, " "));
+            return ostream.str();
+        }
 
-        auto fields = analyzer.getInlineResultsFields();
-        std::copy(fields.begin(), fields.end(), std::ostream_iterator<std::string>(fieldsStream, " "));
-        return fieldsStream.str();
-    }
+    public:
+        InlineResultsPrinter(const Parameters &parameters, const Analyzer &analyzer,
+                             const std::vector<std::string> &parametersToPrint)
+        {
+            for (const auto &param : parametersToPrint) {
+                header.push_back(param);
+                fields.push_back(parameters.getByName(param));
+            }
+            auto resultFields = analyzer.getInlineResultsFields();
+            this->fields.insert(this->fields.end(), resultFields.begin(), resultFields.end());
+            auto headerFields = analyzer.getInlineResultsHeader();
+            this->header.insert(this->header.end(), headerFields.begin(), headerFields.end());
+        }
+
+        [[nodiscard]] std::string getHeader() const {
+            return this->stringifyRow(this->header);
+        }
+
+        [[nodiscard]] std::string getFields() const {
+            return this->stringifyRow(this->fields);
+        }
+    };
 }
 
 Analyzer prepare_analyzer(const std::string &onTheFlyTasks) {
@@ -178,11 +195,11 @@ int main(int argc, char **argv) {
                                                           params.numberOfSimulations, params.saveEigenenergies);
     }
 
-    std::string header = generate_header(analyzer);
-    std::string fields = generate_fields(params, analyzer);
-    std::cout << std::endl << header << std::endl << fields << std::endl;
+    InlineResultsPrinter resultsPrinter(params, analyzer, {"numberOfSites", "numberOfBosons", "J", "W",
+                                                           "U", "U1", "beta", "phi0"});
+    std::cout << std::endl << resultsPrinter.getHeader() << std::endl << resultsPrinter.getFields() << std::endl;
     std::string outputFilename(argv[3]);
-    save_output_to_file(header, fields, outputFilename);
+    save_output_to_file(resultsPrinter.getHeader(), resultsPrinter.getFields(), outputFilename);
 
     std::cout << std::endl << "Storing bulk results... " << std::flush;
     analyzer.storeBulkResults(fileSignature);
