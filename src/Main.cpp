@@ -95,42 +95,44 @@ namespace {
 
         output << fields << std::endl;
     }
-}
 
-Analyzer prepare_analyzer(const std::string &onTheFlyTasks) {
-    auto tasks = explode(onTheFlyTasks, ';');
-    std::for_each(tasks.begin(), tasks.end(), trim);
-    tasks.erase(std::remove_if(tasks.begin(), tasks.end(), std::mem_fn(&std::string::empty)), tasks.end());
+    Analyzer prepare_analyzer(const std::string &onTheFlyTasks) {
+        auto tasks = explode(onTheFlyTasks, ';');
+        std::for_each(tasks.begin(), tasks.end(), trim);
+        tasks.erase(std::remove_if(tasks.begin(), tasks.end(), std::mem_fn(&std::string::empty)), tasks.end());
 
-    Analyzer analyzer;
-    for (const auto &task : tasks) {
-        std::istringstream taskStream(task);
-        std::string taskName;
-        taskStream >> taskName;
-        if (taskName == "mgr") {
-            double mgrCenter, mgrMargin;
-            taskStream >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: mgr [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer.addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
-        } else if (taskName == "cdf") {
-            std::size_t bins;
-            taskStream >> bins;
-            ValidateMsg(taskStream, "Wrong format, use: cdf [number of bins]");
-            Validate(bins >= 2);
-            analyzer.addTask(std::make_unique<CDF>(bins));
-        } else {
-            throw ValidationException("Unknown analyzer task: " + taskName);
+        Analyzer analyzer;
+        for (const auto &task : tasks) {
+            std::istringstream taskStream(task);
+            std::string taskName;
+            taskStream >> taskName;
+            if (taskName == "mgr") {
+                double mgrCenter, mgrMargin;
+                taskStream >> mgrCenter >> mgrMargin;
+                ValidateMsg(taskStream, "Wrong format, use: mgr [epsilon center] [epsilon margin]");
+                Validate(mgrCenter > 0 && mgrCenter < 1);
+                Validate(mgrMargin > 0 && mgrMargin <= 1);
+                Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
+                analyzer.addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
+            } else if (taskName == "cdf") {
+                std::size_t bins;
+                taskStream >> bins;
+                ValidateMsg(taskStream, "Wrong format, use: cdf [number of bins]");
+                Validate(bins >= 2);
+                analyzer.addTask(std::make_unique<CDF>(bins));
+            } else {
+                throw ValidationException("Unknown analyzer task: " + taskName);
+            }
         }
+        return analyzer;
     }
-    return analyzer;
 }
 
 int main(int argc, char **argv) {
-    if (argc != 4)
-        die(std::string("Usage: ") + argv[0] + " [input file] [on the fly tasks] [output file]");
+    if (argc != 4 && argc != 5) {
+        die(std::string("Usage: ") + argv[0] + " [input file] [on the fly tasks] [output file] "
+            + "(parameters to print = all)");
+    }
 
     std::string inputFilename(argv[1]);
     std::ifstream input(inputFilename);
@@ -156,8 +158,16 @@ int main(int argc, char **argv) {
                                                           params.numberOfSimulations, params.saveEigenenergies);
     }
 
-    InlineResultsPrinter resultsPrinter(params, analyzer, {"numberOfSites", "numberOfBosons", "J", "W",
-                                                           "U", "U1", "beta", "phi0"});
+    std::vector<std::string> paramsToPrint;
+    if (argc == 5) {
+        paramsToPrint = explode(argv[4], ' ');
+        paramsToPrint.erase(std::remove_if(paramsToPrint.begin(), paramsToPrint.end(),
+                                           std::mem_fn(&std::string::empty)),
+                            paramsToPrint.end());
+    } else {
+        paramsToPrint = {"numberOfSites", "numberOfBosons", "J", "W", "U", "U1", "beta", "phi0"};
+    }
+    InlineResultsPrinter resultsPrinter(params, analyzer, paramsToPrint);
     std::cout << std::endl << resultsPrinter.getHeader() << std::endl << resultsPrinter.getFields() << std::endl;
     std::string outputFilename(argv[3]);
     save_output_to_file(resultsPrinter.getHeader(), resultsPrinter.getFields(), outputFilename);

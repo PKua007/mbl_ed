@@ -9,8 +9,8 @@
 TEST_CASE("GapRadioCalculator: names") {
     MeanGapRatio ratioCalculator(0.5, 0.1);
 
-    REQUIRE(ratioCalculator.getName() == "mean_gap_ratio");
-    REQUIRE(ratioCalculator.getResultHeader() == std::vector<std::string>{"mean gap ratio", "mean gap ratio error"});
+    REQUIRE(ratioCalculator.getName() == "mgr");
+    REQUIRE(ratioCalculator.getResultHeader() == std::vector<std::string>{"meanGapRatio", "meanGapRatioError"});
 }
 
 TEST_CASE("MeanGapRatio: single energy set") {
