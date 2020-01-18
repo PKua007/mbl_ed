@@ -16,7 +16,7 @@ public:
 class Parameters {
 private:
     void validate() const;
-    std::string doubleToString(double d) const;
+    [[nodiscard]] std::string doubleToString(double d) const;
 
 public:
     std::size_t numberOfSites{};
@@ -32,6 +32,7 @@ public:
     std::size_t numberOfSimulations{};
     std::size_t seed{};
 
+    Parameters() = default;
     explicit Parameters(std::istream &input);
 
     void print(std::ostream &out) const;

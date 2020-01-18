@@ -167,7 +167,8 @@ int main(int argc, char **argv) {
     } else {
         paramsToPrint = {"numberOfSites", "numberOfBosons", "J", "W", "U", "U1", "beta", "phi0"};
     }
-    InlineResultsPrinter resultsPrinter(params, analyzer, paramsToPrint);
+    InlineResultsPrinter resultsPrinter(params, analyzer.getInlineResultsHeader(), analyzer.getInlineResultsFields(),
+                                        paramsToPrint);
     std::cout << std::endl << resultsPrinter.getHeader() << std::endl << resultsPrinter.getFields() << std::endl;
     std::string outputFilename(argv[3]);
     save_output_to_file(resultsPrinter.getHeader(), resultsPrinter.getFields(), outputFilename);

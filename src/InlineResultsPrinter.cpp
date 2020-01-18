@@ -16,15 +16,14 @@ std::string InlineResultsPrinter::stringifyRow(std::vector<std::string> row) con
     return ostream.str();
 }
 
-InlineResultsPrinter::InlineResultsPrinter(const Parameters &parameters, const Analyzer &analyzer,
+InlineResultsPrinter::InlineResultsPrinter(const Parameters &parameters, const std::vector<std::string> &headerFields,
+                                           const std::vector<std::string> &resultsFields,
                                            const std::vector<std::string> &parametersToPrint)
 {
     for (const auto &param : parametersToPrint) {
         header.push_back(param);
         fields.push_back(parameters.getByName(param));
     }
-    auto resultFields = analyzer.getInlineResultsFields();
-    this->fields.insert(this->fields.end(), resultFields.begin(), resultFields.end());
-    auto headerFields = analyzer.getInlineResultsHeader();
+    this->fields.insert(this->fields.end(), resultsFields.begin(), resultsFields.end());
     this->header.insert(this->header.end(), headerFields.begin(), headerFields.end());
 }

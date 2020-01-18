@@ -12,7 +12,6 @@
 #include <sstream>
 #include <iterator>
 
-#include "analyzer/Analyzer.h"
 #include "Parameters.h"
 
 class InlineResultsPrinter {
@@ -23,7 +22,8 @@ private:
     [[nodiscard]] std::string stringifyRow(std::vector<std::string> row) const;
 
 public:
-    InlineResultsPrinter(const Parameters &parameters, const Analyzer &analyzer,
+    InlineResultsPrinter(const Parameters &parameters, const std::vector<std::string> &headerFields,
+                         const std::vector<std::string> &resultsFields,
                          const std::vector<std::string> &parametersToPrint);
 
     [[nodiscard]] std::string getHeader() const { return this->stringifyRow(this->header); }
