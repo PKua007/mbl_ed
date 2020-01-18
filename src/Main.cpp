@@ -11,6 +11,7 @@
 #include "simulation/Simulation.h"
 #include "utils/Utils.h"
 #include "Parameters.h"
+#include "InlineResultsPrinter.h"
 
 namespace {
     class UniformGenerator {
@@ -94,46 +95,6 @@ namespace {
 
         output << fields << std::endl;
     }
-
-    class InlineResultsPrinter {
-    private:
-        std::vector<std::string> header;
-        std::vector<std::string> fields;
-
-        [[nodiscard]] std::string stringifyRow(std::vector<std::string> row) const {
-            auto csvEscaper = [](std::string &entry) {
-                if (entry.find(' ') != std::string::npos)
-                    entry = "\"" + entry + "\"";
-            };
-
-            std::for_each(row.begin(), row.end(), csvEscaper);
-            std::ostringstream ostream;
-            std::copy(row.begin(), row.end(), std::ostream_iterator<std::string>(ostream, " "));
-            return ostream.str();
-        }
-
-    public:
-        InlineResultsPrinter(const Parameters &parameters, const Analyzer &analyzer,
-                             const std::vector<std::string> &parametersToPrint)
-        {
-            for (const auto &param : parametersToPrint) {
-                header.push_back(param);
-                fields.push_back(parameters.getByName(param));
-            }
-            auto resultFields = analyzer.getInlineResultsFields();
-            this->fields.insert(this->fields.end(), resultFields.begin(), resultFields.end());
-            auto headerFields = analyzer.getInlineResultsHeader();
-            this->header.insert(this->header.end(), headerFields.begin(), headerFields.end());
-        }
-
-        [[nodiscard]] std::string getHeader() const {
-            return this->stringifyRow(this->header);
-        }
-
-        [[nodiscard]] std::string getFields() const {
-            return this->stringifyRow(this->fields);
-        }
-    };
 }
 
 Analyzer prepare_analyzer(const std::string &onTheFlyTasks) {
