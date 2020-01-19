@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 #include <random>
+#include <filesystem>
 
 #include "simulation/CavityHamiltonianGenerator.h"
 #include "analyzer/tasks/MeanGapRatio.h"
@@ -126,15 +127,114 @@ namespace {
         }
         return analyzer;
     }
+
+    void store_analyzer_results(const Parameters &params, const Analyzer &analyzer,
+                                const std::string &paramsToPrintString, const std::string &fileSignature,
+                                const std::string &outputFilename)
+    {
+        std::vector<std::string> paramsToPrint;
+        paramsToPrint = explode(paramsToPrintString, ' ');
+        paramsToPrint.erase(std::remove_if(paramsToPrint.begin(), paramsToPrint.end(),
+                                           std::mem_fn(&std::string::empty)),
+                            paramsToPrint.end());
+
+        InlineResultsPrinter resultsPrinter(params, analyzer.getInlineResultsHeader(),
+                                            analyzer.getInlineResultsFields(), paramsToPrint);
+        std::cout << std::endl << resultsPrinter.getHeader() << std::endl << resultsPrinter.getFields() << std::endl;
+        save_output_to_file(resultsPrinter.getHeader(), resultsPrinter.getFields(), outputFilename);
+
+        std::cout << std::endl << "Storing bulk results... " << std::flush;
+        analyzer.storeBulkResults(fileSignature);
+        std::cout << "done." << std::endl;
+    }
+
+    void simulate(int argc, char *const *argv, const Parameters &params) {
+        std::string cmd = argv[0];
+        if (argc != 5 && argc != 6) {
+            die(std::string("Usage: ") + cmd + " simulate [input file] [on the fly tasks] [output file] "
+                + "(parameters to print = all)");
+        }
+
+        bool changePhi0ForAverage = (params.phi0 == "changeForAverage");
+        auto hamiltonianGenerator = build_hamiltonian_generator(params, changePhi0ForAverage);
+
+        std::string onTheFlyTasks(argv[3]);
+
+        Analyzer analyzer = prepare_analyzer(onTheFlyTasks);
+        std::string fileSignature = hamiltonianGenerator->fileSignature();
+        if (changePhi0ForAverage) {
+            perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer,
+                                                    params.numberOfSimulations, params.saveEigenenergies);
+        } else {
+            perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer,
+                                                              params.numberOfSimulations, params.saveEigenenergies);
+        }
+
+        std::string paramsToPrintString;
+        if (argc == 6)
+            paramsToPrintString = argv[5];
+        else
+            paramsToPrintString = "numberOfSites numberOfBosons J W U U1 beta phi0";
+
+        std::string outputFilename = argv[4];
+        store_analyzer_results(params, analyzer, paramsToPrintString, fileSignature, outputFilename);
+    }
+
+    std::vector<std::string> find_eigenenergy_files(const std::string &directory, const std::string &fileSignature) {
+        std::vector<std::string> files;
+        for (const auto &entry : std::filesystem::directory_iterator(directory)) {
+            std::string filename = entry.path();
+            std::string prefix = directory + "/" + fileSignature + "_";
+            if (startsWith(filename, prefix) && endsWith(filename, "_nrg.dat"))
+                files.push_back(filename);
+        }
+
+        return files;
+    }
+
+    void analyze(int argc, char *const *argv, const Parameters &params) {
+        std::string cmd = argv[0];
+        if (argc != 7 && argc != 8) {
+            die(std::string("Usage: ") + cmd + " analyze [input file] [directory] [file signature] [tasks] "
+                "[output file] (parameters to print = all)");
+        }
+
+        std::string tasks = argv[5];
+        Analyzer analyzer = prepare_analyzer(tasks);
+
+        std::string directory(argv[3]);
+        std::string fileSignature(argv[4]);
+        std::vector<std::string> energiesFilenames = find_eigenenergy_files(directory, fileSignature);
+
+        for (const auto &energiesFilename : energiesFilenames) {
+            std::ifstream energiesFile(energiesFilename);
+            if (!energiesFile)
+                die("Cannot open " + energiesFilename + " to read eigenenergies from");
+
+            std::vector<double> eigenenergies;
+            std::copy(std::istream_iterator<double>(energiesFile), std::istream_iterator<double>(),
+                      std::back_inserter(eigenenergies));
+
+            analyzer.analyze(eigenenergies);
+        }
+
+        std::string paramsToPrintString;
+        if (argc == 8)
+            paramsToPrintString = argv[7];
+        else
+            paramsToPrintString = "numberOfSites numberOfBosons J W U U1 beta phi0";
+
+        std::string outputFilename = argv[6];
+        store_analyzer_results(params, analyzer, paramsToPrintString, "placeholder", outputFilename);
+    }
 }
 
 int main(int argc, char **argv) {
-    if (argc != 4 && argc != 5) {
-        die(std::string("Usage: ") + argv[0] + " [input file] [on the fly tasks] [output file] "
-            + "(parameters to print = all)");
-    }
+    std::string cmd(argv[0]);
+    if (argc < 3)
+        die("Usage: " + cmd + " [mode] [input file] (mode dependent parameters)");
 
-    std::string inputFilename(argv[1]);
+    std::string inputFilename(argv[2]);
     std::ifstream input(inputFilename);
     if (!input)
         die("Cannot open " + inputFilename + " to read input parameters");
@@ -142,40 +242,15 @@ int main(int argc, char **argv) {
     Parameters params(input);
     params.print(std::cout);
     std::cout << std::endl;
-
-    bool changePhi0ForAverage = (params.phi0 == "changeForAverage");
-    auto hamiltonianGenerator = build_hamiltonian_generator(params, changePhi0ForAverage);
-
-    std::string onTheFlyTasks(argv[2]);
-
-    Analyzer analyzer = prepare_analyzer(onTheFlyTasks);
-    std::string fileSignature = hamiltonianGenerator->fileSignature();
-    if (changePhi0ForAverage) {
-        perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer, params.numberOfSimulations,
-                                                params.saveEigenenergies);
+    
+    std::string mode(argv[1]);
+    if (mode == "simulate") {
+        simulate(argc, argv, params);
+    } else if (mode == "analyze") {
+        analyze(argc, argv, params);
     } else {
-        perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer,
-                                                          params.numberOfSimulations, params.saveEigenenergies);
+        die("Unknown mode " + mode);
     }
-
-    std::vector<std::string> paramsToPrint;
-    if (argc == 5) {
-        paramsToPrint = explode(argv[4], ' ');
-        paramsToPrint.erase(std::remove_if(paramsToPrint.begin(), paramsToPrint.end(),
-                                           std::mem_fn(&std::string::empty)),
-                            paramsToPrint.end());
-    } else {
-        paramsToPrint = {"numberOfSites", "numberOfBosons", "J", "W", "U", "U1", "beta", "phi0"};
-    }
-    InlineResultsPrinter resultsPrinter(params, analyzer.getInlineResultsHeader(), analyzer.getInlineResultsFields(),
-                                        paramsToPrint);
-    std::cout << std::endl << resultsPrinter.getHeader() << std::endl << resultsPrinter.getFields() << std::endl;
-    std::string outputFilename(argv[3]);
-    save_output_to_file(resultsPrinter.getHeader(), resultsPrinter.getFields(), outputFilename);
-
-    std::cout << std::endl << "Storing bulk results... " << std::flush;
-    analyzer.storeBulkResults(fileSignature);
-    std::cout << "done." << std::endl;
 
     return EXIT_SUCCESS;
 }
