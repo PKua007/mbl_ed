@@ -6,4 +6,4 @@ add_library(mbl_ed_src STATIC utils/Assertions.h simulation/FockBaseGenerator.cp
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(mbl_ed Main.cpp)
-target_link_libraries(mbl_ed PRIVATE mbl_ed_src)
+target_link_libraries(mbl_ed PRIVATE mbl_ed_src cxxopts)
