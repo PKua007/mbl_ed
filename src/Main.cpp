@@ -165,7 +165,7 @@ namespace {
             ("i,input", "file with parameters", cxxopts::value<std::string>(inputFilename))
             ("o,output", "when specified, inline results will be printed to this file",
                 cxxopts::value<std::string>(outputFilename))
-            ("f,on_the_fly", "task(s) to be performed on the fly",
+            ("t,task", "task(s) to be performed on the fly while simulating",
                 cxxopts::value<std::vector<std::string>>(onTheFlyTasks))
             ("p,print_parameter", "parameters to be included in inline results",
                 cxxopts::value<std::vector<std::string>>(paramsToPrint)
@@ -204,22 +204,43 @@ namespace {
         return files;
     }
 
-    void analyze(int argc, char *const *argv) {
-        std::string cmd = argv[0];
-        if (argc != 6 && argc != 7) {
-            die(std::string("Usage: ") + cmd + " [input file] [directory] [file signature] [tasks] "
-                "[output file] (parameters to print = all)");
-        }
+    void analyze(int argc, char **argv) {
+        cxxopts::Options options(argv[0], " - analyze mode");
 
-        std::string inputFilename(argv[1]);
+        std::string inputFilename;
+        std::string outputFilename;
+        std::vector<std::string> paramsToPrint;
+        std::vector<std::string> tasks;
+        std::string directory;
+        std::string fileSignature;
+
+        options.add_options()
+                ("i,input", "file with parameters", cxxopts::value<std::string>(inputFilename))
+                ("o,output", "when specified, inline results will be printed to this file",
+                    cxxopts::value<std::string>(outputFilename))
+                ("t,task", "analyzer task(s) to be performed",
+                    cxxopts::value<std::vector<std::string>>(tasks))
+                ("p,print_parameter", "parameters to be included in inline results",
+                    cxxopts::value<std::vector<std::string>>(paramsToPrint)
+                         ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
+                ("d,directory", "directory to search simulation results",
+                    cxxopts::value<std::string>(directory)->default_value("."))
+                ("f,file_signature", "the signature of result files",
+                     cxxopts::value<std::string>(fileSignature));
+
+        auto result = options.parse(argc, argv);
+        if (!result.count("input"))
+            die("Input file must be specified with option -i [input file name]");
+        if (!result.count("task"))
+            die("At least 1 analyzer task must be specified with option -t [task parameters]");
+        if (!result.count("file_signature"))
+            die("File signature must be specified with option -f [file signature]");
+
         Parameters params = load_parameters(inputFilename);
-
-        std::string tasks = argv[4];
-        Analyzer analyzer;// = prepare_analyzer(tasks);
-
-        std::string directory(argv[2]);
-        std::string fileSignature(argv[3]);
+        Analyzer analyzer = prepare_analyzer(tasks);
         std::vector<std::string> energiesFilenames = find_eigenenergy_files(directory, fileSignature);
+        if (energiesFilenames.empty())
+            die("No eigenenergy files were found.");
 
         for (const auto &energiesFilename : energiesFilenames) {
             std::ifstream energiesFile(energiesFilename);
@@ -233,14 +254,7 @@ namespace {
             analyzer.analyze(eigenenergies);
         }
 
-        std::string paramsToPrintString;
-        if (argc == 7)
-            paramsToPrintString = argv[6];
-        else
-            paramsToPrintString = "numberOfSites numberOfBosons J W U U1 beta phi0";
-
-        std::string outputFilename = argv[5];
-        //store_analyzer_results(params, analyzer, paramsToPrintString, "placeholder", outputFilename);
+        store_analyzer_results(params, analyzer, paramsToPrint, fileSignature, outputFilename);
     }
 }
 
