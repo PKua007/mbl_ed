@@ -148,17 +148,31 @@ namespace {
         std::cout << "done." << std::endl;
     }
 
-    void simulate(int argc, char *const *argv, const Parameters &params) {
+    Parameters load_parameters(const std::string &inputFilename) {
+        std::ifstream input(inputFilename);
+        if (!input)
+            die("Cannot open " + inputFilename + " to read input parameters");
+
+        Parameters params(input);
+        params.print(std::cout);
+        std::cout << std::endl;
+        return params;
+    }
+
+    void simulate(int argc, char *const *argv) {
         std::string cmd = argv[0];
-        if (argc != 5 && argc != 6) {
-            die(std::string("Usage: ") + cmd + " simulate [input file] [on the fly tasks] [output file] "
-                + "(parameters to print = all)");
+        if (argc != 4 && argc != 5) {
+            die(std::string("Usage: ") + cmd + " [input file] [on the fly tasks] [output file] "
+                "(parameters to print = all)");
         }
+
+        std::string inputFilename(argv[1]);
+        Parameters params = load_parameters(inputFilename);
 
         bool changePhi0ForAverage = (params.phi0 == "changeForAverage");
         auto hamiltonianGenerator = build_hamiltonian_generator(params, changePhi0ForAverage);
 
-        std::string onTheFlyTasks(argv[3]);
+        std::string onTheFlyTasks(argv[2]);
 
         Analyzer analyzer = prepare_analyzer(onTheFlyTasks);
         std::string fileSignature = hamiltonianGenerator->fileSignature();
@@ -171,12 +185,12 @@ namespace {
         }
 
         std::string paramsToPrintString;
-        if (argc == 6)
-            paramsToPrintString = argv[5];
+        if (argc == 5)
+            paramsToPrintString = argv[4];
         else
             paramsToPrintString = "numberOfSites numberOfBosons J W U U1 beta phi0";
 
-        std::string outputFilename = argv[4];
+        std::string outputFilename = argv[3];
         store_analyzer_results(params, analyzer, paramsToPrintString, fileSignature, outputFilename);
     }
 
@@ -192,18 +206,21 @@ namespace {
         return files;
     }
 
-    void analyze(int argc, char *const *argv, const Parameters &params) {
+    void analyze(int argc, char *const *argv) {
         std::string cmd = argv[0];
-        if (argc != 7 && argc != 8) {
-            die(std::string("Usage: ") + cmd + " analyze [input file] [directory] [file signature] [tasks] "
+        if (argc != 6 && argc != 7) {
+            die(std::string("Usage: ") + cmd + " [input file] [directory] [file signature] [tasks] "
                 "[output file] (parameters to print = all)");
         }
 
-        std::string tasks = argv[5];
+        std::string inputFilename(argv[1]);
+        Parameters params = load_parameters(inputFilename);
+
+        std::string tasks = argv[4];
         Analyzer analyzer = prepare_analyzer(tasks);
 
-        std::string directory(argv[3]);
-        std::string fileSignature(argv[4]);
+        std::string directory(argv[2]);
+        std::string fileSignature(argv[3]);
         std::vector<std::string> energiesFilenames = find_eigenenergy_files(directory, fileSignature);
 
         for (const auto &energiesFilename : energiesFilenames) {
@@ -219,40 +236,40 @@ namespace {
         }
 
         std::string paramsToPrintString;
-        if (argc == 8)
-            paramsToPrintString = argv[7];
+        if (argc == 7)
+            paramsToPrintString = argv[6];
         else
             paramsToPrintString = "numberOfSites numberOfBosons J W U U1 beta phi0";
 
-        std::string outputFilename = argv[6];
+        std::string outputFilename = argv[5];
         store_analyzer_results(params, analyzer, paramsToPrintString, "placeholder", outputFilename);
     }
 }
 
 int main(int argc, char **argv) {
     std::string cmd(argv[0]);
-    if (argc < 3)
-        die("Usage: " + cmd + " [mode] [input file] (mode dependent parameters)");
+    if (argc < 2)
+        die("Usage: " + cmd + " [mode] (mode dependent parameters)");
 
-    std::string inputFilename(argv[2]);
-    std::ifstream input(inputFilename);
-    if (!input)
-        die("Cannot open " + inputFilename + " to read input parameters");
-
-    Parameters params(input);
-    params.print(std::cout);
-    std::cout << std::endl;
-    
+    // We now shift the arguments, and pretend, that the new first (command) is "cmd mode"
+    // Different modes can then parse the arguments separately
     std::string mode(argv[1]);
+    std::string cmdAndMode = cmd + " " + mode;
+    argv++;
+    argc--;
+    argv[0] = cmdAndMode.data();
+
     if (mode == "simulate") {
-        simulate(argc, argv, params);
+        simulate(argc, argv);
     } else if (mode == "analyze") {
-        analyze(argc, argv, params);
+        analyze(argc, argv);
     } else {
         die("Unknown mode " + mode);
     }
 
     return EXIT_SUCCESS;
 }
+
+
 
 
