@@ -162,6 +162,7 @@ namespace {
         std::vector<std::string> onTheFlyTasks;
 
         options.add_options()
+            ("h,help", "prints help for this mode")
             ("i,input", "file with parameters", cxxopts::value<std::string>(inputFilename))
             ("o,output", "when specified, inline results will be printed to this file",
                 cxxopts::value<std::string>(outputFilename))
@@ -172,6 +173,11 @@ namespace {
                     ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"));
 
         auto result = options.parse(argc, argv);
+        if (result.count("help")) {
+            std::cout << options.help() << std::endl;
+            exit(0);
+        }
+
         if (!result.count("input"))
             die("Input file must be specified with option -i [input file name]");
 
@@ -215,20 +221,26 @@ namespace {
         std::string fileSignature;
 
         options.add_options()
-                ("i,input", "file with parameters", cxxopts::value<std::string>(inputFilename))
-                ("o,output", "when specified, inline results will be printed to this file",
-                    cxxopts::value<std::string>(outputFilename))
-                ("t,task", "analyzer task(s) to be performed",
-                    cxxopts::value<std::vector<std::string>>(tasks))
-                ("p,print_parameter", "parameters to be included in inline results",
-                    cxxopts::value<std::vector<std::string>>(paramsToPrint)
-                         ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
-                ("d,directory", "directory to search simulation results",
-                    cxxopts::value<std::string>(directory)->default_value("."))
-                ("f,file_signature", "the signature of result files",
-                     cxxopts::value<std::string>(fileSignature));
+            ("h,help", "prints help for this mode")
+            ("i,input", "file with parameters", cxxopts::value<std::string>(inputFilename))
+            ("o,output", "when specified, inline results will be printed to this file",
+                cxxopts::value<std::string>(outputFilename))
+            ("t,task", "analyzer task(s) to be performed",
+                cxxopts::value<std::vector<std::string>>(tasks))
+            ("p,print_parameter", "parameters to be included in inline results",
+                cxxopts::value<std::vector<std::string>>(paramsToPrint)
+                     ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
+            ("d,directory", "directory to search simulation results",
+                cxxopts::value<std::string>(directory)->default_value("."))
+            ("f,file_signature", "the signature of result files",
+                 cxxopts::value<std::string>(fileSignature));
 
         auto result = options.parse(argc, argv);
+        if (result.count("help")) {
+            std::cout << options.help() << std::endl;
+            exit(0);
+        }
+        
         if (!result.count("input"))
             die("Input file must be specified with option -i [input file name]");
         if (!result.count("task"))
