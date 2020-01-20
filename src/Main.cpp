@@ -5,6 +5,8 @@
 #include <random>
 #include <filesystem>
 
+#include <cxxopts.hpp>
+
 #include "simulation/CavityHamiltonianGenerator.h"
 #include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/tasks/CDF.h"
@@ -97,11 +99,7 @@ namespace {
         output << fields << std::endl;
     }
 
-    Analyzer prepare_analyzer(const std::string &onTheFlyTasks) {
-        auto tasks = explode(onTheFlyTasks, ';');
-        std::for_each(tasks.begin(), tasks.end(), trim);
-        tasks.erase(std::remove_if(tasks.begin(), tasks.end(), std::mem_fn(&std::string::empty)), tasks.end());
-
+    Analyzer prepare_analyzer(const std::vector<std::string> &tasks) {
         Analyzer analyzer;
         for (const auto &task : tasks) {
             std::istringstream taskStream(task);
@@ -129,19 +127,15 @@ namespace {
     }
 
     void store_analyzer_results(const Parameters &params, const Analyzer &analyzer,
-                                const std::string &paramsToPrintString, const std::string &fileSignature,
+                                const std::vector<std::string> &paramsToPrint, const std::string &fileSignature,
                                 const std::string &outputFilename)
     {
-        std::vector<std::string> paramsToPrint;
-        paramsToPrint = explode(paramsToPrintString, ' ');
-        paramsToPrint.erase(std::remove_if(paramsToPrint.begin(), paramsToPrint.end(),
-                                           std::mem_fn(&std::string::empty)),
-                            paramsToPrint.end());
-
         InlineResultsPrinter resultsPrinter(params, analyzer.getInlineResultsHeader(),
                                             analyzer.getInlineResultsFields(), paramsToPrint);
         std::cout << std::endl << resultsPrinter.getHeader() << std::endl << resultsPrinter.getFields() << std::endl;
-        save_output_to_file(resultsPrinter.getHeader(), resultsPrinter.getFields(), outputFilename);
+
+        if (!outputFilename.empty())
+            save_output_to_file(resultsPrinter.getHeader(), resultsPrinter.getFields(), outputFilename);
 
         std::cout << std::endl << "Storing bulk results... " << std::flush;
         analyzer.storeBulkResults(fileSignature);
@@ -159,20 +153,31 @@ namespace {
         return params;
     }
 
-    void simulate(int argc, char *const *argv) {
-        std::string cmd = argv[0];
-        if (argc != 4 && argc != 5) {
-            die(std::string("Usage: ") + cmd + " [input file] [on the fly tasks] [output file] "
-                "(parameters to print = all)");
-        }
+    void simulate(int argc, char **argv) {
+        cxxopts::Options options(argv[0], " - exact diagonalization mode");
 
-        std::string inputFilename(argv[1]);
+        std::string inputFilename;
+        std::string outputFilename;
+        std::vector<std::string> paramsToPrint;
+        std::vector<std::string> onTheFlyTasks;
+
+        options.add_options()
+            ("i,input", "file with parameters", cxxopts::value<std::string>(inputFilename))
+            ("o,output", "when specified, inline results will be printed to this file",
+                cxxopts::value<std::string>(outputFilename))
+            ("f,on_the_fly", "task(s) to be performed on the fly",
+                cxxopts::value<std::vector<std::string>>(onTheFlyTasks))
+            ("p,print_parameter", "parameters to be included in inline results",
+                cxxopts::value<std::vector<std::string>>(paramsToPrint)
+                    ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"));
+
+        auto result = options.parse(argc, argv);
+        if (!result.count("input"))
+            die("Input file must be specified with option -i [input file name]");
+
         Parameters params = load_parameters(inputFilename);
-
         bool changePhi0ForAverage = (params.phi0 == "changeForAverage");
         auto hamiltonianGenerator = build_hamiltonian_generator(params, changePhi0ForAverage);
-
-        std::string onTheFlyTasks(argv[2]);
 
         Analyzer analyzer = prepare_analyzer(onTheFlyTasks);
         std::string fileSignature = hamiltonianGenerator->fileSignature();
@@ -184,14 +189,7 @@ namespace {
                                                               params.numberOfSimulations, params.saveEigenenergies);
         }
 
-        std::string paramsToPrintString;
-        if (argc == 5)
-            paramsToPrintString = argv[4];
-        else
-            paramsToPrintString = "numberOfSites numberOfBosons J W U U1 beta phi0";
-
-        std::string outputFilename = argv[3];
-        store_analyzer_results(params, analyzer, paramsToPrintString, fileSignature, outputFilename);
+        store_analyzer_results(params, analyzer, paramsToPrint, fileSignature, outputFilename);
     }
 
     std::vector<std::string> find_eigenenergy_files(const std::string &directory, const std::string &fileSignature) {
@@ -217,7 +215,7 @@ namespace {
         Parameters params = load_parameters(inputFilename);
 
         std::string tasks = argv[4];
-        Analyzer analyzer = prepare_analyzer(tasks);
+        Analyzer analyzer;// = prepare_analyzer(tasks);
 
         std::string directory(argv[2]);
         std::string fileSignature(argv[3]);
@@ -242,7 +240,7 @@ namespace {
             paramsToPrintString = "numberOfSites numberOfBosons J W U U1 beta phi0";
 
         std::string outputFilename = argv[5];
-        store_analyzer_results(params, analyzer, paramsToPrintString, "placeholder", outputFilename);
+        //store_analyzer_results(params, analyzer, paramsToPrintString, "placeholder", outputFilename);
     }
 }
 
