@@ -103,3 +103,10 @@ std::string Parameters::doubleToString(double d) const {
     ostream << d;
     return ostream.str();
 }
+
+std::string Parameters::getOutputFileSignature() const {
+    std::ostringstream filename;
+    filename << "J." << this->J << "_U." << this->U << "_U1." << this->U1 << "_N." << this->numberOfBosons;
+    filename << "_K." << this->numberOfSites  << "_beta." << this->beta << "_phi0." << this->phi0;
+    return filename.str();
+}

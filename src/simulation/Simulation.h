@@ -13,6 +13,7 @@
 #include <iterator>
 
 #include <armadillo>
+#include <utility>
 
 #include "utils/Quantity.h"
 #include "analyzer/tasks/MeanGapRatio.h"
@@ -25,6 +26,7 @@ private:
     std::unique_ptr<FileOstreamProvider> ostreamProvider;
     std::size_t numberOfSimulations{};
     bool saveEigenenergies{};
+    std::string fileSignature{};
 
     std::vector<double> performSingleSimulation(std::size_t i) {
         AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, i, this->numberOfSimulations);
@@ -40,7 +42,7 @@ private:
 
     void doSaveEigenenergies(const std::vector<double> &eigenenergies, std::size_t index) const {
         std::ostringstream filenameStream;
-        filenameStream << this->hamiltonianGenerator->fileSignature() << "_" << index << "_nrg.dat";
+        filenameStream << this->fileSignature << "_" << index << "_nrg.dat";
         std::string filename = filenameStream.str();
         auto out = this->ostreamProvider->openFile(filename);
 
@@ -50,15 +52,16 @@ private:
 public:
     Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
                std::unique_ptr<FileOstreamProvider> ostreamProvider, size_t numberOfSimulations,
-               bool saveEigenenergies)
+               std::string fileSignature, bool saveEigenenergies)
             : hamiltonianGenerator{std::move(hamiltonianGenerator)}, ostreamProvider{std::move(ostreamProvider)},
-              numberOfSimulations{numberOfSimulations}, saveEigenenergies{saveEigenenergies}
+              numberOfSimulations{numberOfSimulations}, saveEigenenergies{saveEigenenergies},
+              fileSignature{std::move(fileSignature)}
     { }
 
     Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, size_t numberOfSimulations,
-               bool saveEigenenergies)
+               const std::string &fileSignature, bool saveEigenenergies)
             : Simulation(std::move(hamiltonianGenerator), std::make_unique<FileOstreamProvider>(), numberOfSimulations,
-                         saveEigenenergies)
+                         fileSignature, saveEigenenergies)
     { }
 
     void perform(std::ostream &logger, Analyzer_t &analyzer) {

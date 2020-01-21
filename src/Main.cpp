@@ -82,10 +82,11 @@ namespace {
 
     template<template<typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
     void perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, Analyzer &analyzer,
-                             std::size_t numberOfSimulations, bool saveEigenenergies)
+                             std::size_t numberOfSimulations, const std::string &fileSignature, bool saveEigenenergies)
     {
         using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
-        TheSimulation simulation(std::move(hamiltonianGenerator), numberOfSimulations, saveEigenenergies);
+        TheSimulation simulation(std::move(hamiltonianGenerator), numberOfSimulations, fileSignature,
+                                 saveEigenenergies);
         simulation.perform(std::cout, analyzer);
     }
 
@@ -192,13 +193,15 @@ namespace {
         auto hamiltonianGenerator = build_hamiltonian_generator(params, changePhi0ForAverage);
 
         Analyzer analyzer = prepare_analyzer(onTheFlyTasks);
-        std::string fileSignature = hamiltonianGenerator->fileSignature();
+        std::string fileSignature = params.getOutputFileSignature();
         if (changePhi0ForAverage) {
             perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer,
-                                                    params.numberOfSimulations, params.saveEigenenergies);
+                                                    params.numberOfSimulations, fileSignature,
+                                                    params.saveEigenenergies);
         } else {
             perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer,
-                                                              params.numberOfSimulations, params.saveEigenenergies);
+                                                              params.numberOfSimulations, fileSignature,
+                                                              params.saveEigenenergies);
         }
 
         store_analyzer_results(params, analyzer, paramsToPrint, fileSignature, outputFilename);
@@ -227,7 +230,6 @@ namespace {
         std::vector<std::string> paramsToPrint;
         std::vector<std::string> tasks;
         std::string directory;
-        std::string fileSignature;
 
         options.add_options()
             ("h,help", "prints help for this mode")
@@ -241,9 +243,7 @@ namespace {
                 cxxopts::value<std::vector<std::string>>(paramsToPrint)
                      ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
             ("d,directory", "directory to search simulation results",
-                cxxopts::value<std::string>(directory)->default_value("."))
-            ("f,file_signature", "the signature of result files",
-                 cxxopts::value<std::string>(fileSignature));
+                cxxopts::value<std::string>(directory)->default_value("."));
 
         auto result = options.parse(argc, argv);
         if (result.count("help")) {
@@ -255,11 +255,10 @@ namespace {
             die("Input file must be specified with option -i [input file name]");
         if (!result.count("task"))
             die("At least 1 analyzer task must be specified with option -t [task parameters]");
-        if (!result.count("file_signature"))
-            die("File signature must be specified with option -f [file signature]");
 
         Parameters params = load_parameters(inputFilename);
         Analyzer analyzer = prepare_analyzer(tasks);
+        std::string fileSignature = params.getOutputFileSignature();
         std::vector<std::string> energiesFilenames = find_eigenenergy_files(directory, fileSignature);
         if (energiesFilenames.empty())
             die("No eigenenergy files were found.");

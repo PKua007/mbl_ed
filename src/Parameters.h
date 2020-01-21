@@ -37,6 +37,7 @@ public:
 
     void print(std::ostream &out) const;
     [[nodiscard]] std::string getByName(const std::string &name) const;
+    [[nodiscard]] std::string getOutputFileSignature() const;
 };
 
 
