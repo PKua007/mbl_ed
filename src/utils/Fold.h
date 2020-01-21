@@ -14,6 +14,11 @@ private:
     std::size_t margin_{};
     std::string str;
 
+    [[nodiscard]] std::size_t findEnterInCurrentLine(std::size_t lineBeg, std::size_t effectiveWidth) const;
+    [[nodiscard]] std::size_t findLastSpaceInCurrentLine(std::size_t lineBeg, std::size_t effectiveWidth) const;
+    [[nodiscard]] bool spaceOnBreak(std::size_t lineBeg, std::size_t effectiveWidth) const;
+    [[nodiscard]] bool notLastLine(std::size_t lineBeg, std::size_t effectiveWidth) const;
+
 public:
     explicit Fold(std::string str) : str{std::move(str)} { }
     Fold() : str{""} { }

@@ -54,3 +54,16 @@ TEST_CASE("Fold: space touching border") {
     REQUIRE(actual == "0123 56   \n0123");
 }
 
+TEST_CASE("Fold: margin") {
+    std::string actual = Fold("012 4 0 23\n01234 01").width(10).margin(5);
+
+    REQUIRE(actual == "     012 4\n     0 23\n     01234\n     01");
+}
+
+TEST_CASE("Fold: max width in last line") {
+    std::string actual2 = Fold("0 2 4567 0123 5 789").width(10);
+    std::string actual1 = Fold("0123456 8 0123 56   ").width(10);
+
+    REQUIRE(actual1 == "0123456 8 \n0123 56   ");
+    REQUIRE(actual2 == "0 2 4567 \n0123 5 789");
+}
