@@ -15,6 +15,7 @@
 #include "utils/Utils.h"
 #include "Parameters.h"
 #include "InlineResultsPrinter.h"
+#include "utils/Fold.h"
 
 namespace {
     class UniformGenerator {
@@ -154,7 +155,11 @@ namespace {
     }
 
     void simulate(int argc, char **argv) {
-        cxxopts::Options options(argv[0], " - exact diagonalization mode");
+        cxxopts::Options options(argv[0],
+                                 Fold("Exact diagonalization mode. Performs one or more simulations depending on the "
+                                 "parameters. It can store them for to further processing and/or perform some analyzer "
+                                 "tasks on the fly.")
+                                 .width(80));
 
         std::string inputFilename;
         std::string outputFilename;
@@ -163,7 +168,8 @@ namespace {
 
         options.add_options()
             ("h,help", "prints help for this mode")
-            ("i,input", "file with parameters", cxxopts::value<std::string>(inputFilename))
+            ("i,input", "file with parameters. See input.txt for parameters description",
+                cxxopts::value<std::string>(inputFilename))
             ("o,output", "when specified, inline results will be printed to this file",
                 cxxopts::value<std::string>(outputFilename))
             ("t,task", "task(s) to be performed on the fly while simulating",
@@ -211,7 +217,10 @@ namespace {
     }
 
     void analyze(int argc, char **argv) {
-        cxxopts::Options options(argv[0], " - analyze mode");
+        cxxopts::Options options(argv[0],
+                                 Fold("Mode for analyzing the results of already performed simulations, stored in the "
+                                 "files. It performs one or more analyzer task, specified with option -t (--task). The "
+                                 "files are found using signature generated from parameters.").width(80));
 
         std::string inputFilename;
         std::string outputFilename;
@@ -222,7 +231,8 @@ namespace {
 
         options.add_options()
             ("h,help", "prints help for this mode")
-            ("i,input", "file with parameters", cxxopts::value<std::string>(inputFilename))
+            ("i,input", "file with parameters. See input.txt for parameters description",
+                cxxopts::value<std::string>(inputFilename))
             ("o,output", "when specified, inline results will be printed to this file",
                 cxxopts::value<std::string>(outputFilename))
             ("t,task", "analyzer task(s) to be performed",
@@ -240,7 +250,7 @@ namespace {
             std::cout << options.help() << std::endl;
             exit(0);
         }
-        
+
         if (!result.count("input"))
             die("Input file must be specified with option -i [input file name]");
         if (!result.count("task"))
@@ -268,12 +278,32 @@ namespace {
 
         store_analyzer_results(params, analyzer, paramsToPrint, fileSignature, outputFilename);
     }
+
+    void print_general_help(const std::string &cmd) {
+        std::cout << Fold("Program performing exact diagonalization of Hubbard-like hamiltonians with analyzing "
+                          "facilities. ").width(80) << std::endl;
+        std::cout << std::endl;
+        std::cout << "Usage: " << cmd << " [mode] (mode dependent parameters). " << std::endl;
+        std::cout << std::endl;
+        std::cout << "Available modes:" << std::endl;
+        std::cout << "simulate" << std::endl;
+        std::cout << Fold("Performs the diagonalizations according to the parameters passed. Some analyzer tasks can "
+                          "be performed on the fly.").width(80).margin(4) << std::endl;
+        std::cout << "analyze" << std::endl;
+        std::cout << Fold("Performs one or more analyzer tasks after loading simulation results from the files.")
+                     .width(80).margin(4) << std::endl;
+        std::cout << std::endl;
+        std::cout << "Type " + cmd + " [mode] --help to get help on the specific mode." << std::endl;
+    }
 }
 
 int main(int argc, char **argv) {
     std::string cmd(argv[0]);
-    if (argc < 2)
-        die("Usage: " + cmd + " [mode] (mode dependent parameters)");
+    if (argc < 2) {
+        std::cerr << "Usage: " << cmd << " [mode] (mode dependent parameters). " << std::endl;
+        std::cerr << "Type " << cmd << " --help to see available modes" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     // We now shift the arguments, and pretend, that the new first (command) is "cmd mode"
     // Different modes can then parse the arguments separately
@@ -283,7 +313,9 @@ int main(int argc, char **argv) {
     argc--;
     argv[0] = cmdAndMode.data();
 
-    if (mode == "simulate") {
+    if (mode == "-h" || mode == "--help") {
+        print_general_help(cmd);
+    } else if (mode == "simulate") {
         simulate(argc, argv);
     } else if (mode == "analyze") {
         analyze(argc, argv);
