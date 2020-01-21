@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "InlineResultsPrinter.h"
+#include "frontend/InlineResultsPrinter.h"
 
 TEST_CASE("InlineResultsPrinter: only parameters") {
     Parameters parameters;

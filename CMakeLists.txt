@@ -13,5 +13,6 @@ set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} --coverage")
 
 add_subdirectory(extern/Catch2)
 add_subdirectory(extern/trompeloeil)
+add_subdirectory(extern/cxxopts)
 add_subdirectory(src)
 add_subdirectory(test)

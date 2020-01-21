@@ -95,7 +95,7 @@ namespace {
 TEST_CASE("Simulation: 3 'random' hamiltonians") {
     using TestSimulation = Simulation<MockHamiltonianGenerator, MockAveragingModel, MockAnalyzer>;
     TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(), std::make_unique<DummyOstreamProvider>(),
-                              3, false);
+                              3, "",false);
     MockAnalyzer mockAnalyzer;
     std::ostringstream dummyLogger;
 
