@@ -58,6 +58,20 @@ TEST_CASE("Eigensystem: incomplete") {
     REQUIRE(eigensystem.isComplete() == false);
 }
 
+TEST_CASE("Eigensystem: from arma") {
+    arma::vec energies = {0, 1, 2};
+    arma::mat vectors = {{1, 4, 7}, {2, 5, 8}, {3, 6, 9}};
+
+    Eigensystem eigensystem(energies, vectors);
+
+    REQUIRE(eigensystem.empty() == false);
+    REQUIRE(eigensystem.size() == 3);
+    REQUIRE(eigensystem.getEigenenergies() == std::vector<double>{0, 1, 2});
+    REQUIRE(eigensystem.getEigenstates() == std::vector<std::vector<double>>{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}});
+    REQUIRE(eigensystem.hasEigenvectors() == true);
+    REQUIRE(eigensystem.isComplete() == true);
+}
+
 TEST_CASE("Eigensystem: throw if too many entries") {
     Eigensystem eigensystem;
     eigensystem.addEntry(0, {1, 2, 3});

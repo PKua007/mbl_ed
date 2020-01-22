@@ -30,9 +30,10 @@ const std::vector<std::vector<double>> &Eigensystem::getEigenstates() const {
 
 void Eigensystem::addEntry(double eigenenergy, const std::vector<double> &eigenvector) {
     if (!this->eigenstates.empty()) {
-        Expects(eigenvector.size() == this->eigenstates.front().size());
+        const auto &firstState = this->eigenstates.front();
+        Expects(eigenvector.size() == firstState.size());
 
-        if (!this->eigenstates.front().empty() && this->isComplete())
+        if (!firstState.empty() && this->isComplete())
             throw std::runtime_error("The number of eigenentries is already exhausted");
     }
 
@@ -43,10 +44,12 @@ void Eigensystem::addEntry(double eigenenergy, const std::vector<double> &eigenv
 bool Eigensystem::isComplete() const {
     if (this->eigenstates.empty())
         return true;
-    if (this->eigenstates.front().empty())
+
+    const auto &firstState = this->eigenstates.front();
+    if (firstState.empty())
         return true;
 
-    return this->eigenstates.front().size() == this->eigenenergies.size();
+    return firstState.size() == this->eigenenergies.size();
 }
 
 std::size_t Eigensystem::size() const {
