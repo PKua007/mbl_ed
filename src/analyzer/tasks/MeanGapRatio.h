@@ -7,6 +7,7 @@
 
 
 #include <vector>
+#include <simulation/Eigensystem.h>
 
 #include "utils/Quantity.h"
 #include "analyzer/InlineAnalyzerTask.h"
@@ -23,7 +24,7 @@ private:
 public:
     MeanGapRatio(double relativeMiddleEnergy, double relativeMargin);
 
-    void analyze(const std::vector<double> &eigenenergies) override;
+    void analyze(const Eigensystem &eigensystem) override;
     [[nodiscard]] std::string getName() const override;
     [[nodiscard]] std::vector<std::string> getResultHeader() const override;
     [[nodiscard]] std::vector<std::string> getResultFields() const override;

@@ -19,20 +19,20 @@ TEST_CASE("Analzer: analyze") {
     auto task1 = std::make_unique<AnalyzerTaskMock>();
     auto task2 = std::make_unique<AnalyzerTaskMock>();
     auto task3 = std::make_unique<AnalyzerTaskMock>();
-    std::vector<double> eigenenergies = {1, 2, 3};
+    auto eigensystem = Eigensystem({1, 2, 3});
     trompeloeil::sequence seq;
-    REQUIRE_CALL(*task1, analyze(eigenenergies))
+    REQUIRE_CALL(*task1, analyze(eigensystem))
             .IN_SEQUENCE(seq);
-    REQUIRE_CALL(*task2, analyze(eigenenergies))
+    REQUIRE_CALL(*task2, analyze(eigensystem))
             .IN_SEQUENCE(seq);
-    REQUIRE_CALL(*task3, analyze(eigenenergies))
+    REQUIRE_CALL(*task3, analyze(eigensystem))
             .IN_SEQUENCE(seq);
     Analyzer analyzer;
     analyzer.addTask(std::move(task1));
     analyzer.addTask(std::move(task2));
     analyzer.addTask(std::move(task3));
 
-    analyzer.analyze(eigenenergies);
+    analyzer.analyze(eigensystem);
 }
 
 TEST_CASE("Analzyer: print inline header") {

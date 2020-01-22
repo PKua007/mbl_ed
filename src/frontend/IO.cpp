@@ -58,13 +58,15 @@ std::vector<std::string> IO::findEigenenergyFiles(const std::string &directory, 
     return files;
 }
 
-std::vector<double> IO::loadEigenenergies(const std::string &filename) {
+Eigensystem IO::loadOnlyEigenenergies(const std::string &filename) {
     std::ifstream energiesFile(filename);
     if (!energiesFile)
         die("Cannot open " + filename + " to read eigenenergies from");
 
-    std::vector<double> eigenenergies;
-    std::copy(std::istream_iterator<double>(energiesFile), std::istream_iterator<double>(),
-              std::back_inserter(eigenenergies));
-    return eigenenergies;
+    Eigensystem eigensystem;
+    std::for_each(std::istream_iterator<double>(energiesFile), std::istream_iterator<double>(),
+                  [&eigensystem](double energy) { eigensystem.addEntry(energy, {}); });
+    if (eigensystem.empty())
+        die("No energies loaded from " + filename);
+    return eigensystem;
 }

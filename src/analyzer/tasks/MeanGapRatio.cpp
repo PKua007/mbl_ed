@@ -15,8 +15,8 @@ MeanGapRatio::MeanGapRatio(double relativeMiddleEnergy, double relativeMargin)
     Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
 }
 
-void MeanGapRatio::analyze(const std::vector<double> &eigenenergies) {
-    std::vector<double> normalizedEnergies = this->getNormalizedEigenenergies(eigenenergies);
+void MeanGapRatio::analyze(const Eigensystem &eigensystem) {
+    std::vector<double> normalizedEnergies = this->getNormalizedEigenenergies(eigensystem.getEigenenergies());
 
     double relativeFrom = this->relativeMiddleEnergy - this->relativeMargin/2;
     double relativeTo = this->relativeMiddleEnergy + this->relativeMargin/2;

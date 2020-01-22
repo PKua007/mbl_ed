@@ -7,6 +7,7 @@
 #include <numeric>
 #include <functional>
 
+#include "simulation/Eigensystem.h"
 #include "utils/Assertions.h"
 #include "CDF.h"
 
@@ -24,9 +25,9 @@ std::vector<double> CDF::getNormalizedEigenenergies(const std::vector<double> &e
     return normalizedEnergies;
 }
 
-void CDF::analyze(const std::vector<double> &eigenenergies) {
+void CDF::analyze(const Eigensystem &eigensystem) {
     std::size_t steps = this->cdfTable.size();
-    auto normalizedEnergies = this->getNormalizedEigenenergies(eigenenergies);
+    auto normalizedEnergies = this->getNormalizedEigenenergies(eigensystem.getEigenenergies());
 
     using namespace std::placeholders;
     std::for_each(this->cdfTable.begin(), this->cdfTable.end(), [](auto &entry) { entry.push_back(0); });
@@ -37,8 +38,8 @@ void CDF::analyze(const std::vector<double> &eigenenergies) {
 
         std::for_each(it, this->cdfTable.end(), [](auto &entry) { entry.back()++; });
     }
-    std::for_each(this->cdfTable.begin(), this->cdfTable.end(), [&eigenenergies](auto &entry) {
-        entry.back() /= eigenenergies.size();
+    std::for_each(this->cdfTable.begin(), this->cdfTable.end(), [&eigensystem](auto &entry) {
+        entry.back() /= eigensystem.size();
     });
 }
 

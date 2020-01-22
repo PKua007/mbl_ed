@@ -216,7 +216,7 @@ void Frontend::analyze(int argc, char **argv) {
         die("No eigenenergy files were found.");
 
     for (const auto &energiesFilename : energiesFilenames)
-        analyzer.analyze(io.loadEigenenergies(energiesFilename));
+        analyzer.analyze(io.loadOnlyEigenenergies(energiesFilename));
 
     io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);
 }

@@ -70,8 +70,9 @@ namespace {
             REQUIRE(index == 3);
         }
 
-        void analyze(const std::vector<double> &eigenenergies) {
+        void analyze(const Eigensystem &eigensystem) {
             REQUIRE(index < 3);
+            const auto &eigenenergies = eigensystem.getEigenenergies();
             if (index == 0)
                 REQUIRE(approxVectorsEqual(eigenenergies, std::vector<double>{-1, 0, 9}));
             else if (index == 1)
