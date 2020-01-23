@@ -18,6 +18,7 @@
 #include "utils/Quantity.h"
 #include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/Analyzer.h"
+#include "Eigensystem.h"
 
 template<typename HamiltonianGenerator_t, typename AveragingModel_t, typename Analyzer_t = Analyzer>
 class Simulation {
@@ -28,25 +29,23 @@ private:
     bool saveEigenenergies{};
     std::string fileSignature{};
 
-    std::vector<double> performSingleSimulation(std::size_t i) {
-        AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, i, this->numberOfSimulations);
+    Eigensystem performSingleSimulation(std::size_t simulationIndex) {
+        AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, simulationIndex, this->numberOfSimulations);
         arma::mat hamiltonian = this->hamiltonianGenerator->generate();
-        arma::vec armaEigenenergies = arma::eig_sym(hamiltonian);
 
-        std::vector<double> eigenenergies;
-        eigenenergies.reserve(armaEigenenergies.size());
-        std::copy(armaEigenenergies.begin(), armaEigenenergies.end(), std::back_inserter(eigenenergies));
+        arma::vec armaEnergies;
+        arma::mat armaEigvec;
 
-        return eigenenergies;
+        Assert(arma::eig_sym(armaEnergies, armaEigvec, hamiltonian));
+        return Eigensystem(armaEnergies, armaEigvec);
     }
 
-    void doSaveEigenenergies(const std::vector<double> &eigenenergies, std::size_t index) const {
+    void doSaveEigenenergies(const Eigensystem &eigensystem, std::size_t index) const {
         std::ostringstream filenameStream;
-        filenameStream << this->fileSignature << "_" << index << "_nrg.dat";
+        filenameStream << this->fileSignature << "_" << index << "_nrg.bin";
         std::string filename = filenameStream.str();
         auto out = this->ostreamProvider->openFile(filename);
-
-        std::copy(eigenenergies.begin(), eigenenergies.end(), std::ostream_iterator<double>(*out, "\n"));
+        eigensystem.store(*out);
     }
 
 public:
@@ -67,10 +66,10 @@ public:
     void perform(std::ostream &logger, Analyzer_t &analyzer) {
         for (std::size_t i = 0; i < this->numberOfSimulations; i++) {
             logger << "[Simulation::perform] Performing simulation " << i << "... " << std::flush;
-            auto eigenenergies = this->performSingleSimulation(i);
-            analyzer.analyze(eigenenergies);
+            Eigensystem eigensystem = this->performSingleSimulation(i);
+            analyzer.analyze(eigensystem);
             if (this->saveEigenenergies)
-                this->doSaveEigenenergies(eigenenergies, i);
+                this->doSaveEigenenergies(eigensystem, i);
             logger << "done." << std::endl;
         }
     }

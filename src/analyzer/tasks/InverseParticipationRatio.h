@@ -1,27 +1,23 @@
 //
-// Created by pkua on 08.11.2019.
+// Created by Piotr Kubala on 22/01/2020.
 //
 
-#ifndef MBL_ED_MEANGAPRATIO_H
-#define MBL_ED_MEANGAPRATIO_H
+#ifndef MBL_ED_INVERSEPARTICIPATIONRATIO_H
+#define MBL_ED_INVERSEPARTICIPATIONRATIO_H
 
-
-#include <vector>
-#include <simulation/Eigensystem.h>
-
-#include "utils/Quantity.h"
 #include "analyzer/InlineAnalyzerTask.h"
+#include "utils/Quantity.h"
 
-class MeanGapRatio : public InlineAnalyzerTask {
+class InverseParticipationRatio : public InlineAnalyzerTask {
 private:
     double relativeMiddleEnergy{};
     double relativeMargin{};
-    std::vector<double> gapRatios{};
+    std::vector<double> ratios{};
 
     [[nodiscard]] Quantity calculateMean() const;
 
 public:
-    MeanGapRatio(double relativeMiddleEnergy, double relativeMargin);
+    InverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin);
 
     void analyze(const Eigensystem &eigensystem) override;
     [[nodiscard]] std::string getName() const override;
@@ -30,4 +26,4 @@ public:
 };
 
 
-#endif //MBL_ED_MEANGAPRATIO_H
+#endif //MBL_ED_INVERSEPARTICIPATIONRATIO_H

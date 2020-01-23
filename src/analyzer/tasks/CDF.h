@@ -12,12 +12,10 @@ class CDF : public BulkAnalyzerTask {
 private:
     std::vector<std::vector<double>> cdfTable;
 
-    [[nodiscard]] std::vector<double> getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const;
-
 public:
     explicit CDF(std::size_t bins);
 
-    void analyze(const std::vector<double> &eigenenergies) override;
+    void analyze(const Eigensystem &eigensystem) override;
     [[nodiscard]] std::string getName() const override;
     void storeResult(std::ostream &out) const override;
 };

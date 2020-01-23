@@ -13,6 +13,7 @@
 #include "simulation/CavityHamiltonianGenerator.h"
 #include "IO.h"
 #include "analyzer/tasks/CDF.h"
+#include "analyzer/tasks/InverseParticipationRatio.h"
 #include "utils/Fold.h"
 #include "utils/Utils.h"
 
@@ -94,6 +95,14 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
             Validate(mgrMargin > 0 && mgrMargin <= 1);
             Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
             analyzer.addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
+        } else if (taskName == "ipr") {
+            double mgrCenter, mgrMargin;
+            taskStream >> mgrCenter >> mgrMargin;
+            ValidateMsg(taskStream, "Wrong format, use: ipr [epsilon center] [epsilon margin]");
+            Validate(mgrCenter > 0 && mgrCenter < 1);
+            Validate(mgrMargin > 0 && mgrMargin <= 1);
+            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
+            analyzer.addTask(std::make_unique<InverseParticipationRatio>(mgrCenter, mgrMargin));
         } else if (taskName == "cdf") {
             std::size_t bins;
             taskStream >> bins;
@@ -215,8 +224,15 @@ void Frontend::analyze(int argc, char **argv) {
     if (energiesFilenames.empty())
         die("No eigenenergy files were found.");
 
-    for (const auto &energiesFilename : energiesFilenames)
-        analyzer.analyze(io.loadEigenenergies(energiesFilename));
+    for (const auto &energiesFilename : energiesFilenames) {
+        std::ifstream energiesFile(energiesFilename);
+        if (!energiesFile)
+            die("Cannot open " + energiesFilename + " to read eigenenergies from");
+
+        Eigensystem eigensystem;
+        eigensystem.restore(energiesFile);
+        analyzer.analyze(eigensystem);
+    }
 
     io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);
 }

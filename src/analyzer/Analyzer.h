@@ -9,6 +9,7 @@
 #include <vector>
 #include <memory>
 
+#include "simulation/Eigensystem.h"
 #include "AnalyzerTask.h"
 #include "utils/FileUtils.h"
 
@@ -24,7 +25,7 @@ public:
     { }
 
     void addTask(std::unique_ptr<AnalyzerTask> task);
-    void analyze(const std::vector<double> &eigenenergies);
+    void analyze(const Eigensystem &eigensystem);
     [[nodiscard]] std::vector<std::string> getInlineResultsHeader() const;
     [[nodiscard]] std::vector<std::string> getInlineResultsFields() const;
     void storeBulkResults(const std::string &fileSignature) const;

@@ -12,9 +12,9 @@ void Analyzer::addTask(std::unique_ptr<AnalyzerTask> task) {
     this->tasks.push_back(std::move(task));
 }
 
-void Analyzer::analyze(const std::vector<double> &eigenenergies) {
+void Analyzer::analyze(const Eigensystem &eigensystem) {
     using namespace std::placeholders;
-    std::for_each(this->tasks.begin(), this->tasks.end(), std::bind(&AnalyzerTask::analyze, _1, eigenenergies));
+    std::for_each(this->tasks.begin(), this->tasks.end(), std::bind(&AnalyzerTask::analyze, _1, eigensystem));
 }
 
 void Analyzer::storeBulkResults(const std::string &fileSignature) const {

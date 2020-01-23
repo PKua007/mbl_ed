@@ -8,11 +8,13 @@
 #include <vector>
 #include <string>
 
+#include "simulation/Eigensystem.h"
+
 class AnalyzerTask {
 public:
     virtual ~AnalyzerTask() = default;
 
-    virtual void analyze(const std::vector<double> &eigenenergies) = 0;
+    virtual void analyze(const Eigensystem &eigensystem) = 0;
     [[nodiscard]] virtual std::string getName() const = 0;
 };
 

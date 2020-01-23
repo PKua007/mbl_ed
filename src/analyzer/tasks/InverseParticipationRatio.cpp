@@ -1,21 +1,19 @@
 //
-// Created by pkua on 08.11.2019.
+// Created by Piotr Kubala on 22/01/2020.
 //
 
-#include <algorithm>
-#include <sstream>
-
-#include "MeanGapRatio.h"
+#include "InverseParticipationRatio.h"
 #include "utils/Quantity.h"
 
-MeanGapRatio::MeanGapRatio(double relativeMiddleEnergy, double relativeMargin)
+InverseParticipationRatio::InverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin)
         : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
 {
     Expects(relativeMargin > 0);
     Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
 }
 
-void MeanGapRatio::analyze(const Eigensystem &eigensystem) {
+void InverseParticipationRatio::analyze(const Eigensystem &eigensystem) {
+    Expects(eigensystem.hasEigenvectors());
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
 
     double relativeFrom = this->relativeMiddleEnergy - this->relativeMargin/2;
@@ -28,27 +26,31 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem) {
     Assert(toIt - fromIt > 0);
 
     for (; fromIt < toIt; fromIt++) {
-        double gap1 = *fromIt - *(fromIt - 1);
-        double gap2 = *(fromIt + 1) - *fromIt;
-        this->gapRatios.push_back(gap1 < gap2 ? gap1/gap2 : gap2/gap1);
+        auto vecIdx = fromIt - normalizedEnergies.begin();
+        Assert(vecIdx >= 0 && static_cast<std::size_t>(vecIdx) < eigensystem.size());
+        auto state = eigensystem.getEigenstate(vecIdx);
+        double participationRatio = std::accumulate(state.begin(), state.end(), 0., [](double sum, double d) {
+            return sum + d*d*d*d;
+        });
+        this->ratios.push_back(1. / participationRatio);
     }
 }
 
-Quantity MeanGapRatio::calculateMean() const {
+Quantity InverseParticipationRatio::calculateMean() const {
     Quantity result;
-    result.calculateFromSamples(this->gapRatios);
+    result.calculateFromSamples(this->ratios);
     return result;
 }
 
-std::string MeanGapRatio::getName() const {
-    return "mgr";
+std::string InverseParticipationRatio::getName() const {
+    return "ipr";
 }
 
-std::vector<std::string> MeanGapRatio::getResultHeader() const {
-    return {"meanGapRatio", "meanGapRatioError"};
+std::vector<std::string> InverseParticipationRatio::getResultHeader() const {
+    return {"inverseParticipationRatio", "inverseParticipationRatioError"};
 }
 
-std::vector<std::string> MeanGapRatio::getResultFields() const {
+std::vector<std::string> InverseParticipationRatio::getResultFields() const {
     Quantity result = this->calculateMean();
     result.separator = Quantity::Separator::SPACE;
     std::stringstream resultStream;
