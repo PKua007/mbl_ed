@@ -16,7 +16,7 @@ MeanGapRatio::MeanGapRatio(double relativeMiddleEnergy, double relativeMargin)
 }
 
 void MeanGapRatio::analyze(const Eigensystem &eigensystem) {
-    std::vector<double> normalizedEnergies = this->getNormalizedEigenenergies(eigensystem.getEigenenergies());
+    auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
 
     double relativeFrom = this->relativeMiddleEnergy - this->relativeMargin/2;
     double relativeTo = this->relativeMiddleEnergy + this->relativeMargin/2;
@@ -32,20 +32,6 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem) {
         double gap2 = *(fromIt + 1) - *fromIt;
         this->gapRatios.push_back(gap1 < gap2 ? gap1/gap2 : gap2/gap1);
     }
-}
-
-std::vector<double> MeanGapRatio::getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const {
-    double groundLevel = eigenenergies.front();
-    double highestLevel = eigenenergies.back();
-    Expects(groundLevel < highestLevel);
-
-    std::vector<double> normalizedEnergies;
-    normalizedEnergies.reserve(eigenenergies.size());
-    auto normalizer = [groundLevel, highestLevel](auto energy) {
-        return (energy - groundLevel) / (highestLevel - groundLevel);
-    };
-    std::transform(eigenenergies.begin(), eigenenergies.end(), std::back_inserter(normalizedEnergies), normalizer);
-    return normalizedEnergies;
 }
 
 Quantity MeanGapRatio::calculateMean() const {

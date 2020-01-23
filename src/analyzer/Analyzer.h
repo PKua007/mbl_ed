@@ -8,8 +8,8 @@
 
 #include <vector>
 #include <memory>
-#include <simulation/Eigensystem.h>
 
+#include "simulation/Eigensystem.h"
 #include "AnalyzerTask.h"
 #include "utils/FileUtils.h"
 

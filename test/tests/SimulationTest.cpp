@@ -4,20 +4,13 @@
 
 #include <catch2/catch.hpp>
 #include <sstream>
-#include <simulation/HamiltonianGenerator.h>
 
+#include "matchers/ArmaApproxEqualMatcher.h"
+
+#include "simulation/HamiltonianGenerator.h"
 #include "simulation/Simulation.h"
 
 namespace {
-    bool approxVectorsEqual(std::vector<double> first, std::vector<double> second) {
-        if (first.size() != second.size())
-            return false;
-        for (std::size_t i{}; i < first.size(); i++)
-            if (std::abs(first[i] - second[i]) > 0.0000001)
-                return false;
-        return true;
-    }
-
     class MockHamiltonianGenerator {
     private:
         std::size_t simulationIndex{};
@@ -74,11 +67,11 @@ namespace {
             REQUIRE(index < 3);
             const auto &eigenenergies = eigensystem.getEigenenergies();
             if (index == 0)
-                REQUIRE(approxVectorsEqual(eigenenergies, std::vector<double>{-1, 0, 9}));
+                REQUIRE_THAT(eigenenergies, IsApproxEqual(arma::vec{-1, 0, 9}, 1e-8));
             else if (index == 1)
-                REQUIRE(approxVectorsEqual(eigenenergies, std::vector<double>{-1, 1, 2}));
+                REQUIRE_THAT(eigenenergies, IsApproxEqual(arma::vec{-1, 1, 2}, 1e-8));
             else if (index == 2)
-                REQUIRE(approxVectorsEqual(eigenenergies, std::vector<double>{1, 2, 3}));
+                REQUIRE_THAT(eigenenergies, IsApproxEqual(arma::vec{1, 2, 3}, 1e-8));
             index++;
         }
     };
@@ -91,7 +84,6 @@ namespace {
         }
     };
 }
-
 
 TEST_CASE("Simulation: 3 'random' hamiltonians") {
     using TestSimulation = Simulation<MockHamiltonianGenerator, MockAveragingModel, MockAnalyzer>;

@@ -51,22 +51,9 @@ std::vector<std::string> IO::findEigenenergyFiles(const std::string &directory, 
     for (const auto &entry : std::filesystem::directory_iterator(directory)) {
         std::string filename = entry.path();
         std::string prefix = directory + "/" + fileSignature + "_";
-        if (startsWith(filename, prefix) && endsWith(filename, "_nrg.dat"))
+        if (startsWith(filename, prefix) && endsWith(filename, "_nrg.bin"))
             files.push_back(filename);
     }
 
     return files;
-}
-
-Eigensystem IO::loadOnlyEigenenergies(const std::string &filename) {
-    std::ifstream energiesFile(filename);
-    if (!energiesFile)
-        die("Cannot open " + filename + " to read eigenenergies from");
-
-    Eigensystem eigensystem;
-    std::for_each(std::istream_iterator<double>(energiesFile), std::istream_iterator<double>(),
-                  [&eigensystem](double energy) { eigensystem.addEntry(energy, {}); });
-    if (eigensystem.empty())
-        die("No energies loaded from " + filename);
-    return eigensystem;
 }

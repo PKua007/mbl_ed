@@ -18,7 +18,6 @@ private:
     double relativeMargin{};
     std::vector<double> gapRatios{};
 
-    [[nodiscard]] std::vector<double> getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const;
     [[nodiscard]] Quantity calculateMean() const;
 
 public:

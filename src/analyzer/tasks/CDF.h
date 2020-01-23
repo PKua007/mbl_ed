@@ -12,8 +12,6 @@ class CDF : public BulkAnalyzerTask {
 private:
     std::vector<std::vector<double>> cdfTable;
 
-    [[nodiscard]] std::vector<double> getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const;
-
 public:
     explicit CDF(std::size_t bins);
 

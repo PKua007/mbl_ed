@@ -27,5 +27,4 @@ public:
                               const std::string &outputFilename);
     Parameters loadParameters(const std::string &inputFilename);
     std::vector<std::string> findEigenenergyFiles(const std::string &directory, const std::string &fileSignature);
-    Eigensystem loadOnlyEigenenergies(const std::string &filename);
 };

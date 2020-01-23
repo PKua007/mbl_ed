@@ -40,13 +40,12 @@ private:
         return Eigensystem(armaEnergies, armaEigvec);
     }
 
-    void doSaveEigenenergies(const std::vector<double> &eigenenergies, std::size_t index) const {
+    void doSaveEigenenergies(const Eigensystem &eigensystem, std::size_t index) const {
         std::ostringstream filenameStream;
-        filenameStream << this->fileSignature << "_" << index << "_nrg.dat";
+        filenameStream << this->fileSignature << "_" << index << "_nrg.bin";
         std::string filename = filenameStream.str();
         auto out = this->ostreamProvider->openFile(filename);
-
-        std::copy(eigenenergies.begin(), eigenenergies.end(), std::ostream_iterator<double>(*out, "\n"));
+        eigensystem.store(*out);
     }
 
 public:
@@ -70,7 +69,7 @@ public:
             Eigensystem eigensystem = this->performSingleSimulation(i);
             analyzer.analyze(eigensystem);
             if (this->saveEigenenergies)
-                this->doSaveEigenenergies(eigensystem.getEigenenergies(), i);
+                this->doSaveEigenenergies(eigensystem, i);
             logger << "done." << std::endl;
         }
     }

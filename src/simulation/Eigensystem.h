@@ -10,24 +10,30 @@
 
 class Eigensystem {
 private:
-    std::vector<double> eigenenergies;
-    std::vector<std::vector<double>> eigenstates;
+    arma::vec eigenenergies;
+    arma::mat eigenstates;
+    bool hasEigenvectors_{};
+
+    void sortAndNormalize();
 
 public:
     Eigensystem() = default;
-    Eigensystem(std::vector<double> eigenenergies);
-    Eigensystem(const arma::vec &eigenvalues, const arma::mat &eigenvectors);
+    Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors);
+    explicit Eigensystem(const arma::vec &eigenvalues);
 
-    void addEntry(double eigenenergy, const std::vector<double> &eigenvector);
-    [[nodiscard]] bool empty() const;
     [[nodiscard]] std::size_t size() const;
-    [[nodiscard]] const std::vector<double> &getEigenenergies() const;
-    [[nodiscard]] const std::vector<std::vector<double>> &getEigenstates() const;
-    [[nodiscard]] bool isComplete() const;
+    [[nodiscard]] bool empty() const;
     [[nodiscard]] bool hasEigenvectors() const;
+    [[nodiscard]] const arma::vec &getEigenenergies() const;
+    [[nodiscard]] const arma::mat &getEigenstates() const;
+    [[nodiscard]] arma::vec getEigenstate(std::size_t i) const;
+    [[nodiscard]] arma::vec getNormalizedEigenenergies() const;
+    void store(std::ostream &eigenenergiesOut) const;
+    void restore(std::istream &in);
 
     friend bool operator==(const Eigensystem &lhs, const Eigensystem &rhs);
     friend bool operator!=(const Eigensystem &lhs, const Eigensystem &rhs);
+    friend std::ostream &operator<<(std::ostream &out, const Eigensystem &eigensystem);
 };
 
 #endif //MBL_ED_EIGENSYSTEM_H

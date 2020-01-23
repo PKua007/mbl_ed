@@ -11,23 +11,9 @@
 #include "utils/Assertions.h"
 #include "CDF.h"
 
-std::vector<double> CDF::getNormalizedEigenenergies(const std::vector<double> &eigenenergies) const {
-    double groundLevel = eigenenergies.front();
-    double highestLevel = eigenenergies.back();
-    Expects(groundLevel < highestLevel);
-
-    std::vector<double> normalizedEnergies;
-    normalizedEnergies.reserve(eigenenergies.size());
-    auto normalizer = [groundLevel, highestLevel](auto energy) {
-        return (energy - groundLevel) / (highestLevel - groundLevel);
-    };
-    std::transform(eigenenergies.begin(), eigenenergies.end(), std::back_inserter(normalizedEnergies), normalizer);
-    return normalizedEnergies;
-}
-
 void CDF::analyze(const Eigensystem &eigensystem) {
     std::size_t steps = this->cdfTable.size();
-    auto normalizedEnergies = this->getNormalizedEigenenergies(eigensystem.getEigenenergies());
+    auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
 
     using namespace std::placeholders;
     std::for_each(this->cdfTable.begin(), this->cdfTable.end(), [](auto &entry) { entry.push_back(0); });

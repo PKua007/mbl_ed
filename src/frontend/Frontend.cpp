@@ -215,8 +215,15 @@ void Frontend::analyze(int argc, char **argv) {
     if (energiesFilenames.empty())
         die("No eigenenergy files were found.");
 
-    for (const auto &energiesFilename : energiesFilenames)
-        analyzer.analyze(io.loadOnlyEigenenergies(energiesFilename));
+    for (const auto &energiesFilename : energiesFilenames) {
+        std::ifstream energiesFile(energiesFilename);
+        if (!energiesFile)
+            die("Cannot open " + energiesFilename + " to read eigenenergies from");
+
+        Eigensystem eigensystem;
+        eigensystem.restore(energiesFile);
+        analyzer.analyze(eigensystem);
+    }
 
     io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);
 }
