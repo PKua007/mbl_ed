@@ -161,6 +161,9 @@ void Frontend::simulate(int argc, char **argv) {
         exit(0);
     }
 
+    std::string cmd(argv[0]);
+    if (argc != 1)
+        die("Unexpected positional arguments. See " + cmd + " --help");
     if (!result.count("input"))
         die("Input file must be specified with option -i [input file name]");
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
@@ -219,6 +222,9 @@ void Frontend::analyze(int argc, char **argv) {
         exit(0);
     }
 
+    std::string cmd(argv[0]);
+    if (argc != 1)
+        die("Unexpected positional arguments. See " + cmd + " --help");
     if (!result.count("input"))
         die("Input file must be specified with option -i [input file name]");
     if (!result.count("task"))
