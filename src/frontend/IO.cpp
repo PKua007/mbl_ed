@@ -49,10 +49,10 @@ Parameters IO::loadParameters(const std::string &inputFilename) {
 std::vector<std::string> IO::findEigenenergyFiles(const std::string &directory, const std::string &fileSignature) {
     std::vector<std::string> files;
     for (const auto &entry : std::filesystem::directory_iterator(directory)) {
-        std::string filename = entry.path();
-        std::string prefix = directory + "/" + fileSignature + "_";
-        if (startsWith(filename, prefix) && endsWith(filename, "_nrg.bin"))
-            files.push_back(filename);
+        const std::filesystem::path &filePath = entry.path();
+        std::string prefix = fileSignature + "_";
+        if (startsWith(filePath.filename(), prefix) && endsWith(filePath.filename(), "_nrg.bin"))
+            files.push_back(filePath);
     }
 
     return files;

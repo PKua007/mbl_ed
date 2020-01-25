@@ -5,6 +5,7 @@
 #include <random>
 
 #include <cxxopts.hpp>
+#include <filesystem>
 
 #include "Frontend.h"
 #include "utils/Assertions.h"
@@ -119,11 +120,11 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
 template<template <typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
 void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, Analyzer &analyzer,
                                    std::size_t numberOfSimulations, const std::string &fileSignature,
-                                   bool saveEigenenergies, std::ostream &out) {
+                                   bool saveEigenenergies) {
     using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
     TheSimulation simulation(std::move(hamiltonianGenerator), numberOfSimulations, fileSignature,
                              saveEigenenergies);
-    simulation.perform(out, analyzer);
+    simulation.perform(this->out, analyzer);
 }
 
 void Frontend::simulate(int argc, char **argv) {
@@ -134,7 +135,8 @@ void Frontend::simulate(int argc, char **argv) {
                              .width(80));
 
     std::string inputFilename;
-    std::string outputFilename;
+    std::filesystem::path outputFilename;
+    std::filesystem::path directory;
     std::vector<std::string> paramsToPrint;
     std::vector<std::string> onTheFlyTasks;
 
@@ -143,12 +145,15 @@ void Frontend::simulate(int argc, char **argv) {
             ("i,input", "file with parameters. See input.txt for parameters description",
              cxxopts::value<std::string>(inputFilename))
             ("o,output", "when specified, inline results will be printed to this file",
-             cxxopts::value<std::string>(outputFilename))
+             cxxopts::value<std::filesystem::path>(outputFilename))
             ("t,task", "task(s) to be performed on the fly while simulating",
              cxxopts::value<std::vector<std::string>>(onTheFlyTasks))
+            ("d,directory", "where to put eigenenergies and eigenstates. Note, that this option does not "
+                            "affect --output path nor analyzer result files",
+                cxxopts::value<std::filesystem::path>(directory)->default_value("."))
             ("p,print_parameter", "parameters to be included in inline results",
              cxxopts::value<std::vector<std::string>>(paramsToPrint)
-                     ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"));
+                ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"));
 
     auto result = options.parse(argc, argv);
     if (result.count("help")) {
@@ -158,6 +163,8 @@ void Frontend::simulate(int argc, char **argv) {
 
     if (!result.count("input"))
         die("Input file must be specified with option -i [input file name]");
+    if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
+        die("Output directory " + directory.string() + " does not exist or is not a directory");
 
     IO io(std::cout);
     Parameters params = io.loadParameters(inputFilename);
@@ -166,14 +173,15 @@ void Frontend::simulate(int argc, char **argv) {
 
     Analyzer analyzer = prepareAnalyzer(onTheFlyTasks);
     std::string fileSignature = params.getOutputFileSignature();
+    std::string eigensystemPath = directory / fileSignature;
     if (changePhi0ForAverage) {
         perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer,
-                                                params.numberOfSimulations, fileSignature,
-                                                params.saveEigenenergies, this->out);
+                                                params.numberOfSimulations, eigensystemPath,
+                                                params.saveEigenenergies);
     } else {
         perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer,
-                                                          params.numberOfSimulations, fileSignature,
-                                                          params.saveEigenenergies, this->out);
+                                                          params.numberOfSimulations, eigensystemPath,
+                                                          params.saveEigenenergies);
     }
 
     io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);
@@ -187,9 +195,9 @@ void Frontend::analyze(int argc, char **argv) {
 
     std::string inputFilename;
     std::string outputFilename;
-    std::vector<std::string> paramsToPrint;
-    std::vector<std::string> tasks;
-    std::string directory;
+    std::vector<std::string> paramsToPrint{};
+    std::vector<std::string> tasks{};
+    std::filesystem::path directory;
 
     options.add_options()
             ("h,help", "prints help for this mode")
@@ -203,7 +211,7 @@ void Frontend::analyze(int argc, char **argv) {
              cxxopts::value<std::vector<std::string>>(paramsToPrint)
                      ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
             ("d,directory", "directory to search simulation results",
-             cxxopts::value<std::string>(directory)->default_value("."));
+             cxxopts::value<std::filesystem::path>(directory)->default_value("."));
 
     auto result = options.parse(argc, argv);
     if (result.count("help")) {
@@ -215,6 +223,8 @@ void Frontend::analyze(int argc, char **argv) {
         die("Input file must be specified with option -i [input file name]");
     if (!result.count("task"))
         die("At least 1 analyzer task must be specified with option -t [task parameters]");
+    if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
+        die("Directory " + directory.string() + " does not exist or is not a directory");
 
     IO io(std::cout);
     Parameters params = io.loadParameters(inputFilename);
