@@ -1,12 +1,14 @@
 numberOfSites = 6
 numberOfBosons = 6
 J = 1
-W = 0
+W = 3
 U = 5
 U1 = 10
 beta = 0.61803398875
 phi0 = 0
 usePeriodicBC = false
 saveEigenenergies = true
-numberOfSimulations = 1
+from = 2
+to = 5
+totalSimulations = 7
 seed = 1234

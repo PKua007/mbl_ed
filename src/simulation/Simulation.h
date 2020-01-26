@@ -25,12 +25,14 @@ class Simulation {
 private:
     std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;
     std::unique_ptr<FileOstreamProvider> ostreamProvider;
-    std::size_t numberOfSimulations{};
+    std::size_t from{};
+    std::size_t to{};
+    std::size_t totalSimulations{};
     bool saveEigenenergies{};
     std::string fileSignature{};
 
     Eigensystem performSingleSimulation(std::size_t simulationIndex) {
-        AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, simulationIndex, this->numberOfSimulations);
+        AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, simulationIndex, this->totalSimulations);
         arma::mat hamiltonian = this->hamiltonianGenerator->generate();
 
         arma::vec armaEnergies;
@@ -50,21 +52,25 @@ private:
 
 public:
     Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
-               std::unique_ptr<FileOstreamProvider> ostreamProvider, size_t numberOfSimulations,
-               std::string fileSignature, bool saveEigenenergies)
+               std::unique_ptr<FileOstreamProvider> ostreamProvider, std::size_t from, std::size_t to,
+               std::size_t totalSimulations, std::string fileSignature, bool saveEigenenergies)
             : hamiltonianGenerator{std::move(hamiltonianGenerator)}, ostreamProvider{std::move(ostreamProvider)},
-              numberOfSimulations{numberOfSimulations}, saveEigenenergies{saveEigenenergies},
+              from{from}, to{to}, totalSimulations{totalSimulations}, saveEigenenergies{saveEigenenergies},
               fileSignature{std::move(fileSignature)}
-    { }
+    {
+        Expects(totalSimulations > 0);
+        Expects(from < to);
+        Expects(to <= totalSimulations);
+    }
 
-    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, size_t numberOfSimulations,
-               const std::string &fileSignature, bool saveEigenenergies)
-            : Simulation(std::move(hamiltonianGenerator), std::make_unique<FileOstreamProvider>(), numberOfSimulations,
-                         fileSignature, saveEigenenergies)
+    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::size_t from, std::size_t to,
+               std::size_t totalSimulations, const std::string &fileSignature, bool saveEigenenergies)
+            : Simulation(std::move(hamiltonianGenerator), std::make_unique<FileOstreamProvider>(), from, to,
+                         totalSimulations, fileSignature, saveEigenenergies)
     { }
 
     void perform(std::ostream &logger, Analyzer_t &analyzer) {
-        for (std::size_t i = 0; i < this->numberOfSimulations; i++) {
+        for (std::size_t i = this->from; i < this->to; i++) {
             logger << "[Simulation::perform] Performing simulation " << i << "... " << std::flush;
             Eigensystem eigensystem = this->performSingleSimulation(i);
             analyzer.analyze(eigensystem);

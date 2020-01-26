@@ -67,7 +67,8 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, bool changePh
     FockBaseGenerator baseGenerator;
     auto base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
 
-    auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed);
+    // We add 'from' to seed not to duplicate results when simulating in parts
+    auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed + params.from);
 
     CavityHamiltonianGeneratorParameters hamiltonianParams;
     hamiltonianParams.J = params.J;
@@ -119,10 +120,11 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
 
 template<template <typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
 void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, Analyzer &analyzer,
-                                   std::size_t numberOfSimulations, const std::string &fileSignature,
-                                   bool saveEigenenergies) {
+                                   std::size_t from, std::size_t to, std::size_t totalSimulations,
+                                   const std::string &fileSignature, bool saveEigenenergies)
+{
     using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
-    TheSimulation simulation(std::move(hamiltonianGenerator), numberOfSimulations, fileSignature,
+    TheSimulation simulation(std::move(hamiltonianGenerator), from, to, totalSimulations, fileSignature,
                              saveEigenenergies);
     simulation.perform(this->out, analyzer);
 }
@@ -179,12 +181,12 @@ void Frontend::simulate(int argc, char **argv) {
     std::string eigensystemPath = directory / fileSignature;
     if (changePhi0ForAverage) {
         perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer,
-                                                params.numberOfSimulations, eigensystemPath,
+                                                params.from, params.to, params.totalSimulations, eigensystemPath,
                                                 params.saveEigenenergies);
     } else {
         perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer,
-                                                          params.numberOfSimulations, eigensystemPath,
-                                                          params.saveEigenenergies);
+                                                          params.from, params.to, params.totalSimulations,
+                                                          eigensystemPath, params.saveEigenenergies);
     }
 
     io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);

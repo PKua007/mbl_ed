@@ -33,40 +33,54 @@ Parameters::Parameters(std::istream &input) {
             this->usePeriodicBC = config.getBoolean("usePeriodicBC");
         else if (key == "saveEigenenergies")
             this->saveEigenenergies = config.getBoolean("saveEigenenergies");
-        else if (key == "numberOfSimulations")
-            this->numberOfSimulations = config.getUnsignedLong("numberOfSimulations");
+        else if (key == "from")
+            this->from = config.getUnsignedLong("from");
+        else if (key == "to")
+            this->to = config.getUnsignedLong("to");
+        else if (key == "totalSimulations")
+            this->totalSimulations = config.getUnsignedLong("totalSimulations");
         else if (key == "seed")
             this->seed = config.getUnsignedLong("seed");
         else
             throw UnknownParameterException("Unknown parameter " + key);
     }
 
-    this->validate();
+    this->autocompleteAndValidate();
 }
 
-void Parameters::validate() const {
+void Parameters::autocompleteAndValidate() {
+    Validate(this->totalSimulations > 0 || this->to > 0);
+
+    if (this->to == 0)
+        this->to = this->totalSimulations;
+    else if (this->totalSimulations == 0)
+        this->totalSimulations = this->to;
+
+    Validate(this->from < this->to);
+    Validate(this->to <= this->totalSimulations);
     Validate(numberOfSites > 0);
     Validate(numberOfBosons > 0);
     Validate(J >= 0);
     Validate(W >= 0);
     Validate(U >= 0);
     Validate(U1 >= 0);
-    Validate(numberOfSimulations > 0);
 }
 
 void Parameters::print(std::ostream &out) const {
-    out << "numberOfSites       : " << this->numberOfSites << std::endl;
-    out << "numbeOfBosons       : " << this->numberOfBosons << std::endl;
-    out << "J                   : " << this->J << std::endl;
-    out << "W                   : " << this->W << std::endl;
-    out << "U                   : " << this->U << std::endl;
-    out << "U1                  : " << this->U1 << std::endl;
-    out << "beta                : " << this->beta << std::endl;
-    out << "phi0                : " << this->phi0 << std::endl;
-    out << "usePeriodicBC       : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
-    out << "saveEigenenergies   : " << (this->saveEigenenergies ? "true" : "false") << std::endl;
-    out << "numberOfSimulations : " << this->numberOfSimulations << std::endl;
-    out << "seed                : " << this->seed << std::endl;
+    out << "numberOfSites     : " << this->numberOfSites << std::endl;
+    out << "numbeOfBosons     : " << this->numberOfBosons << std::endl;
+    out << "J                 : " << this->J << std::endl;
+    out << "W                 : " << this->W << std::endl;
+    out << "U                 : " << this->U << std::endl;
+    out << "U1                : " << this->U1 << std::endl;
+    out << "beta              : " << this->beta << std::endl;
+    out << "phi0              : " << this->phi0 << std::endl;
+    out << "usePeriodicBC     : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
+    out << "saveEigenenergies : " << (this->saveEigenenergies ? "true" : "false") << std::endl;
+    out << "from              : " << this->from << std::endl;
+    out << "to                : " << this->to << std::endl;
+    out << "totalSimulations  : " << this->totalSimulations << std::endl;
+    out << "seed              : " << this->seed << std::endl;
 }
 
 std::string Parameters::getByName(const std::string &name) const {
@@ -90,8 +104,12 @@ std::string Parameters::getByName(const std::string &name) const {
         return this->usePeriodicBC ? "true" : "false";
     else if (name == "saveEigenenergies")
         return this->saveEigenenergies ? "true" : "false";
-    else if (name == "numberOfSimulations")
-        return std::to_string(this->numberOfSimulations);
+    else if (name == "from")
+        return std::to_string(this->from);
+    else if (name == "to")
+        return std::to_string(this->to);
+    else if (name == "totalSimulations")
+        return std::to_string(this->totalSimulations);
     else if (name == "seed")
         return std::to_string(this->seed);
     else

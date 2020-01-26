@@ -15,7 +15,7 @@ public:
 
 class Parameters {
 private:
-    void validate() const;
+    void autocompleteAndValidate();
     [[nodiscard]] std::string doubleToString(double d) const;
 
 public:
@@ -29,7 +29,9 @@ public:
     std::string phi0;
     bool usePeriodicBC{};
     bool saveEigenenergies{};
-    std::size_t numberOfSimulations{};
+    std::size_t to{};
+    std::size_t from{};
+    std::size_t totalSimulations{};
     std::size_t seed{};
 
     Parameters() = default;
