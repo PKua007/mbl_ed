@@ -83,9 +83,16 @@ namespace {
 }
 
 TEST_CASE("Simulation: 3 'random' hamiltonians") {
+    SimulationParameters params;
+    params.from = 1;
+    params.to = 4;
+    params.totalSimulations = 5;
+    params.calculateEigenvectors = true;
+    params.saveEigenenergies = false;
+    params.fileSignature = "";
     using TestSimulation = Simulation<MockHamiltonianGenerator, MockAveragingModel, MockAnalyzer>;
     TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(), std::make_unique<DummyOstreamProvider>(),
-                              1, 4, 5, "",false);
+                              params);
     MockAnalyzer mockAnalyzer;
     std::ostringstream dummyLogger;
 
