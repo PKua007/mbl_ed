@@ -24,6 +24,12 @@ Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors)
     this->sortAndNormalize();
 }
 
+Eigensystem::Eigensystem(arma::vec eigenvalues)
+        : eigenenergies{std::move(eigenvalues)}, hasEigenvectors_{false}
+{
+    this->sort();
+}
+
 std::size_t Eigensystem::size() const {
     return this->eigenenergies.size();
 }
@@ -41,10 +47,14 @@ const arma::vec &Eigensystem::getEigenenergies() const {
 }
 
 const arma::mat &Eigensystem::getEigenstates() const {
+    if (!this->hasEigenvectors_)
+        throw std::runtime_error("Eigensystem does not contain eigenvectors");
     return this->eigenstates;
 }
 
 arma::vec Eigensystem::getEigenstate(std::size_t i) const {
+    if (!this->hasEigenvectors_)
+        throw std::runtime_error("Eigensystem does not contain eigenvectors");
     Expects(i < this->size());
     return this->eigenstates.col(i);
 }
@@ -74,13 +84,6 @@ void Eigensystem::restore(std::istream &in) {
     *this = Eigensystem(newEigenenergies);
 }
 
-Eigensystem::Eigensystem(const arma::vec &eigenvalues)
-        : eigenenergies{eigenvalues}, eigenstates(eigenvalues.size(), eigenvalues.size(), arma::fill::zeros),
-          hasEigenvectors_{false}
-{
-    this->sortAndNormalize();
-}
-
 bool operator==(const Eigensystem &lhs, const Eigensystem &rhs) {
     return arma::approx_equal(lhs.eigenenergies, rhs.eigenenergies, "absdiff", 1e-12) &&
            arma::approx_equal(lhs.eigenstates, rhs.eigenstates, "absdiff", 1e-12);
@@ -95,13 +98,14 @@ void Eigensystem::sortAndNormalize() {
     auto zipped = Zip(this->eigenenergies, indices);
     std::sort(zipped.begin(), zipped.end());
 
-    if (!this->hasEigenvectors_)
-        return;
-
     arma::mat newEigenstates(this->size(), this->size());
     for (std::size_t i{}; i < this->size(); i++)
         newEigenstates.col(i) = arma::normalise(this->eigenstates.col(indices[i]));
     this->eigenstates = newEigenstates;
+}
+
+void Eigensystem::sort() {
+    std::sort(this->eigenenergies.begin(), this->eigenenergies.end());
 }
 
 std::ostream &operator<<(std::ostream &out, const Eigensystem &eigensystem) {

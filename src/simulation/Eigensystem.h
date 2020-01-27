@@ -15,11 +15,12 @@ private:
     bool hasEigenvectors_{};
 
     void sortAndNormalize();
+    void sort();
 
 public:
     Eigensystem() = default;
     Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors);
-    explicit Eigensystem(const arma::vec &eigenvalues);
+    explicit Eigensystem(arma::vec eigenvalues);
 
     [[nodiscard]] std::size_t size() const;
     [[nodiscard]] bool empty() const;

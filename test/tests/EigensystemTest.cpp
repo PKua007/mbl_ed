@@ -14,7 +14,7 @@ TEST_CASE("Eigensystem: empty") {
     REQUIRE(eigensystem.empty());
     REQUIRE(eigensystem.size() == 0);
     REQUIRE_FALSE(eigensystem.hasEigenvectors());
-    REQUIRE_THAT(eigensystem.getEigenstates(), IsApproxEqual(arma::mat{}, 1e-15));
+    REQUIRE_THROWS(eigensystem.getEigenstates());
     REQUIRE_THAT(eigensystem.getEigenenergies(), IsApproxEqual(arma::vec{}, 1e-15));
     REQUIRE_THROWS(eigensystem.getEigenstate(0));
 }
@@ -25,11 +25,9 @@ TEST_CASE("Eigensystem: only eigenvalues") {
     REQUIRE_FALSE(eigensystem.empty());
     REQUIRE(eigensystem.size() == 3);
     REQUIRE_FALSE(eigensystem.hasEigenvectors());
-    REQUIRE_THAT(eigensystem.getEigenstates(), IsApproxEqual(arma::mat(3, 3, arma::fill::zeros), 1e-15));
+    REQUIRE_THROWS(eigensystem.getEigenstates());
     REQUIRE_THAT(eigensystem.getEigenenergies(), IsApproxEqual(arma::vec{0, 0.5, 1}, 1e-15));
-    REQUIRE_THAT(eigensystem.getEigenstate(0), IsApproxEqual(arma::vec{0, 0, 0}, 1e-15));
-    REQUIRE_THAT(eigensystem.getEigenstate(1), IsApproxEqual(arma::vec{0, 0, 0}, 1e-15));
-    REQUIRE_THAT(eigensystem.getEigenstate(2), IsApproxEqual(arma::vec{0, 0, 0}, 1e-15));
+    REQUIRE_THROWS(eigensystem.getEigenstate(0));
 }
 
 TEST_CASE("Eigensystem: eigenvalues and eigenvectors") {
