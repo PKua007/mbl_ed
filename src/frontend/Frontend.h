@@ -8,6 +8,7 @@
 
 #include "analyzer/Analyzer.h"
 #include "Parameters.h"
+#include "simulation/SimulationParameters.h"
 
 class Frontend {
 private:
@@ -18,8 +19,7 @@ private:
 
     template<template<typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
     void perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, Analyzer &analyzer,
-                             std::size_t from, std::size_t to, std::size_t totalSimulations,
-                             const std::string &fileSignature, bool calculateEigenvectors, bool saveEigenenergies);
+                             const SimulationParameters &simulationParameters);
 
 public:
     explicit Frontend(std::ostream &out) : out{out} { }
