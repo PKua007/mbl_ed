@@ -120,12 +120,10 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
 
 template<template <typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
 void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, Analyzer &analyzer,
-                                   std::size_t from, std::size_t to, std::size_t totalSimulations,
-                                   const std::string &fileSignature, bool saveEigenenergies)
+                                   const SimulationParameters &simulationParameters)
 {
     using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
-    TheSimulation simulation(std::move(hamiltonianGenerator), from, to, totalSimulations, fileSignature,
-                             saveEigenenergies);
+    TheSimulation simulation(std::move(hamiltonianGenerator), simulationParameters);
     simulation.perform(this->out, analyzer);
 }
 
@@ -179,15 +177,18 @@ void Frontend::simulate(int argc, char **argv) {
     Analyzer analyzer = prepareAnalyzer(onTheFlyTasks);
     std::string fileSignature = params.getOutputFileSignature();
     std::string eigensystemPath = directory / fileSignature;
-    if (changePhi0ForAverage) {
-        perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer,
-                                                params.from, params.to, params.totalSimulations, eigensystemPath,
-                                                params.saveEigenenergies);
-    } else {
-        perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer,
-                                                          params.from, params.to, params.totalSimulations,
-                                                          eigensystemPath, params.saveEigenenergies);
-    }
+
+    SimulationParameters simulationParams;
+    simulationParams.from = params.from;
+    simulationParams.to = params.to;
+    simulationParams.totalSimulations = params.totalSimulations;
+    simulationParams.calculateEigenvectors = params.calculateEigenvectors;
+    simulationParams.saveEigenenergies = params.saveEigenenergies;
+    simulationParams.fileSignature = eigensystemPath;
+    if (changePhi0ForAverage)
+        perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer, simulationParams);
+    else
+        perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer, simulationParams);
 
     io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);
 }

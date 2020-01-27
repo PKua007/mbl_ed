@@ -31,6 +31,8 @@ Parameters::Parameters(std::istream &input) {
             this->phi0 = config.getString("phi0");
         else if (key == "usePeriodicBC")
             this->usePeriodicBC = config.getBoolean("usePeriodicBC");
+        else if (key == "calculateEigenvectors")
+            this->calculateEigenvectors = config.getBoolean("calculateEigenvectors");
         else if (key == "saveEigenenergies")
             this->saveEigenenergies = config.getBoolean("saveEigenenergies");
         else if (key == "from")
@@ -67,20 +69,21 @@ void Parameters::autocompleteAndValidate() {
 }
 
 void Parameters::print(std::ostream &out) const {
-    out << "numberOfSites     : " << this->numberOfSites << std::endl;
-    out << "numbeOfBosons     : " << this->numberOfBosons << std::endl;
-    out << "J                 : " << this->J << std::endl;
-    out << "W                 : " << this->W << std::endl;
-    out << "U                 : " << this->U << std::endl;
-    out << "U1                : " << this->U1 << std::endl;
-    out << "beta              : " << this->beta << std::endl;
-    out << "phi0              : " << this->phi0 << std::endl;
-    out << "usePeriodicBC     : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
-    out << "saveEigenenergies : " << (this->saveEigenenergies ? "true" : "false") << std::endl;
-    out << "from              : " << this->from << std::endl;
-    out << "to                : " << this->to << std::endl;
-    out << "totalSimulations  : " << this->totalSimulations << std::endl;
-    out << "seed              : " << this->seed << std::endl;
+    out << "numberOfSites         : " << this->numberOfSites << std::endl;
+    out << "numbeOfBosons         : " << this->numberOfBosons << std::endl;
+    out << "J                     : " << this->J << std::endl;
+    out << "W                     : " << this->W << std::endl;
+    out << "U                     : " << this->U << std::endl;
+    out << "U1                    : " << this->U1 << std::endl;
+    out << "beta                  : " << this->beta << std::endl;
+    out << "phi0                  : " << this->phi0 << std::endl;
+    out << "usePeriodicBC         : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
+    out << "calculateEigenvectors : " << (this->calculateEigenvectors ? "true" : "false") << std::endl;
+    out << "saveEigenenergies     : " << (this->saveEigenenergies ? "true" : "false") << std::endl;
+    out << "from                  : " << this->from << std::endl;
+    out << "to                    : " << this->to << std::endl;
+    out << "totalSimulations      : " << this->totalSimulations << std::endl;
+    out << "seed                  : " << this->seed << std::endl;
 }
 
 std::string Parameters::getByName(const std::string &name) const {
@@ -102,6 +105,8 @@ std::string Parameters::getByName(const std::string &name) const {
         return this->phi0;
     else if (name == "usePeriodicBC")
         return this->usePeriodicBC ? "true" : "false";
+    else if (name == "calculateEigenvectors")
+        return this->calculateEigenvectors ? "true" : "false";
     else if (name == "saveEigenenergies")
         return this->saveEigenenergies ? "true" : "false";
     else if (name == "from")

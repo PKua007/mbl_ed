@@ -28,10 +28,11 @@ public:
     double beta{};
     std::string phi0;
     bool usePeriodicBC{};
-    bool saveEigenenergies{};
+    bool calculateEigenvectors = true;
+    bool saveEigenenergies = false;
     std::size_t to{};
-    std::size_t from{};
-    std::size_t totalSimulations{};
+    std::size_t from = 0;
+    std::size_t totalSimulations = 1;
     std::size_t seed{};
 
     Parameters() = default;
