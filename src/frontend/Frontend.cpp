@@ -121,11 +121,11 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
 template<template <typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
 void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, Analyzer &analyzer,
                                    std::size_t from, std::size_t to, std::size_t totalSimulations,
-                                   const std::string &fileSignature, bool saveEigenenergies)
+                                   const std::string &fileSignature, bool calculateEigenvectors, bool saveEigenenergies)
 {
     using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
     TheSimulation simulation(std::move(hamiltonianGenerator), from, to, totalSimulations, fileSignature,
-                             saveEigenenergies);
+                             calculateEigenvectors, saveEigenenergies);
     simulation.perform(this->out, analyzer);
 }
 
@@ -182,11 +182,12 @@ void Frontend::simulate(int argc, char **argv) {
     if (changePhi0ForAverage) {
         perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer,
                                                 params.from, params.to, params.totalSimulations, eigensystemPath,
-                                                params.saveEigenenergies);
+                                                params.calculateEigenvectors, params.saveEigenenergies);
     } else {
         perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer,
                                                           params.from, params.to, params.totalSimulations,
-                                                          eigensystemPath, params.saveEigenenergies);
+                                                          eigensystemPath, params.calculateEigenvectors,
+                                                          params.saveEigenenergies);
     }
 
     io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);
