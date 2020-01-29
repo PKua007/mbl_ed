@@ -4,18 +4,18 @@
 
 #include <catch2/catch.hpp>
 
-#include "analyzer/tasks/InverseParticipationRatio.h"
+#include "analyzer/tasks/MeanInverseParticipationRatio.h"
 
-TEST_CASE("InverseParticipationRatio: names") {
-    InverseParticipationRatio ratioCalculator(0.5, 0.1);
+TEST_CASE("MeanInverseParticipationRatio: names") {
+    MeanInverseParticipationRatio ratioCalculator(0.5, 0.1);
 
     REQUIRE(ratioCalculator.getName() == "ipr");
     REQUIRE(ratioCalculator.getResultHeader() == std::vector<std::string>{"inverseParticipationRatio",
                                                                           "inverseParticipationRatioError"});
 }
 
-TEST_CASE("InverseParticipationRatio: single energy set") {
-    InverseParticipationRatio ratioCalculator(0.5, 0.7);
+TEST_CASE("MeanInverseParticipationRatio: single energy set") {
+    MeanInverseParticipationRatio ratioCalculator(0.5, 0.7);
 
     // We are interested in 0.4, 0.5, 0.6, 0.8
     Eigensystem eigensystem(
@@ -38,8 +38,8 @@ TEST_CASE("InverseParticipationRatio: single energy set") {
     REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"2.7143", "0.7308"});
 }
 
-TEST_CASE("InverseParticipationRatio: calculating mean") {
-    InverseParticipationRatio ratioCalculator(0.5, 0.2);
+TEST_CASE("MeanInverseParticipationRatio: calculating mean") {
+    MeanInverseParticipationRatio ratioCalculator(0.5, 0.2);
 
     ratioCalculator.analyze(Eigensystem(
             { 0, 0.4, 1},
@@ -59,7 +59,7 @@ TEST_CASE("InverseParticipationRatio: calculating mean") {
     REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"1.5000", "0.5000"});
 }
 
-TEST_CASE("InverseParticipationRatio: requires eigenvectors") {
-    REQUIRE_THROWS_WITH(InverseParticipationRatio(0.5, 0.1).analyze(Eigensystem({0, 1, 2, 3})),
+TEST_CASE("MeanInverseParticipationRatio: requires eigenvectors") {
+    REQUIRE_THROWS_WITH(MeanInverseParticipationRatio(0.5, 0.1).analyze(Eigensystem({0, 1, 2, 3})),
                         Catch::Contains("hasEigenvectors"));
 }

@@ -2,17 +2,17 @@
 // Created by Piotr Kubala on 22/01/2020.
 //
 
-#include "InverseParticipationRatio.h"
+#include "MeanInverseParticipationRatio.h"
 #include "utils/Quantity.h"
 
-InverseParticipationRatio::InverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin)
+MeanInverseParticipationRatio::MeanInverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin)
         : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
 {
     Expects(relativeMargin > 0);
     Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
 }
 
-void InverseParticipationRatio::analyze(const Eigensystem &eigensystem) {
+void MeanInverseParticipationRatio::analyze(const Eigensystem &eigensystem) {
     Expects(eigensystem.hasEigenvectors());
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
     auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
@@ -27,21 +27,21 @@ void InverseParticipationRatio::analyze(const Eigensystem &eigensystem) {
     }
 }
 
-Quantity InverseParticipationRatio::calculateMean() const {
+Quantity MeanInverseParticipationRatio::calculateMean() const {
     Quantity result;
     result.calculateFromSamples(this->ratios);
     return result;
 }
 
-std::string InverseParticipationRatio::getName() const {
+std::string MeanInverseParticipationRatio::getName() const {
     return "ipr";
 }
 
-std::vector<std::string> InverseParticipationRatio::getResultHeader() const {
+std::vector<std::string> MeanInverseParticipationRatio::getResultHeader() const {
     return {"inverseParticipationRatio", "inverseParticipationRatioError"};
 }
 
-std::vector<std::string> InverseParticipationRatio::getResultFields() const {
+std::vector<std::string> MeanInverseParticipationRatio::getResultFields() const {
     Quantity result = this->calculateMean();
     result.separator = Quantity::Separator::SPACE;
     std::stringstream resultStream;
