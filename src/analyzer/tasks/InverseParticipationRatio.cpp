@@ -15,20 +15,11 @@ InverseParticipationRatio::InverseParticipationRatio(double relativeMiddleEnergy
 void InverseParticipationRatio::analyze(const Eigensystem &eigensystem) {
     Expects(eigensystem.hasEigenvectors());
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
+    auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
+                                                                        this->relativeMargin);
 
-    double relativeFrom = this->relativeMiddleEnergy - this->relativeMargin/2;
-    double relativeTo = this->relativeMiddleEnergy + this->relativeMargin/2;
-
-    auto fromIt = std::lower_bound(normalizedEnergies.begin(), normalizedEnergies.end(), relativeFrom);
-    auto toIt = std::lower_bound(normalizedEnergies.begin(), normalizedEnergies.end(), relativeTo);
-    Assert(fromIt - normalizedEnergies.begin() >= 1);
-    Assert(normalizedEnergies.end() - toIt >= 1);
-    Assert(toIt - fromIt > 0);
-
-    for (; fromIt < toIt; fromIt++) {
-        auto vecIdx = fromIt - normalizedEnergies.begin();
-        Assert(vecIdx >= 0 && static_cast<std::size_t>(vecIdx) < eigensystem.size());
-        auto state = eigensystem.getEigenstate(vecIdx);
+    for (auto i : bandIndices) {
+        auto state = eigensystem.getEigenstate(i);
         double participationRatio = std::accumulate(state.begin(), state.end(), 0., [](double sum, double d) {
             return sum + d*d*d*d;
         });

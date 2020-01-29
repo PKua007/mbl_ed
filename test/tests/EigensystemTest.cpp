@@ -103,3 +103,21 @@ TEST_CASE("Eigensystem: zero vector") {
 TEST_CASE("Eigensystem: cannot normalize equal eigenvalues") {
     REQUIRE_THROWS(Eigensystem({2, 2, 2}).getNormalizedEigenenergies());
 }
+
+TEST_CASE("Eigensystem: get indices of eigenenergies in band") {
+    Eigensystem eigensystem({0, 0.1, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0});
+
+    auto indices = eigensystem.getIndicesOfNormalizedEnergiesInBand(0.5, 0.5);
+
+    REQUIRE(indices == std::vector<std::size_t>{2, 3, 4, 5});
+}
+
+TEST_CASE("Eigensystem: get indices of eigenenergies in band - incorrect") {
+    Eigensystem eigensystem({0, 0.1, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0});
+
+    REQUIRE_THROWS(eigensystem.getIndicesOfNormalizedEnergiesInBand(-0.3, 0.1));
+    REQUIRE_THROWS(eigensystem.getIndicesOfNormalizedEnergiesInBand(1.2, 0.1));
+    REQUIRE_THROWS(eigensystem.getIndicesOfNormalizedEnergiesInBand(0.1, 0.3));
+    REQUIRE_THROWS(eigensystem.getIndicesOfNormalizedEnergiesInBand(0.4, 0));
+    REQUIRE_THROWS(eigensystem.getIndicesOfNormalizedEnergiesInBand(0.4, -0.1));
+}
