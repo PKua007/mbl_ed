@@ -34,7 +34,7 @@ Quantity MeanInverseParticipationRatio::calculateMean() const {
 }
 
 std::string MeanInverseParticipationRatio::getName() const {
-    return "ipr";
+    return "mipr";
 }
 
 std::vector<std::string> MeanInverseParticipationRatio::getResultHeader() const {
