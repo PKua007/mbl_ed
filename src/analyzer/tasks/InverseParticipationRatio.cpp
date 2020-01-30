@@ -16,7 +16,6 @@ InverseParticipationRatio::InverseParticipationRatio(double relativeMiddleEnergy
 void InverseParticipationRatio::analyze(const Eigensystem &eigensystem) {
     Expects(eigensystem.hasEigenvectors());
 
-    this->entries.clear();
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
     auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
                                                                         this->relativeMargin);

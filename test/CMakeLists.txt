@@ -5,6 +5,6 @@ add_executable(tests TestMain.cpp tests/FockBaseGeneratorTest.cpp tests/FockBase
         tests/SimulationTest.cpp matchers/ArmaApproxEqualMatcher.h tests/AnalzerTest.cpp mocks/AnalyzerTaskMock.h
         mocks/FileUtilsMock.h mocks/OstringStreamMock.h mocks/InlineAnalyzerTaskMock.h mocks/BulkAnalyzerTaskMock.h
         tests/CDFTest.cpp tests/InlineResultsPrinterTest.cpp tests/FoldTest.cpp tests/EigensystemTest.cpp
-        tests/MeanInverseParticipationRatioTest.cpp)
+        tests/MeanInverseParticipationRatioTest.cpp tests/InverseParticipationRatioTest.cpp)
 target_link_libraries(tests PRIVATE mbl_ed_src Catch2::Catch2 trompeloeil)
 target_include_directories(tests PRIVATE ../test)

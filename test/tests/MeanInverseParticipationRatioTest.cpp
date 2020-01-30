@@ -9,7 +9,7 @@
 TEST_CASE("MeanInverseParticipationRatio: names") {
     MeanInverseParticipationRatio ratioCalculator(0.5, 0.1);
 
-    REQUIRE(ratioCalculator.getName() == "ipr");
+    REQUIRE(ratioCalculator.getName() == "mipr");
     REQUIRE(ratioCalculator.getResultHeader() == std::vector<std::string>{"inverseParticipationRatio",
                                                                           "inverseParticipationRatioError"});
 }
