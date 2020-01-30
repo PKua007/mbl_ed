@@ -148,6 +148,7 @@ void Frontend::simulate(int argc, char **argv) {
     std::filesystem::path directory;
     std::vector<std::string> paramsToPrint;
     std::vector<std::string> onTheFlyTasks;
+    std::vector<std::string> overridenParams;
 
     options.add_options()
             ("h,help", "prints help for this mode")
@@ -159,10 +160,13 @@ void Frontend::simulate(int argc, char **argv) {
              cxxopts::value<std::vector<std::string>>(onTheFlyTasks))
             ("d,directory", "where to put eigenenergies and eigenstates. Note, that this option does not "
                             "affect --output path nor analyzer result files",
-                cxxopts::value<std::filesystem::path>(directory)->default_value("."))
+             cxxopts::value<std::filesystem::path>(directory)->default_value("."))
             ("p,print_parameter", "parameters to be included in inline results",
              cxxopts::value<std::vector<std::string>>(paramsToPrint)
-                ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"));
+                ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
+            ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
+                            "-P J=1 (-PJ=1 does not work) act as one would append J=1 to input file",
+             cxxopts::value<std::vector<std::string>>(overridenParams));
 
     auto result = options.parse(argc, argv);
     if (result.count("help")) {
@@ -179,7 +183,9 @@ void Frontend::simulate(int argc, char **argv) {
         die("Output directory " + directory.string() + " does not exist or is not a directory");
 
     IO io(std::cout);
-    Parameters params = io.loadParameters(inputFilename);
+    Parameters params = io.loadParameters(inputFilename, overridenParams);
+    params.print(std::cout);
+
     bool changePhi0ForAverage = (params.phi0 == "changeForAverage");
     auto hamiltonianGenerator = buildHamiltonianGenerator(params, changePhi0ForAverage);
 
@@ -213,6 +219,7 @@ void Frontend::analyze(int argc, char **argv) {
     std::vector<std::string> paramsToPrint{};
     std::vector<std::string> tasks{};
     std::filesystem::path directory;
+    std::vector<std::string> overridenParams;
 
     options.add_options()
             ("h,help", "prints help for this mode")
@@ -226,7 +233,10 @@ void Frontend::analyze(int argc, char **argv) {
              cxxopts::value<std::vector<std::string>>(paramsToPrint)
                      ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
             ("d,directory", "directory to search simulation results",
-             cxxopts::value<std::filesystem::path>(directory)->default_value("."));
+             cxxopts::value<std::filesystem::path>(directory)->default_value("."))
+            ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
+                            "-P J=1 (-PJ=1 does not work) act as one would append J=1 to input file",
+             cxxopts::value<std::vector<std::string>>(overridenParams));
 
     auto result = options.parse(argc, argv);
     if (result.count("help")) {
@@ -245,7 +255,9 @@ void Frontend::analyze(int argc, char **argv) {
         die("Directory " + directory.string() + " does not exist or is not a directory");
 
     IO io(std::cout);
-    Parameters params = io.loadParameters(inputFilename);
+    Parameters params = io.loadParameters(inputFilename, overridenParams);
+    params.print(std::cout);
+
     Analyzer analyzer = prepareAnalyzer(tasks);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);

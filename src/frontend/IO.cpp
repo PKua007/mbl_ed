@@ -35,15 +35,16 @@ void IO::storeAnalyzerResults(const Parameters &params, const Analyzer &analyzer
     this->out << "done." << std::endl;
 }
 
-Parameters IO::loadParameters(const std::string &inputFilename) {
-    std::ifstream input(inputFilename);
-    if (!input)
-        die("Cannot open " + inputFilename + " to read input parameters");
+Parameters IO::loadParameters(const std::string &inputFilename, const std::vector<std::string> &overridenParams) {
+    std::ifstream paramsFile(inputFilename);
+    if (!paramsFile)
+        die("Cannot open " + inputFilename + " to read parameters from.");
+    std::stringstream paramsStream;
+    paramsStream << paramsFile.rdbuf() << std::endl;
+    for (const auto &overridenParam : overridenParams)
+        paramsStream << overridenParam << std::endl;
 
-    Parameters params(input);
-    params.print(this->out);
-    this->out << std::endl;
-    return params;
+    return Parameters(paramsStream);
 }
 
 std::vector<std::string> IO::findEigenenergyFiles(const std::string &directory, const std::string &fileSignature) {

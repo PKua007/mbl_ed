@@ -25,6 +25,6 @@ public:
     void storeAnalyzerResults(const Parameters &params, const Analyzer &analyzer,
                               const std::vector<std::string> &paramsToPrint, const std::string &fileSignature,
                               const std::string &outputFilename);
-    Parameters loadParameters(const std::string &inputFilename);
+    Parameters loadParameters(const std::string &inputFilename, const std::vector<std::string> &overridenParams);
     std::vector<std::string> findEigenenergyFiles(const std::string &directory, const std::string &fileSignature);
 };
