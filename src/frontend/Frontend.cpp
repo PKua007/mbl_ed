@@ -14,6 +14,7 @@
 #include "simulation/CavityHamiltonianGenerator.h"
 #include "IO.h"
 #include "analyzer/tasks/CDF.h"
+#include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/InverseParticipationRatio.h"
 #include "utils/Fold.h"
 #include "utils/Utils.h"
@@ -97,6 +98,14 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
             Validate(mgrMargin > 0 && mgrMargin <= 1);
             Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
             analyzer.addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
+        } else if (taskName == "mipr") {
+            double mgrCenter, mgrMargin;
+            taskStream >> mgrCenter >> mgrMargin;
+            ValidateMsg(taskStream, "Wrong format, use: mipr [epsilon center] [epsilon margin]");
+            Validate(mgrCenter > 0 && mgrCenter < 1);
+            Validate(mgrMargin > 0 && mgrMargin <= 1);
+            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
+            analyzer.addTask(std::make_unique<MeanInverseParticipationRatio>(mgrCenter, mgrMargin));
         } else if (taskName == "ipr") {
             double mgrCenter, mgrMargin;
             taskStream >> mgrCenter >> mgrMargin;

@@ -29,6 +29,7 @@ public:
     [[nodiscard]] const arma::mat &getEigenstates() const;
     [[nodiscard]] arma::vec getEigenstate(std::size_t i) const;
     [[nodiscard]] arma::vec getNormalizedEigenenergies() const;
+    [[nodiscard]] std::vector<std::size_t> getIndicesOfNormalizedEnergiesInBand(double epsilon, double delta) const;
     void store(std::ostream &eigenenergiesOut) const;
     void restore(std::istream &in);
 

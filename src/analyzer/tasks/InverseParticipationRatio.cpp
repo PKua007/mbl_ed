@@ -1,7 +1,8 @@
 //
-// Created by Piotr Kubala on 22/01/2020.
+// Created by Piotr Kubala on 29/01/2020.
 //
 
+#include <iterator>
 #include "InverseParticipationRatio.h"
 #include "utils/Quantity.h"
 
@@ -14,48 +15,30 @@ InverseParticipationRatio::InverseParticipationRatio(double relativeMiddleEnergy
 
 void InverseParticipationRatio::analyze(const Eigensystem &eigensystem) {
     Expects(eigensystem.hasEigenvectors());
+
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
+    auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
+                                                                        this->relativeMargin);
 
-    double relativeFrom = this->relativeMiddleEnergy - this->relativeMargin/2;
-    double relativeTo = this->relativeMiddleEnergy + this->relativeMargin/2;
-
-    auto fromIt = std::lower_bound(normalizedEnergies.begin(), normalizedEnergies.end(), relativeFrom);
-    auto toIt = std::lower_bound(normalizedEnergies.begin(), normalizedEnergies.end(), relativeTo);
-    Assert(fromIt - normalizedEnergies.begin() >= 1);
-    Assert(normalizedEnergies.end() - toIt >= 1);
-    Assert(toIt - fromIt > 0);
-
-    for (; fromIt < toIt; fromIt++) {
-        auto vecIdx = fromIt - normalizedEnergies.begin();
-        Assert(vecIdx >= 0 && static_cast<std::size_t>(vecIdx) < eigensystem.size());
-        auto state = eigensystem.getEigenstate(vecIdx);
+    this->entries.reserve(bandIndices.size());
+    for (auto i : bandIndices) {
+        auto state = eigensystem.getEigenstate(i);
         double participationRatio = std::accumulate(state.begin(), state.end(), 0., [](double sum, double d) {
             return sum + d*d*d*d;
         });
-        this->ratios.push_back(1. / participationRatio);
+        this->entries.emplace_back(normalizedEnergies[i], 1 / participationRatio);
     }
-}
-
-Quantity InverseParticipationRatio::calculateMean() const {
-    Quantity result;
-    result.calculateFromSamples(this->ratios);
-    return result;
 }
 
 std::string InverseParticipationRatio::getName() const {
     return "ipr";
 }
 
-std::vector<std::string> InverseParticipationRatio::getResultHeader() const {
-    return {"inverseParticipationRatio", "inverseParticipationRatioError"};
+void InverseParticipationRatio::storeResult(std::ostream &out) const {
+    std::copy(this->entries.begin(), this->entries.end(), std::ostream_iterator<Entry>(out, "\n"));
 }
 
-std::vector<std::string> InverseParticipationRatio::getResultFields() const {
-    Quantity result = this->calculateMean();
-    result.separator = Quantity::Separator::SPACE;
-    std::stringstream resultStream;
-    resultStream << result;
-    std::string quantityValue, quantityError;
-    resultStream >> quantityValue >> quantityError;
-    return {quantityValue, quantityError};
+std::ostream &operator<<(std::ostream &out, const InverseParticipationRatio::Entry &entry) {
+    out << entry.energy << " " << entry.ipr;
+    return out;
 }

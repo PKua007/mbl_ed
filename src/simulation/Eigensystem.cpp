@@ -112,3 +112,23 @@ std::ostream &operator<<(std::ostream &out, const Eigensystem &eigensystem) {
     out << eigensystem.eigenenergies.t() << std::endl << eigensystem.eigenstates;
     return out;
 }
+
+std::vector<std::size_t> Eigensystem::getIndicesOfNormalizedEnergiesInBand(double epsilon, double delta) const {
+    Expects(epsilon > 0 && epsilon < 1);
+    Expects(delta > 0);
+    Expects(epsilon - delta/2 >= 0 && epsilon + delta/2 <= 1);
+
+    auto normalizedEnergies = this->getNormalizedEigenenergies();
+    double relativeFrom = epsilon - delta/2;
+    double relativeTo = epsilon + delta/2;
+
+    auto fromIt = std::lower_bound(normalizedEnergies.begin(), normalizedEnergies.end(), relativeFrom);
+    auto toIt = std::lower_bound(normalizedEnergies.begin(), normalizedEnergies.end(), relativeTo);
+    Assert(fromIt - normalizedEnergies.begin() >= 1);
+    Assert(normalizedEnergies.end() - toIt >= 1);
+    Assert(toIt - fromIt > 0);
+
+    std::vector<std::size_t> indices(toIt - fromIt);
+    std::iota(indices.begin(), indices.end(), fromIt - normalizedEnergies.begin());
+    return indices;
+}

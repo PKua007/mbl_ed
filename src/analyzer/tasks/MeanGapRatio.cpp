@@ -17,19 +17,14 @@ MeanGapRatio::MeanGapRatio(double relativeMiddleEnergy, double relativeMargin)
 
 void MeanGapRatio::analyze(const Eigensystem &eigensystem) {
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
+    auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
+                                                                        this->relativeMargin);
+    Assert(bandIndices.front() > 0);
+    Assert(bandIndices.back() < normalizedEnergies.size() - 1);
 
-    double relativeFrom = this->relativeMiddleEnergy - this->relativeMargin/2;
-    double relativeTo = this->relativeMiddleEnergy + this->relativeMargin/2;
-
-    auto fromIt = std::lower_bound(normalizedEnergies.begin(), normalizedEnergies.end(), relativeFrom);
-    auto toIt = std::lower_bound(normalizedEnergies.begin(), normalizedEnergies.end(), relativeTo);
-    Assert(fromIt - normalizedEnergies.begin() >= 1);
-    Assert(normalizedEnergies.end() - toIt >= 1);
-    Assert(toIt - fromIt > 0);
-
-    for (; fromIt < toIt; fromIt++) {
-        double gap1 = *fromIt - *(fromIt - 1);
-        double gap2 = *(fromIt + 1) - *fromIt;
+    for (auto i : bandIndices) {
+        double gap1 = normalizedEnergies[i] - normalizedEnergies[i - 1];
+        double gap2 = normalizedEnergies[i + 1] - normalizedEnergies[i];
         this->gapRatios.push_back(gap1 < gap2 ? gap1/gap2 : gap2/gap1);
     }
 }

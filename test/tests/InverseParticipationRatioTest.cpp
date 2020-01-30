@@ -1,5 +1,5 @@
 //
-// Created by Piotr Kubala on 23/01/2020.
+// Created by Piotr Kubala on 30/01/2020.
 //
 
 #include <catch2/catch.hpp>
@@ -10,8 +10,6 @@ TEST_CASE("InverseParticipationRatio: names") {
     InverseParticipationRatio ratioCalculator(0.5, 0.1);
 
     REQUIRE(ratioCalculator.getName() == "ipr");
-    REQUIRE(ratioCalculator.getResultHeader() == std::vector<std::string>{"inverseParticipationRatio",
-                                                                          "inverseParticipationRatioError"});
 }
 
 TEST_CASE("InverseParticipationRatio: single energy set") {
@@ -31,14 +29,16 @@ TEST_CASE("InverseParticipationRatio: single energy set") {
              {1,   1,   0, -1./3,     0, -M_SQRT1_2,   1,   1}});
     ratioCalculator.analyze(eigensystem);
 
-    // (   ( (1)^4 )^(-1)
-    //   + ( (2/3)^4 + 5*(1/3)^4 )^(-1)
-    //   + ( 4*(1/2)^4 )^(-1)
-    //   + ( 2*(1/sqrt(2))^4 )^(-1)     ) / 4  =  2.71428571429
-    REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"2.7143", "0.7308"});
+    // ( (1)^4 )^(-1)  =  1
+    // ( (2/3)^4 + 5*(1/3)^4 )^(-1)  =  3.85714285714
+    // ( 4*(1/2)^4 )^(-1)  =  4
+    // ( 2*(1/sqrt(2))^4 )^(-1)  =  2
+    std::ostringstream out;
+    ratioCalculator.storeResult(out);
+    REQUIRE(out.str() == "0.4 1\n0.5 3.85714\n0.6 4\n0.8 2\n");
 }
 
-TEST_CASE("InverseParticipationRatio: calculating mean") {
+TEST_CASE("InverseParticipationRatio: multiple simulations") {
     InverseParticipationRatio ratioCalculator(0.5, 0.2);
 
     ratioCalculator.analyze(Eigensystem(
@@ -54,9 +54,11 @@ TEST_CASE("InverseParticipationRatio: calculating mean") {
              {1,  M_SQRT1_2, 1},
              {1,          0, 1}}));
 
-    // (   ( (1)^4 )^(-1)
-    //   + ( 2*(1/sqrt(2))^4 )^(-1) ) / 2  =  1.5
-    REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"1.5000", "0.5000"});
+    // ( (1)^4 )^(-1)  =  1
+    // ( 2*(1/sqrt(2))^4 )^(-1)  =  2
+    std::ostringstream out;
+    ratioCalculator.storeResult(out);
+    REQUIRE(out.str() == "0.4 1\n0.5 2\n");
 }
 
 TEST_CASE("InverseParticipationRatio: requires eigenvectors") {
