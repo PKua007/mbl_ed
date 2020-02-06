@@ -12,7 +12,10 @@
 #include "utils/Assertions.h"
 #include "HamiltonianGenerator.h"
 
-struct CavityHamiltonianGeneratorParameters {
+/**
+ * @brief Parameters used in CavityHamiltonianGenerator. Look there for the description.
+ */
+struct CavityHamiltonianParameters {
     double J{};
     double U{};
     double U1{};
@@ -21,7 +24,29 @@ struct CavityHamiltonianGeneratorParameters {
 };
 
 /**
- * @brief Generator of boson hamiltonian from https://arxiv.org/pdf/1902.00357.pdf
+ * @brief Generator of boson hamiltonian from https://arxiv.org/pdf/1902.00357.pdf with modifications.
+ *
+ * It consist of:
+ * <ol>
+ *
+ * <li> One site tunnelling terms, according to PBC of OBC:
+ * \f[ -J \sum_{i=1}^K ( \hat{b}_i^\dagger \hat{b}_{i+1} + \text{c. c.} ) \f]
+ *
+ * <li> Onsite energy:
+ * \f[ \frac{U}{2} \sum_{i=1}^K \hat{n}_i (\hat{n}_i - 1) \f]
+ *
+ * <li> Onsite disorder potential:
+ * \f[ \sum_{i=1}^K E_i \hat{n}_i \f]
+ *
+ * <li> The long interaction term:
+ * \f[ -\frac{U_1}{K} \left( \sum_{i=1}^K \cos(2\pi\beta i+\phi_0) \hat{n}_i \right)^2, \f]
+ *
+ * </ol>
+ * where \f$ i \f$ is the number of site, \f$ K \f$ is the total number of sites, \f$ \hat{b}_i \f$ is annihilation
+ * operator, \f$ \hat{n}_i = \hat{b}_i^\dagger\hat{b}_i \f$, \f$ E_i \f$ are random energies sampled by
+ * @a DisorderGenerator and the rest of the letters are parameters from CavityHamiltonianParameters. If
+ * \f$ \beta=0.5 \f$, \f$ \phi_0=0 \f$, then the hamiltonian has the same form as in the reference above.
+ *
  * @tparam DisorderGenerator class whose operator() returns random energies as double
  */
 template<typename DisorderGenerator>
@@ -29,11 +54,11 @@ class CavityHamiltonianGenerator : public HamiltonianGenerator {
 private:
     std::vector<double> onsiteEnergies;
     std::unique_ptr<DisorderGenerator> disorderGenerator;
-    CavityHamiltonianGeneratorParameters params;
+    CavityHamiltonianParameters params;
 
-    /* Sum of E_j n_j, where j = 0, ..., [number of sites]; n_j - number of particles in j-th site and E_j - random site
-     * energies from the constructor */
-    [[nodiscard]] double getOnsiteEnergy(const FockBase::Vector &vector) const {
+    /* All diagonal terms below are described above the class */
+
+    [[nodiscard]] double getOnsiteDisorderEnergy(const FockBase::Vector &vector) const {
         std::vector<double> elementwiseEnergies;
         elementwiseEnergies.reserve(vector.size());
         std::transform(vector.begin(), vector.end(), this->onsiteEnergies.begin(),
@@ -41,16 +66,13 @@ private:
         return std::accumulate(elementwiseEnergies.begin(), elementwiseEnergies.end(), 0., std::plus<>());
     }
 
-    /* Sum of U * n_j * (n_j - 1), where j = 1, ..., [number of sites]; n_j - number of particles in j-th site */
-    [[nodiscard]] double getShortInteractionEnergy(const FockBase::Vector &vector) const {
+    [[nodiscard]] double getOnsiteEnergy(const FockBase::Vector &vector) const {
         auto bosonAccumulator = [](auto sum, auto numberOfParticles) {
             return sum + numberOfParticles*(numberOfParticles - 1);
         };
         return this->params.U / 2 * std::accumulate(vector.begin(), vector.end(), 0., bosonAccumulator);
     }
 
-    /* -U1/[number of sites] * (sum of (-1)^j n_j)^2, where j = 1, ..., [number of sites]; n_j - number of particles in
-     * j-th site */
     [[nodiscard]] double getLongInteractionEnergy(const FockBase::Vector &vector) const {
         std::size_t elementIndex{};
         auto plusMinusAccumulator = [&elementIndex, this](auto sum, auto element) {
@@ -61,7 +83,10 @@ private:
     }
 
 public:
-    CavityHamiltonianGenerator(std::unique_ptr<FockBase> fockBase, CavityHamiltonianGeneratorParameters params,
+    /**
+     * @brief Creates the hamiltonian generator. Onsite disorder energies are initialized with random generator.
+     */
+    CavityHamiltonianGenerator(std::unique_ptr<FockBase> fockBase, CavityHamiltonianParameters params,
                                std::unique_ptr<DisorderGenerator> disorderGenerator, bool usePbc = true)
             : HamiltonianGenerator(std::move(fockBase), usePbc), disorderGenerator(std::move(disorderGenerator)),
               params{params}
@@ -69,6 +94,9 @@ public:
         this->resampleOnsiteEnergies();
     }
 
+    /**
+     * @brief Clears old onsite disorder values and samples new ones. Used for each new simulation.
+     */
     void resampleOnsiteEnergies() {
         this->onsiteEnergies.resize(this->fockBase->getNumberOfSites());
         std::generate(this->onsiteEnergies.begin(), this->onsiteEnergies.end(), std::ref(*(this->disorderGenerator)));
@@ -79,9 +107,13 @@ public:
     }
 
     [[nodiscard]] double getDiagonalElement(const FockBase::Vector &vector) const override {
-        return getOnsiteEnergy(vector) + getShortInteractionEnergy(vector) + getLongInteractionEnergy(vector);
+        return getOnsiteDisorderEnergy(vector) + getOnsiteEnergy(vector) + getLongInteractionEnergy(vector);
     }
 
+    /**
+     * @brief Returns constant -J (see CavityHamiltonianParameters) for a hop between neighbouring
+     * sites (according to PBC or OBC) and 0 for larger hops.
+     */
     [[nodiscard]] double getHoppingTerm(std::size_t fromSiteIndex, std::size_t toSiteIndex) const override {
         Expects(this->getSiteDistance(fromSiteIndex, toSiteIndex) == 1);
 

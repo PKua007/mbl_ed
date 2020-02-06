@@ -9,6 +9,10 @@
 #include <vector>
 #include <map>
 
+/**
+ * @brief A class representing a base of product states of bosons/fermion trapped inside an optical lattice.
+ * @details It uses hashing technique for a fast access to the elements.
+ */
 class FockBase {
 public:
     using Vector = std::vector<int>;
@@ -24,8 +28,22 @@ private:
 public:
     void add(Vector vector);
     [[nodiscard]] std::size_t size() const;
+
+    /**
+     * @brief Returns modifiable vector of index @a i. j-th elements of vector reperesents number of parcitles on site
+     * j.
+     */
     Vector &operator[](std::size_t i);
+
+    /**
+     * @brief Returns non-modifiable vector of index @a i. j-th elements of vector reperesents number of parcitles on
+     * site j.
+     */
     const Vector &operator[](std::size_t i) const;
+
+    /**
+     * @brief Returns the index of a given Vector or std::nullopt if it is not present.
+     */
     [[nodiscard]] std::optional<std::size_t> findIndex(const Vector &vector) const;
     iterator begin();
     iterator end();

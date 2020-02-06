@@ -71,7 +71,7 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, bool changePh
     // We add 'from' to seed not to duplicate results when simulating in parts
     auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed + params.from);
 
-    CavityHamiltonianGeneratorParameters hamiltonianParams;
+    CavityHamiltonianParameters hamiltonianParams;
     hamiltonianParams.J = params.J;
     hamiltonianParams.U = params.U;
     hamiltonianParams.U1 = params.U1;

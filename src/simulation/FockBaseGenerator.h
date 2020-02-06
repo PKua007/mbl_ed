@@ -10,6 +10,9 @@
 
 #include "FockBase.h"
 
+/**
+ * @brief A class generating complete bosonic FockBase of a given number of particles on a given number of sites.
+ */
 class FockBaseGenerator {
 public:
     [[nodiscard]] std::unique_ptr<FockBase> generate(int numberOfSites, int numberOfParticles) const;

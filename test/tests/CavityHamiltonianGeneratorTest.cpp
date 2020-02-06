@@ -36,7 +36,7 @@ TEST_CASE("CavityHamiltonianGenerator: onsite energy") {
     FockBaseGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(3, 3);
     auto disorderGenerator = std::make_unique<SequenceDisorderGenerator>(std::vector<double>{1, 2, 3});
-    CavityHamiltonianGeneratorParameters params{};
+    CavityHamiltonianParameters params{};
     CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params, std::move(disorderGenerator));
 
     arma::mat result = hamiltonianGenerator.generate();
@@ -48,7 +48,7 @@ TEST_CASE("CavityHamiltonianGenerator: onsite energy") {
 TEST_CASE("CavityHamiltonianGenerator: short interactions") {
     FockBaseGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 4);
-    CavityHamiltonianGeneratorParameters params{};
+    CavityHamiltonianParameters params{};
     params.U = 2;
     CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params,
                                                     std::make_unique<ConstantDisorderGenerator>(0));
@@ -63,7 +63,7 @@ TEST_CASE("CavityHamiltonianGenerator: long interactions") {
     SECTION("+-1 interactions") {
         FockBaseGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(3, 3);
-        CavityHamiltonianGeneratorParameters params{};
+        CavityHamiltonianParameters params{};
         params.U1 = 3;
         params.beta = 0.5;
         CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params,
@@ -78,7 +78,7 @@ TEST_CASE("CavityHamiltonianGenerator: long interactions") {
     SECTION("cos interactions: beta=1/12, phi0=pi/6") {
         FockBaseGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(3, 2);
-        CavityHamiltonianGeneratorParameters params{};
+        CavityHamiltonianParameters params{};
         params.U1 = 3;
         params.beta = 1./12;
         params.phi0 = M_PI/6;
