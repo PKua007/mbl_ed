@@ -8,61 +8,21 @@
 #include <filesystem>
 
 #include "Frontend.h"
-#include "utils/Assertions.h"
+#include "IO.h"
+
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/CavityHamiltonianGenerator.h"
-#include "IO.h"
+#include "simulation/AveragingModels.h"
+#include "simulation/DisorderGenerators.h"
+
 #include "analyzer/tasks/CDF.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/InverseParticipationRatio.h"
+
 #include "utils/Fold.h"
 #include "utils/Utils.h"
-
-namespace {
-    class UniformGenerator {
-    private:
-        std::mt19937 generator;
-        std::uniform_real_distribution<double> distribution;
-
-    public:
-        UniformGenerator(double min, double max, unsigned long seed) : generator(seed), distribution(min, max) { }
-
-        UniformGenerator(UniformGenerator &dummy) = delete;
-        UniformGenerator operator=(UniformGenerator dummy) = delete;
-
-        double operator()() {
-            return this->distribution(this->generator);
-        }
-    };
-
-    template<typename HamiltonianGenerator_t>
-    class OnsiteDisorderAveragingModel {
-    public:
-        static void setupHamiltonianGenerator(HamiltonianGenerator_t &hamiltonianGenerator, std::size_t simulationIndex,
-                                              std::size_t numberOfSimulations)
-        {
-            static_cast<void>(simulationIndex);
-            static_cast<void>(numberOfSimulations);
-            hamiltonianGenerator.resampleOnsiteEnergies();
-        }
-    };
-
-    template<typename HamiltonianGenerator_t>
-    class Phi0AveragingModel {
-    public:
-        static void setupHamiltonianGenerator(HamiltonianGenerator_t &hamiltonianGenerator,
-                                              std::size_t simulationIndex, std::size_t numberOfSimulations)
-        {
-            Expects(numberOfSimulations > 0);
-            Expects(simulationIndex < numberOfSimulations);
-
-            double phi0 = 2*M_PI*simulationIndex/numberOfSimulations;
-            hamiltonianGenerator.resampleOnsiteEnergies();
-            hamiltonianGenerator.setPhi0(phi0);
-        }
-    };
-}
+#include "utils/Assertions.h"
 
 auto Frontend::buildHamiltonianGenerator(const Parameters &params, bool changePhi0ForAverage) {
     FockBaseGenerator baseGenerator;
@@ -168,8 +128,8 @@ void Frontend::simulate(int argc, char **argv) {
                             "-P J=1 (-PJ=1 does not work) act as one would append J=1 to input file",
              cxxopts::value<std::vector<std::string>>(overridenParams));
 
-    auto result = options.parse(argc, argv);
-    if (result.count("help")) {
+    auto parsedOptions = options.parse(argc, argv);
+    if (parsedOptions.count("help")) {
         std::cout << options.help() << std::endl;
         exit(0);
     }
@@ -177,7 +137,7 @@ void Frontend::simulate(int argc, char **argv) {
     std::string cmd(argv[0]);
     if (argc != 1)
         die("Unexpected positional arguments. See " + cmd + " --help");
-    if (!result.count("input"))
+    if (!parsedOptions.count("input"))
         die("Input file must be specified with option -i [input file name]");
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
         die("Output directory " + directory.string() + " does not exist or is not a directory");
@@ -190,8 +150,6 @@ void Frontend::simulate(int argc, char **argv) {
     auto hamiltonianGenerator = buildHamiltonianGenerator(params, changePhi0ForAverage);
 
     Analyzer analyzer = prepareAnalyzer(onTheFlyTasks);
-    std::string fileSignature = params.getOutputFileSignature();
-    std::string eigensystemPath = directory / fileSignature;
 
     SimulationParameters simulationParams;
     simulationParams.from = params.from;
@@ -199,13 +157,17 @@ void Frontend::simulate(int argc, char **argv) {
     simulationParams.totalSimulations = params.totalSimulations;
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
-    simulationParams.fileSignature = eigensystemPath;
+    simulationParams.fileSignature = directory / params.getOutputFileSignature();
     if (changePhi0ForAverage)
         perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer, simulationParams);
     else
         perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer, simulationParams);
 
-    io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);
+    io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
+    if (outputFilename.empty())
+        io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
+    else
+        io.storeAnalyzerResults(params, analyzer, paramsToPrint, outputFilename);
 }
 
 void Frontend::analyze(int argc, char **argv) {
@@ -238,8 +200,8 @@ void Frontend::analyze(int argc, char **argv) {
                             "-P J=1 (-PJ=1 does not work) act as one would append J=1 to input file",
              cxxopts::value<std::vector<std::string>>(overridenParams));
 
-    auto result = options.parse(argc, argv);
-    if (result.count("help")) {
+    auto parsedOptions = options.parse(argc, argv);
+    if (parsedOptions.count("help")) {
         std::cout << options.help() << std::endl;
         exit(0);
     }
@@ -247,9 +209,9 @@ void Frontend::analyze(int argc, char **argv) {
     std::string cmd(argv[0]);
     if (argc != 1)
         die("Unexpected positional arguments. See " + cmd + " --help");
-    if (!result.count("input"))
+    if (!parsedOptions.count("input"))
         die("Input file must be specified with option -i [input file name]");
-    if (!result.count("task"))
+    if (!parsedOptions.count("task"))
         die("At least 1 analyzer task must be specified with option -t [task parameters]");
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
         die("Directory " + directory.string() + " does not exist or is not a directory");
@@ -274,7 +236,11 @@ void Frontend::analyze(int argc, char **argv) {
         analyzer.analyze(eigensystem);
     }
 
-    io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);
+    io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
+    if (outputFilename.empty())
+        io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
+    else
+        io.storeAnalyzerResults(params, analyzer, paramsToPrint, outputFilename);
 }
 
 void Frontend::printGeneralHelp(const std::string &cmd) {

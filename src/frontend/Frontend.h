@@ -10,6 +10,9 @@
 #include "Parameters.h"
 #include "simulation/SimulationParameters.h"
 
+/**
+ * @brief Class responsible for communication between the user and simulation backend.
+ */
 class Frontend {
 private:
     std::ostream &out;
