@@ -2,68 +2,29 @@
 // Created by Piotr Kubala on 21/01/2020.
 //
 
-#include <random>
-
 #include <cxxopts.hpp>
 #include <filesystem>
 
 #include "Frontend.h"
-#include "utils/Assertions.h"
+#include "IO.h"
+
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/CavityHamiltonianGenerator.h"
-#include "IO.h"
+#include "simulation/AveragingModels.h"
+#include "simulation/DisorderGenerators.h"
+
 #include "analyzer/tasks/CDF.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/InverseParticipationRatio.h"
+
 #include "utils/Fold.h"
 #include "utils/Utils.h"
+#include "utils/Assertions.h"
 
-namespace {
-    class UniformGenerator {
-    private:
-        std::mt19937 generator;
-        std::uniform_real_distribution<double> distribution;
-
-    public:
-        UniformGenerator(double min, double max, unsigned long seed) : generator(seed), distribution(min, max) { }
-
-        UniformGenerator(UniformGenerator &dummy) = delete;
-        UniformGenerator operator=(UniformGenerator dummy) = delete;
-
-        double operator()() {
-            return this->distribution(this->generator);
-        }
-    };
-
-    template<typename HamiltonianGenerator_t>
-    class OnsiteDisorderAveragingModel {
-    public:
-        static void setupHamiltonianGenerator(HamiltonianGenerator_t &hamiltonianGenerator, std::size_t simulationIndex,
-                                              std::size_t numberOfSimulations)
-        {
-            static_cast<void>(simulationIndex);
-            static_cast<void>(numberOfSimulations);
-            hamiltonianGenerator.resampleOnsiteEnergies();
-        }
-    };
-
-    template<typename HamiltonianGenerator_t>
-    class Phi0AveragingModel {
-    public:
-        static void setupHamiltonianGenerator(HamiltonianGenerator_t &hamiltonianGenerator,
-                                              std::size_t simulationIndex, std::size_t numberOfSimulations)
-        {
-            Expects(numberOfSimulations > 0);
-            Expects(simulationIndex < numberOfSimulations);
-
-            double phi0 = 2*M_PI*simulationIndex/numberOfSimulations;
-            hamiltonianGenerator.resampleOnsiteEnergies();
-            hamiltonianGenerator.setPhi0(phi0);
-        }
-    };
-}
-
+/**
+ * @param changePhi0ForAverage this determines whether to average on disorder or phi0
+ */
 auto Frontend::buildHamiltonianGenerator(const Parameters &params, bool changePhi0ForAverage) {
     FockBaseGenerator baseGenerator;
     auto base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
@@ -71,7 +32,7 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, bool changePh
     // We add 'from' to seed not to duplicate results when simulating in parts
     auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed + params.from);
 
-    CavityHamiltonianGeneratorParameters hamiltonianParams;
+    CavityHamiltonianParameters hamiltonianParams;
     hamiltonianParams.J = params.J;
     hamiltonianParams.U = params.U;
     hamiltonianParams.U1 = params.U1;
@@ -84,6 +45,9 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, bool changePh
                                                      std::move(disorderGenerator), params.usePeriodicBC);
 }
 
+/**
+ * @brief Takes a vector of @a tasks with parameters and parses them to AnalyzerTask -s
+ */
 Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
     Analyzer analyzer;
     for (const auto &task : tasks) {
@@ -137,6 +101,7 @@ void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamil
 }
 
 void Frontend::simulate(int argc, char **argv) {
+    // Parse options
     cxxopts::Options options(argv[0],
                              Fold("Exact diagonalization mode. Performs one or more simulations depending on the "
                              "parameters. It can store them for to further processing and/or perform some "
@@ -168,20 +133,22 @@ void Frontend::simulate(int argc, char **argv) {
                             "-P J=1 (-PJ=1 does not work) act as one would append J=1 to input file",
              cxxopts::value<std::vector<std::string>>(overridenParams));
 
-    auto result = options.parse(argc, argv);
-    if (result.count("help")) {
+    auto parsedOptions = options.parse(argc, argv);
+    if (parsedOptions.count("help")) {
         std::cout << options.help() << std::endl;
         exit(0);
     }
 
+    // Validate parsed options
     std::string cmd(argv[0]);
     if (argc != 1)
         die("Unexpected positional arguments. See " + cmd + " --help");
-    if (!result.count("input"))
+    if (!parsedOptions.count("input"))
         die("Input file must be specified with option -i [input file name]");
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
         die("Output directory " + directory.string() + " does not exist or is not a directory");
 
+    // Prepare parameters
     IO io(std::cout);
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
@@ -190,25 +157,30 @@ void Frontend::simulate(int argc, char **argv) {
     auto hamiltonianGenerator = buildHamiltonianGenerator(params, changePhi0ForAverage);
 
     Analyzer analyzer = prepareAnalyzer(onTheFlyTasks);
-    std::string fileSignature = params.getOutputFileSignature();
-    std::string eigensystemPath = directory / fileSignature;
 
+    // Prepare and run simulations
     SimulationParameters simulationParams;
     simulationParams.from = params.from;
     simulationParams.to = params.to;
     simulationParams.totalSimulations = params.totalSimulations;
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
-    simulationParams.fileSignature = eigensystemPath;
+    simulationParams.fileSignature = directory / params.getOutputFileSignature();
     if (changePhi0ForAverage)
         perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer, simulationParams);
     else
         perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer, simulationParams);
 
-    io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);
+    // Save results
+    io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
+    if (outputFilename.empty())
+        io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
+    else
+        io.storeAnalyzerResults(params, analyzer, paramsToPrint, outputFilename);
 }
 
 void Frontend::analyze(int argc, char **argv) {
+    // Parse options
     cxxopts::Options options(argv[0],
                              Fold("Mode for analyzing the results of already performed simulations, stored in the "
                              "files. It performs one or more analyzer task, specified with option -t (--task). The "
@@ -238,26 +210,29 @@ void Frontend::analyze(int argc, char **argv) {
                             "-P J=1 (-PJ=1 does not work) act as one would append J=1 to input file",
              cxxopts::value<std::vector<std::string>>(overridenParams));
 
-    auto result = options.parse(argc, argv);
-    if (result.count("help")) {
+    auto parsedOptions = options.parse(argc, argv);
+    if (parsedOptions.count("help")) {
         std::cout << options.help() << std::endl;
         exit(0);
     }
 
+    // Validate options
     std::string cmd(argv[0]);
     if (argc != 1)
         die("Unexpected positional arguments. See " + cmd + " --help");
-    if (!result.count("input"))
+    if (!parsedOptions.count("input"))
         die("Input file must be specified with option -i [input file name]");
-    if (!result.count("task"))
+    if (!parsedOptions.count("task"))
         die("At least 1 analyzer task must be specified with option -t [task parameters]");
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
         die("Directory " + directory.string() + " does not exist or is not a directory");
 
+    // Load parameters
     IO io(std::cout);
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
 
+    // Load eigenenergies and analyze them
     Analyzer analyzer = prepareAnalyzer(tasks);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
@@ -274,7 +249,12 @@ void Frontend::analyze(int argc, char **argv) {
         analyzer.analyze(eigensystem);
     }
 
-    io.storeAnalyzerResults(params, analyzer, paramsToPrint, fileSignature, outputFilename);
+    // Save results
+    io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
+    if (outputFilename.empty())
+        io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
+    else
+        io.storeAnalyzerResults(params, analyzer, paramsToPrint, outputFilename);
 }
 
 void Frontend::printGeneralHelp(const std::string &cmd) {

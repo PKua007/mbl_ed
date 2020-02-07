@@ -1,15 +1,43 @@
+###########################
+# Parameters of the lattice
+###########################
+
 numberOfSites = 6
 numberOfBosons = 6
+usePeriodicBC = false   # false = PBC, true = OBC
+
+################################################################################################
+# Parameters of the hamiltonian - they are mapped to CavityHamiltonianParameters.
+# See simulation/CavityHamiltonianGenerator.h documentation for the formulas where they are used
+################################################################################################
+
 J = 1
 W = 3
 U = 5
 U1 = 10
 beta = 0.61803398875
+
+# This parameter is special.
+# a) If set to numerical value, all hamiltonians will have the same phi0 and averaging will be based on random disorder
+# b) If set to 'changeForAverage', averaging will be based on hamiltonians with different phi0 uniformly covering
+#    [0, 2pi] range. Disorder will be also resampled. One can set W = 0 to turn the disorder term off.
+
 phi0 = 0
-usePeriodicBC = false
-calculateEigenvectors = true
-saveEigenenergies = false
-from = 2
-to = 4
-totalSimulations = 5
+
+#######################
+# Simulation parameters
+#######################
+
 seed = 1234
+calculateEigenvectors = true    # This can be used to switch off calculating eigenvectors. Defualt: true
+saveEigenenergies = false       # Default: false
+
+# These parameters describe the range of simulations. The range is used for example to determine which phi0 to sample
+# for phi0 = changeForAverage. The range is given by [from, to) and determines which simulations are performed in this
+# program run, while totalSimulations describes all runs. For example, if from = 0, to = 5, totalSimulations = 8
+# and phi0 = changeForAverage, simulations will be performed for phi0 = 0, 0.25pi, 0.5pi, 0.75pi, pi and 1.25pi.
+
+from = 2              # If omitted, set to 0
+to = 4                # If omitted, set to totalSimulations
+totalSimulations = 5  # If omitted, set to to. You cannot omit both to and totalSimulation
+

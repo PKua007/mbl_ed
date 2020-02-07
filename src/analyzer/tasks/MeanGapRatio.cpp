@@ -2,9 +2,6 @@
 // Created by pkua on 08.11.2019.
 //
 
-#include <algorithm>
-#include <sstream>
-
 #include "MeanGapRatio.h"
 #include "utils/Quantity.h"
 

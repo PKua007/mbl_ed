@@ -27,11 +27,11 @@ Fold::operator std::string() const {
             formatted << marginSpaces << this->str.substr(lineBeg, effectiveWidth) << '\n';
             lineBeg = lineBeg + effectiveWidth + 1;
         } else if (spacePos == std::string::npos) {
-            // found space to break
+            // too long line to break nicely
             formatted << marginSpaces << this->str.substr(lineBeg, effectiveWidth) << '\n';
             lineBeg = lineBeg + effectiveWidth;
         } else {
-            // too long line to break nicely
+            // found space to break
             formatted << marginSpaces << this->str.substr(lineBeg, spacePos - lineBeg + 1) << '\n';
             lineBeg = spacePos + 1;
         }
