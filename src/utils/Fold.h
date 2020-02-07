@@ -8,6 +8,32 @@
 #include <sstream>
 #include <utility>
 
+/**
+ * @brief A simple class for folding long strings into multiline.
+ * @details Usage:
+ *
+ * \code
+ * std::cout << Fold("Long string without a margin").width(10) << std::endl;
+ * \endcode
+ *
+ * <pre>
+ * |Long      |
+ * |string    |
+ * |without a |
+ * |margin    |
+ * </pre>
+ *
+ * \code
+ * std::cout << Fold("Long string with a margin").width(10).margin(4) << std::endl;
+ * \endcode
+ *
+ * <pre>
+ * |    Long  |
+ * |    string|
+ * |    with a|
+ * |    margin|
+ * </pre>
+ */
 class Fold {
 private:
     std::size_t width_{};

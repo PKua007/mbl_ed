@@ -9,6 +9,10 @@
 
 #include "utils/Assertions.h"
 
+/**
+ * @brief Averaging model, used in Simulation, which samples new onsite disorder terms for each simulation.
+ * @tparam HamiltonianGenerator_t concrete hamiltonian generator that it to be prepared for new average entry
+ */
 template<typename HamiltonianGenerator_t>
 class OnsiteDisorderAveragingModel {
 public:
@@ -21,6 +25,11 @@ public:
     }
 };
 
+/**
+ * @brief Averaging model, used in Simulation, which distributes evenly phi0 values across simulations based on
+ * @a simulationIndex and @a numberOfSimulations.
+ * @tparam HamiltonianGenerator_t concrete hamiltonian generator that it to be prepared for new average entry
+ */
 template<typename HamiltonianGenerator_t>
 class Phi0AveragingModel {
 public:

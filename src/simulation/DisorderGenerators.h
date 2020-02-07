@@ -7,6 +7,9 @@
 
 #include <random>
 
+/**
+ * @brief Disorder generator wich just samples random number from [min, max).
+ */
 class UniformGenerator {
 private:
     std::mt19937 generator;

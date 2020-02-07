@@ -8,6 +8,9 @@
 #include <iosfwd>
 #include <exception>
 
+/**
+ * @brief Exception thrown when parsing of accessing unknown parameter.
+ */
 struct UnknownParameterException : public std::runtime_error {
 public:
     explicit UnknownParameterException(const std::string &what) : std::runtime_error(what) { }
