@@ -51,8 +51,8 @@ Parameters::Parameters(std::istream &input) {
 }
 
 void Parameters::autocompleteAndValidate() {
+    // Empty totalSimulations is taken from to and vice verse, but at least one of them must be specified
     Validate(this->totalSimulations > 0 || this->to > 0);
-
     if (this->to == 0)
         this->to = this->totalSimulations;
     else if (this->totalSimulations == 0)

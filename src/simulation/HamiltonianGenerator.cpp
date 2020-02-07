@@ -5,6 +5,10 @@
 #include "HamiltonianGenerator.h"
 #include "utils/Assertions.h"
 
+/**
+ * @brief Returns vector after acting with b_{toSiteIndex}^\dagger b_{fromSiteIndex} on @a vector with a correct
+ * constant
+ */
 std::optional<std::pair<FockBase::Vector, double>>
 HamiltonianGenerator::hoppingAction(const FockBase::Vector &vector, std::size_t fromSiteIndex,
                                     std::size_t toSiteIndex) const

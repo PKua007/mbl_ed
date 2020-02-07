@@ -2,7 +2,6 @@
 // Created by Piotr Kubala on 17/01/2020.
 //
 
-#include <algorithm>
 #include <ostream>
 #include <numeric>
 #include <functional>
@@ -12,21 +11,20 @@
 #include "CDF.h"
 
 void CDF::analyze(const Eigensystem &eigensystem) {
-    std::size_t steps = this->cdfTable.size();
-    auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
+    for (auto &cdfEntry : this->cdfTable)
+        cdfEntry.push_back(0);
 
-    using namespace std::placeholders;
-    std::for_each(this->cdfTable.begin(), this->cdfTable.end(), [](auto &entry) { entry.push_back(0); });
+    auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
+    std::size_t steps = this->cdfTable.size();
     for (auto energy : normalizedEnergies) {
         auto it = this->cdfTable.begin();
         while(static_cast<double>(it - this->cdfTable.begin()) / static_cast<double>(steps - 1) < energy)
             it++;
-
         std::for_each(it, this->cdfTable.end(), [](auto &entry) { entry.back()++; });
     }
-    std::for_each(this->cdfTable.begin(), this->cdfTable.end(), [&eigensystem](auto &entry) {
-        entry.back() /= eigensystem.size();
-    });
+
+    for (auto &cdfEntry : this->cdfTable)
+        cdfEntry.back() /= eigensystem.size();
 }
 
 std::string CDF::getName() const {

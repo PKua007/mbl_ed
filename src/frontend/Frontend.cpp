@@ -2,8 +2,6 @@
 // Created by Piotr Kubala on 21/01/2020.
 //
 
-#include <random>
-
 #include <cxxopts.hpp>
 #include <filesystem>
 
@@ -24,6 +22,9 @@
 #include "utils/Utils.h"
 #include "utils/Assertions.h"
 
+/**
+ * @param changePhi0ForAverage this determines whether to average on disorder or phi0
+ */
 auto Frontend::buildHamiltonianGenerator(const Parameters &params, bool changePhi0ForAverage) {
     FockBaseGenerator baseGenerator;
     auto base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
@@ -44,6 +45,9 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, bool changePh
                                                      std::move(disorderGenerator), params.usePeriodicBC);
 }
 
+/**
+ * @brief Takes a vector of @a tasks with parameters and parses them to AnalyzerTask -s
+ */
 Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
     Analyzer analyzer;
     for (const auto &task : tasks) {
@@ -97,6 +101,7 @@ void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamil
 }
 
 void Frontend::simulate(int argc, char **argv) {
+    // Parse options
     cxxopts::Options options(argv[0],
                              Fold("Exact diagonalization mode. Performs one or more simulations depending on the "
                              "parameters. It can store them for to further processing and/or perform some "
@@ -134,6 +139,7 @@ void Frontend::simulate(int argc, char **argv) {
         exit(0);
     }
 
+    // Validate parsed options
     std::string cmd(argv[0]);
     if (argc != 1)
         die("Unexpected positional arguments. See " + cmd + " --help");
@@ -142,6 +148,7 @@ void Frontend::simulate(int argc, char **argv) {
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
         die("Output directory " + directory.string() + " does not exist or is not a directory");
 
+    // Prepare parameters
     IO io(std::cout);
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
@@ -151,6 +158,7 @@ void Frontend::simulate(int argc, char **argv) {
 
     Analyzer analyzer = prepareAnalyzer(onTheFlyTasks);
 
+    // Prepare and run simulations
     SimulationParameters simulationParams;
     simulationParams.from = params.from;
     simulationParams.to = params.to;
@@ -163,6 +171,7 @@ void Frontend::simulate(int argc, char **argv) {
     else
         perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer, simulationParams);
 
+    // Save results
     io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
     if (outputFilename.empty())
         io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
@@ -171,6 +180,7 @@ void Frontend::simulate(int argc, char **argv) {
 }
 
 void Frontend::analyze(int argc, char **argv) {
+    // Parse options
     cxxopts::Options options(argv[0],
                              Fold("Mode for analyzing the results of already performed simulations, stored in the "
                              "files. It performs one or more analyzer task, specified with option -t (--task). The "
@@ -206,6 +216,7 @@ void Frontend::analyze(int argc, char **argv) {
         exit(0);
     }
 
+    // Validate options
     std::string cmd(argv[0]);
     if (argc != 1)
         die("Unexpected positional arguments. See " + cmd + " --help");
@@ -216,10 +227,12 @@ void Frontend::analyze(int argc, char **argv) {
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
         die("Directory " + directory.string() + " does not exist or is not a directory");
 
+    // Load parameters
     IO io(std::cout);
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
 
+    // Load eigenenergies and analyze them
     Analyzer analyzer = prepareAnalyzer(tasks);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
@@ -236,6 +249,7 @@ void Frontend::analyze(int argc, char **argv) {
         analyzer.analyze(eigensystem);
     }
 
+    // Save results
     io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
     if (outputFilename.empty())
         io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);

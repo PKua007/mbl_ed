@@ -8,6 +8,10 @@
 #include "IO.h"
 #include "utils/Utils.h"
 
+/**
+ * @brief Saves inline results' @a header + @a fields to @a outputFilename. The header is printed only if file didn't
+ * exist.
+ */
 void IO::saveOutputToFile(const std::string &header, const std::string &fields, const std::string &outputFilename) {
     bool fileExists = std::ifstream(outputFilename).is_open();
     std::ofstream output(outputFilename, std::fstream::app);
@@ -19,6 +23,9 @@ void IO::saveOutputToFile(const std::string &header, const std::string &fields, 
     output << fields << std::endl;
 }
 
+/**
+ * @brief Implodes a vector of strings into a row with spaces escaped by " "
+ */
 std::string IO::stringifyRow(std::vector<std::string> row) const {
     auto csvEscaper = [](std::string &entry) {
         if (entry.find(' ') != std::string::npos)
@@ -31,6 +38,10 @@ std::string IO::stringifyRow(std::vector<std::string> row) const {
     return ostream.str();
 }
 
+/**
+ * @brief Takes @a analyzer and prepares the whole header for inline results.
+ * @param parametersToPrint parameters from Parameters to also include (the first columns)
+ */
 std::string IO::prepareInlineResultHeaderRow(const Analyzer &analyzer,
                                              const std::vector<std::string> &parametersToPrint)
 {
@@ -42,6 +53,10 @@ std::string IO::prepareInlineResultHeaderRow(const Analyzer &analyzer,
     return this->stringifyRow(header);
 }
 
+/**
+ * @brief Takes @a analyzer and prepares the whole fields row for inline results.
+ * @param parametersToPrint parameters from Parameters to also include (the first columns)
+ */
 std::string IO::prepareInlineResultFieldsRow(const Parameters &parameters, const Analyzer &analyzer,
                                              const std::vector<std::string> &parametersToPrint)
 {
@@ -57,8 +72,7 @@ std::string IO::prepareInlineResultFieldsRow(const Parameters &parameters, const
 void IO::printInlineAnalyzerResults(const Parameters &params, const Analyzer &analyzer,
                                     const std::vector<std::string> &paramsToPrint)
 {
-    std::string headerRow = this->prepareInlineResultHeaderRow(analyze
-            r, paramsToPrint);
+    std::string headerRow = this->prepareInlineResultHeaderRow(analyzer, paramsToPrint);
     std::string fieldsRow = this->prepareInlineResultFieldsRow(params, analyzer, paramsToPrint);
     this->logger << std::endl << headerRow << std::endl << fieldsRow << std::endl;
 }

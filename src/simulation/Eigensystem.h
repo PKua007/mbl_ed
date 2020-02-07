@@ -19,8 +19,8 @@ private:
     arma::mat eigenstates;
     bool hasEigenvectors_{};
 
-    void sortAndNormalize();
-    void sort();
+    void sortEigenenergiesAndNormalizeEigenstates();
+    void sortEigenenergies();
 
 public:
     Eigensystem() = default;

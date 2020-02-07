@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
     }
 
     // We now shift the arguments, and pretend, that the new first (command) is "cmd mode"
-    // Different modes can then parse the arguments separately
+    // Different modes can then parse the arguments separately and will think that the whole argv[0] is "cmd mode"
     std::string mode(argv[1]);
     std::string cmdAndMode = cmd + " " + mode;
     argv++;

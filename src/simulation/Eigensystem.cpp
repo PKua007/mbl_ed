@@ -21,13 +21,13 @@ Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors)
 
     if (size == 0)
         this->hasEigenvectors_ = false;
-    this->sortAndNormalize();
+    this->sortEigenenergiesAndNormalizeEigenstates();
 }
 
 Eigensystem::Eigensystem(arma::vec eigenvalues)
         : eigenenergies{std::move(eigenvalues)}, hasEigenvectors_{false}
 {
-    this->sort();
+    this->sortEigenenergies();
 }
 
 std::size_t Eigensystem::size() const {
@@ -93,7 +93,7 @@ bool operator!=(const Eigensystem &lhs, const Eigensystem &rhs) {
     return !(rhs == lhs);
 }
 
-void Eigensystem::sortAndNormalize() {
+void Eigensystem::sortEigenenergiesAndNormalizeEigenstates() {
     auto indices = arma::regspace<arma::ivec>(0, this->size() - 1);
     auto zipped = Zip(this->eigenenergies, indices);
     std::sort(zipped.begin(), zipped.end());
@@ -104,7 +104,7 @@ void Eigensystem::sortAndNormalize() {
     this->eigenstates = newEigenstates;
 }
 
-void Eigensystem::sort() {
+void Eigensystem::sortEigenenergies() {
     std::sort(this->eigenenergies.begin(), this->eigenenergies.end());
 }
 
