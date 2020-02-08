@@ -16,12 +16,6 @@ W = 3
 U = 5
 U1 = 10
 beta = 0.61803398875
-
-# This parameter is special.
-# a) If set to numerical value, all hamiltonians will have the same phi0 and averaging will be based on random disorder
-# b) If set to 'changeForAverage', averaging will be based on hamiltonians with different phi0 uniformly covering
-#    [0, 2pi] range. Disorder will be also resampled. One can set W = 0 to turn the disorder term off.
-
 phi0 = 0
 
 #######################
@@ -32,10 +26,18 @@ seed = 1234
 calculateEigenvectors = true    # This can be used to switch off calculating eigenvectors. Defualt: true
 saveEigenenergies = false       # Default: false
 
+# This describes what to change in hamiltonian in subsequent simulations for averaging.
+# - onsiteDisorder - only onsite disorder is resampled for each simulation
+# - uniformPhi0 - averaging is done on phi0 uniformly distributed over [0, pi) interval. The range can be controlled
+#                 by from, to and totalSimulations parameters; onsite disorder is also sampled
+# - randomPhi0 - for each simulation random phi0 is sampled from [0, 2pi) interval; onsite disorder is also sampled
+
+averagingModel = randomPhi0
+
 # These parameters describe the range of simulations. The range is used for example to determine which phi0 to sample
-# for phi0 = changeForAverage. The range is given by [from, to) and determines which simulations are performed in this
-# program run, while totalSimulations describes all runs. For example, if from = 0, to = 5, totalSimulations = 8
-# and phi0 = changeForAverage, simulations will be performed for phi0 = 0, 0.25pi, 0.5pi, 0.75pi, pi and 1.25pi.
+# for uniformPhi0 averaging models. The range is given by [from, to) and determines which simulations are performed in
+# this program run, while totalSimulations describes all runs. For example, if from = 0, to = 5, totalSimulations = 8
+# and averagingModel = uniformPhi0, simulations will be performed for phi0 = 0, 0.25pi, 0.5pi, 0.75pi, pi and 1.25pi.
 
 from = 2              # If omitted, set to 0
 to = 4                # If omitted, set to totalSimulations

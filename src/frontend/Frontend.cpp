@@ -25,7 +25,7 @@
 /**
  * @param changePhi0ForAverage this determines whether to average on disorder or phi0
  */
-auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd, bool changePhi0ForAverage) {
+auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
     FockBaseGenerator baseGenerator;
     auto base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
 
@@ -37,8 +37,7 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd, boo
     hamiltonianParams.U = params.U;
     hamiltonianParams.U1 = params.U1;
     hamiltonianParams.beta = params.beta;
-    if (!changePhi0ForAverage)
-        hamiltonianParams.phi0 = std::stod(params.phi0);
+    hamiltonianParams.phi0 = params.phi0;
 
     using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
     return std::make_unique<TheHamiltonianGenerator>(std::move(base), hamiltonianParams, rnd,
@@ -155,8 +154,7 @@ void Frontend::simulate(int argc, char **argv) {
     params.print(std::cout);
 
     auto rnd = std::make_unique<RND>(params.from + params.seed);
-    bool changePhi0ForAverage = (params.phi0 == "changeForAverage");
-    auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd, changePhi0ForAverage);
+    auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd);
 
     Analyzer analyzer = prepareAnalyzer(onTheFlyTasks);
 
@@ -168,10 +166,13 @@ void Frontend::simulate(int argc, char **argv) {
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
     simulationParams.fileSignature = directory / params.getOutputFileSignature();
-    if (changePhi0ForAverage) {
+    if (params.averagingModel == "uniformPhi0") {
         perform_simulations<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
                                                        simulationParams);
-    } else {
+    } else if (params.averagingModel == "randomPhi0") {
+        perform_simulations<RandomPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
+                                                      simulationParams);
+    } else if (params.averagingModel == "onsiteDisorder") {
         perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
                                                           simulationParams);
     }

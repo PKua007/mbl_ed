@@ -28,7 +28,9 @@ Parameters::Parameters(std::istream &input) {
         else if (key == "beta")
             this->beta = config.getDouble("beta");
         else if (key == "phi0")
-            this->phi0 = config.getString("phi0");
+            this->phi0 = config.getDouble("phi0");
+        else if (key == "averagingModel")
+            this->averagingModel = config.getString("averagingModel");
         else if (key == "usePeriodicBC")
             this->usePeriodicBC = config.getBoolean("usePeriodicBC");
         else if (key == "calculateEigenvectors")
@@ -77,6 +79,7 @@ void Parameters::print(std::ostream &out) const {
     out << "U1                    : " << this->U1 << std::endl;
     out << "beta                  : " << this->beta << std::endl;
     out << "phi0                  : " << this->phi0 << std::endl;
+    out << "averagingModel        : " << this->averagingModel << std::endl;
     out << "usePeriodicBC         : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
     out << "calculateEigenvectors : " << (this->calculateEigenvectors ? "true" : "false") << std::endl;
     out << "saveEigenenergies     : " << (this->saveEigenenergies ? "true" : "false") << std::endl;
@@ -84,6 +87,7 @@ void Parameters::print(std::ostream &out) const {
     out << "to                    : " << this->to << std::endl;
     out << "totalSimulations      : " << this->totalSimulations << std::endl;
     out << "seed                  : " << this->seed << std::endl;
+    out << std::endl;
 }
 
 std::string Parameters::getByName(const std::string &name) const {
@@ -102,7 +106,9 @@ std::string Parameters::getByName(const std::string &name) const {
     else if (name == "beta")
         return this->doubleToString(this->beta);
     else if (name == "phi0")
-        return this->phi0;
+        return this->doubleToString(this->phi0);
+    else if (name == "averagingModel")
+        return this->averagingModel;
     else if (name == "usePeriodicBC")
         return this->usePeriodicBC ? "true" : "false";
     else if (name == "calculateEigenvectors")

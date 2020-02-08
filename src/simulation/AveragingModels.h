@@ -29,6 +29,7 @@ public:
 /**
  * @brief Averaging model, used in Simulation, which distributes evenly phi0 values across simulations based on
  * @a simulationIndex and @a numberOfSimulations.
+ * @details Onsite disorder is also resampled.
  * @tparam HamiltonianGenerator_t concrete hamiltonian generator that it to be prepared for new average entry
  */
 template<typename HamiltonianGenerator_t>
@@ -40,7 +41,7 @@ public:
         Expects(numberOfSimulations > 0);
         Expects(simulationIndex < numberOfSimulations);
 
-        double phi0 = 2*M_PI*simulationIndex/numberOfSimulations;
+        double phi0 = M_PI*simulationIndex/numberOfSimulations;
         hamiltonianGenerator.resampleOnsiteEnergies(rnd);
         hamiltonianGenerator.setPhi0(phi0);
     }
@@ -49,6 +50,7 @@ public:
 /**
  * @brief Averaging model, used in Simulation, which picks random phi0 values across simulations based on
  * @a simulationIndex and @a numberOfSimulations.
+ * @details Onsite disorder is also resampled.
  * @tparam HamiltonianGenerator_t concrete hamiltonian generator that it to be prepared for new average entry
  */
 template<typename HamiltonianGenerator_t>
@@ -60,7 +62,7 @@ public:
         Expects(numberOfSimulations > 0);
         Expects(simulationIndex < numberOfSimulations);
 
-        hamiltonianGenerator.resampleOnsiteEnergies();
+        hamiltonianGenerator.resampleOnsiteEnergies(rnd);
         hamiltonianGenerator.setPhi0(2*M_PI*rnd());
     }
 };
