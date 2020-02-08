@@ -4,10 +4,12 @@
 
 #include <catch2/catch.hpp>
 #include <utility>
-#include <simulation/FockBaseGenerator.h>
 
 #include "matchers/ArmaApproxEqualMatcher.h"
+
 #include "simulation/CavityHamiltonianGenerator.h"
+#include "simulation/FockBaseGenerator.h"
+#include "simulation/RND.h"
 
 namespace {
     class ConstantDisorderGenerator {
@@ -17,7 +19,7 @@ namespace {
     public:
         explicit ConstantDisorderGenerator(double constant) : constant(constant) { }
 
-        double operator()() { return constant; }
+        double operator()(RND &rnd) { return constant; }
     };
 
     class SequenceDisorderGenerator {
@@ -28,7 +30,7 @@ namespace {
     public:
         explicit SequenceDisorderGenerator(std::vector<double> sequence) : sequence(std::move(sequence)) { }
 
-        double operator()() { return this->sequence.at(index++); }
+        double operator()(RND &rnd) { return this->sequence.at(index++); }
     };
 }
 
@@ -37,7 +39,8 @@ TEST_CASE("CavityHamiltonianGenerator: onsite energy") {
     auto fockBase = baseGenerator.generate(3, 3);
     auto disorderGenerator = std::make_unique<SequenceDisorderGenerator>(std::vector<double>{1, 2, 3});
     CavityHamiltonianParameters params{};
-    CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params, std::move(disorderGenerator));
+    RND rnd;
+    CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params, rnd, std::move(disorderGenerator));
 
     arma::mat result = hamiltonianGenerator.generate();
 
@@ -50,7 +53,8 @@ TEST_CASE("CavityHamiltonianGenerator: short interactions") {
     auto fockBase = baseGenerator.generate(2, 4);
     CavityHamiltonianParameters params{};
     params.U = 2;
-    CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params,
+    RND rnd;
+    CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params, rnd,
                                                     std::make_unique<ConstantDisorderGenerator>(0));
 
     arma::mat result = hamiltonianGenerator.generate();
@@ -66,7 +70,8 @@ TEST_CASE("CavityHamiltonianGenerator: long interactions") {
         CavityHamiltonianParameters params{};
         params.U1 = 3;
         params.beta = 0.5;
-        CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params,
+        RND rnd;
+        CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params, rnd,
                                                         std::make_unique<ConstantDisorderGenerator>(0));
 
         arma::mat result = hamiltonianGenerator.generate();
@@ -82,7 +87,8 @@ TEST_CASE("CavityHamiltonianGenerator: long interactions") {
         params.U1 = 3;
         params.beta = 1./12;
         params.phi0 = M_PI/6;
-        CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params,
+        RND rnd;
+        CavityHamiltonianGenerator hamiltonianGenerator(std::move(fockBase), params, rnd,
                                                         std::make_unique<ConstantDisorderGenerator>(0));
 
         arma::mat result = hamiltonianGenerator.generate();

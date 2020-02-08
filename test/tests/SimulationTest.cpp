@@ -41,9 +41,10 @@ namespace {
 
     class MockAveragingModel {
     public:
-        static void setupHamiltonianGenerator(MockHamiltonianGenerator &hamiltonianGenerator,
+        static void setupHamiltonianGenerator(MockHamiltonianGenerator &hamiltonianGenerator, RND &rnd,
                                               std::size_t simulationIndex, std::size_t totalSimulations)
         {
+            static_cast<void>(rnd);
             REQUIRE((simulationIndex >= 1 && simulationIndex <= 3));
             REQUIRE(totalSimulations == 5);
             hamiltonianGenerator.simulationIndex = simulationIndex;
@@ -91,8 +92,8 @@ TEST_CASE("Simulation: 3 'random' hamiltonians") {
     params.saveEigenenergies = false;
     params.fileSignature = "";
     using TestSimulation = Simulation<MockHamiltonianGenerator, MockAveragingModel, MockAnalyzer>;
-    TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(), std::make_unique<DummyOstreamProvider>(),
-                              params);
+    TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(), std::make_unique<RND>(),
+                              std::make_unique<DummyOstreamProvider>(), params);
     MockAnalyzer mockAnalyzer;
     std::ostringstream dummyLogger;
 

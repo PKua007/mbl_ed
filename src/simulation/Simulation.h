@@ -20,6 +20,7 @@
 #include "analyzer/Analyzer.h"
 #include "Eigensystem.h"
 #include "SimulationParameters.h"
+#include "RND.h"
 
 /**
  * @brief A class performing a series of diagonalizations and optionaly some analyzer tasks.
@@ -33,11 +34,12 @@ template<typename HamiltonianGenerator_t, typename AveragingModel_t, typename An
 class Simulation {
 private:
     std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;
+    std::unique_ptr<RND> rnd;
     std::unique_ptr<FileOstreamProvider> ostreamProvider;
     SimulationParameters params;
 
     Eigensystem performSingleSimulation(std::size_t simulationIndex) {
-        AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, simulationIndex,
+        AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, simulationIndex,
                                                     this->params.totalSimulations);
         arma::mat hamiltonian = this->hamiltonianGenerator->generate();
 
@@ -65,10 +67,10 @@ public:
     /**
      * @brief The constructor with mockable eigenenergy file creating using own FileOstreamProvider.
      */
-    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND> rnd,
                std::unique_ptr<FileOstreamProvider> ostreamProvider, SimulationParameters simulationParameters)
-            : hamiltonianGenerator{std::move(hamiltonianGenerator)}, ostreamProvider{std::move(ostreamProvider)},
-              params{std::move(simulationParameters)}
+            : hamiltonianGenerator{std::move(hamiltonianGenerator)}, rnd{std::move(rnd)},
+              ostreamProvider{std::move(ostreamProvider)}, params{std::move(simulationParameters)}
     {
         Expects(this->params.totalSimulations > 0);
         Expects(this->params.from < this->params.to);
@@ -79,9 +81,10 @@ public:
      * @brief The non-mockable constructor which will pass FileOstreamProvider which actually creates files to store
      * eigenenrgies.
      */
-    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND> rnd,
                const SimulationParameters &simulationParameters)
-            : Simulation(std::move(hamiltonianGenerator), std::make_unique<FileOstreamProvider>(), simulationParameters)
+            : Simulation(std::move(hamiltonianGenerator), std::move(rnd), std::make_unique<FileOstreamProvider>(),
+                         simulationParameters)
     { }
 
     /**
