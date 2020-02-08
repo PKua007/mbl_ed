@@ -19,7 +19,10 @@ namespace {
     public:
         explicit ConstantDisorderGenerator(double constant) : constant(constant) { }
 
-        double operator()(RND &rnd) { return constant; }
+        double operator()(RND &rnd) {
+            static_cast<void>(rnd);
+            return constant;
+        }
     };
 
     class SequenceDisorderGenerator {
@@ -30,7 +33,10 @@ namespace {
     public:
         explicit SequenceDisorderGenerator(std::vector<double> sequence) : sequence(std::move(sequence)) { }
 
-        double operator()(RND &rnd) { return this->sequence.at(index++); }
+        double operator()(RND &rnd) {
+            static_cast<void>(rnd);
+            return this->sequence.at(index++);
+        }
     };
 }
 
