@@ -25,23 +25,22 @@
 /**
  * @param changePhi0ForAverage this determines whether to average on disorder or phi0
  */
-auto Frontend::buildHamiltonianGenerator(const Parameters &params, bool changePhi0ForAverage) {
+auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
     FockBaseGenerator baseGenerator;
     auto base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
 
     // We add 'from' to seed not to duplicate results when simulating in parts
-    auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W, params.seed + params.from);
+    auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W);
 
     CavityHamiltonianParameters hamiltonianParams;
     hamiltonianParams.J = params.J;
     hamiltonianParams.U = params.U;
     hamiltonianParams.U1 = params.U1;
     hamiltonianParams.beta = params.beta;
-    if (!changePhi0ForAverage)
-        hamiltonianParams.phi0 = std::stod(params.phi0);
+    hamiltonianParams.phi0 = params.phi0;
 
     using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
-    return std::make_unique<TheHamiltonianGenerator>(std::move(base), hamiltonianParams,
+    return std::make_unique<TheHamiltonianGenerator>(std::move(base), hamiltonianParams, rnd,
                                                      std::move(disorderGenerator), params.usePeriodicBC);
 }
 
@@ -92,11 +91,12 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
 }
 
 template<template <typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
-void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, Analyzer &analyzer,
+void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+                                   std::unique_ptr<RND> rnd, Analyzer &analyzer,
                                    const SimulationParameters &simulationParameters)
 {
     using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
-    TheSimulation simulation(std::move(hamiltonianGenerator), simulationParameters);
+    TheSimulation simulation(std::move(hamiltonianGenerator), std::move(rnd), simulationParameters);
     simulation.perform(this->out, analyzer);
 }
 
@@ -153,8 +153,8 @@ void Frontend::simulate(int argc, char **argv) {
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
 
-    bool changePhi0ForAverage = (params.phi0 == "changeForAverage");
-    auto hamiltonianGenerator = buildHamiltonianGenerator(params, changePhi0ForAverage);
+    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd);
 
     Analyzer analyzer = prepareAnalyzer(onTheFlyTasks);
 
@@ -166,10 +166,16 @@ void Frontend::simulate(int argc, char **argv) {
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
     simulationParams.fileSignature = directory / params.getOutputFileSignature();
-    if (changePhi0ForAverage)
-        perform_simulations<Phi0AveragingModel>(std::move(hamiltonianGenerator), analyzer, simulationParams);
-    else
-        perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), analyzer, simulationParams);
+    if (params.averagingModel == "uniformPhi0") {
+        perform_simulations<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
+                                                       simulationParams);
+    } else if (params.averagingModel == "randomPhi0") {
+        perform_simulations<RandomPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
+                                                      simulationParams);
+    } else if (params.averagingModel == "onsiteDisorder") {
+        perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
+                                                          simulationParams);
+    }
 
     // Save results
     io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);

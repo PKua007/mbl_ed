@@ -35,10 +35,11 @@ public:
     double U{};
     double U1{};
     double beta{};
-    std::string phi0;
+    double phi0{};
     bool usePeriodicBC{};
     bool calculateEigenvectors = true;
     bool saveEigenenergies = false;
+    std::string averagingModel{};
     std::size_t to{};
     std::size_t from = 0;
     std::size_t totalSimulations = 1;

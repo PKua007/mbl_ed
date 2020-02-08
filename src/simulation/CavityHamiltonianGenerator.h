@@ -11,6 +11,7 @@
 
 #include "utils/Assertions.h"
 #include "HamiltonianGenerator.h"
+#include "RND.h"
 
 /**
  * @brief Parameters used in CavityHamiltonianGenerator. Look there for the description.
@@ -84,22 +85,25 @@ private:
 
 public:
     /**
-     * @brief Creates the hamiltonian generator. Onsite disorder energies are initialized with random generator.
+     * @brief Creates the hamiltonian generator. Onsite disorder energies are initialized with random generator
+     * using @a rnd.
      */
-    CavityHamiltonianGenerator(std::unique_ptr<FockBase> fockBase, CavityHamiltonianParameters params,
+    CavityHamiltonianGenerator(std::unique_ptr<FockBase> fockBase, CavityHamiltonianParameters params, RND &rnd,
                                std::unique_ptr<DisorderGenerator> disorderGenerator, bool usePbc = true)
             : HamiltonianGenerator(std::move(fockBase), usePbc), disorderGenerator(std::move(disorderGenerator)),
               params{params}
     {
-        this->resampleOnsiteEnergies();
+        this->resampleOnsiteEnergies(rnd);
     }
 
     /**
      * @brief Clears old onsite disorder values and samples new ones. Used for each new simulation.
      */
-    void resampleOnsiteEnergies() {
+    void resampleOnsiteEnergies(RND &rnd) {
         this->onsiteEnergies.resize(this->fockBase->getNumberOfSites());
-        std::generate(this->onsiteEnergies.begin(), this->onsiteEnergies.end(), std::ref(*(this->disorderGenerator)));
+        std::generate(this->onsiteEnergies.begin(), this->onsiteEnergies.end(), [this, &rnd]() {
+            return (*this->disorderGenerator)(rnd);
+        });
     }
 
     [[nodiscard]] const std::vector<double> &getOnsiteEnergies() const {
