@@ -12,7 +12,7 @@ double CavityLongInteraction::calculate(const FockBase::Vector &vector, const Ha
 
     std::size_t elementIndex{};
     auto plusMinusAccumulator = [&elementIndex, this](auto sum, auto element) {
-        return sum + std::cos(beta*(elementIndex++) + phi0) * element;
+        return sum + std::cos(2*M_PI*beta*(elementIndex++) + phi0) * element;
     };
     double populationImbalance = std::accumulate(vector.begin(), vector.end(), 0., plusMinusAccumulator);
     return -this->U1 / vector.size() * populationImbalance * populationImbalance;

@@ -20,7 +20,7 @@ private:
     std::unique_ptr<DisorderGenerator> disorderGenerator;
 
 public:
-    explicit OnsiteDisorder(std::unique_ptr<DisorderGenerator>, std::size_t numberOfSites, RND &rnd)
+    explicit OnsiteDisorder(std::unique_ptr<DisorderGenerator> disorderGenerator, std::size_t numberOfSites, RND &rnd)
             : disorderGenerator{std::move(disorderGenerator)}
     {
         Expects(numberOfSites > 0);
