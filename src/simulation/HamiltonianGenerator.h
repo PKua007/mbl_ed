@@ -10,6 +10,8 @@
 #include <memory>
 
 #include "FockBase.h"
+#include "DiagonalTerm.h"
+#include "HoppingTerm.h"
 
 /**
  * @brief A base class for hamiltonians of a fixed number of particles in a linear optical lattice.
@@ -18,15 +20,13 @@
  */
 class HamiltonianGenerator {
 private:
-    [[nodiscard]] std::optional<std::pair<FockBase::Vector, double>>
-    hoppingAction(const FockBase::Vector &vector, std::size_t fromSiteIndex, std::size_t toSiteIndex) const;
-
-protected:
-    /**
-     * @brief If true, PBC are used, OBC otherwise.
-     */
     const bool usePBC;
     std::unique_ptr<FockBase> fockBase;
+    std::vector<std::unique_ptr<DiagonalTerm>> diagonalTerms;
+    std::vector<std::unique_ptr<HoppingTerm>> hoppingTerms;
+
+    [[nodiscard]] std::optional<std::pair<FockBase::Vector, double>>
+    hoppingAction(const FockBase::Vector &vector, std::size_t fromSiteIndex, std::size_t toSiteIndex) const;
 
 public:
     HamiltonianGenerator(std::unique_ptr<FockBase> fockBase, bool usePBC)
@@ -46,17 +46,11 @@ public:
      */
     [[nodiscard]] size_t getSiteDistance(size_t fromSiteIndex, size_t toSiteIndex) const;
 
-    /**
-     * @brief Derived classes should implement this method to provide own diagonal terms for all fock states.
-     */
-    [[nodiscard]] virtual double getDiagonalElement(const FockBase::Vector &vector) const = 0;
-
-    /**
-     * @brief Derived classes should implement this method to provide hopping constants for each possible hop.
-     * @details Note, that hops of any lengths will be sampled and the method should return 0 if some of them are
-     * forbidden.
-     */
-    [[nodiscard]] virtual double getHoppingTerm(std::size_t fromSiteIndex, std::size_t toSiteIndex) const = 0;
+    void addDiagonalTerm(std::unique_ptr<DiagonalTerm> term);
+    void addHoppingTerm(std::unique_ptr<HoppingTerm> term);
+    [[nodiscard]] const std::vector<std::unique_ptr<DiagonalTerm>> &getDiagonalTerms() const;
+    [[nodiscard]] const std::vector<std::unique_ptr<HoppingTerm>> &getHoppingTerms() const;
+    [[nodiscard]] const FockBase &getFockBase() const;
 };
 
 

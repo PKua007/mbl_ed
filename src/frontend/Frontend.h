@@ -18,7 +18,7 @@ class Frontend {
 private:
     std::ostream &out;
 
-    auto buildHamiltonianGenerator(const Parameters &params, RND &rnd);
+    //auto buildHamiltonianGenerator(const Parameters &params, RND &rnd);
     Analyzer prepareAnalyzer(const std::vector<std::string> &tasks);
 
     template<template<typename> typename AveragingModel_t, typename HamiltonianGenerator_t>

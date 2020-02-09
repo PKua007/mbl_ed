@@ -4,92 +4,110 @@
 
 #include <catch2/catch.hpp>
 
+#include "mocks/DiagonalTermMock.h"
+#include "mocks/HoppingTermMock.h"
+
 #include "matchers/ArmaApproxEqualMatcher.h"
+
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/HamiltonianGenerator.h"
 #include "utils/Assertions.h"
 
+using namespace trompeloeil;
+
 namespace {
-    class MockPeriodicHamiltonianGenerator : public HamiltonianGenerator {
+    class HopBetween {
+    private:
+        std::size_t a{};
+        std::size_t b{};
+
     public:
-        mutable bool periodicUsed = false;
+        HopBetween(std::size_t a, std::size_t b) : a{a}, b{b} {}
 
-        explicit MockPeriodicHamiltonianGenerator(std::unique_ptr<FockBase> fockBase)
-                : HamiltonianGenerator(std::move(fockBase), true)
-        { }
-
-        [[nodiscard]] double getDiagonalElement(const FockBase::Vector &vector) const override {
-            return *(this->fockBase->findIndex(vector));
-        }
-
-        [[nodiscard]] double getHoppingTerm(std::size_t fromSiteIndex, std::size_t toSiteIndex) const override {
-            Expects(fromSiteIndex < this->fockBase->getNumberOfSites());
-            Expects(toSiteIndex < this->fockBase->getNumberOfSites());
-            Expects(std::abs(static_cast<int>(toSiteIndex - fromSiteIndex)) == 1
-                    || std::abs(static_cast<int>(toSiteIndex - fromSiteIndex))
-                       == static_cast<int>(this->fockBase->getNumberOfSites() - 1));
-            if (std::abs(static_cast<int>(toSiteIndex) - static_cast<int>(fromSiteIndex)) == 1) {
-                return -1;
-            } else {
-                this->periodicUsed = true;
-                return 0;
-            }
+        bool operator==(HopBetween other) {
+            return (this->a == other.a && this->b == other.b) || (this->a == other.b && this->b == other.a);
         }
     };
 }
 
-namespace {
-    class MockNonPeriodicHamiltonianGenerator : public HamiltonianGenerator {
-    public:
-        explicit MockNonPeriodicHamiltonianGenerator(std::unique_ptr<FockBase> fockBase)
-                : HamiltonianGenerator(std::move(fockBase), false)
-        { }
-
-        [[nodiscard]] double getDiagonalElement(const FockBase::Vector &vector) const override {
-            return *(this->fockBase->findIndex(vector));
-        }
-
-        [[nodiscard]] double getHoppingTerm(std::size_t fromSiteIndex, std::size_t toSiteIndex) const override {
-            Expects(fromSiteIndex < this->fockBase->getNumberOfSites());
-            Expects(toSiteIndex < this->fockBase->getNumberOfSites());
-            Expects(std::abs(static_cast<int>(toSiteIndex - fromSiteIndex)) == 1);
-
-            return -1;
-        }
-    };
-}
-
-TEST_CASE("HamiltonianGenerator: 2 bosons in 3 sites") {
+TEST_CASE("HamiltonianGenerator: non-periodic hop") {
+    auto hopping = std::make_unique<HoppingTermMock>();
+    REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
+        .WITH(HopBetween(_3, _4) == HopBetween(0, 1))
+        .RETURN(-1)
+        .TIMES(AT_LEAST(1));
+    REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
+        .WITH(HopBetween(_3, _4) == HopBetween(1, 2))
+        .RETURN(-1)
+        .TIMES(AT_LEAST(1));
     FockBaseGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(3, 2);
-    MockPeriodicHamiltonianGenerator hamiltonianGenerator(std::move(fockBase));
+    HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
+    hamiltonianGenerator.addHoppingTerm(std::move(hopping));
 
     arma::mat result = hamiltonianGenerator.generate();
 
     arma::mat expected = {{ 0,       -M_SQRT2,  0,  0,        0,        0},
-                          {-M_SQRT2,  1,       -1, -M_SQRT2,  0,        0},
-                          { 0,       -1,        2,  0,       -1,        0},
-                          { 0,       -M_SQRT2,  0,  3,       -M_SQRT2,  0},
-                          { 0,        0,       -1, -M_SQRT2,  4,       -M_SQRT2},
-                          { 0,        0,        0,  0,       -M_SQRT2,  5}};
+                          {-M_SQRT2,  0,       -1, -M_SQRT2,  0,        0},
+                          { 0,       -1,        0,  0,       -1,        0},
+                          { 0,       -M_SQRT2,  0,  0,       -M_SQRT2,  0},
+                          { 0,        0,       -1, -M_SQRT2,  0,       -M_SQRT2},
+                          { 0,        0,        0,  0,       -M_SQRT2,  0}};
+    REQUIRE_THAT(result, IsApproxEqual(expected, 1e-8));
+}
+
+TEST_CASE("HamiltonianGenerator: diagonal") {
+    auto diagonal = std::make_unique<DiagonalTermMock>();
+    ALLOW_CALL(*diagonal, calculate(_, _))
+        .RETURN(_2.getFockBase().findIndex(_1).value());
+    FockBaseGenerator baseGenerator;
+    auto fockBase = baseGenerator.generate(3, 2);
+    HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);
+    hamiltonianGenerator.addDiagonalTerm(std::move(diagonal));
+
+    arma::mat result = hamiltonianGenerator.generate();
+
+    arma::mat expected = arma::diagmat(arma::vec{0, 1, 2, 3, 4, 5});
     REQUIRE_THAT(result, IsApproxEqual(expected, 1e-8));
 }
 
 TEST_CASE("HamiltonianGenerator: PBC") {
     SECTION("Periodic BC - periodic hopping should be present") {
+        auto hopping = std::make_unique<HoppingTermMock>();
+        REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
+                .WITH(HopBetween(_3, _4) == HopBetween(0, 1))
+                .RETURN(-1)
+                .TIMES(AT_LEAST(1));
+        REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
+                .WITH(HopBetween(_3, _4) == HopBetween(1, 2))
+                .RETURN(-1)
+                .TIMES(AT_LEAST(1));
+        REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
+                .WITH(HopBetween(_3, _4) == HopBetween(0, 2))
+                .RETURN(-1)
+                .TIMES(AT_LEAST(1));
         FockBaseGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(3, 2);
-        MockPeriodicHamiltonianGenerator hamiltonianGenerator(std::move(fockBase));
+        HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);
+        hamiltonianGenerator.addHoppingTerm(std::move(hopping));
 
-        static_cast<void>(hamiltonianGenerator.generate());
-
-        REQUIRE(hamiltonianGenerator.periodicUsed);
+        REQUIRE_NOTHROW(hamiltonianGenerator.generate());
     }
 
     SECTION("Non periodic BC - periodic hopping should not be present") {
+        auto hopping = std::make_unique<HoppingTermMock>();
+        REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
+                .WITH(HopBetween(_3, _4) == HopBetween(0, 1))
+                .RETURN(-1)
+                .TIMES(AT_LEAST(1));
+        REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
+                .WITH(HopBetween(_3, _4) == HopBetween(1, 2))
+                .RETURN(-1)
+                .TIMES(AT_LEAST(1));
         FockBaseGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(3, 2);
-        MockNonPeriodicHamiltonianGenerator hamiltonianGenerator(std::move(fockBase));
+        HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
+        hamiltonianGenerator.addHoppingTerm(std::move(hopping));
 
         REQUIRE_NOTHROW(hamiltonianGenerator.generate());
     }
@@ -102,7 +120,7 @@ TEST_CASE("HamiltonianGenerator: site distance") {
 
     SECTION("Periodic BC - site distance calculated normally") {
         SECTION("even size") {
-            MockPeriodicHamiltonianGenerator hamiltonianGenerator(std::move(evenBase));
+            HamiltonianGenerator hamiltonianGenerator(std::move(evenBase), true);
 
             REQUIRE(hamiltonianGenerator.getSiteDistance(0, 1) == 1);
             REQUIRE(hamiltonianGenerator.getSiteDistance(4, 5) == 1);
@@ -113,7 +131,7 @@ TEST_CASE("HamiltonianGenerator: site distance") {
         }
 
         SECTION("odd size") {
-            MockPeriodicHamiltonianGenerator hamiltonianGenerator(std::move(oddBase));
+            HamiltonianGenerator hamiltonianGenerator(std::move(oddBase), true);
 
             REQUIRE(hamiltonianGenerator.getSiteDistance(0, 1) == 1);
             REQUIRE(hamiltonianGenerator.getSiteDistance(5, 6) == 1);
@@ -126,7 +144,7 @@ TEST_CASE("HamiltonianGenerator: site distance") {
 
     SECTION("Non-periodic BC - site distance calculated periodically") {
         SECTION("even size") {
-            MockNonPeriodicHamiltonianGenerator hamiltonianGenerator(std::move(evenBase));
+            HamiltonianGenerator hamiltonianGenerator(std::move(evenBase), false);
 
             REQUIRE(hamiltonianGenerator.getSiteDistance(0, 1) == 1);
             REQUIRE(hamiltonianGenerator.getSiteDistance(4, 5) == 1);
@@ -137,7 +155,7 @@ TEST_CASE("HamiltonianGenerator: site distance") {
         }
 
         SECTION("odd size") {
-            MockNonPeriodicHamiltonianGenerator hamiltonianGenerator(std::move(oddBase));
+            HamiltonianGenerator hamiltonianGenerator(std::move(oddBase), false);
 
             REQUIRE(hamiltonianGenerator.getSiteDistance(0, 1) == 1);
             REQUIRE(hamiltonianGenerator.getSiteDistance(5, 6) == 1);
