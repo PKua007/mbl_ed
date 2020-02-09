@@ -6,26 +6,35 @@
 
 #include "Config.h"
 #include "Utils.h"
+#include "Assertions.h"
 
 #include <istream>
 
 
-Config Config::parse(std::istream & in, char delim, bool allowRedefinition) {
-    if (delim == '#')
-        throw std::invalid_argument("delim == #");
+Config Config::parse(std::istream &in, char delim, bool allowRedefinition) {
+    Expects(delim != '#' && delim != ';');
 
     Config result;
-    std::size_t line_num = 0;
+    std::size_t lineNum = 0;
     std::string line;
+    std::string currentSection;
     while (std::getline(in, line)) {
-        line_num++;
+        lineNum++;
         stripComment(line);
+        trim(line);
         if (line.empty())
             continue;
 
-        auto field = splitField(line, delim, line_num);
-        if (result.hasParam(field.key) && !allowRedefinition)
-            throw ConfigParseException("Redefinition of field \"" + field.key + "\" in line " + std::to_string(line_num));
+        if (isItSectionEntry(line, lineNum)) {
+            currentSection = line.substr(1, line.size() - 2) + ".";
+            continue;
+        }
+
+        auto field = splitField(line, delim, lineNum, currentSection);
+        if (result.hasParam(field.key) && !allowRedefinition) {
+            throw ConfigParseException("Redefinition of field \"" + field.key + "\" in line "
+                                       + std::to_string(lineNum));
+        }
 
         result.fieldMap[field.key] = field.value;
         if (!result.hasParam(field.key))
@@ -35,13 +44,23 @@ Config Config::parse(std::istream & in, char delim, bool allowRedefinition) {
     return result;
 }
 
-Config::Field Config::splitField(const std::string &line, char delim, std::size_t line_num) {
+bool Config::isItSectionEntry(std::string &line, std::size_t lineNum) {
+    if (line.front() != '[')
+        return false;
+    if (line.back() != ']')
+        throw ConfigParseException("Malformed section entry in line " + std::to_string(lineNum));
+    return line.front() == '[';
+}
+
+Config::Field Config::splitField(const std::string &line, char delim, std::size_t line_num,
+                                 const std::string &currentSection)
+{
     Field keyValue;
     std::size_t pos = line.find(delim);
     if (pos == std::string::npos)
         throw ConfigParseException("No '" + std::string(1, delim) + "' sign in line " + std::to_string(line_num));
 
-    keyValue.key = line.substr(0, pos);
+    keyValue.key = currentSection + line.substr(0, pos);
     trim(keyValue.key);
     keyValue.value = (pos == line.length() - 1) ? "" : line.substr(pos + 1);
     trim(keyValue.value);
@@ -49,7 +68,7 @@ Config::Field Config::splitField(const std::string &line, char delim, std::size_
 }
 
 void Config::stripComment(std::string &line) {
-    std::size_t pos = line.find('#');
+    std::size_t pos = line.find_first_of(";#");
     if (pos != std::string::npos)
         line.erase(pos);
 }

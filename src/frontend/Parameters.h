@@ -18,7 +18,7 @@ public:
 
 /**
  * @brief A class which parses and stores parameters of the simulation.
- * @details The description of parameters can be found in the sample input.txt in the root folder
+ * @details The description of parameters can be found in the sample input.ini in the root folder
  */
 class Parameters {
 private:
@@ -26,7 +26,7 @@ private:
     [[nodiscard]] std::string doubleToString(double d) const;
 
 public:
-    /* All of these are described in input.txt */
+    /* All of these are described in input.ini */
 
     std::size_t numberOfSites{};
     std::size_t numberOfBosons{};

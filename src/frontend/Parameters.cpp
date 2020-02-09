@@ -13,38 +13,41 @@
 Parameters::Parameters(std::istream &input) {
     auto config = Config::parse(input, '=', true);
     for (const auto &key : config.getKeys()) {
-        if (key == "numberOfSites")
-            this->numberOfSites = config.getUnsignedLong("numberOfSites");
-        else if (key == "numberOfBosons")
-            this->numberOfBosons = config.getUnsignedLong("numberOfBosons");
-        else if (key == "J")
-            this->J = config.getDouble("J");
-        else if (key == "W")
-            this->W = config.getDouble("W");
-        else if (key == "U")
-            this->U = config.getDouble("U");
-        else if (key == "U1")
-            this->U1 = config.getDouble("U1");
-        else if (key == "beta")
-            this->beta = config.getDouble("beta");
-        else if (key == "phi0")
-            this->phi0 = config.getDouble("phi0");
-        else if (key == "averagingModel")
-            this->averagingModel = config.getString("averagingModel");
-        else if (key == "usePeriodicBC")
-            this->usePeriodicBC = config.getBoolean("usePeriodicBC");
-        else if (key == "calculateEigenvectors")
-            this->calculateEigenvectors = config.getBoolean("calculateEigenvectors");
-        else if (key == "saveEigenenergies")
-            this->saveEigenenergies = config.getBoolean("saveEigenenergies");
-        else if (key == "from")
-            this->from = config.getUnsignedLong("from");
-        else if (key == "to")
-            this->to = config.getUnsignedLong("to");
-        else if (key == "totalSimulations")
-            this->totalSimulations = config.getUnsignedLong("totalSimulations");
-        else if (key == "seed")
-            this->seed = config.getUnsignedLong("seed");
+        if (key == "lattice.numberOfSites")
+            this->numberOfSites = config.getUnsignedLong("lattice.numberOfSites");
+        else if (key == "lattice.numberOfBosons")
+            this->numberOfBosons = config.getUnsignedLong("lattice.numberOfBosons");
+        else if (key == "lattice.usePeriodicBC")
+            this->usePeriodicBC = config.getBoolean("lattice.usePeriodicBC");
+
+        else if (key == "hamiltonian.J")
+            this->J = config.getDouble("hamiltonian.J");
+        else if (key == "hamiltonian.W")
+            this->W = config.getDouble("hamiltonian.W");
+        else if (key == "hamiltonian.U")
+            this->U = config.getDouble("hamiltonian.U");
+        else if (key == "hamiltonian.U1")
+            this->U1 = config.getDouble("hamiltonian.U1");
+        else if (key == "hamiltonian.beta")
+            this->beta = config.getDouble("hamiltonian.beta");
+        else if (key == "hamiltonian.phi0")
+            this->phi0 = config.getDouble("hamiltonian.phi0");
+
+        else if (key == "simulation.averagingModel")
+            this->averagingModel = config.getString("simulation.averagingModel");
+        else if (key == "simulation.calculateEigenvectors")
+            this->calculateEigenvectors = config.getBoolean("simulation.calculateEigenvectors");
+        else if (key == "simulation.saveEigenenergies")
+            this->saveEigenenergies = config.getBoolean("simulation.saveEigenenergies");
+        else if (key == "simulation.from")
+            this->from = config.getUnsignedLong("simulation.from");
+        else if (key == "simulation.to")
+            this->to = config.getUnsignedLong("simulation.to");
+        else if (key == "simulation.totalSimulations")
+            this->totalSimulations = config.getUnsignedLong("simulation.totalSimulations");
+        else if (key == "simulation.seed")
+            this->seed = config.getUnsignedLong("simulation.seed");
+
         else
             throw UnknownParameterException("Unknown parameter " + key);
     }

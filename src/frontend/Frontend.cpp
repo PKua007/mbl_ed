@@ -117,7 +117,7 @@ void Frontend::simulate(int argc, char **argv) {
 
     options.add_options()
             ("h,help", "prints help for this mode")
-            ("i,input", "file with parameters. See input.txt for parameters description",
+            ("i,input", "file with parameters. See input.ini for parameters description",
              cxxopts::value<std::string>(inputFilename))
             ("o,output", "when specified, inline results will be printed to this file",
              cxxopts::value<std::filesystem::path>(outputFilename))
@@ -201,7 +201,7 @@ void Frontend::analyze(int argc, char **argv) {
 
     options.add_options()
             ("h,help", "prints help for this mode")
-            ("i,input", "file with parameters. See input.txt for parameters description",
+            ("i,input", "file with parameters. See input.ini for parameters description",
              cxxopts::value<std::string>(inputFilename))
             ("o,output", "when specified, inline results will be printed to this file",
              cxxopts::value<std::string>(outputFilename))

@@ -38,7 +38,7 @@ public:
 
 
 /**
- * @brief A key=value config file parser
+ * @brief A key=value config file parser (INI format) with sections support.
  *
  * File format:
  * \code
@@ -63,7 +63,9 @@ private:
     };
 
     static void stripComment(std::string &line);
-    static Field splitField(const std::string &line, char delim, std::size_t line_num);
+    static bool isItSectionEntry(std::string &line, std::size_t lineNum);
+    static Field splitField(const std::string &line, char delim, std::size_t line_num,
+                            const std::string &currentSection);
 
     Config() = default;
 
@@ -76,11 +78,15 @@ public:
      * \code
      * key1=value1
      * # standalone comment
-     * key2=value2 # end-line comment;
+     * ; semicolon is also supported
+     * key2=value2 # end-line comment
+     * [section]
+     * key3 = value3
      *
      * # empty lines are omitted
-     * key3 = value3 # whitespace is trimmed
+     * key4 = value4 # whitespace is trimmed
      * \endcode
+     * The keys are @a key1, @a key2, @a section.key3, @a section.key4.
      *
      * @param in stream to parse from
      * @param delim delimiter for key, value; defaults to '='
