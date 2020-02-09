@@ -10,9 +10,12 @@
 
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
-//#include "simulation/CavityHamiltonianGenerator.h"
 #include "simulation/AveragingModels.h"
 #include "simulation/DisorderGenerators.h"
+#include "simulation/terms/OnsiteDisorder.h"
+#include "simulation/terms/HubbardHop.h"
+#include "simulation/terms/CavityLongInteraction.h"
+#include "simulation/terms/HubbardOnsite.h"
 
 #include "analyzer/tasks/CDF.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
@@ -25,24 +28,21 @@
 /**
  * @param changePhi0ForAverage this determines whether to average on disorder or phi0
  */
-/*auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
+auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
     FockBaseGenerator baseGenerator;
     auto base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
-
-    // We add 'from' to seed not to duplicate results when simulating in parts
     auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W);
+    std::size_t numberOfSites = base->getNumberOfSites();
 
-    CavityHamiltonianParameters hamiltonianParams;
-    hamiltonianParams.J = params.J;
-    hamiltonianParams.U = params.U;
-    hamiltonianParams.U1 = params.U1;
-    hamiltonianParams.beta = params.beta;
-    hamiltonianParams.phi0 = params.phi0;
+    auto generator = std::make_unique<HamiltonianGenerator>(std::move(base), params.usePeriodicBC);
+    generator->addHoppingTerm(std::make_unique<HubbardHop>(params.J));
+    generator->addDiagonalTerm(std::make_unique<HubbardOnsite>(params.U));
+    generator->addDiagonalTerm(std::make_unique<OnsiteDisorder<UniformGenerator>>(std::move(disorderGenerator),
+                                                                                  numberOfSites, rnd));
+    generator->addDiagonalTerm(std::make_unique<CavityLongInteraction>(params.U1, params.beta, params.phi0));
 
-    using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
-    return std::make_unique<TheHamiltonianGenerator>(std::move(base), hamiltonianParams, rnd,
-                                                     std::move(disorderGenerator), params.usePeriodicBC);
-}*/
+    return generator;
+}
 
 /**
  * @brief Takes a vector of @a tasks with parameters and parses them to AnalyzerTask -s
@@ -90,12 +90,12 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
     return analyzer;
 }
 
-template<template <typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
-void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+template<template <typename> typename AveragingModel_t>
+void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
                                    std::unique_ptr<RND> rnd, Analyzer &analyzer,
                                    const SimulationParameters &simulationParameters)
 {
-    using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
+    using TheSimulation = Simulation<HamiltonianGenerator, AveragingModel_t<UniformGenerator>>;
     TheSimulation simulation(std::move(hamiltonianGenerator), std::move(rnd), simulationParameters);
     simulation.perform(this->out, analyzer);
 }
@@ -154,7 +154,7 @@ void Frontend::simulate(int argc, char **argv) {
     params.print(std::cout);
 
     auto rnd = std::make_unique<RND>(params.from + params.seed);
-    //auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd);
+    auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd);
 
     Analyzer analyzer = prepareAnalyzer(onTheFlyTasks);
 
@@ -166,7 +166,7 @@ void Frontend::simulate(int argc, char **argv) {
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
     simulationParams.fileSignature = directory / params.getOutputFileSignature();
-    /*if (params.averagingModel == "uniformPhi0") {
+    if (params.averagingModel == "uniformPhi0") {
         perform_simulations<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
                                                        simulationParams);
     } else if (params.averagingModel == "randomPhi0") {
@@ -175,7 +175,7 @@ void Frontend::simulate(int argc, char **argv) {
     } else if (params.averagingModel == "onsiteDisorder") {
         perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
                                                           simulationParams);
-    }*/
+    }
 
     // Save results
     io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);

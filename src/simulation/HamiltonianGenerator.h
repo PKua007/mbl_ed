@@ -48,8 +48,8 @@ public:
 
     void addDiagonalTerm(std::unique_ptr<DiagonalTerm> term);
     void addHoppingTerm(std::unique_ptr<HoppingTerm> term);
-    [[nodiscard]] const std::vector<std::unique_ptr<DiagonalTerm>> &getDiagonalTerms() const;
-    [[nodiscard]] const std::vector<std::unique_ptr<HoppingTerm>> &getHoppingTerms() const;
+    [[nodiscard]] std::vector<std::unique_ptr<DiagonalTerm>> &getDiagonalTerms();
+    [[nodiscard]] std::vector<std::unique_ptr<HoppingTerm>> &getHoppingTerms();
     [[nodiscard]] const FockBase &getFockBase() const;
 };
 

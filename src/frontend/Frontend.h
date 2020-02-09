@@ -10,6 +10,7 @@
 #include "Parameters.h"
 #include "simulation/SimulationParameters.h"
 #include "simulation/RND.h"
+#include "simulation/HamiltonianGenerator.h"
 
 /**
  * @brief Class responsible for communication between the user and simulation backend.
@@ -18,11 +19,11 @@ class Frontend {
 private:
     std::ostream &out;
 
-    //auto buildHamiltonianGenerator(const Parameters &params, RND &rnd);
+    auto buildHamiltonianGenerator(const Parameters &params, RND &rnd);
     Analyzer prepareAnalyzer(const std::vector<std::string> &tasks);
 
-    template<template<typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
-    void perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND>,
+    template<template <typename> typename AveragingModel_t>
+    void perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator, std::unique_ptr<RND>,
                              Analyzer &analyzer, const SimulationParameters &simulationParameters);
 
 public:

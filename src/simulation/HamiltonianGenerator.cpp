@@ -72,12 +72,12 @@ size_t HamiltonianGenerator::getSiteDistance(size_t fromSiteIndex, size_t toSite
     return distance;
 }
 
-const std::vector<std::unique_ptr<DiagonalTerm>> &HamiltonianGenerator::getDiagonalTerms() const {
-    return diagonalTerms;
+std::vector<std::unique_ptr<DiagonalTerm>> &HamiltonianGenerator::getDiagonalTerms() {
+    return this->diagonalTerms;
 }
 
-const std::vector<std::unique_ptr<HoppingTerm>> &HamiltonianGenerator::getHoppingTerms() const {
-    return hoppingTerms;
+std::vector<std::unique_ptr<HoppingTerm>> &HamiltonianGenerator::getHoppingTerms() {
+    return this->hoppingTerms;
 }
 
 void HamiltonianGenerator::addDiagonalTerm(std::unique_ptr<DiagonalTerm> term) {
@@ -89,5 +89,5 @@ void HamiltonianGenerator::addHoppingTerm(std::unique_ptr<HoppingTerm> term) {
 }
 
 const FockBase &HamiltonianGenerator::getFockBase() const {
-    return *fockBase;
+    return *(this->fockBase);
 }
