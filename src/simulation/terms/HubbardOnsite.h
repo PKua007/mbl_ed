@@ -9,6 +9,14 @@
 #include "utils/Assertions.h"
 #include "simulation/DiagonalTerm.h"
 
+/**
+ * @brief A stantard onsite energy term from Hubbard hamiltonian.
+ * @details It is defined as
+ * \f[ \frac{U}{2} \sum_{i=1}^K \hat{n}_i (\hat{n}_i - 1) \f]
+ *
+ * where \f$ i \f$ is the number of site, \f$ K \f$ is the total number of sites, \f$ \hat{b}_i \f$ is annihilation
+ * operator, \f$ \hat{n}_i = \hat{b}_i^\dagger\hat{b}_i \f$ and \f$ U \f$ is a parameter in the constructor.
+ */
 class HubbardOnsite : public DiagonalTerm {
 private:
     double U{};

@@ -20,6 +20,9 @@
 template<typename DisorderGenerator_t>
 class OnsiteDisorderAveragingModel {
 public:
+    /**
+     * @brief The method looks for OnsiteDisorder term in the @a hamiltonianGenerator.
+     */
     static void setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
                                           std::size_t simulationIndex, std::size_t numberOfSimulations)
     {
@@ -44,6 +47,9 @@ public:
 template<typename DisorderGenerator_t>
 class UniformPhi0AveragingModel {
 public:
+    /**
+     * @brief The method looks for CavityLongInteraction and OnsiteDisorder terms in the @a hamiltonianGenerator.
+     */
     static void setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
                                           std::size_t simulationIndex, std::size_t numberOfSimulations)
     {
@@ -73,6 +79,9 @@ public:
 template<typename DisorderGenerator_t>
 class RandomPhi0AveragingModel {
 public:
+    /**
+     * @brief The method looks for CavityLongInteraction and OnsiteDisorder terms in the @a hamiltonianGenerator.
+     */
     static void setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
                                           std::size_t simulationIndex, std::size_t numberOfSimulations)
     {

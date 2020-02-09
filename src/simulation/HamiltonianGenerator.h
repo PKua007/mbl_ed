@@ -14,9 +14,7 @@
 #include "HoppingTerm.h"
 
 /**
- * @brief A base class for hamiltonians of a fixed number of particles in a linear optical lattice.
- * @details Is allows derived classes to provide their own diagonal terms for each fock state and kinetic constants for
- * each hopping term while doing the rest of the job of producing hamiltonian matrix.
+ * @brief Hamiltonian generator, which can accept multiple DiagonalTerm -s and HoppingTerm -s.
  */
 class HamiltonianGenerator {
 private:
@@ -35,8 +33,9 @@ public:
     virtual ~HamiltonianGenerator() = default;
 
     /**
-     * @brief Using derived class' provided getDiagonalElement() and getHoppingTerm() methods, generates the complete
-     * hamiltonian matrix and returns it.
+     * @brief Generates the hamiltonian matrix - it uses all provided DiagonalTerm -s and HoppingTerms -s.
+     * @details For HoppingTerms -s, it produces them by doing one-site hop on each base vector and finding which
+     * another base vector is obtained that way.
      */
     [[nodiscard]] arma::mat generate() const;
 
@@ -48,8 +47,17 @@ public:
 
     void addDiagonalTerm(std::unique_ptr<DiagonalTerm> term);
     void addHoppingTerm(std::unique_ptr<HoppingTerm> term);
+
+    /**
+     * @brief Returns modyfiable list of diagonal terms.
+     */
     [[nodiscard]] std::vector<std::unique_ptr<DiagonalTerm>> &getDiagonalTerms();
+
+    /**
+     * @brief Returns modyfiable list of diagonal terms.
+     */
     [[nodiscard]] std::vector<std::unique_ptr<HoppingTerm>> &getHoppingTerms();
+
     [[nodiscard]] const FockBase &getFockBase() const;
 };
 

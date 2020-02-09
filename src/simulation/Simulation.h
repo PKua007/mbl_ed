@@ -26,7 +26,8 @@
  * @brief A class performing a series of diagonalizations and optionaly some analyzer tasks.
  * @details Each simulation consists of: generating new hamiltonian according to @a AveragingModel_t,
  * diagonalisation, optionally saving eigenvalues and optionally doing some AnalyzerTask -s.
- * @tparam AveragingModel_t the concrete averaging model to user
+ * @tparam HamiltonianGenerator_t the concrete hamiltonian generator to use
+ * @tparam AveragingModel_t the concrete averaging model to use
  * @tparam Analyzer_t the concrete analyzer to use
  */
 template<typename HamiltonianGenerator_t, typename AveragingModel_t, typename Analyzer_t = Analyzer>

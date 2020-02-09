@@ -13,6 +13,17 @@
 #include "simulation/DiagonalTerm.h"
 #include "simulation/RND.h"
 
+/**
+ * @brief The class representing random potential in each site.
+ * @details It is defined as
+ * \f[ \sum_{i=1}^K E_i \hat{n}_i \f]
+ *
+ * where \f$ i \f$ is the number of site, \f$ K \f$ is the total number of sites, \f$ \hat{b}_i \f$ is annihilation
+ * operator, \f$ \hat{n}_i = \hat{b}_i^\dagger\hat{b}_i \f$, \f$ E_i \f$ are random energies sampled by
+ * @a DisorderGenerator. The disorder is sampled during construction and can be later resampled using
+ * resampleOnsiteEnergies().
+ * @tparam DisorderGenerator The concrete disorded generator, whose operator() is used to sample the disorder.
+ */
 template<typename DisorderGenerator>
 class OnsiteDisorder : public DiagonalTerm {
 private:
@@ -20,6 +31,10 @@ private:
     std::unique_ptr<DisorderGenerator> disorderGenerator;
 
 public:
+    /**
+     * @brief Contructs the class. @a numberOfSites is specified a priori and cannot be changed later. @a rnd
+     * is used to do the initial sampling.
+     */
     explicit OnsiteDisorder(std::unique_ptr<DisorderGenerator> disorderGenerator, std::size_t numberOfSites, RND &rnd)
             : disorderGenerator{std::move(disorderGenerator)}
     {
