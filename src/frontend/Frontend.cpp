@@ -26,7 +26,7 @@
 #include "utils/Assertions.h"
 
 /**
- * @param changePhi0ForAverage this determines whether to average on disorder or phi0
+ * @brief Builds hamiltonian generator parsing all general parameters and hamiltonian terms from @ params
  */
 auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
     FockBaseGenerator baseGenerator;

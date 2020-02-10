@@ -102,10 +102,12 @@ Parameters IO::loadParameters(const std::string &inputFilename, const std::vecto
     for (const auto &overridenParam : overridenParams) {
         std::size_t pos = overridenParam.find('.');
         if (pos == std::string::npos) {
+            // Overriding general param
             paramsStream << "[general]" << std::endl << overridenParam << std::endl;
         } else {
+            // Overriding hamiltonian term param
             if (pos == 0 || pos == overridenParam.size() - 1)
-                die("Malformed param to print. Format: [param name] or [term name].[param name]");
+                die("Malformed overriden param. Use: [param name]=[value] or [term name].[param name]=[value]");
             std::string termName = overridenParam.substr(0, pos);
             std::string paramName = overridenParam.substr(pos + 1);
             paramsStream << "[term." << termName << "]" << std::endl << paramName << std::endl;

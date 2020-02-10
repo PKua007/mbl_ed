@@ -11,6 +11,7 @@
 #include "utils/Assertions.h"
 
 Parameters::Parameters(std::istream &input) {
+    // First we are looking for parameters from [general sections]
     auto config = Config::parse(input, '=', true);
     if (!config.hasRootSection("general"))
         throw ParametersParseException("Found no general parameters.");
@@ -41,6 +42,7 @@ Parameters::Parameters(std::istream &input) {
             throw ParametersParseException("Unknown parameter " + key);
     }
 
+    // Now we are parsing all hamiltonian terms - [term.termName] sections
     if (!config.hasRootSection("term"))
         throw ParametersParseException("No hamiltonian terms were specified!");
 
@@ -69,6 +71,7 @@ void Parameters::autocompleteAndValidate() {
 }
 
 void Parameters::print(std::ostream &out) const {
+    out << "General parameters:" << std::endl;
     out << "N                     : " << this->N << std::endl;
     out << "K                     : " << this->K << std::endl;
     out << "averagingModel        : " << this->averagingModel << std::endl;
@@ -79,6 +82,7 @@ void Parameters::print(std::ostream &out) const {
     out << "to                    : " << this->to << std::endl;
     out << "totalSimulations      : " << this->totalSimulations << std::endl;
     out << "seed                  : " << this->seed << std::endl;
+
     out << std::endl;
     out << "Hamiltonian terms:" << std::endl;
     for (const auto &term : this->hamiltonianTerms) {
@@ -88,6 +92,7 @@ void Parameters::print(std::ostream &out) const {
 }
 
 std::string Parameters::getByName(const std::string &name) const {
+    // General parameters
     if (name == "N")
         return this->doubleToString(this->N);
     else if (name == "K")
@@ -109,6 +114,7 @@ std::string Parameters::getByName(const std::string &name) const {
     else if (name == "seed")
         return std::to_string(this->seed);
 
+    // Hamiltonian term parameters
     for (auto &term : this->hamiltonianTerms) {
         const auto &termParams = term.second;
         if (termParams.hasField(name))

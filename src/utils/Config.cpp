@@ -9,7 +9,7 @@
 #include "Assertions.h"
 
 #include <istream>
-#include <unordered_set>
+#include <set>
 #include <ostream>
 
 Config Config::parse(std::istream &in, char delim, bool allowRedefinition) {
@@ -54,6 +54,9 @@ bool Config::isItSectionEntry(std::string &line, std::size_t lineNum) {
     return line.front() == '[';
 }
 
+/**
+ * @brief Parses field from the line. Format key=valye. The current section is appended to the key: section.key
+ */
 Config::Field Config::splitField(const std::string &line, char delim, std::size_t lineNum,
                                  const std::string &currentSection)
 {
@@ -64,7 +67,7 @@ Config::Field Config::splitField(const std::string &line, char delim, std::size_
 
     field.key = line.substr(0, pos);
     if (field.key.find('.') != std::string::npos)
-        throw ConfigParseException("Fields " + field.key + " in line " + std::to_string(lineNum) + " has '.' sign");
+        throw ConfigParseException("Key " + field.key + " in line " + std::to_string(lineNum) + " has '.' sign");
     trim(field.key);
     field.key = currentSection + field.key;
 
@@ -73,6 +76,9 @@ Config::Field Config::splitField(const std::string &line, char delim, std::size_
     return field;
 }
 
+/**
+ * @brief Removes comment from the line (starting with ; or #).
+ */
 void Config::stripComment(std::string &line) {
     std::size_t pos = line.find_first_of(";#");
     if (pos != std::string::npos)
@@ -123,8 +129,12 @@ bool Config::hasRootSection(const std::string &section) const {
     return std::find(this->rootSections.begin(), this->rootSections.end(), section) != this->rootSections.end();
 }
 
+/**
+ * @brief It takes all keys and construct root sections. Note, that "" is also root section.
+ * @detail Ex: keys key1, sec1.key2, sec2.sub1.key3, sec2.sub2.key4 yield "", sec1 and sec2 root sections
+ */
 void Config::buildRootSections() {
-    std::unordered_set<std::string> sectionsSet;
+    std::set<std::string> sectionsSet;
     for (const auto &key : this->keys) {
         std::size_t pos = key.find('.');
         if (pos == std::string::npos)
@@ -137,13 +147,15 @@ void Config::buildRootSections() {
 }
 
 Config Config::fetchSubconfig(const std::string &rootSection) const {
-    Expects(rootSection.find('.') == std::string::npos);
+    if (rootSection.find('.') != std::string::npos)
+        throw std::invalid_argument("Root section names do not have dots");
 
     if (!this->hasRootSection(rootSection))
-        throw ConfigParseException("No root section " + rootSection + " in config");
+        throw std::invalid_argument("No root section " + rootSection + " in config");
 
     Config result;
     if (rootSection.empty()) {
+        // Fetching "empty" section, so all keys without section
         for (const auto &key : this->keys) {
             if (key.find('.') == std::string::npos) {
                 result.fieldMap[key] = this->fieldMap.at(key);
@@ -151,6 +163,7 @@ Config Config::fetchSubconfig(const std::string &rootSection) const {
             }
         }
     } else {
+        // Fetching named section
         for (const auto &key : this->keys) {
             if (startsWith(key, rootSection + ".")) {
                 std::string subKey = key.substr(rootSection.size() + 1);

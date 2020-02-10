@@ -33,7 +33,7 @@ public:
 
     /**
      * @brief Loads parameters from a file named @a inputFilename in key=value format, however override some params
-     * using key=value strings from @a overridenParams
+     * using @a key=value or @a term.key=value strings from @a overridenParams
      */
     Parameters loadParameters(const std::string &inputFilename, const std::vector<std::string> &overridenParams);
 

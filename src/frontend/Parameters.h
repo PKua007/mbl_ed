@@ -42,6 +42,9 @@ public:
     std::size_t totalSimulations = 1;
     std::size_t seed{};
 
+    /**
+     * @brief All keys from sections @a [term.termName] are mapped to separate config under @a termName key in the map.
+     */
     std::map<std::string, Config> hamiltonianTerms;
 
     Parameters() = default;
@@ -56,11 +59,14 @@ public:
      */
     void print(std::ostream &out) const;
 
+    /**
+     * @brief Returns general or term parameters by name. Name should not contain the section.
+     */
     [[nodiscard]] std::string getByName(const std::string &name) const;
 
     /**
      * @brief Prepares prefix for output files which gives some info about parameters.
-     * @details See the source for the format, it may change often.
+     * @details It prints: N, K and all parameters of hamiltonian terms, without the name of the sections.
      */
     [[nodiscard]] std::string getOutputFileSignature() const;
 };
