@@ -56,6 +56,7 @@ class Config
 private:
     std::map<std::string, std::string>  fieldMap;
     std::vector<std::string>            keys;
+    std::vector<std::string>            rootSections;
 
     struct Field {
         std::string key;
@@ -64,8 +65,10 @@ private:
 
     static void stripComment(std::string &line);
     static bool isItSectionEntry(std::string &line, std::size_t lineNum);
-    static Field splitField(const std::string &line, char delim, std::size_t line_num,
+    static Field splitField(const std::string &line, char delim, std::size_t lineNum,
                             const std::string &currentSection);
+
+    void buildRootSections();
 
     Config() = default;
 
@@ -98,7 +101,10 @@ public:
      */
     static Config parse(std::istream &in, char delim = '=', bool allowRedefinition = false);
 
-    bool hasParam(const std::string &field) const { return std::find(keys.begin(), keys.end(), field) != keys.end(); };
+    bool hasField(const std::string &field) const;
+    std::size_t size() const { return this->keys.size(); }
+    bool empty() const { return this->keys.empty(); }
+
     std::string getString(const std::string &field) const;
     int getInt(const std::string &field) const;
     unsigned long getUnsignedLong(const std::string &field) const;
@@ -110,7 +116,12 @@ public:
      * Returns keys in a config, preserving order from an input
      * @return keys in a config, preserving order from an input
      */
-    std::vector<std::string> getKeys() const { return this->keys; };
+    std::vector<std::string> getKeys() const { return this->keys; }
+
+    std::vector<std::string> getRootSections() const { return this->rootSections; }
+    bool hasRootSection(const std::string &section) const;
+
+    Config fetchSubconfig(const std::string &rootSection) const;
 };
 
 
