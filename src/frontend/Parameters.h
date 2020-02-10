@@ -7,13 +7,16 @@
 
 #include <iosfwd>
 #include <exception>
+#include <map>
+
+#include "utils/Config.h"
 
 /**
  * @brief Exception thrown when parsing of accessing unknown parameter.
  */
-struct UnknownParameterException : public std::runtime_error {
+struct ParametersParseException : public std::runtime_error {
 public:
-    explicit UnknownParameterException(const std::string &what) : std::runtime_error(what) { }
+    explicit ParametersParseException(const std::string &what) : std::runtime_error(what) { }
 };
 
 /**
@@ -28,14 +31,8 @@ private:
 public:
     /* All of these are described in input.ini */
 
-    std::size_t numberOfSites{};
-    std::size_t numberOfBosons{};
-    double J{};
-    double W{};
-    double U{};
-    double U1{};
-    double beta{};
-    double phi0{};
+    std::size_t N{};
+    std::size_t K{};
     bool usePeriodicBC{};
     bool calculateEigenvectors = true;
     bool saveEigenenergies = false;
@@ -44,6 +41,8 @@ public:
     std::size_t from = 0;
     std::size_t totalSimulations = 1;
     std::size_t seed{};
+
+    std::map<std::string, Config> hamiltonianTerms;
 
     Parameters() = default;
 

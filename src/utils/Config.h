@@ -70,8 +70,6 @@ private:
 
     void buildRootSections();
 
-    Config() = default;
-
 public:
 
     /**
@@ -101,6 +99,8 @@ public:
      */
     static Config parse(std::istream &in, char delim = '=', bool allowRedefinition = false);
 
+    Config() = default;
+
     bool hasField(const std::string &field) const;
     std::size_t size() const { return this->keys.size(); }
     bool empty() const { return this->keys.empty(); }
@@ -122,6 +122,8 @@ public:
     bool hasRootSection(const std::string &section) const;
 
     Config fetchSubconfig(const std::string &rootSection) const;
+
+    friend std::ostream &operator<<(std::ostream &out, const Config &config);
 };
 
 

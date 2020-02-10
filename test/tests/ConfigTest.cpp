@@ -33,6 +33,14 @@ TEST_CASE("Config: parsing sections tree") {
         REQUIRE(config.getString("s2.ss2.k5") == "5");
 
         SECTION("first level") {
+            auto rootconfig = config.fetchSubconfig("");
+
+            expected = {""};
+            REQUIRE_THAT(rootconfig.getRootSections(), Catch::UnorderedEquals(expected));
+            expected = {"k1"};
+            REQUIRE_THAT(rootconfig.getKeys(), Catch::UnorderedEquals(expected));
+            REQUIRE(rootconfig.getString("k1") == "1");
+
             auto subconfig1 = config.fetchSubconfig("s1");
 
             expected = {""};

@@ -9,7 +9,7 @@
 #include "simulation/FockBaseGenerator.h"
 
 TEST_CASE("HubbardOnsite") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 4), false);
+    HamiltonianGenerator generator(FockBaseGenerator{}.generate(4, 2), false);
     const auto &fockBase = generator.getFockBase();
     HubbardOnsite hubbardOnsite(2);
 

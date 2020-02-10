@@ -10,6 +10,7 @@
 
 #include <istream>
 #include <unordered_set>
+#include <ostream>
 
 Config Config::parse(std::istream &in, char delim, bool allowRedefinition) {
     Expects(delim != '#' && delim != ';');
@@ -124,7 +125,7 @@ bool Config::hasRootSection(const std::string &section) const {
 
 void Config::buildRootSections() {
     std::unordered_set<std::string> sectionsSet;
-    for (auto &key : this->keys) {
+    for (const auto &key : this->keys) {
         std::size_t pos = key.find('.');
         if (pos == std::string::npos)
             sectionsSet.insert("");
@@ -136,20 +137,34 @@ void Config::buildRootSections() {
 }
 
 Config Config::fetchSubconfig(const std::string &rootSection) const {
-    Expects(!rootSection.empty());
     Expects(rootSection.find('.') == std::string::npos);
 
     if (!this->hasRootSection(rootSection))
         throw ConfigParseException("No root section " + rootSection + " in config");
 
     Config result;
-    for (auto &key : this->keys) {
-        if (startsWith(key, rootSection + ".")) {
-            std::string subKey = key.substr(rootSection.size() + 1);
-            result.fieldMap[subKey] = this->fieldMap.at(key);
-            result.keys.push_back(subKey);
+    if (rootSection.empty()) {
+        for (const auto &key : this->keys) {
+            if (key.find('.') == std::string::npos) {
+                result.fieldMap[key] = this->fieldMap.at(key);
+                result.keys.push_back(key);
+            }
+        }
+    } else {
+        for (const auto &key : this->keys) {
+            if (startsWith(key, rootSection + ".")) {
+                std::string subKey = key.substr(rootSection.size() + 1);
+                result.fieldMap[subKey] = this->fieldMap.at(key);
+                result.keys.push_back(subKey);
+            }
         }
     }
     result.buildRootSections();
     return result;
+}
+
+std::ostream &operator<<(std::ostream &out, const Config &config) {
+    for (const auto &pair : config.fieldMap)
+        out << pair.first << " = " << pair.second << std::endl;
+    return out;
 }

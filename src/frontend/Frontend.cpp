@@ -30,16 +30,39 @@
  */
 auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
     FockBaseGenerator baseGenerator;
-    auto base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
-    auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W);
+    auto base = baseGenerator.generate(params.N, params.K);
     std::size_t numberOfSites = base->getNumberOfSites();
 
     auto generator = std::make_unique<HamiltonianGenerator>(std::move(base), params.usePeriodicBC);
-    generator->addHoppingTerm(std::make_unique<HubbardHop>(params.J));
-    generator->addDiagonalTerm(std::make_unique<HubbardOnsite>(params.U));
-    generator->addDiagonalTerm(std::make_unique<OnsiteDisorder<UniformGenerator>>(std::move(disorderGenerator),
-                                                                                  numberOfSites, rnd));
-    generator->addDiagonalTerm(std::make_unique<CavityLongInteraction>(params.U1, params.beta, params.phi0));
+
+    for (auto &term : params.hamiltonianTerms) {
+        std::string termName = term.first;
+        const auto &termParams = term.second;
+        if (termName == "hubbardHop") {
+            double J = termParams.getDouble("J");
+            Validate(J >= 0);
+            generator->addHoppingTerm(std::make_unique<HubbardHop>(J));
+        } else if (termName == "hubbardOnsite") {
+            double U = termParams.getDouble("U");
+            Validate(U >= 0);
+            generator->addDiagonalTerm(std::make_unique<HubbardOnsite>(U));
+        } else if (termName == "onsiteDisorder") {
+            double W = termParams.getDouble("W");
+            Validate(W >= 0);
+            auto disorderGenerator = std::make_unique<UniformGenerator>(-W, W);
+            generator->addDiagonalTerm(std::make_unique<OnsiteDisorder<UniformGenerator>>(std::move(disorderGenerator),
+                                                                                          numberOfSites, rnd));
+        } else if (termName == "cavityLongInteractions") {
+            double U1 = termParams.getDouble("U1");
+            double beta = termParams.getDouble("beta");
+            double phi0 = termParams.getDouble("phi0");
+            Validate(U1 >= 0);
+            Validate(beta > 0);
+            generator->addDiagonalTerm(std::make_unique<CavityLongInteraction>(U1, beta, phi0));
+        } else {
+            throw ValidationException("Unknown hamiltonian term: " + termName);
+        }
+    }
 
     return generator;
 }
@@ -128,9 +151,10 @@ void Frontend::simulate(int argc, char **argv) {
              cxxopts::value<std::filesystem::path>(directory)->default_value("."))
             ("p,print_parameter", "parameters to be included in inline results",
              cxxopts::value<std::vector<std::string>>(paramsToPrint)
-                ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
+                 ->default_value("N,K"))
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
-                            "-P J=1 (-PJ=1 does not work) act as one would append J=1 to input file",
+                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
+                            "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
              cxxopts::value<std::vector<std::string>>(overridenParams));
 
     auto parsedOptions = options.parse(argc, argv);
@@ -152,6 +176,7 @@ void Frontend::simulate(int argc, char **argv) {
     IO io(std::cout);
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
+    std::cout << std::endl;
 
     auto rnd = std::make_unique<RND>(params.from + params.seed);
     auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd);
@@ -209,11 +234,12 @@ void Frontend::analyze(int argc, char **argv) {
              cxxopts::value<std::vector<std::string>>(tasks))
             ("p,print_parameter", "parameters to be included in inline results",
              cxxopts::value<std::vector<std::string>>(paramsToPrint)
-                     ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
+                 ->default_value("N,K"))
             ("d,directory", "directory to search simulation results",
              cxxopts::value<std::filesystem::path>(directory)->default_value("."))
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
-                            "-P J=1 (-PJ=1 does not work) act as one would append J=1 to input file",
+                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
+                            "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
              cxxopts::value<std::vector<std::string>>(overridenParams));
 
     auto parsedOptions = options.parse(argc, argv);
@@ -237,6 +263,7 @@ void Frontend::analyze(int argc, char **argv) {
     IO io(std::cout);
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
+    std::cout << std::endl;
 
     // Load eigenenergies and analyze them
     Analyzer analyzer = prepareAnalyzer(tasks);

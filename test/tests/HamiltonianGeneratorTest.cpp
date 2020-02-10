@@ -41,7 +41,7 @@ TEST_CASE("HamiltonianGenerator: non-periodic hop") {
         .RETURN(-1)
         .TIMES(AT_LEAST(1));
     FockBaseGenerator baseGenerator;
-    auto fockBase = baseGenerator.generate(3, 2);
+    auto fockBase = baseGenerator.generate(2, 3);
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
     hamiltonianGenerator.addHoppingTerm(std::move(hopping));
 
@@ -61,7 +61,7 @@ TEST_CASE("HamiltonianGenerator: diagonal") {
     ALLOW_CALL(*diagonal, calculate(_, _))
         .RETURN(_2.getFockBase().findIndex(_1).value());
     FockBaseGenerator baseGenerator;
-    auto fockBase = baseGenerator.generate(3, 2);
+    auto fockBase = baseGenerator.generate(2, 3);
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);
     hamiltonianGenerator.addDiagonalTerm(std::move(diagonal));
 
@@ -87,7 +87,7 @@ TEST_CASE("HamiltonianGenerator: PBC") {
                 .RETURN(-1)
                 .TIMES(AT_LEAST(1));
         FockBaseGenerator baseGenerator;
-        auto fockBase = baseGenerator.generate(3, 2);
+        auto fockBase = baseGenerator.generate(2, 3);
         HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);
         hamiltonianGenerator.addHoppingTerm(std::move(hopping));
 
@@ -105,7 +105,7 @@ TEST_CASE("HamiltonianGenerator: PBC") {
                 .RETURN(-1)
                 .TIMES(AT_LEAST(1));
         FockBaseGenerator baseGenerator;
-        auto fockBase = baseGenerator.generate(3, 2);
+        auto fockBase = baseGenerator.generate(2, 3);
         HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
         hamiltonianGenerator.addHoppingTerm(std::move(hopping));
 
@@ -115,8 +115,8 @@ TEST_CASE("HamiltonianGenerator: PBC") {
 
 TEST_CASE("HamiltonianGenerator: site distance") {
     FockBaseGenerator baseGenerator;
-    auto evenBase = baseGenerator.generate(6, 1);
-    auto oddBase = baseGenerator.generate(7, 1);
+    auto evenBase = baseGenerator.generate(1, 6);
+    auto oddBase = baseGenerator.generate(1, 7);
 
     SECTION("Periodic BC - site distance calculated normally") {
         SECTION("even size") {

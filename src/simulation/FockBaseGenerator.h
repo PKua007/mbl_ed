@@ -15,7 +15,7 @@
  */
 class FockBaseGenerator {
 public:
-    [[nodiscard]] std::unique_ptr<FockBase> generate(int numberOfSites, int numberOfParticles) const;
+    [[nodiscard]] std::unique_ptr<FockBase> generate(int numberOfParticles, int numberOfSites) const;
 };
 
 
