@@ -10,23 +10,21 @@
 #include <memory>
 
 #include "FockBase.h"
+#include "DiagonalTerm.h"
+#include "HoppingTerm.h"
 
 /**
- * @brief A base class for hamiltonians of a fixed number of particles in a linear optical lattice.
- * @details Is allows derived classes to provide their own diagonal terms for each fock state and kinetic constants for
- * each hopping term while doing the rest of the job of producing hamiltonian matrix.
+ * @brief Hamiltonian generator, which can accept multiple DiagonalTerm -s and HoppingTerm -s.
  */
 class HamiltonianGenerator {
 private:
-    [[nodiscard]] std::optional<std::pair<FockBase::Vector, double>>
-    hoppingAction(const FockBase::Vector &vector, std::size_t fromSiteIndex, std::size_t toSiteIndex) const;
-
-protected:
-    /**
-     * @brief If true, PBC are used, OBC otherwise.
-     */
     const bool usePBC;
     std::unique_ptr<FockBase> fockBase;
+    std::vector<std::unique_ptr<DiagonalTerm>> diagonalTerms;
+    std::vector<std::unique_ptr<HoppingTerm>> hoppingTerms;
+
+    [[nodiscard]] std::optional<std::pair<FockBase::Vector, double>>
+    hoppingAction(const FockBase::Vector &vector, std::size_t fromSiteIndex, std::size_t toSiteIndex) const;
 
 public:
     HamiltonianGenerator(std::unique_ptr<FockBase> fockBase, bool usePBC)
@@ -35,8 +33,9 @@ public:
     virtual ~HamiltonianGenerator() = default;
 
     /**
-     * @brief Using derived class' provided getDiagonalElement() and getHoppingTerm() methods, generates the complete
-     * hamiltonian matrix and returns it.
+     * @brief Generates the hamiltonian matrix - it uses all provided DiagonalTerm -s and HoppingTerms -s.
+     * @details For HoppingTerms -s, it produces them by doing one-site hop on each base vector and finding which
+     * another base vector is obtained that way.
      */
     [[nodiscard]] arma::mat generate() const;
 
@@ -46,17 +45,22 @@ public:
      */
     [[nodiscard]] size_t getSiteDistance(size_t fromSiteIndex, size_t toSiteIndex) const;
 
-    /**
-     * @brief Derived classes should implement this method to provide own diagonal terms for all fock states.
-     */
-    [[nodiscard]] virtual double getDiagonalElement(const FockBase::Vector &vector) const = 0;
+    void addDiagonalTerm(std::unique_ptr<DiagonalTerm> term);
+    void addHoppingTerm(std::unique_ptr<HoppingTerm> term);
 
     /**
-     * @brief Derived classes should implement this method to provide hopping constants for each possible hop.
-     * @details Note, that hops of any lengths will be sampled and the method should return 0 if some of them are
-     * forbidden.
+     * @brief Returns modyfiable list of diagonal terms.
      */
-    [[nodiscard]] virtual double getHoppingTerm(std::size_t fromSiteIndex, std::size_t toSiteIndex) const = 0;
+    [[nodiscard]] std::vector<std::unique_ptr<DiagonalTerm>> &getDiagonalTerms();
+
+    /**
+     * @brief Returns modyfiable list of diagonal terms.
+     */
+    [[nodiscard]] std::vector<std::unique_ptr<HoppingTerm>> &getHoppingTerms();
+
+    [[nodiscard]] const FockBase &getFockBase() const;
+
+    [[nodiscard]] bool usingPBC() const { return this->usePBC; }
 };
 
 

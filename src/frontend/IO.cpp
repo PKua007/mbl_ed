@@ -98,8 +98,21 @@ Parameters IO::loadParameters(const std::string &inputFilename, const std::vecto
         die("Cannot open " + inputFilename + " to read parameters from.");
     std::stringstream paramsStream;
     paramsStream << paramsFile.rdbuf() << std::endl;
-    for (const auto &overridenParam : overridenParams)
-        paramsStream << overridenParam << std::endl;
+
+    for (const auto &overridenParam : overridenParams) {
+        std::size_t pos = overridenParam.find('.');
+        if (pos == std::string::npos) {
+            // Overriding general param
+            paramsStream << "[general]" << std::endl << overridenParam << std::endl;
+        } else {
+            // Overriding hamiltonian term param
+            if (pos == 0 || pos == overridenParam.size() - 1)
+                die("Malformed overriden param. Use: [param name]=[value] or [term name].[param name]=[value]");
+            std::string termName = overridenParam.substr(0, pos);
+            std::string paramName = overridenParam.substr(pos + 1);
+            paramsStream << "[term." << termName << "]" << std::endl << paramName << std::endl;
+        }
+    }
 
     return Parameters(paramsStream);
 }

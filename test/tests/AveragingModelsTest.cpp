@@ -8,7 +8,7 @@
 
 #include "simulation/AveragingModels.h"
 
-namespace {
+/*namespace {
     class MockHamiltonianGenerator {
     public:
         MAKE_MOCK1(resampleOnsiteEnergies, void(RND&));
@@ -47,4 +47,4 @@ TEST_CASE("RandomPhi0AveragingModel") {
         .WITH(_1 == Approx(M_PI));
 
     RandomPhi0AveragingModel<MockHamiltonianGenerator>::setupHamiltonianGenerator(generator, rnd, 0, 1);
-}
+}*/

@@ -38,7 +38,7 @@ public:
 
 
 /**
- * @brief A key=value config file parser
+ * @brief A key=value config file parser (INI format) with sections support.
  *
  * File format:
  * \code
@@ -50,12 +50,36 @@ public:
  * key3 = value3 # whitespace is trimmed
  * # key3 = value3 - duplicate fields are forbidden
  * \endcode
+ *
+ * Example explaining sections:
+ * \code
+ * # Key without section
+ * key1=value1
+ *
+ * # Sections names are in [...]
+ * [section]
+ * key2=value2
+ *
+ * # Sections do not nest, but this effect can be achieved by using dots within section names
+ * [section.subsection1]
+ * key3=value3
+ *
+ * [section.subsection2]
+ * key4=value4
+ * \endcode
+ *
+ * The values are then accessed by @a secionName.keyName.
+ *
+ * Each section can be used to fetch subconfig object (fetchSubconfig()). Then, only the keys from this section are
+ * exported an they no longer have @a sectionName prefix. Note, that subsections nested by using dot will remain,
+ * so the process may be recursed.
  */
 class Config
 {
 private:
     std::map<std::string, std::string>  fieldMap;
     std::vector<std::string>            keys;
+    std::vector<std::string>            rootSections;
 
     struct Field {
         std::string key;
@@ -63,25 +87,17 @@ private:
     };
 
     static void stripComment(std::string &line);
-    static Field splitField(const std::string &line, char delim, std::size_t line_num);
+    static bool isItSectionEntry(std::string &line, std::size_t lineNum);
+    static Field splitField(const std::string &line, char delim, std::size_t lineNum,
+                            const std::string &currentSection);
 
-    Config() = default;
+    void buildRootSections();
 
 public:
 
     /**
      * @brief Parses given stream.
-     *
-     * Format:
-     * \code
-     * key1=value1
-     * # standalone comment
-     * key2=value2 # end-line comment;
-     *
-     * # empty lines are omitted
-     * key3 = value3 # whitespace is trimmed
-     * \endcode
-     *
+     * @details Format: see class description.
      * @param in stream to parse from
      * @param delim delimiter for key, value; defaults to '='
      * @param allowRedefinition if `true`, redefinition of field will overwrite the old value; if `false`, it will
@@ -92,7 +108,12 @@ public:
      */
     static Config parse(std::istream &in, char delim = '=', bool allowRedefinition = false);
 
-    bool hasParam(const std::string &field) const { return std::find(keys.begin(), keys.end(), field) != keys.end(); };
+    Config() = default;
+
+    bool hasField(const std::string &field) const;
+    std::size_t size() const { return this->keys.size(); }
+    bool empty() const { return this->keys.empty(); }
+
     std::string getString(const std::string &field) const;
     int getInt(const std::string &field) const;
     unsigned long getUnsignedLong(const std::string &field) const;
@@ -101,10 +122,32 @@ public:
     bool getBoolean(const std::string &field) const;
 
     /**
-     * Returns keys in a config, preserving order from an input
+     * @brief Returns keys in a config, preserving order from an input
      * @return keys in a config, preserving order from an input
      */
-    std::vector<std::string> getKeys() const { return this->keys; };
+    std::vector<std::string> getKeys() const { return this->keys; }
+
+    /**
+     * @brief Returns names of root sections - everything before the first dot in section name.
+     * @details Note, that there is a section with an empty name for keys without any section.
+     */
+    std::vector<std::string> getRootSections() const { return this->rootSections; }
+
+    /**
+     * @brief Returns @a true if a section with name @a section is present
+     * @details Note, that there is a section with an empty name for keys without any section.
+     */
+    bool hasRootSection(const std::string &section) const;
+
+    /**
+     * @brief Prepares subconfig file for section @a rootSection.
+     * @details It includes all key=value pairs from this root section, including subsections. Of course all
+     * @a rootSection prefixes are stripped in the result, but subsections remain. The procedure can be recursed for
+     * deeper nesting. Note, that one can also fetch fields with no section passing the empty string.
+     */
+    Config fetchSubconfig(const std::string &rootSection) const;
+
+    friend std::ostream &operator<<(std::ostream &out, const Config &config);
 };
 
 

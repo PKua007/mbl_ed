@@ -7,12 +7,18 @@
 
 #include "Frontend.h"
 #include "IO.h"
+#include "CavityConstantsReader.h"
 
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
-#include "simulation/CavityHamiltonianGenerator.h"
 #include "simulation/AveragingModels.h"
 #include "simulation/DisorderGenerators.h"
+#include "simulation/terms/OnsiteDisorder.h"
+#include "simulation/terms/HubbardHop.h"
+#include "simulation/terms/CavityLongInteraction.h"
+#include "simulation/terms/HubbardOnsite.h"
+#include "simulation/terms/LookupCavityZ2.h"
+#include "simulation/terms/LookupCavityYZ.h"
 
 #include "analyzer/tasks/CDF.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
@@ -23,25 +29,63 @@
 #include "utils/Assertions.h"
 
 /**
- * @param changePhi0ForAverage this determines whether to average on disorder or phi0
+ * @brief Builds hamiltonian generator parsing all general parameters and hamiltonian terms from @ params
  */
 auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
     FockBaseGenerator baseGenerator;
-    auto base = baseGenerator.generate(params.numberOfSites, params.numberOfBosons);
+    auto base = baseGenerator.generate(params.N, params.K);
+    std::size_t numberOfSites = base->getNumberOfSites();
 
-    // We add 'from' to seed not to duplicate results when simulating in parts
-    auto disorderGenerator = std::make_unique<UniformGenerator>(-params.W, params.W);
+    auto generator = std::make_unique<HamiltonianGenerator>(std::move(base), params.usePeriodicBC);
 
-    CavityHamiltonianParameters hamiltonianParams;
-    hamiltonianParams.J = params.J;
-    hamiltonianParams.U = params.U;
-    hamiltonianParams.U1 = params.U1;
-    hamiltonianParams.beta = params.beta;
-    hamiltonianParams.phi0 = params.phi0;
+    for (auto &term : params.hamiltonianTerms) {
+        std::string termName = term.first;
+        const auto &termParams = term.second;
+        if (termName == "hubbardHop") {
+            double J = termParams.getDouble("J");
+            Validate(J >= 0);
+            generator->addHoppingTerm(std::make_unique<HubbardHop>(J));
+        } else if (termName == "hubbardOnsite") {
+            double U = termParams.getDouble("U");
+            Validate(U >= 0);
+            generator->addDiagonalTerm(std::make_unique<HubbardOnsite>(U));
+        } else if (termName == "onsiteDisorder") {
+            double W = termParams.getDouble("W");
+            Validate(W >= 0);
+            auto disorderGenerator = std::make_unique<UniformGenerator>(-W, W);
+            generator->addDiagonalTerm(std::make_unique<OnsiteDisorder<UniformGenerator>>(std::move(disorderGenerator),
+                                                                                          numberOfSites, rnd));
+        } else if (termName == "cavityLongInteractions") {
+            double U1 = termParams.getDouble("U1");
+            double beta = termParams.getDouble("beta");
+            double phi0 = termParams.getDouble("phi0");
+            Validate(U1 >= 0);
+            Validate(beta > 0);
+            generator->addDiagonalTerm(std::make_unique<CavityLongInteraction>(U1, beta, phi0));
+        } else if (termName == "lookupCavityZ2") {
+            double U1 = termParams.getDouble("U1");
+            Validate(U1 >= 0);
+            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::ifstream cavityConstantsFile(cavityConstantsFilename);
+            if (!cavityConstantsFile)
+                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
+            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
+            generator->addDiagonalTerm(std::make_unique<LookupCavityZ2>(U1, cavityConstants));
+        } else if (termName == "lookupCavityYZ") {
+            double U1 = termParams.getDouble("U1");
+            Validate(U1 >= 0);
+            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::ifstream cavityConstantsFile(cavityConstantsFilename);
+            if (!cavityConstantsFile)
+                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
+            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
+            generator->addHoppingTerm(std::make_unique<LookupCavityYZ>(U1, cavityConstants));
+        } else {
+            throw ValidationException("Unknown hamiltonian term: " + termName);
+        }
+    }
 
-    using TheHamiltonianGenerator = CavityHamiltonianGenerator<UniformGenerator>;
-    return std::make_unique<TheHamiltonianGenerator>(std::move(base), hamiltonianParams, rnd,
-                                                     std::move(disorderGenerator), params.usePeriodicBC);
+    return generator;
 }
 
 /**
@@ -90,12 +134,12 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
     return analyzer;
 }
 
-template<template <typename> typename AveragingModel_t, typename HamiltonianGenerator_t>
-void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+template<template <typename> typename AveragingModel_t>
+void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
                                    std::unique_ptr<RND> rnd, Analyzer &analyzer,
                                    const SimulationParameters &simulationParameters)
 {
-    using TheSimulation = Simulation<HamiltonianGenerator_t, AveragingModel_t<HamiltonianGenerator_t>>;
+    using TheSimulation = Simulation<HamiltonianGenerator, AveragingModel_t<UniformGenerator>>;
     TheSimulation simulation(std::move(hamiltonianGenerator), std::move(rnd), simulationParameters);
     simulation.perform(this->out, analyzer);
 }
@@ -117,7 +161,7 @@ void Frontend::simulate(int argc, char **argv) {
 
     options.add_options()
             ("h,help", "prints help for this mode")
-            ("i,input", "file with parameters. See input.txt for parameters description",
+            ("i,input", "file with parameters. See input.ini for parameters description",
              cxxopts::value<std::string>(inputFilename))
             ("o,output", "when specified, inline results will be printed to this file",
              cxxopts::value<std::filesystem::path>(outputFilename))
@@ -128,9 +172,10 @@ void Frontend::simulate(int argc, char **argv) {
              cxxopts::value<std::filesystem::path>(directory)->default_value("."))
             ("p,print_parameter", "parameters to be included in inline results",
              cxxopts::value<std::vector<std::string>>(paramsToPrint)
-                ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
+                 ->default_value("N,K"))
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
-                            "-P J=1 (-PJ=1 does not work) act as one would append J=1 to input file",
+                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
+                            "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
              cxxopts::value<std::vector<std::string>>(overridenParams));
 
     auto parsedOptions = options.parse(argc, argv);
@@ -152,6 +197,7 @@ void Frontend::simulate(int argc, char **argv) {
     IO io(std::cout);
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
+    std::cout << std::endl;
 
     auto rnd = std::make_unique<RND>(params.from + params.seed);
     auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd);
@@ -175,6 +221,11 @@ void Frontend::simulate(int argc, char **argv) {
     } else if (params.averagingModel == "onsiteDisorder") {
         perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
                                                           simulationParams);
+    } else if (params.averagingModel == "cavityConstants") {
+        perform_simulations<CavityConstantsAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
+                                                           simulationParams);
+    } else {
+        die("Unknown averaging model: " + params.averagingModel);
     }
 
     // Save results
@@ -201,7 +252,7 @@ void Frontend::analyze(int argc, char **argv) {
 
     options.add_options()
             ("h,help", "prints help for this mode")
-            ("i,input", "file with parameters. See input.txt for parameters description",
+            ("i,input", "file with parameters. See input.ini for parameters description",
              cxxopts::value<std::string>(inputFilename))
             ("o,output", "when specified, inline results will be printed to this file",
              cxxopts::value<std::string>(outputFilename))
@@ -209,11 +260,12 @@ void Frontend::analyze(int argc, char **argv) {
              cxxopts::value<std::vector<std::string>>(tasks))
             ("p,print_parameter", "parameters to be included in inline results",
              cxxopts::value<std::vector<std::string>>(paramsToPrint)
-                     ->default_value("numberOfSites,numberOfBosons,J,W,U,U1,beta,phi0"))
+                 ->default_value("N,K"))
             ("d,directory", "directory to search simulation results",
              cxxopts::value<std::filesystem::path>(directory)->default_value("."))
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
-                            "-P J=1 (-PJ=1 does not work) act as one would append J=1 to input file",
+                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
+                            "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
              cxxopts::value<std::vector<std::string>>(overridenParams));
 
     auto parsedOptions = options.parse(argc, argv);
@@ -237,6 +289,7 @@ void Frontend::analyze(int argc, char **argv) {
     IO io(std::cout);
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
+    std::cout << std::endl;
 
     // Load eigenenergies and analyze them
     Analyzer analyzer = prepareAnalyzer(tasks);

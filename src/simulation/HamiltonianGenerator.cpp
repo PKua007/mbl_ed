@@ -30,7 +30,8 @@ arma::mat HamiltonianGenerator::generate() const {
     arma::mat result(this->fockBase->size(), this->fockBase->size(), arma::fill::zeros);
 
     for (std::size_t i = 0; i < this->fockBase->size(); i++) {
-        result(i, i) = this->getDiagonalElement((*this->fockBase)[i]);
+        for (auto &diagonalTerm : this->diagonalTerms)
+            result(i, i) += diagonalTerm->calculate((*this->fockBase)[i], *this);
 
         for (std::size_t from = 0; from < this->fockBase->getNumberOfSites(); from++) {
             std::size_t to;
@@ -45,12 +46,17 @@ arma::mat HamiltonianGenerator::generate() const {
             if (hoppedVector == std::nullopt)
                 continue;
 
-            auto [hoppedBase, hoppedConstant] = *hoppedVector;
-            std::size_t hoppedIndex = *(this->fockBase->findIndex(hoppedBase));
-            hoppedConstant *= this->getHoppingTerm(from, to);
+            auto [hoppedBase, ladderConstant] = *hoppedVector;
 
-            result(i, hoppedIndex) = hoppedConstant;
-            result(hoppedIndex, i) = hoppedConstant;
+            double hopConstant{};
+            for (auto &hoppingTerm : this->hoppingTerms)
+                hopConstant += hoppingTerm->calculate((*this->fockBase)[i], hoppedBase, from, to, *this);
+
+            hopConstant *= ladderConstant;
+            std::size_t hoppedIndex = *(this->fockBase->findIndex(hoppedBase));
+
+            result(i, hoppedIndex) = hopConstant;
+            result(hoppedIndex, i) = hopConstant;
         }
     }
 
@@ -64,4 +70,24 @@ size_t HamiltonianGenerator::getSiteDistance(size_t fromSiteIndex, size_t toSite
     if (this->usePBC && distance > this->fockBase->getNumberOfSites() / 2)
         distance = this->fockBase->getNumberOfSites() - distance;
     return distance;
+}
+
+std::vector<std::unique_ptr<DiagonalTerm>> &HamiltonianGenerator::getDiagonalTerms() {
+    return this->diagonalTerms;
+}
+
+std::vector<std::unique_ptr<HoppingTerm>> &HamiltonianGenerator::getHoppingTerms() {
+    return this->hoppingTerms;
+}
+
+void HamiltonianGenerator::addDiagonalTerm(std::unique_ptr<DiagonalTerm> term) {
+    this->diagonalTerms.push_back(std::move(term));
+}
+
+void HamiltonianGenerator::addHoppingTerm(std::unique_ptr<HoppingTerm> term) {
+    this->hoppingTerms.push_back(std::move(term));
+}
+
+const FockBase &HamiltonianGenerator::getFockBase() const {
+    return *(this->fockBase);
 }

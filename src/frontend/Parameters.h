@@ -7,18 +7,21 @@
 
 #include <iosfwd>
 #include <exception>
+#include <map>
+
+#include "utils/Config.h"
 
 /**
  * @brief Exception thrown when parsing of accessing unknown parameter.
  */
-struct UnknownParameterException : public std::runtime_error {
+struct ParametersParseException : public std::runtime_error {
 public:
-    explicit UnknownParameterException(const std::string &what) : std::runtime_error(what) { }
+    explicit ParametersParseException(const std::string &what) : std::runtime_error(what) { }
 };
 
 /**
  * @brief A class which parses and stores parameters of the simulation.
- * @details The description of parameters can be found in the sample input.txt in the root folder
+ * @details The description of parameters can be found in the sample input.ini in the root folder
  */
 class Parameters {
 private:
@@ -26,16 +29,10 @@ private:
     [[nodiscard]] std::string doubleToString(double d) const;
 
 public:
-    /* All of these are described in input.txt */
+    /* All of these are described in input.ini */
 
-    std::size_t numberOfSites{};
-    std::size_t numberOfBosons{};
-    double J{};
-    double W{};
-    double U{};
-    double U1{};
-    double beta{};
-    double phi0{};
+    std::size_t N{};
+    std::size_t K{};
     bool usePeriodicBC{};
     bool calculateEigenvectors = true;
     bool saveEigenenergies = false;
@@ -44,6 +41,11 @@ public:
     std::size_t from = 0;
     std::size_t totalSimulations = 1;
     std::size_t seed{};
+
+    /**
+     * @brief All keys from sections @a [term.termName] are mapped to separate config under @a termName key in the map.
+     */
+    std::map<std::string, Config> hamiltonianTerms;
 
     Parameters() = default;
 
@@ -57,11 +59,14 @@ public:
      */
     void print(std::ostream &out) const;
 
+    /**
+     * @brief Returns general or term parameters by name. Name should not contain the section.
+     */
     [[nodiscard]] std::string getByName(const std::string &name) const;
 
     /**
      * @brief Prepares prefix for output files which gives some info about parameters.
-     * @details See the source for the format, it may change often.
+     * @details It prints: N, K and all parameters of hamiltonian terms, without the name of the sections.
      */
     [[nodiscard]] std::string getOutputFileSignature() const;
 };

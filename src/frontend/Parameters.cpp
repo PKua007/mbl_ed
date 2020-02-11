@@ -11,43 +11,47 @@
 #include "utils/Assertions.h"
 
 Parameters::Parameters(std::istream &input) {
+    // First we are looking for parameters from [general sections]
     auto config = Config::parse(input, '=', true);
-    for (const auto &key : config.getKeys()) {
-        if (key == "numberOfSites")
-            this->numberOfSites = config.getUnsignedLong("numberOfSites");
-        else if (key == "numberOfBosons")
-            this->numberOfBosons = config.getUnsignedLong("numberOfBosons");
-        else if (key == "J")
-            this->J = config.getDouble("J");
-        else if (key == "W")
-            this->W = config.getDouble("W");
-        else if (key == "U")
-            this->U = config.getDouble("U");
-        else if (key == "U1")
-            this->U1 = config.getDouble("U1");
-        else if (key == "beta")
-            this->beta = config.getDouble("beta");
-        else if (key == "phi0")
-            this->phi0 = config.getDouble("phi0");
-        else if (key == "averagingModel")
-            this->averagingModel = config.getString("averagingModel");
+    if (!config.hasRootSection("general"))
+        throw ParametersParseException("Found no general parameters.");
+    
+    auto generalConfig = config.fetchSubconfig("general");
+    for (const auto &key : generalConfig.getKeys()) {
+        if (key == "N")
+            this->N = generalConfig.getUnsignedLong("N");
+        else if (key == "K")
+            this->K = generalConfig.getUnsignedLong("K");
         else if (key == "usePeriodicBC")
-            this->usePeriodicBC = config.getBoolean("usePeriodicBC");
+            this->usePeriodicBC = generalConfig.getBoolean("usePeriodicBC");
+        else if (key == "averagingModel")
+            this->averagingModel = generalConfig.getString("averagingModel");
         else if (key == "calculateEigenvectors")
-            this->calculateEigenvectors = config.getBoolean("calculateEigenvectors");
+            this->calculateEigenvectors = generalConfig.getBoolean("calculateEigenvectors");
         else if (key == "saveEigenenergies")
-            this->saveEigenenergies = config.getBoolean("saveEigenenergies");
+            this->saveEigenenergies = generalConfig.getBoolean("saveEigenenergies");
         else if (key == "from")
-            this->from = config.getUnsignedLong("from");
+            this->from = generalConfig.getUnsignedLong("from");
         else if (key == "to")
-            this->to = config.getUnsignedLong("to");
+            this->to = generalConfig.getUnsignedLong("to");
         else if (key == "totalSimulations")
-            this->totalSimulations = config.getUnsignedLong("totalSimulations");
+            this->totalSimulations = generalConfig.getUnsignedLong("totalSimulations");
         else if (key == "seed")
-            this->seed = config.getUnsignedLong("seed");
+            this->seed = generalConfig.getUnsignedLong("seed");
         else
-            throw UnknownParameterException("Unknown parameter " + key);
+            throw ParametersParseException("Unknown parameter " + key);
     }
+
+    // Now we are parsing all hamiltonian terms - [term.termName] sections
+    if (!config.hasRootSection("term"))
+        throw ParametersParseException("No hamiltonian terms were specified!");
+
+    Config terms = config.fetchSubconfig("term");
+    if (terms.hasRootSection(""))
+        throw ParametersParseException("Found naked section [term]. Expecting only [term.nameOfTerm] sections.");
+
+    for (const auto &term : terms.getRootSections())
+        this->hamiltonianTerms[term] = terms.fetchSubconfig(term);
 
     this->autocompleteAndValidate();
 }
@@ -62,23 +66,14 @@ void Parameters::autocompleteAndValidate() {
 
     Validate(this->from < this->to);
     Validate(this->to <= this->totalSimulations);
-    Validate(numberOfSites > 0);
-    Validate(numberOfBosons > 0);
-    Validate(J >= 0);
-    Validate(W >= 0);
-    Validate(U >= 0);
-    Validate(U1 >= 0);
+    Validate(N > 0);
+    Validate(K > 0);
 }
 
 void Parameters::print(std::ostream &out) const {
-    out << "numberOfSites         : " << this->numberOfSites << std::endl;
-    out << "numbeOfBosons         : " << this->numberOfBosons << std::endl;
-    out << "J                     : " << this->J << std::endl;
-    out << "W                     : " << this->W << std::endl;
-    out << "U                     : " << this->U << std::endl;
-    out << "U1                    : " << this->U1 << std::endl;
-    out << "beta                  : " << this->beta << std::endl;
-    out << "phi0                  : " << this->phi0 << std::endl;
+    out << "General parameters:" << std::endl;
+    out << "N                     : " << this->N << std::endl;
+    out << "K                     : " << this->K << std::endl;
     out << "averagingModel        : " << this->averagingModel << std::endl;
     out << "usePeriodicBC         : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
     out << "calculateEigenvectors : " << (this->calculateEigenvectors ? "true" : "false") << std::endl;
@@ -87,26 +82,21 @@ void Parameters::print(std::ostream &out) const {
     out << "to                    : " << this->to << std::endl;
     out << "totalSimulations      : " << this->totalSimulations << std::endl;
     out << "seed                  : " << this->seed << std::endl;
+
     out << std::endl;
+    out << "Hamiltonian terms:" << std::endl;
+    for (const auto &term : this->hamiltonianTerms) {
+        out << "-- " << term.first << ":" << std::endl;
+        out << term.second;
+    }
 }
 
 std::string Parameters::getByName(const std::string &name) const {
-    if (name == "numberOfSites")
-        return this->doubleToString(this->numberOfSites);
-    else if (name == "numberOfBosons")
-        return this->doubleToString(this->numberOfBosons);
-    else if (name == "J")
-        return this->doubleToString(this->J);
-    else if (name == "W")
-        return this->doubleToString(this->W);
-    else if (name == "U")
-        return this->doubleToString(this->U);
-    else if (name == "U1")
-        return this->doubleToString(this->U1);
-    else if (name == "beta")
-        return this->doubleToString(this->beta);
-    else if (name == "phi0")
-        return this->doubleToString(this->phi0);
+    // General parameters
+    if (name == "N")
+        return this->doubleToString(this->N);
+    else if (name == "K")
+        return this->doubleToString(this->K);
     else if (name == "averagingModel")
         return this->averagingModel;
     else if (name == "usePeriodicBC")
@@ -123,8 +113,15 @@ std::string Parameters::getByName(const std::string &name) const {
         return std::to_string(this->totalSimulations);
     else if (name == "seed")
         return std::to_string(this->seed);
-    else
-        throw UnknownParameterException("Unknown parameter " + name);
+
+    // Hamiltonian term parameters
+    for (auto &term : this->hamiltonianTerms) {
+        const auto &termParams = term.second;
+        if (termParams.hasField(name))
+            return termParams.getString(name);
+    }
+
+    throw ParametersParseException("Unknown parameter " + name);
 }
 
 std::string Parameters::doubleToString(double d) const {
@@ -135,7 +132,13 @@ std::string Parameters::doubleToString(double d) const {
 
 std::string Parameters::getOutputFileSignature() const {
     std::ostringstream filename;
-    filename << "J." << this->J << "_U." << this->U << "_U1." << this->U1 << "_N." << this->numberOfBosons;
-    filename << "_K." << this->numberOfSites  << "_beta." << this->beta << "_phi0." << this->phi0;
+    filename << "N." << this->N << "_K." << this->K;
+
+    for (const auto &term : this->hamiltonianTerms) {
+        const auto &termParams = term.second;
+        for (const auto &termParam : termParams.getKeys())
+            filename << "_" << termParam << "." << termParams.getString(termParam);
+    }
+
     return filename.str();
 }

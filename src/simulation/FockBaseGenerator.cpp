@@ -6,7 +6,7 @@
 
 #include "FockBaseGenerator.h"
 
-std::unique_ptr<FockBase> FockBaseGenerator::generate(int numberOfSites, int numberOfParticles) const {
+std::unique_ptr<FockBase> FockBaseGenerator::generate(int numberOfParticles, int numberOfSites) const {
     auto base = std::make_unique<FockBase>();
 
     // An algorithm from https://arxiv.org/pdf/1102.4006.pdf
