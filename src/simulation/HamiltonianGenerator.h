@@ -59,6 +59,8 @@ public:
     [[nodiscard]] std::vector<std::unique_ptr<HoppingTerm>> &getHoppingTerms();
 
     [[nodiscard]] const FockBase &getFockBase() const;
+
+    [[nodiscard]] bool usingPBC() const { return this->usePBC; }
 };
 
 

@@ -7,6 +7,7 @@
 
 #include "Frontend.h"
 #include "IO.h"
+#include "CavityConstantsReader.h"
 
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
@@ -16,6 +17,8 @@
 #include "simulation/terms/HubbardHop.h"
 #include "simulation/terms/CavityLongInteraction.h"
 #include "simulation/terms/HubbardOnsite.h"
+#include "simulation/terms/LookupCavityZ2.h"
+#include "simulation/terms/LookupCavityYZ.h"
 
 #include "analyzer/tasks/CDF.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
@@ -59,6 +62,24 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
             Validate(U1 >= 0);
             Validate(beta > 0);
             generator->addDiagonalTerm(std::make_unique<CavityLongInteraction>(U1, beta, phi0));
+        } else if (termName == "lookupCavityZ2") {
+            double U1 = termParams.getDouble("U1");
+            Validate(U1 >= 0);
+            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::ifstream cavityConstantsFile(cavityConstantsFilename);
+            if (!cavityConstantsFile)
+                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
+            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
+            generator->addDiagonalTerm(std::make_unique<LookupCavityZ2>(U1, cavityConstants));
+        } else if (termName == "lookupCavityYZ") {
+            double U1 = termParams.getDouble("U1");
+            Validate(U1 >= 0);
+            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::ifstream cavityConstantsFile(cavityConstantsFilename);
+            if (!cavityConstantsFile)
+                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
+            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
+            generator->addHoppingTerm(std::make_unique<LookupCavityYZ>(U1, cavityConstants));
         } else {
             throw ValidationException("Unknown hamiltonian term: " + termName);
         }

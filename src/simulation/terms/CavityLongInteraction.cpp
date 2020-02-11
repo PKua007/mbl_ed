@@ -6,9 +6,10 @@
 #include <numeric>
 
 #include "CavityLongInteraction.h"
+#include "simulation/HamiltonianGenerator.h"
 
 double CavityLongInteraction::calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) {
-    static_cast<void>(generator);
+    Expects(!generator.usingPBC());
 
     std::size_t elementIndex{};
     auto plusMinusAccumulator = [&elementIndex, this](auto sum, auto element) {

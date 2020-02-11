@@ -9,11 +9,31 @@
 #include <iosfwd>
 #include <ostream>
 
+/**
+ * @brief Some constants from prof. Zakrzewski's notes, used in LookupCavityZ2 and LookupCavityYZ.
+ * @details It is a set of different realisations for random @a phi0. Check CavityConstants::Realisation.
+ */
 class CavityConstants {
 public:
+    /**
+     * @brief SiteEntry are 3 constants calculated from @a phi0 from CavityConstants::Realisation for a concrete site.
+     */
     struct SiteEntry {
+        /**
+         * @brief It is just \f$ \cos(2\pi\beta i) \f$ for i-th site (like in CavityLongInteraction)
+         */
         double cosine{};
+
+        /**
+         * @brief \f$ \int dx \cos(kx)w_i(x)^2 \f$.
+         * @details It is the exact formula, which becomes SiteEntry::cosine if Wannier function \f$ w_i \f$ becomes
+         * Dirac delta in a given site.
+         */
         double wannier{};
+
+        /**
+         * @brief \f$ \int dx \cos(kx)w_i(x)w_{i+1}(x) \f$
+         */
         double y{};
 
         friend bool operator==(const SiteEntry &lhs, const SiteEntry &rhs);
@@ -21,13 +41,16 @@ public:
         friend std::ostream &operator<<(std::ostream &os, const SiteEntry &entry);
     };
 
+    /**
+     * @brief Realisation is a concrete @a phi0 and a few site entries (see CavityConstants::SiteEntry) for each site
+     * calculated from this @a phi0.
+     */
     struct Realisation {
         double phi0{};
         std::vector<SiteEntry> siteEntries;
 
         friend bool operator==(const Realisation &lhs, const Realisation &rhs);
         friend bool operator!=(const Realisation &lhs, const Realisation &rhs);
-
         friend std::ostream &operator<<(std::ostream &os, const Realisation &realisation);
     };
 
@@ -38,6 +61,11 @@ private:
     std::vector<Realisation> realisations;
 
 public:
+    /**
+     * @brief Adds another realisation to the set (presumably for another phi0).
+     * @brief The number of sites is determined by the first invokation of this method and the following ones must
+     * have the same number of CavityConstants::SiteEntry -ies.
+     */
     void addRealisation(const Realisation &realisation);
 
     std::size_t getNumberOfSites() const;
