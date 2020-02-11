@@ -221,6 +221,11 @@ void Frontend::simulate(int argc, char **argv) {
     } else if (params.averagingModel == "onsiteDisorder") {
         perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
                                                           simulationParams);
+    } else if (params.averagingModel == "cavityConstants") {
+        perform_simulations<CavityConstantsAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
+                                                           simulationParams);
+    } else {
+        die("Unknown averaging model: " + params.averagingModel);
     }
 
     // Save results

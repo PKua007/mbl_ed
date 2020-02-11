@@ -7,8 +7,11 @@
 
 #include <cmath>
 
+#include "simulation/terms/LookupCavityZ2.h"
+#include "simulation/terms/LookupCavityYZ.h"
 #include "simulation/terms/CavityLongInteraction.h"
 #include "simulation/terms/OnsiteDisorder.h"
+
 #include "utils/Assertions.h"
 #include "HamiltonianGenerator.h"
 #include "RND.h"
@@ -29,12 +32,17 @@ public:
         static_cast<void>(simulationIndex);
         static_cast<void>(numberOfSimulations);
 
+        bool changed{};
         for (auto &diagonalTerm : hamiltonianGenerator.getDiagonalTerms()) {
             try {
                 auto &onsiteDisorder = dynamic_cast<OnsiteDisorder<DisorderGenerator_t>&>(*diagonalTerm);
                 onsiteDisorder.resampleOnsiteEnergies(rnd);
+                changed = true;
             } catch (std::bad_cast &e) { static_cast<void>(e); }
         }
+
+        if (!changed)
+            throw std::runtime_error("OnsiteDisorderAveragingModel: lack of any term to average on");
     }
 };
 
@@ -56,18 +64,24 @@ public:
         Expects(numberOfSimulations > 0);
         Expects(simulationIndex < numberOfSimulations);
 
+        bool termFound{};
         for (auto &diagonalTerm : hamiltonianGenerator.getDiagonalTerms()) {
             try {
                 auto &longIteraction = dynamic_cast<CavityLongInteraction&>(*diagonalTerm);
                 double phi0 = M_PI * simulationIndex / numberOfSimulations;
                 longIteraction.setPhi0(phi0);
+                termFound = true;
             } catch (std::bad_cast &e) { static_cast<void>(e); }
 
             try {
                 auto &onsiteDisorder = dynamic_cast<OnsiteDisorder<DisorderGenerator_t>&>(*diagonalTerm);
                 onsiteDisorder.resampleOnsiteEnergies(rnd);
+                termFound = true;
             } catch (std::bad_cast &e) { static_cast<void>(e); }
         }
+
+        if (!termFound)
+            throw std::runtime_error("UniformPhi0AveragingModel: lack of any term to average on");
     }
 };
 
@@ -88,17 +102,69 @@ public:
         Expects(numberOfSimulations > 0);
         Expects(simulationIndex < numberOfSimulations);
 
+        bool termFound{};
         for (auto &diagonalTerm : hamiltonianGenerator.getDiagonalTerms()) {
             try {
                 auto &longIteraction = dynamic_cast<CavityLongInteraction&>(*diagonalTerm);
                 longIteraction.setPhi0(2*M_PI*rnd());
+                termFound = true;
             } catch (std::bad_cast &e) { static_cast<void>(e); }
 
             try {
                 auto &onsiteDisorder = dynamic_cast<OnsiteDisorder<DisorderGenerator_t>&>(*diagonalTerm);
                 onsiteDisorder.resampleOnsiteEnergies(rnd);
+                termFound = true;
             } catch (std::bad_cast &e) { static_cast<void>(e); }
         }
+
+        if (!termFound)
+            throw std::runtime_error("RandomPhi0AveragingModel: lack of any term to average on");
+    }
+};
+
+/**
+ * @brief Averaging model, used in Simulation which picks subsequent realisations from CavityConstants.
+ * @details It also samples random onsite disorder.
+ * @tparam DisorderGenerator_t disorder generator used
+ */
+template<typename DisorderGenerator_t>
+class CavityConstantsAveragingModel {
+public:
+    /**
+     * @brief The method looks for LookupCavityZ2, LookupCavityYZ and OnsiteDisorder terms in the
+     * @a hamiltonianGenerator.
+     */
+    static void setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
+                                          std::size_t simulationIndex, std::size_t numberOfSimulations)
+    {
+        Expects(numberOfSimulations > 0);
+        Expects(simulationIndex < numberOfSimulations);
+
+        bool termFound{};
+        for (auto &diagonalTerm : hamiltonianGenerator.getDiagonalTerms()) {
+            try {
+                auto &lookupCavityZ2 = dynamic_cast<LookupCavityZ2&>(*diagonalTerm);
+                lookupCavityZ2.changeRealisation(simulationIndex);
+                termFound = true;
+            } catch (std::bad_cast &e) { static_cast<void>(e); }
+
+            try {
+                auto &onsiteDisorder = dynamic_cast<OnsiteDisorder<DisorderGenerator_t>&>(*diagonalTerm);
+                onsiteDisorder.resampleOnsiteEnergies(rnd);
+                termFound = true;
+            } catch (std::bad_cast &e) { static_cast<void>(e); }
+        }
+
+        for (auto &hoppingTerm : hamiltonianGenerator.getHoppingTerms()) {
+            try {
+                auto &lookupCavityYZ = dynamic_cast<LookupCavityYZ&>(*hoppingTerm);
+                lookupCavityYZ.changeRealisation(simulationIndex);
+                termFound = true;
+            } catch (std::bad_cast &e) { static_cast<void>(e); }
+        }
+
+        if (!termFound)
+            throw std::runtime_error("CavityConstantsAveragingModel: lack of any term to average on");
     }
 };
 
