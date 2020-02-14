@@ -36,14 +36,17 @@ HamiltonianGenerator::hoppingAction(const FockBase::Vector &fromVector, std::siz
     return result;
 }
 
+#include <iostream>
 arma::mat HamiltonianGenerator::generate() const {
     arma::mat result(this->fockBase->size(), this->fockBase->size(), arma::fill::zeros);
 
+    std::cout << "hamiltonian... " << std::flush;
     for (std::size_t vectorIdx = 0; vectorIdx < this->fockBase->size(); vectorIdx++) {
         this->addDiagonalTerms(result, vectorIdx);
         this->addHoppingTerms(result, vectorIdx);
         this->addDoubleHoppingTerms(result, vectorIdx);
     }
+    std::cout << "done" << std::flush;
 
     return result;
 }
@@ -71,7 +74,7 @@ void HamiltonianGenerator::addHoppingTerms(arma::mat &result, std::size_t fromId
     }
 }
 
-auto HamiltonianGenerator::calculateDoubleHop(const HopData &firstHop, const HopData &secondHop) const {
+auto HamiltonianGenerator::calculateDoubleHopMatrixElement(const HopData &firstHop, const HopData &secondHop) const {
     double matrixElement{};
     for (auto &doubleHoppingTerm : this->doubleHoppingTerms)
         matrixElement += doubleHoppingTerm->calculate(firstHop, secondHop, *this);
@@ -82,38 +85,31 @@ auto HamiltonianGenerator::calculateDoubleHop(const HopData &firstHop, const Hop
     return std::make_tuple(matrixElement, toIdx);
 }
 
+void HamiltonianGenerator::performSecondHop(arma::mat &result, std::size_t fromIdx, const HopData &firstHop) const {
+    for (std::size_t fromSite2 = 0; fromSite2 < this->fockBase->getNumberOfSites(); fromSite2++) {
+        auto secondHopForward = this->hoppingAction(firstHop.toVector, fromSite2, fromSite2 + 1);
+        if (secondHopForward != std::nullopt) {
+            auto[matrixElement, toIdx] = this->calculateDoubleHopMatrixElement(firstHop, *secondHopForward);
+            result(toIdx, fromIdx) += matrixElement;
+        }
+
+        auto secondHopBackward = this->hoppingAction(firstHop.toVector, fromSite2 + 1, fromSite2);
+        if (secondHopBackward != std::nullopt) {
+            auto[matrixElement, toIdx] = this->calculateDoubleHopMatrixElement(firstHop, *secondHopBackward);
+            result(toIdx, fromIdx) += matrixElement;
+        }
+    }
+}
+
 void HamiltonianGenerator::addDoubleHoppingTerms(arma::mat &result, std::size_t fromIdx) const {
     for (std::size_t fromSite1 = 0; fromSite1 < this->fockBase->getNumberOfSites(); fromSite1++) {
-        auto forward = this->hoppingAction((*this->fockBase)[fromIdx], fromSite1, fromSite1 + 1);
-        auto backward = this->hoppingAction((*this->fockBase)[fromIdx], fromSite1 + 1, fromSite1);
+        auto firstHopForward = this->hoppingAction((*this->fockBase)[fromIdx], fromSite1, fromSite1 + 1);
+        if (firstHopForward != std::nullopt)
+            this->performSecondHop(result, fromIdx, *firstHopForward);
 
-        if (forward == std::nullopt && backward == std::nullopt)
-            continue;
-
-        for (std::size_t fromSite2 = 0; fromSite2 < this->fockBase->getNumberOfSites(); fromSite2++) {
-            if (forward != std::nullopt) {
-                auto forwardForward = this->hoppingAction(forward->toVector, fromSite2, fromSite2 + 1);
-                if (forwardForward != std::nullopt) {
-                    auto [matrixElement, toIdx] = this->calculateDoubleHop(*forward, *forwardForward);
-                    result(fromIdx, toIdx) += matrixElement;
-                    result(toIdx, fromIdx) += matrixElement;
-                }
-
-                auto forwardBackward = this->hoppingAction(forward->toVector, fromSite2 + 1, fromSite2);
-                if (forwardBackward != std::nullopt) {
-                    auto [matrixElement, toIdx] = this->calculateDoubleHop(*forward, *forwardBackward);
-                    result(toIdx, fromIdx) += matrixElement;
-                }
-            }
-
-            if (backward != std::nullopt) {
-                auto backwardForward = this->hoppingAction(backward->toVector, fromSite2, fromSite2 + 1);
-                if (backwardForward != std::nullopt) {
-                    auto [matrixElement, toIdx] = this->calculateDoubleHop(*backward, *backwardForward);
-                    result(toIdx, fromIdx) += matrixElement;
-                }
-            }
-        }
+        auto firstHopBackward = this->hoppingAction((*this->fockBase)[fromIdx], fromSite1 + 1, fromSite1);
+        if (firstHopBackward != std::nullopt)
+            this->performSecondHop(result, fromIdx, *firstHopBackward);
     }
 }
 

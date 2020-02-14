@@ -35,7 +35,8 @@ private:
 
     [[nodiscard]] std::optional<HopData>
     hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
-    auto calculateDoubleHop(const HopData &firstHop, const HopData &secondHop) const;
+    auto calculateDoubleHopMatrixElement(const HopData &firstHop, const HopData &secondHop) const;
+    void performSecondHop(arma::mat &result, std::size_t fromIdx, const HopData &firstHop) const;
     void addDiagonalTerms(arma::mat &result, std::size_t vectorIdx) const;
     void addHoppingTerms(arma::mat &result, std::size_t fromIdx) const;
     void addDoubleHoppingTerms(arma::mat &result, std::size_t fromIdx) const;
