@@ -36,6 +36,10 @@ private:
     [[nodiscard]] std::optional<HopData>
     hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
 
+    void addDiagonalTerms(arma::mat &result, std::size_t vectorIdx) const;
+    void addHoppingTerms(arma::mat &result, std::size_t vectorIdx) const;
+    void addDoubleHoppingTerms(arma::mat &result, std::size_t vectorIdx) const;
+
 public:
     HamiltonianGenerator(std::unique_ptr<FockBase> fockBase, bool usePBC)
             : usePBC{usePBC}, fockBase{std::move(fockBase)}
