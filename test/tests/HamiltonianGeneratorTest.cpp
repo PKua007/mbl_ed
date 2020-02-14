@@ -22,7 +22,8 @@ namespace {
         std::size_t b{};
 
     public:
-        HopBetween(std::size_t a, std::size_t b) : a{a}, b{b} {}
+        HopBetween(std::size_t a, std::size_t b) : a{a}, b{b} { }
+        HopBetween(const HopData &hopData) : a{hopData.fromSite}, b{hopData.toSite} { }
 
         bool operator==(HopBetween other) {
             return (this->a == other.a && this->b == other.b) || (this->a == other.b && this->b == other.a);
@@ -32,12 +33,12 @@ namespace {
 
 TEST_CASE("HamiltonianGenerator: non-periodic hop") {
     auto hopping = std::make_unique<HoppingTermMock>();
-    REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
-        .WITH(HopBetween(_3, _4) == HopBetween(0, 1))
+    REQUIRE_CALL(*hopping, calculate(_, _))
+        .WITH(HopBetween(_1) == HopBetween(0, 1))
         .RETURN(-1)
         .TIMES(AT_LEAST(1));
-    REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
-        .WITH(HopBetween(_3, _4) == HopBetween(1, 2))
+    REQUIRE_CALL(*hopping, calculate(_, _))
+        .WITH(HopBetween(_1) == HopBetween(1, 2))
         .RETURN(-1)
         .TIMES(AT_LEAST(1));
     FockBaseGenerator baseGenerator;
@@ -74,16 +75,16 @@ TEST_CASE("HamiltonianGenerator: diagonal") {
 TEST_CASE("HamiltonianGenerator: PBC") {
     SECTION("Periodic BC - periodic hopping should be present") {
         auto hopping = std::make_unique<HoppingTermMock>();
-        REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
-                .WITH(HopBetween(_3, _4) == HopBetween(0, 1))
+        REQUIRE_CALL(*hopping, calculate(_, _))
+                .WITH(HopBetween(_1) == HopBetween(0, 1))
                 .RETURN(-1)
                 .TIMES(AT_LEAST(1));
-        REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
-                .WITH(HopBetween(_3, _4) == HopBetween(1, 2))
+        REQUIRE_CALL(*hopping, calculate(_, _))
+                .WITH(HopBetween(_1) == HopBetween(1, 2))
                 .RETURN(-1)
                 .TIMES(AT_LEAST(1));
-        REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
-                .WITH(HopBetween(_3, _4) == HopBetween(0, 2))
+        REQUIRE_CALL(*hopping, calculate(_, _))
+                .WITH(HopBetween(_1) == HopBetween(0, 2))
                 .RETURN(-1)
                 .TIMES(AT_LEAST(1));
         FockBaseGenerator baseGenerator;
@@ -96,12 +97,12 @@ TEST_CASE("HamiltonianGenerator: PBC") {
 
     SECTION("Non periodic BC - periodic hopping should not be present") {
         auto hopping = std::make_unique<HoppingTermMock>();
-        REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
-                .WITH(HopBetween(_3, _4) == HopBetween(0, 1))
+        REQUIRE_CALL(*hopping, calculate(_, _))
+                .WITH(HopBetween(_1) == HopBetween(0, 1))
                 .RETURN(-1)
                 .TIMES(AT_LEAST(1));
-        REQUIRE_CALL(*hopping, calculate(_, _, _, _, _))
-                .WITH(HopBetween(_3, _4) == HopBetween(1, 2))
+        REQUIRE_CALL(*hopping, calculate(_, _))
+                .WITH(HopBetween(_1) == HopBetween(1, 2))
                 .RETURN(-1)
                 .TIMES(AT_LEAST(1));
         FockBaseGenerator baseGenerator;

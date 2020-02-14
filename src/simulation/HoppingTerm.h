@@ -8,6 +8,7 @@
 #include "FockBase.h"
 
 class HamiltonianGenerator;
+class HopData;
 
 /**
  * @brief A class representing hopping term (off-diagonal term) of second-quantized hamiltonian.
@@ -24,8 +25,7 @@ public:
      * initial and final Fock vectors. Note, that factors which appear just from ladder operators should not be
      * included, only this additional \f$ Y \f$ factor.
      */
-    virtual double calculate(const FockBase::Vector &from, const FockBase::Vector &to, std::size_t fromSite,
-                             std::size_t toSite, const HamiltonianGenerator &generator) = 0;
+    virtual double calculate(const HopData &hopData, const HamiltonianGenerator &generator) = 0;
 };
 
 #endif //MBL_ED_HOPPINGTERM_H

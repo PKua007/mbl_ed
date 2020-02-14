@@ -48,8 +48,7 @@ public:
      * @brief Calculates the hop elements for @a vector. CavityConstants from the constructor must have enough sites
      * defined.
      */
-    double calculate(const FockBase::Vector &from, const FockBase::Vector &to, std::size_t fromSite, std::size_t toSite,
-                     const HamiltonianGenerator &generator) override;
+    double calculate(const HopData &hopData, const HamiltonianGenerator &generator) override;
 
     /**
      * @brief Changes the realisation, i.e. phi0 and wanniers, to the one pointed by @a index in CavityConstants from

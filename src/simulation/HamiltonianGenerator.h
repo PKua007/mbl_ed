@@ -13,6 +13,14 @@
 #include "DiagonalTerm.h"
 #include "HoppingTerm.h"
 
+struct HopData {
+    std::size_t fromSite{};
+    std::size_t toSite{};
+    FockBase::Vector fromVector{};
+    FockBase::Vector toVector{};
+    double ladderConstant{};
+};
+
 /**
  * @brief Hamiltonian generator, which can accept multiple DiagonalTerm -s and HoppingTerm -s.
  */
@@ -23,8 +31,8 @@ private:
     std::vector<std::unique_ptr<DiagonalTerm>> diagonalTerms;
     std::vector<std::unique_ptr<HoppingTerm>> hoppingTerms;
 
-    [[nodiscard]] std::optional<std::pair<FockBase::Vector, double>>
-    hoppingAction(const FockBase::Vector &vector, std::size_t fromSiteIndex, std::size_t toSiteIndex) const;
+    [[nodiscard]] std::optional<HopData>
+    hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
 
 public:
     HamiltonianGenerator(std::unique_ptr<FockBase> fockBase, bool usePBC)

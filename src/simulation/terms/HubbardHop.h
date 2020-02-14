@@ -27,8 +27,7 @@ public:
     /**
      * @brief Returns constant -J for a hop between neighbouring sites (according to PBC or OBC).
      */
-    double calculate(const FockBase::Vector &from, const FockBase::Vector &to, std::size_t fromSite,
-                     std::size_t toSite, const HamiltonianGenerator &generator) override;
+    double calculate(const HopData &hopData, const HamiltonianGenerator &generator) override;
 };
 
 #endif //MBL_ED_HUBBARDHOP_H

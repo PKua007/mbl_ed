@@ -9,20 +9,30 @@
  * @brief Returns vector after acting with b_{toSiteIndex}^\dagger b_{fromSiteIndex} on @a vector with a correct
  * constant
  */
-std::optional<std::pair<FockBase::Vector, double>>
-HamiltonianGenerator::hoppingAction(const FockBase::Vector &vector, std::size_t fromSiteIndex,
-                                    std::size_t toSiteIndex) const
+std::optional<HopData>
+HamiltonianGenerator::hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite,
+                                    std::size_t toSite) const
 {
-    Expects(fromSiteIndex < vector.size());
-    Expects(toSiteIndex < vector.size());
+    Expects(fromSite < fromVector.size());
+    Expects(toSite != fromSite);
+    if (this->usePBC)
+        toSite %= this->fockBase->getNumberOfSites();
+    else if (toSite >= this->fockBase->getNumberOfSites())
+        return std::nullopt;
 
-    double constant = (vector[toSiteIndex] + 1) * vector[fromSiteIndex];
+    double constant = (fromVector[toSite] + 1) * fromVector[fromSite];
     if (constant == 0)
         return std::nullopt;
 
-    auto result = std::make_pair(vector, std::sqrt(constant));
-    result.first[fromSiteIndex]--;
-    result.first[toSiteIndex]++;
+    HopData result;
+    result.fromSite = fromSite;
+    result.toSite = toSite;
+    result.fromVector = fromVector;
+    result.toVector = fromVector;
+    result.toVector[fromSite]--;
+    result.toVector[toSite]++;
+    result.ladderConstant = std::sqrt(constant);
+
     return result;
 }
 
@@ -34,26 +44,16 @@ arma::mat HamiltonianGenerator::generate() const {
             result(i, i) += diagonalTerm->calculate((*this->fockBase)[i], *this);
 
         for (std::size_t from = 0; from < this->fockBase->getNumberOfSites(); from++) {
-            std::size_t to;
-            if (this->usePBC)
-                to = (from + 1) % this->fockBase->getNumberOfSites();
-            else if (from == this->fockBase->getNumberOfSites() - 1)
+            auto hopData = this->hoppingAction((*this->fockBase)[i], from, from + 1);
+            if (hopData == std::nullopt)
                 continue;
-            else
-                to = from + 1;
-
-            auto hoppedVector = this->hoppingAction((*this->fockBase)[i], from, to);
-            if (hoppedVector == std::nullopt)
-                continue;
-
-            auto [hoppedBase, ladderConstant] = *hoppedVector;
 
             double hopConstant{};
             for (auto &hoppingTerm : this->hoppingTerms)
-                hopConstant += hoppingTerm->calculate((*this->fockBase)[i], hoppedBase, from, to, *this);
+                hopConstant += hoppingTerm->calculate(*hopData, *this);
 
-            hopConstant *= ladderConstant;
-            std::size_t hoppedIndex = *(this->fockBase->findIndex(hoppedBase));
+            hopConstant *= hopData->ladderConstant;
+            std::size_t hoppedIndex = *(this->fockBase->findIndex(hopData->toVector));
 
             result(i, hoppedIndex) = hopConstant;
             result(hoppedIndex, i) = hopConstant;
