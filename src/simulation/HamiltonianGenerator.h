@@ -12,6 +12,7 @@
 #include "FockBase.h"
 #include "DiagonalTerm.h"
 #include "HoppingTerm.h"
+#include "DoubleHoppingTerm.h"
 
 struct HopData {
     std::size_t fromSite{};
@@ -30,6 +31,7 @@ private:
     std::unique_ptr<FockBase> fockBase;
     std::vector<std::unique_ptr<DiagonalTerm>> diagonalTerms;
     std::vector<std::unique_ptr<HoppingTerm>> hoppingTerms;
+    std::vector<std::unique_ptr<DoubleHoppingTerm>> doubleHoppingTerms;
 
     [[nodiscard]] std::optional<HopData>
     hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
@@ -55,6 +57,7 @@ public:
 
     void addDiagonalTerm(std::unique_ptr<DiagonalTerm> term);
     void addHoppingTerm(std::unique_ptr<HoppingTerm> term);
+    void addDoubleHoppingTerm(std::unique_ptr<DoubleHoppingTerm> term);
 
     /**
      * @brief Returns modyfiable list of diagonal terms.
@@ -62,12 +65,16 @@ public:
     [[nodiscard]] std::vector<std::unique_ptr<DiagonalTerm>> &getDiagonalTerms();
 
     /**
-     * @brief Returns modyfiable list of diagonal terms.
+     * @brief Returns modyfiable list of hopping terms.
      */
     [[nodiscard]] std::vector<std::unique_ptr<HoppingTerm>> &getHoppingTerms();
 
-    [[nodiscard]] const FockBase &getFockBase() const;
+    /**
+     * @brief Returns modyfiable list of double hopping terms.
+     */
+    [[nodiscard]] std::vector<std::unique_ptr<DoubleHoppingTerm>> &getDoubleHoppingTerms();
 
+    [[nodiscard]] const FockBase &getFockBase() const;
     [[nodiscard]] bool usingPBC() const { return this->usePBC; }
 };
 

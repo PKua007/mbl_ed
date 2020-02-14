@@ -13,5 +13,4 @@ class HoppingTermMock : public trompeloeil::mock_interface<HoppingTerm> {
     IMPLEMENT_MOCK2(calculate);
 };
 
-
 #endif //MBL_ED_HOPPINGTERMMOCK_H

@@ -6,6 +6,7 @@
 
 #include "mocks/DiagonalTermMock.h"
 #include "mocks/HoppingTermMock.h"
+#include "mocks/DoubleHoppingTermMock.h"
 
 #include "matchers/ArmaApproxEqualMatcher.h"
 
@@ -35,11 +36,11 @@ TEST_CASE("HamiltonianGenerator: non-periodic hop") {
     auto hopping = std::make_unique<HoppingTermMock>();
     REQUIRE_CALL(*hopping, calculate(_, _))
         .WITH(HopBetween(_1) == HopBetween(0, 1))
-        .RETURN(-1)
+        .RETURN(1)
         .TIMES(AT_LEAST(1));
     REQUIRE_CALL(*hopping, calculate(_, _))
         .WITH(HopBetween(_1) == HopBetween(1, 2))
-        .RETURN(-1)
+        .RETURN(1)
         .TIMES(AT_LEAST(1));
     FockBaseGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 3);
@@ -48,12 +49,53 @@ TEST_CASE("HamiltonianGenerator: non-periodic hop") {
 
     arma::mat result = hamiltonianGenerator.generate();
 
-    arma::mat expected = {{ 0,       -M_SQRT2,  0,  0,        0,        0},
-                          {-M_SQRT2,  0,       -1, -M_SQRT2,  0,        0},
-                          { 0,       -1,        0,  0,       -1,        0},
-                          { 0,       -M_SQRT2,  0,  0,       -M_SQRT2,  0},
-                          { 0,        0,       -1, -M_SQRT2,  0,       -M_SQRT2},
-                          { 0,        0,        0,  0,       -M_SQRT2,  0}};
+    arma::mat expected = {{0,       M_SQRT2, 0, 0,       0,       0},
+                          {M_SQRT2, 0,       1, M_SQRT2, 0,       0},
+                          {0,       1,       0, 0,       1,       0},
+                          {0,       M_SQRT2, 0, 0,       M_SQRT2, 0},
+                          {0,       0,       1, M_SQRT2, 0,       M_SQRT2},
+                          {0,       0,       0, 0,       M_SQRT2, 0}};
+    REQUIRE_THAT(result, IsApproxEqual(expected, 1e-8));
+}
+
+TEST_CASE("HamiltonianGenerator: double hop 2 on 2") {
+    auto hopping = std::make_unique<DoubleHoppingTermMock>();
+    REQUIRE_CALL(*hopping, calculate(_, _, _))
+            .WITH(_3.getSiteDistance(_1.fromSite, _1.toSite) == 1 && _3.getSiteDistance(_2.fromSite, _2.toSite) == 1)
+            .RETURN(1)
+            .TIMES(AT_LEAST(1));
+    FockBaseGenerator baseGenerator;
+    auto fockBase = baseGenerator.generate(2, 2);
+    HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
+    hamiltonianGenerator.addDoubleHoppingTerm(std::move(hopping));
+
+    arma::mat result = hamiltonianGenerator.generate();
+
+    arma::mat expected = {{2, 0, 2},
+                          {0, 4, 0},
+                          {2, 0, 2}};
+    REQUIRE_THAT(result, IsApproxEqual(expected, 1e-8));
+}
+
+TEST_CASE("HamiltonianGenerator: double hop 2 on 3") {
+    auto hopping = std::make_unique<DoubleHoppingTermMock>();
+    REQUIRE_CALL(*hopping, calculate(_, _, _))
+            .WITH(_3.getSiteDistance(_1.fromSite, _1.toSite) == 1 && _3.getSiteDistance(_2.fromSite, _2.toSite) == 1)
+            .RETURN(1)
+            .TIMES(AT_LEAST(1));
+    FockBaseGenerator baseGenerator;
+    auto fockBase = baseGenerator.generate(2, 3);
+    HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
+    hamiltonianGenerator.addDoubleHoppingTerm(std::move(hopping));
+
+    arma::mat result = hamiltonianGenerator.generate();
+
+    arma::mat expected = {{      2, 0,   M_SQRT2,         2, 0,       0},
+                          {      0, 5,         0,         0, 3,       0},
+                          {M_SQRT2, 0,         2, 2*M_SQRT2, 0, M_SQRT2},
+                          {      2, 0, 2*M_SQRT2,         4, 0,       2},
+                          {      0, 3,         0,         0, 5,       0},
+                          {      0, 0,   M_SQRT2,         2, 0,       2}};
     REQUIRE_THAT(result, IsApproxEqual(expected, 1e-8));
 }
 
