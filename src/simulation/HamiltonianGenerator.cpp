@@ -39,10 +39,10 @@ HamiltonianGenerator::hoppingAction(const FockBase::Vector &fromVector, std::siz
 arma::mat HamiltonianGenerator::generate() const {
     arma::mat result(this->fockBase->size(), this->fockBase->size(), arma::fill::zeros);
 
-    for (std::size_t i = 0; i < this->fockBase->size(); i++) {
-        this->addDiagonalTerms(result, i);
-        this->addHoppingTerms(result, i);
-        this->addDoubleHoppingTerms(result, i);
+    for (std::size_t vectorIdx = 0; vectorIdx < this->fockBase->size(); vectorIdx++) {
+        this->addDiagonalTerms(result, vectorIdx);
+        this->addHoppingTerms(result, vectorIdx);
+        this->addDoubleHoppingTerms(result, vectorIdx);
     }
 
     return result;
@@ -53,28 +53,39 @@ void HamiltonianGenerator::addDiagonalTerms(arma::mat &result, std::size_t vecto
         result(vectorIdx, vectorIdx) += diagonalTerm->calculate((*this->fockBase)[vectorIdx], *this);
 }
 
-void HamiltonianGenerator::addHoppingTerms(arma::mat &result, std::size_t vectorIdx) const {
+void HamiltonianGenerator::addHoppingTerms(arma::mat &result, std::size_t fromIdx) const {
     for (std::size_t fromSite = 0; fromSite < this->fockBase->getNumberOfSites(); fromSite++) {
-        auto hopData = this->hoppingAction((*this->fockBase)[vectorIdx], fromSite, fromSite + 1);
+        auto hopData = this->hoppingAction((*this->fockBase)[fromIdx], fromSite, fromSite + 1);
         if (hopData == std::nullopt)
             continue;
 
-        double hopConstant{};
+        double matrixElement{};
         for (auto &hoppingTerm : this->hoppingTerms)
-            hopConstant += hoppingTerm->calculate(*hopData, *this);
+            matrixElement += hoppingTerm->calculate(*hopData, *this);
 
-        hopConstant *= hopData->ladderConstant;
-        std::size_t hoppedIndex = *(this->fockBase->findIndex(hopData->toVector));
+        matrixElement *= hopData->ladderConstant;
+        std::size_t toIdx = *(this->fockBase->findIndex(hopData->toVector));
 
-        result(vectorIdx, hoppedIndex) += hopConstant;
-        result(hoppedIndex, vectorIdx) += hopConstant;
+        result(fromIdx, toIdx) += matrixElement;
+        result(toIdx, fromIdx) += matrixElement;
     }
 }
 
-void HamiltonianGenerator::addDoubleHoppingTerms(arma::mat &result, std::size_t vectorIdx) const {
+auto HamiltonianGenerator::calculateDoubleHop(const HopData &firstHop, const HopData &secondHop) const {
+    double matrixElement{};
+    for (auto &doubleHoppingTerm : this->doubleHoppingTerms)
+        matrixElement += doubleHoppingTerm->calculate(firstHop, secondHop, *this);
+
+    matrixElement *= firstHop.ladderConstant * secondHop.ladderConstant;
+    std::size_t toIdx = *(this->fockBase->findIndex(secondHop.toVector));
+
+    return std::make_tuple(matrixElement, toIdx);
+}
+
+void HamiltonianGenerator::addDoubleHoppingTerms(arma::mat &result, std::size_t fromIdx) const {
     for (std::size_t fromSite1 = 0; fromSite1 < this->fockBase->getNumberOfSites(); fromSite1++) {
-        auto forward = this->hoppingAction((*this->fockBase)[vectorIdx], fromSite1, fromSite1 + 1);
-        auto backward = this->hoppingAction((*this->fockBase)[vectorIdx], fromSite1 + 1, fromSite1);
+        auto forward = this->hoppingAction((*this->fockBase)[fromIdx], fromSite1, fromSite1 + 1);
+        auto backward = this->hoppingAction((*this->fockBase)[fromIdx], fromSite1 + 1, fromSite1);
 
         if (forward == std::nullopt && backward == std::nullopt)
             continue;
@@ -83,51 +94,33 @@ void HamiltonianGenerator::addDoubleHoppingTerms(arma::mat &result, std::size_t 
             if (forward != std::nullopt) {
                 auto forwardForward = this->hoppingAction(forward->toVector, fromSite2, fromSite2 + 1);
                 if (forwardForward != std::nullopt) {
-                    double hopConstant{};
-                    for (auto &doubleHoppingTerm : this->doubleHoppingTerms)
-                        hopConstant += doubleHoppingTerm->calculate(*forward, *forwardForward, *this);
-
-                    hopConstant *= forward->ladderConstant * forwardForward->ladderConstant;
-                    std::size_t hoppedIndex = *(this->fockBase->findIndex(forwardForward->toVector));
-
-                    result(vectorIdx, hoppedIndex) += hopConstant;
-                    result(hoppedIndex, vectorIdx) += hopConstant;
+                    auto [matrixElement, toIdx] = this->calculateDoubleHop(*forward, *forwardForward);
+                    result(fromIdx, toIdx) += matrixElement;
+                    result(toIdx, fromIdx) += matrixElement;
                 }
 
                 auto forwardBackward = this->hoppingAction(forward->toVector, fromSite2 + 1, fromSite2);
                 if (forwardBackward != std::nullopt) {
-                    double hopConstant{};
-                    for (auto &doubleHoppingTerm : this->doubleHoppingTerms)
-                        hopConstant += doubleHoppingTerm->calculate(*forward, *forwardBackward, *this);
-
-                    hopConstant *= forward->ladderConstant * forwardBackward->ladderConstant;
-                    std::size_t hoppedIndex = *(this->fockBase->findIndex(forwardBackward->toVector));
-
-                    result(hoppedIndex, vectorIdx) += hopConstant;
+                    auto [matrixElement, toIdx] = this->calculateDoubleHop(*forward, *forwardBackward);
+                    result(toIdx, fromIdx) += matrixElement;
                 }
             }
 
             if (backward != std::nullopt) {
                 auto backwardForward = this->hoppingAction(backward->toVector, fromSite2, fromSite2 + 1);
                 if (backwardForward != std::nullopt) {
-                    double hopConstant{};
-                    for (auto &doubleHoppingTerm : this->doubleHoppingTerms)
-                        hopConstant += doubleHoppingTerm->calculate(*backward, *backwardForward, *this);
-
-                    hopConstant *= backward->ladderConstant * backwardForward->ladderConstant;
-                    std::size_t hoppedIndex = *(this->fockBase->findIndex(backwardForward->toVector));
-
-                    result(hoppedIndex, vectorIdx) += hopConstant;
+                    auto [matrixElement, toIdx] = this->calculateDoubleHop(*backward, *backwardForward);
+                    result(toIdx, fromIdx) += matrixElement;
                 }
             }
         }
     }
 }
 
-size_t HamiltonianGenerator::getSiteDistance(size_t fromSiteIndex, size_t toSiteIndex) const {
-    Expects(fromSiteIndex < this->fockBase->getNumberOfSites());
-    Expects(toSiteIndex < this->fockBase->getNumberOfSites());
-    std::size_t distance = abs(static_cast<int>(fromSiteIndex) - static_cast<int>(toSiteIndex));
+size_t HamiltonianGenerator::getSiteDistance(std::size_t fromSite, std::size_t toIdx) const {
+    Expects(fromSite < this->fockBase->getNumberOfSites());
+    Expects(toIdx < this->fockBase->getNumberOfSites());
+    std::size_t distance = abs(static_cast<int>(fromSite) - static_cast<int>(toIdx));
     if (this->usePBC && distance > this->fockBase->getNumberOfSites() / 2)
         distance = this->fockBase->getNumberOfSites() - distance;
     return distance;

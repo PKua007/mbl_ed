@@ -35,10 +35,10 @@ private:
 
     [[nodiscard]] std::optional<HopData>
     hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
-
+    auto calculateDoubleHop(const HopData &firstHop, const HopData &secondHop) const;
     void addDiagonalTerms(arma::mat &result, std::size_t vectorIdx) const;
-    void addHoppingTerms(arma::mat &result, std::size_t vectorIdx) const;
-    void addDoubleHoppingTerms(arma::mat &result, std::size_t vectorIdx) const;
+    void addHoppingTerms(arma::mat &result, std::size_t fromIdx) const;
+    void addDoubleHoppingTerms(arma::mat &result, std::size_t fromIdx) const;
 
 public:
     HamiltonianGenerator(std::unique_ptr<FockBase> fockBase, bool usePBC)
@@ -57,7 +57,7 @@ public:
      * @brief Returns the distance between sites of given indices.
      * @details Note, that when used with PBC, the shorter distance will be returned.
      */
-    [[nodiscard]] size_t getSiteDistance(size_t fromSiteIndex, size_t toSiteIndex) const;
+    [[nodiscard]] size_t getSiteDistance(std::size_t fromSite, std::size_t toIdx) const;
 
     void addDiagonalTerm(std::unique_ptr<DiagonalTerm> term);
     void addHoppingTerm(std::unique_ptr<HoppingTerm> term);
