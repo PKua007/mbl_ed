@@ -36,18 +36,13 @@ HamiltonianGenerator::hoppingAction(const FockBase::Vector &fromVector, std::siz
     return result;
 }
 
-#include <iostream>
 arma::mat HamiltonianGenerator::generate() const {
     arma::mat result(this->fockBase->size(), this->fockBase->size(), arma::fill::zeros);
-
-    std::cout << "hamiltonian... " << std::flush;
     for (std::size_t vectorIdx = 0; vectorIdx < this->fockBase->size(); vectorIdx++) {
         this->addDiagonalTerms(result, vectorIdx);
         this->addHoppingTerms(result, vectorIdx);
         this->addDoubleHoppingTerms(result, vectorIdx);
     }
-    std::cout << "done" << std::flush;
-
     return result;
 }
 
