@@ -14,16 +14,24 @@
 #include "HoppingTerm.h"
 #include "DoubleHoppingTerm.h"
 
+/**
+ * @brief Struct representing a hop between two sites.
+ */
 struct HopData {
     std::size_t fromSite{};
     std::size_t toSite{};
     FockBase::Vector fromVector{};
     FockBase::Vector toVector{};
+
+    /**
+     * @brief The constant given by acting with \f$ \hat{b}_\text{toSite} \hat{b}_\text{fromSite} \f$ on
+     * \f$ |\text{fromVector}> \f$.
+     */
     double ladderConstant{};
 };
 
 /**
- * @brief Hamiltonian generator, which can accept multiple DiagonalTerm -s and HoppingTerm -s.
+ * @brief Hamiltonian generator, which can accept multiple DiagonalTerm -s, HoppingTerm -s and DoubleHoppingTerm -s.
  */
 class HamiltonianGenerator {
 private:

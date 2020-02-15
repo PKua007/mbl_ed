@@ -46,7 +46,7 @@ public:
     }
 
     /**
-     * @brief Calculates the hop elements for @a vector. CavityConstants from the constructor must have enough sites
+     * @brief Calculates the hop elements for @a hopData. CavityConstants from the constructor must have enough sites
      * defined.
      */
     double calculate(const HopData &hopData, const HamiltonianGenerator &generator) override;
