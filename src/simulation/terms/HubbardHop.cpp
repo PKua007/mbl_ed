@@ -5,12 +5,11 @@
 #include "HubbardHop.h"
 #include "simulation/HamiltonianGenerator.h"
 
-double HubbardHop::calculate(const FockBase::Vector &from, const FockBase::Vector &to, std::size_t fromSite,
-                             std::size_t toSite, const HamiltonianGenerator &generator)
+double HubbardHop::calculate(const HopData &hopData, const HamiltonianGenerator &generator)
 {
-    Expects(generator.getSiteDistance(fromSite, toSite) == 1);
-    static_cast<void>(from);
-    static_cast<void>(to);
+    Expects(generator.getSiteDistance(hopData.fromSite, hopData.toSite) == 1);
+    static_cast<void>(hopData.fromVector);
+    static_cast<void>(hopData.toVector);
 
     return -this->J;
 }

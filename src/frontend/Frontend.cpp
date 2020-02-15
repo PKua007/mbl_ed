@@ -19,6 +19,7 @@
 #include "simulation/terms/HubbardOnsite.h"
 #include "simulation/terms/LookupCavityZ2.h"
 #include "simulation/terms/LookupCavityYZ.h"
+#include "simulation/terms/LookupCavityY2.h"
 
 #include "analyzer/tasks/CDF.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
@@ -80,6 +81,15 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
                 throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
             CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
             generator->addHoppingTerm(std::make_unique<LookupCavityYZ>(U1, cavityConstants));
+        }  else if (termName == "lookupCavityY2") {
+            double U1 = termParams.getDouble("U1");
+            Validate(U1 >= 0);
+            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::ifstream cavityConstantsFile(cavityConstantsFilename);
+            if (!cavityConstantsFile)
+                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
+            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
+            generator->addDoubleHoppingTerm(std::make_unique<LookupCavityY2>(U1, cavityConstants));
         } else {
             throw ValidationException("Unknown hamiltonian term: " + termName);
         }

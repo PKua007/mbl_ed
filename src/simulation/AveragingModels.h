@@ -9,6 +9,7 @@
 
 #include "simulation/terms/LookupCavityZ2.h"
 #include "simulation/terms/LookupCavityYZ.h"
+#include "simulation/terms/LookupCavityY2.h"
 #include "simulation/terms/CavityLongInteraction.h"
 #include "simulation/terms/OnsiteDisorder.h"
 
@@ -159,6 +160,14 @@ public:
             try {
                 auto &lookupCavityYZ = dynamic_cast<LookupCavityYZ&>(*hoppingTerm);
                 lookupCavityYZ.changeRealisation(simulationIndex);
+                termFound = true;
+            } catch (std::bad_cast &e) { static_cast<void>(e); }
+        }
+
+        for (auto &doubleHoppingTerm : hamiltonianGenerator.getDoubleHoppingTerms()) {
+            try {
+                auto &lookupCavityY2 = dynamic_cast<LookupCavityY2&>(*doubleHoppingTerm);
+                lookupCavityY2.changeRealisation(simulationIndex);
                 termFound = true;
             } catch (std::bad_cast &e) { static_cast<void>(e); }
         }

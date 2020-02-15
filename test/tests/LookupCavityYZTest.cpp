@@ -25,8 +25,8 @@ TEST_CASE("LookupCavityYZ: correct") {
         // hop y constant = 3, -U1/K = -1
         // -1 * 3 * (7 + 10) = -51
         // + vice versa
-        REQUIRE(term.calculate({1, 1}, {0, 2}, 0, 1, generator) == -51);
-        REQUIRE(term.calculate({0, 2}, {1, 1}, 1, 0, generator) == -51);
+        REQUIRE(term.calculate({0, 1, {1, 1}, {0, 2}}, generator) == -51);
+        REQUIRE(term.calculate({1, 0, {0, 2}, {1, 1}}, generator) == -51);
     }
 
     SECTION("explicit realisation in constructor = 1") {
@@ -37,8 +37,8 @@ TEST_CASE("LookupCavityYZ: correct") {
         // vector{0, 2} * wanniers{8, 11} = 22
         // hop y constant = 9, -U1/K = -1
         // + vice versa
-        REQUIRE(term.calculate({1, 1}, {0, 2}, 0, 1, generator) == -9 * (19 + 22));
-        REQUIRE(term.calculate({0, 2}, {1, 1}, 1, 0, generator) == -9 * (19 + 22));
+        REQUIRE(term.calculate({0, 1, {1, 1}, {0, 2}}, generator) == -9 * (19 + 22));
+        REQUIRE(term.calculate({1, 0, {0, 2}, {1, 1}}, generator) == -9 * (19 + 22));
     }
 
     SECTION("changing realisation to 1") {
@@ -46,7 +46,7 @@ TEST_CASE("LookupCavityYZ: correct") {
 
         term.changeRealisation(1);
 
-        REQUIRE(term.calculate({1, 1}, {0, 2}, 0, 1, generator) == -9 * (19 + 22));
+        REQUIRE(term.calculate({0, 1, {1, 1}, {0, 2}}, generator) == -9 * (19 + 22));
     }
 }
 
@@ -86,6 +86,6 @@ TEST_CASE("LookupCavityYZ: errors") {
         smallCavityConstants.addRealisation(CavityConstants::Realisation{0.4, {{1, 2, 3}}});
         LookupCavityYZ term(2, smallCavityConstants, 0);
 
-        REQUIRE_THROWS(term.calculate({1, 1}, {0, 2}, 0, 1, generator));
+        REQUIRE_THROWS(term.calculate({0, 1, {1, 1}, {0, 2}}, generator));
     }
 }

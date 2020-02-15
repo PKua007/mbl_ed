@@ -10,8 +10,7 @@
 #include "simulation/HoppingTerm.h"
 
 class HoppingTermMock : public trompeloeil::mock_interface<HoppingTerm> {
-    IMPLEMENT_MOCK5(calculate);
+    IMPLEMENT_MOCK2(calculate);
 };
-
 
 #endif //MBL_ED_HOPPINGTERMMOCK_H

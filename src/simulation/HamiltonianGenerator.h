@@ -12,9 +12,26 @@
 #include "FockBase.h"
 #include "DiagonalTerm.h"
 #include "HoppingTerm.h"
+#include "DoubleHoppingTerm.h"
 
 /**
- * @brief Hamiltonian generator, which can accept multiple DiagonalTerm -s and HoppingTerm -s.
+ * @brief Struct representing a hop between two sites.
+ */
+struct HopData {
+    std::size_t fromSite{};
+    std::size_t toSite{};
+    FockBase::Vector fromVector{};
+    FockBase::Vector toVector{};
+
+    /**
+     * @brief The constant given by acting with \f$ \hat{b}_\text{toSite} \hat{b}_\text{fromSite} \f$ on
+     * \f$ |\text{fromVector}> \f$.
+     */
+    double ladderConstant{};
+};
+
+/**
+ * @brief Hamiltonian generator, which can accept multiple DiagonalTerm -s, HoppingTerm -s and DoubleHoppingTerm -s.
  */
 class HamiltonianGenerator {
 private:
@@ -22,9 +39,15 @@ private:
     std::unique_ptr<FockBase> fockBase;
     std::vector<std::unique_ptr<DiagonalTerm>> diagonalTerms;
     std::vector<std::unique_ptr<HoppingTerm>> hoppingTerms;
+    std::vector<std::unique_ptr<DoubleHoppingTerm>> doubleHoppingTerms;
 
-    [[nodiscard]] std::optional<std::pair<FockBase::Vector, double>>
-    hoppingAction(const FockBase::Vector &vector, std::size_t fromSiteIndex, std::size_t toSiteIndex) const;
+    [[nodiscard]] std::optional<HopData>
+    hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
+    auto calculateDoubleHopMatrixElement(const HopData &firstHop, const HopData &secondHop) const;
+    void performSecondHop(arma::mat &result, std::size_t fromIdx, const HopData &firstHop) const;
+    void addDiagonalTerms(arma::mat &result, std::size_t vectorIdx) const;
+    void addHoppingTerms(arma::mat &result, std::size_t fromIdx) const;
+    void addDoubleHoppingTerms(arma::mat &result, std::size_t fromIdx) const;
 
 public:
     HamiltonianGenerator(std::unique_ptr<FockBase> fockBase, bool usePBC)
@@ -43,10 +66,11 @@ public:
      * @brief Returns the distance between sites of given indices.
      * @details Note, that when used with PBC, the shorter distance will be returned.
      */
-    [[nodiscard]] size_t getSiteDistance(size_t fromSiteIndex, size_t toSiteIndex) const;
+    [[nodiscard]] size_t getSiteDistance(std::size_t fromSite, std::size_t toIdx) const;
 
     void addDiagonalTerm(std::unique_ptr<DiagonalTerm> term);
     void addHoppingTerm(std::unique_ptr<HoppingTerm> term);
+    void addDoubleHoppingTerm(std::unique_ptr<DoubleHoppingTerm> term);
 
     /**
      * @brief Returns modyfiable list of diagonal terms.
@@ -54,12 +78,16 @@ public:
     [[nodiscard]] std::vector<std::unique_ptr<DiagonalTerm>> &getDiagonalTerms();
 
     /**
-     * @brief Returns modyfiable list of diagonal terms.
+     * @brief Returns modyfiable list of hopping terms.
      */
     [[nodiscard]] std::vector<std::unique_ptr<HoppingTerm>> &getHoppingTerms();
 
-    [[nodiscard]] const FockBase &getFockBase() const;
+    /**
+     * @brief Returns modyfiable list of double hopping terms.
+     */
+    [[nodiscard]] std::vector<std::unique_ptr<DoubleHoppingTerm>> &getDoubleHoppingTerms();
 
+    [[nodiscard]] const FockBase &getFockBase() const;
     [[nodiscard]] bool usingPBC() const { return this->usePBC; }
 };
 
