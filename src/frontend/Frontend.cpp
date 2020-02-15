@@ -81,7 +81,7 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
                 throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
             CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
             generator->addHoppingTerm(std::make_unique<LookupCavityYZ>(U1, cavityConstants));
-        }  else if (termName == "lookupCavityY2") {
+        } else if (termName == "lookupCavityY2") {
             double U1 = termParams.getDouble("U1");
             Validate(U1 >= 0);
             std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
@@ -89,6 +89,27 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
             if (!cavityConstantsFile)
                 throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
             CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
+            generator->addDoubleHoppingTerm(std::make_unique<LookupCavityY2>(U1, cavityConstants));
+        } else if (termName == "lookupCavityZ2_YZ") {
+            double U1 = termParams.getDouble("U1");
+            Validate(U1 >= 0);
+            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::ifstream cavityConstantsFile(cavityConstantsFilename);
+            if (!cavityConstantsFile)
+                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
+            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
+            generator->addDiagonalTerm(std::make_unique<LookupCavityZ2>(U1, cavityConstants));
+            generator->addHoppingTerm(std::make_unique<LookupCavityYZ>(U1, cavityConstants));
+        } else if (termName == "lookupCavityZ2_YZ_Y2") {
+            double U1 = termParams.getDouble("U1");
+            Validate(U1 >= 0);
+            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::ifstream cavityConstantsFile(cavityConstantsFilename);
+            if (!cavityConstantsFile)
+                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
+            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
+            generator->addDiagonalTerm(std::make_unique<LookupCavityZ2>(U1, cavityConstants));
+            generator->addHoppingTerm(std::make_unique<LookupCavityYZ>(U1, cavityConstants));
             generator->addDoubleHoppingTerm(std::make_unique<LookupCavityY2>(U1, cavityConstants));
         } else {
             throw ValidationException("Unknown hamiltonian term: " + termName);
