@@ -27,7 +27,7 @@ namespace {
 
 TEST_CASE("OnsiteDisorder: first sample") {
     HamiltonianGenerator generator(FockBaseGenerator{}.generate(3, 3), false);
-    const auto &fockBase = generator.getFockBase();
+    const auto &fockBase = *generator.getFockBase();
     RND rnd;
     auto disorderGenerator = std::make_unique<SequenceDisorderGenerator>(std::vector<double>{1, 2, 3});
     OnsiteDisorder onsiteDisorder(std::move(disorderGenerator), 3, rnd);
@@ -46,7 +46,7 @@ TEST_CASE("OnsiteDisorder: first sample") {
 
 TEST_CASE("OnsiteDisorder: resample") {
     HamiltonianGenerator generator(FockBaseGenerator{}.generate(3, 3), false);
-    const auto &fockBase = generator.getFockBase();
+    const auto &fockBase = *generator.getFockBase();
     RND rnd;
     auto disorderGenerator = std::make_unique<SequenceDisorderGenerator>(std::vector<double>{0, 0, 0, 1, 2, 3});
     OnsiteDisorder onsiteDisorder(std::move(disorderGenerator), 3, rnd);

@@ -10,7 +10,7 @@
 #include "utils/Assertions.h"
 #include "Eigensystem.h"
 
-Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::shared_ptr<FockBase> fockBase)
+Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::shared_ptr<const FockBase> fockBase)
         : eigenenergies{std::move(eigenvalues)}, eigenstates{std::move(eigenvectors)}, hasEigenvectors_{true},
           fockBase{std::move(fockBase)}
 {
@@ -27,7 +27,7 @@ Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::sha
     this->sortEigenenergiesAndNormalizeEigenstates();
 }
 
-Eigensystem::Eigensystem(arma::vec eigenvalues, std::shared_ptr<FockBase> fockBase)
+Eigensystem::Eigensystem(arma::vec eigenvalues, std::shared_ptr<const FockBase> fockBase)
         : eigenenergies{std::move(eigenvalues)}, hasEigenvectors_{false}, fockBase{std::move(fockBase)}
 {
     if (this->fockBase != nullptr)
@@ -82,7 +82,7 @@ void Eigensystem::store(std::ostream &eigenenergiesOut) const {
         throw std::runtime_error("Store procedure failed");
 }
 
-void Eigensystem::restore(std::istream &in, std::shared_ptr<FockBase> newFockBase) {
+void Eigensystem::restore(std::istream &in, std::shared_ptr<const FockBase> newFockBase) {
     arma::vec newEigenenergies;
     if (!newEigenenergies.load(in))
         throw std::runtime_error("Restore procedure failed");

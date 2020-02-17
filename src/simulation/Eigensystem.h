@@ -20,7 +20,7 @@ private:
     arma::vec eigenenergies;
     arma::mat eigenstates;
     bool hasEigenvectors_{};
-    std::shared_ptr<FockBase> fockBase;
+    std::shared_ptr<const FockBase> fockBase;
 
     void sortEigenenergiesAndNormalizeEigenstates();
     void sortEigenenergies();
@@ -35,14 +35,14 @@ public:
      * Eigenvalues are sorted in ascending order and eigenvectors are normalized to unity. @a fockBase can be omitted,
      * but when it's not, the size must match the number of eigenvalues.
      */
-    Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::shared_ptr<FockBase> fockBase = nullptr);
+    Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::shared_ptr<const FockBase> fockBase = nullptr);
 
     /**
      * @brief Constructs a system without eigenvectors: eigenvalues are entries in @a eigengenvalues.
      *
      * Eigenvalues are sorted in ascending order.
      */
-    explicit Eigensystem(arma::vec eigenvalues, std::shared_ptr<FockBase> fockBase = nullptr);
+    explicit Eigensystem(arma::vec eigenvalues, std::shared_ptr<const FockBase> fockBase = nullptr);
 
     [[nodiscard]] std::size_t size() const;
     [[nodiscard]] bool empty() const;
@@ -70,7 +70,7 @@ public:
      */
     [[nodiscard]] std::vector<std::size_t> getIndicesOfNormalizedEnergiesInBand(double epsilon, double delta) const;
     void store(std::ostream &eigenenergiesOut) const;
-    void restore(std::istream &in, std::shared_ptr<FockBase> fockBase = nullptr);
+    void restore(std::istream &in, std::shared_ptr<const FockBase> fockBase = nullptr);
 
     friend bool operator==(const Eigensystem &lhs, const Eigensystem &rhs);
     friend bool operator!=(const Eigensystem &lhs, const Eigensystem &rhs);

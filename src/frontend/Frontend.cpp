@@ -335,13 +335,15 @@ void Frontend::analyze(int argc, char **argv) {
     if (energiesFilenames.empty())
         die("No eigenenergy files were found.");
 
+    FockBaseGenerator baseGenerator;
+    auto base = std::shared_ptr<FockBase>(baseGenerator.generate(params.N, params.K));
     for (const auto &energiesFilename : energiesFilenames) {
         std::ifstream energiesFile(energiesFilename);
         if (!energiesFile)
             die("Cannot open " + energiesFilename + " to read eigenenergies from");
 
         Eigensystem eigensystem;
-        eigensystem.restore(energiesFile);
+        eigensystem.restore(energiesFile, base);
         analyzer.analyze(eigensystem);
     }
 

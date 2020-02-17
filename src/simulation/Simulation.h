@@ -48,10 +48,10 @@ private:
 
         if (this->params.calculateEigenvectors) {
             Assert(arma::eig_sym(armaEnergies, armaEigvec, hamiltonian));
-            return Eigensystem(armaEnergies, armaEigvec);
+            return Eigensystem(armaEnergies, armaEigvec, this->hamiltonianGenerator->getFockBase());
         } else {
             Assert(arma::eig_sym(armaEnergies, hamiltonian));
-            return Eigensystem(armaEnergies);
+            return Eigensystem(armaEnergies, this->hamiltonianGenerator->getFockBase());
         }
     }
 

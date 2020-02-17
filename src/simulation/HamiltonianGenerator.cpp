@@ -143,7 +143,3 @@ void HamiltonianGenerator::addHoppingTerm(std::unique_ptr<HoppingTerm> term) {
 void HamiltonianGenerator::addDoubleHoppingTerm(std::unique_ptr<DoubleHoppingTerm> term) {
     this->doubleHoppingTerms.push_back(std::move(term));
 }
-
-const FockBase &HamiltonianGenerator::getFockBase() const {
-    return *(this->fockBase);
-}

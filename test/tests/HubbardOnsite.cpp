@@ -10,7 +10,7 @@
 
 TEST_CASE("HubbardOnsite") {
     HamiltonianGenerator generator(FockBaseGenerator{}.generate(4, 2), false);
-    const auto &fockBase = generator.getFockBase();
+    const auto &fockBase = *generator.getFockBase();
     HubbardOnsite hubbardOnsite(2);
 
     REQUIRE(hubbardOnsite.calculate(fockBase[0], generator) == 12);
