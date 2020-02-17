@@ -10,10 +10,13 @@
 #include "utils/Assertions.h"
 #include "Eigensystem.h"
 
-Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors)
-        : eigenenergies{std::move(eigenvalues)}, eigenstates{std::move(eigenvectors)}, hasEigenvectors_{true}
+Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::shared_ptr<FockBase> fockBase)
+        : eigenenergies{std::move(eigenvalues)}, eigenstates{std::move(eigenvectors)}, hasEigenvectors_{true},
+          fockBase{std::move(fockBase)}
 {
     std::size_t size = this->eigenenergies.size();
+    if (this->fockBase != nullptr)
+        Expects(this->fockBase->size() == size);
     Expects(this->eigenstates.n_cols == size);
     Expects(this->eigenstates.n_rows == size);
     for (std::size_t i{}; i < size; i++)
@@ -24,9 +27,11 @@ Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors)
     this->sortEigenenergiesAndNormalizeEigenstates();
 }
 
-Eigensystem::Eigensystem(arma::vec eigenvalues)
-        : eigenenergies{std::move(eigenvalues)}, hasEigenvectors_{false}
+Eigensystem::Eigensystem(arma::vec eigenvalues, std::shared_ptr<FockBase> fockBase)
+        : eigenenergies{std::move(eigenvalues)}, hasEigenvectors_{false}, fockBase{std::move(fockBase)}
 {
+    if (this->fockBase != nullptr)
+        Expects(this->fockBase->size() == this->eigenenergies.size());
     this->sortEigenenergies();
 }
 
@@ -77,11 +82,11 @@ void Eigensystem::store(std::ostream &eigenenergiesOut) const {
         throw std::runtime_error("Store procedure failed");
 }
 
-void Eigensystem::restore(std::istream &in) {
+void Eigensystem::restore(std::istream &in, std::shared_ptr<FockBase> newFockBase) {
     arma::vec newEigenenergies;
     if (!newEigenenergies.load(in))
         throw std::runtime_error("Restore procedure failed");
-    *this = Eigensystem(newEigenenergies);
+    *this = Eigensystem(newEigenenergies, std::move(newFockBase));
 }
 
 bool operator==(const Eigensystem &lhs, const Eigensystem &rhs) {
@@ -131,4 +136,12 @@ std::vector<std::size_t> Eigensystem::getIndicesOfNormalizedEnergiesInBand(doubl
     std::vector<std::size_t> indices(toIt - fromIt);
     std::iota(indices.begin(), indices.end(), fromIt - normalizedEnergies.begin());
     return indices;
+}
+
+const FockBase &Eigensystem::getFockBase() const {
+    return *(this->fockBase);
+}
+
+bool Eigensystem::hasFockBase() const {
+    return this->fockBase != nullptr;
 }

@@ -121,3 +121,31 @@ TEST_CASE("Eigensystem: get indices of eigenenergies in band - incorrect") {
     REQUIRE_THROWS(eigensystem.getIndicesOfNormalizedEnergiesInBand(0.4, 0));
     REQUIRE_THROWS(eigensystem.getIndicesOfNormalizedEnergiesInBand(0.4, -0.1));
 }
+
+TEST_CASE("Eigensystem: FockBase") {
+    auto base = std::make_shared<FockBase>();
+    base->add({2, 0});
+    base->add({1, 1});
+    base->add({0, 2});
+
+    SECTION("valid construction") {
+        REQUIRE_NOTHROW(Eigensystem({0, 0.5, 1}, base));
+        REQUIRE(Eigensystem({0, 0.5, 1}, base).hasFockBase());
+        REQUIRE_FALSE(Eigensystem({0, 0.5, 1}).hasFockBase());
+        REQUIRE_NOTHROW(Eigensystem({0, 0.5, 1}, {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}, base));
+    }
+
+    SECTION("invalid construction") {
+        REQUIRE_THROWS(Eigensystem({0, 1}, base));
+        REQUIRE_THROWS(Eigensystem({0, 1}, {{1, 0, }, {0, 1}}, base));
+    }
+
+    SECTION("restore") {
+        Eigensystem eigensystem({0, 1});
+        Eigensystem saved({0, 0.5, 1});
+        std::stringstream stream;
+        saved.store(stream);
+
+        REQUIRE_NOTHROW(eigensystem.restore(stream, base));
+    }
+}
