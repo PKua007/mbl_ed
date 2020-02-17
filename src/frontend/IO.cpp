@@ -100,16 +100,22 @@ Parameters IO::loadParameters(const std::string &inputFilename, const std::vecto
     paramsStream << paramsFile.rdbuf() << std::endl;
 
     for (const auto &overridenParam : overridenParams) {
-        std::size_t pos = overridenParam.find('.');
-        if (pos == std::string::npos) {
+        std::size_t dotPos = overridenParam.find('.');
+        std::size_t equalPos = overridenParam.find('=');
+        if (equalPos == std::string::npos)
+            die("Malformed overriden param. Use: [param name]=[value] or [term name].[param name]=[value]");
+
+        if (dotPos == std::string::npos || dotPos > equalPos) {
             // Overriding general param
+            // 1) no '.', or
+            // 2) dot after '=', meaning that it is a part of the value, eg. someParam=1.5
             paramsStream << "[general]" << std::endl << overridenParam << std::endl;
         } else {
             // Overriding hamiltonian term param
-            if (pos == 0 || pos == overridenParam.size() - 1)
+            if (dotPos == 0 || dotPos == overridenParam.size() - 1)
                 die("Malformed overriden param. Use: [param name]=[value] or [term name].[param name]=[value]");
-            std::string termName = overridenParam.substr(0, pos);
-            std::string paramName = overridenParam.substr(pos + 1);
+            std::string termName = overridenParam.substr(0, dotPos);
+            std::string paramName = overridenParam.substr(dotPos + 1);
             paramsStream << "[term." << termName << "]" << std::endl << paramName << std::endl;
         }
     }
