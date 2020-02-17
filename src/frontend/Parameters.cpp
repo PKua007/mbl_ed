@@ -9,6 +9,7 @@
 #include "Parameters.h"
 #include "utils/Config.h"
 #include "utils/Assertions.h"
+#include "utils/Utils.h"
 
 Parameters::Parameters(std::istream &input) {
     // First we are looking for parameters from [general sections]
@@ -136,9 +137,30 @@ std::string Parameters::getOutputFileSignature() const {
 
     for (const auto &term : this->hamiltonianTerms) {
         const auto &termParams = term.second;
-        for (const auto &termParam : termParams.getKeys())
-            filename << "_" << termParam << "." << termParams.getString(termParam);
+        for (const auto &termParam : termParams.getKeys()) {
+            std::string paramValue = termParams.getString(termParam);
+
+            // Erase beginnings of paths ~/, ./ and ../ (possibly repeated)
+            // ' ' and '/' should be dots
+            // Eventually "pathParam = ../../subdir/file.dat" becomes nice - "[...]_pathParam.subdir.file.dat_[...]"
+            paramValue = replaceAll(paramValue, "../", "");
+            paramValue = replaceAll(paramValue, "./", "");
+            paramValue = replaceAll(paramValue, "~/", "");
+            paramValue = replaceAll(paramValue, " ", ".");
+            paramValue = replaceAll(paramValue, "/", ".");
+
+            filename << "_" << termParam << "." << paramValue;
+        }
     }
 
     return filename.str();
+}
+
+bool Parameters::hasParam(const std::string &name) const {
+    try {
+        static_cast<void>(this->getByName(name));
+    } catch (const ParametersParseException &e) {
+        return false;
+    }
+    return true;
 }

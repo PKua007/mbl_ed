@@ -65,8 +65,14 @@ public:
     [[nodiscard]] std::string getByName(const std::string &name) const;
 
     /**
+     * @brief Check is the paramm of given name exists, Name should not contain the section.
+     */
+    [[nodiscard]] bool hasParam(const std::string &name) const;
+
+    /**
      * @brief Prepares prefix for output files which gives some info about parameters.
-     * @details It prints: N, K and all parameters of hamiltonian terms, without the name of the sections.
+     * @details It prints: N, K and all parameters of hamiltonian terms, without the name of the sections. The format
+     * may change often, consult the source code.
      */
     [[nodiscard]] std::string getOutputFileSignature() const;
 };

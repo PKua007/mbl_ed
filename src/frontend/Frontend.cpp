@@ -229,6 +229,9 @@ void Frontend::simulate(int argc, char **argv) {
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
     std::cout << std::endl;
+    for (const auto &param : paramsToPrint)
+        if (!params.hasParam(param))
+            die("Parameters to print: parameter " + param + " is unknown");
 
     auto rnd = std::make_unique<RND>(params.from + params.seed);
     auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd);
@@ -321,6 +324,9 @@ void Frontend::analyze(int argc, char **argv) {
     Parameters params = io.loadParameters(inputFilename, overridenParams);
     params.print(std::cout);
     std::cout << std::endl;
+    for (const auto &param : paramsToPrint)
+        if (!params.hasParam(param))
+            die("Parameters to print: parameter " + param + " is unknown");
 
     // Load eigenenergies and analyze them
     Analyzer analyzer = prepareAnalyzer(tasks);
