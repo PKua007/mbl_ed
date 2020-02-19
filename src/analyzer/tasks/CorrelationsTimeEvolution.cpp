@@ -161,19 +161,15 @@ std::string CorrelationsTimeEvolution::getName() const {
 
 void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
     Assert(!this->evolutions.empty());
-    out << "#t ";
-
+    
     auto headerPrinter = [](const auto &entry) { return entry.getHeader(); };
     std::transform(this->evolutions.begin(), this->evolutions.end(), std::ostream_iterator<std::string>(out, ""),
                    headerPrinter);
     out << std::endl;
 
     for (std::size_t i = 0; i < this->times.size(); i++) {
-        out << this->times[i] << " ";
-        for (const auto &evolution: this->evolutions) {
-            Assert(i < evolution.timeEntries.size());
+        for (const auto &evolution: this->evolutions)
             out << evolution.timeEntries[i];
-        }
         out << std::endl;
     }
 }
@@ -259,7 +255,7 @@ void CorrelationsTimeEvolution::OnsiteFluctuations::addObservables(const Observa
 std::string CorrelationsTimeEvolution::TimeEntry::getHeader() const {
     std::ostringstream out;
 
-    out << "x ";
+    out << "t x ";
     auto headerPrinter = [](const auto &entry) { return entry.getHeader(); };
     std::transform(this->correlations.begin(), this->correlations.end(), std::ostream_iterator<std::string>(out, " "),
                    headerPrinter);
@@ -272,7 +268,7 @@ std::string CorrelationsTimeEvolution::TimeEntry::getHeader() const {
 }
 
 std::ostream &operator<<(std::ostream &out, const CorrelationsTimeEvolution::TimeEntry &timeEntry) {
-    out << timeEntry.x << " ";
+    out << timeEntry.t << " " << timeEntry.x << " ";
     std::copy(timeEntry.correlations.begin(), timeEntry.correlations.end(),
               std::ostream_iterator<CorrelationsTimeEvolution::Correlations>(out, " "));
     std::copy(timeEntry.borderlessCorrelations.begin(), timeEntry.borderlessCorrelations.end(),
