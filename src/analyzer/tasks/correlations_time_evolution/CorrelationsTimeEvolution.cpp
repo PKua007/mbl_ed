@@ -42,7 +42,7 @@ void CorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem) {
 
     for (auto &evolution : this->evolutions) {
         std::size_t initialIdx = *fockBase.findIndex(evolution.initialVector);
-        std::vector<Observables> observablesEvolution = performObservblesEvolution(initialIdx, fockBase, eigensystem);
+        auto observablesEvolution = OccupationEvolution::perform(this->times, initialIdx, fockBase, eigensystem);
 
         Assert(observablesEvolution.size() == evolution.timeEntries.size());
         for (std::size_t i{}; i < observablesEvolution.size(); i++) {
@@ -59,109 +59,13 @@ void CorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem) {
     }
 }
 
-std::vector<CorrelationsTimeEvolution::Observables>
-CorrelationsTimeEvolution::performObservblesEvolution(size_t initialIdx, const FockBase &fockBase,
-                                                      const Eigensystem &eigensystem) const
-{
-    const auto &eigenvectors = eigensystem.getEigenstates();
-    const auto &eigenenergies = eigensystem.getEigenenergies();
-    std::size_t numberOfSites = fockBase.getNumberOfSites();
-
-    std::vector<Observables> observablesEvolution;
-    observablesEvolution.resize(this->times.size());
-    std::transform(this->times.begin(), this->times.end(), observablesEvolution.begin(),
-                   [numberOfSites](double time) { return Observables(numberOfSites, time); });
-
-    for (std::size_t site{}; site < numberOfSites; site++) {
-        SymmetricMatrix matrixElements = numberOfParticlesObservable(fockBase, eigenvectors, site);
-        SymmetricMatrix evolutionTerms = calculateEvolutionTerms(std::move(matrixElements), fockBase,
-                                                                 eigenvectors, initialIdx);
-
-        for (std::size_t timeIdx{}; timeIdx < this->times.size(); timeIdx++) {
-            double time = this->times[timeIdx];
-            double value = calculateObservableValue(evolutionTerms, time, eigenenergies);
-            observablesEvolution[timeIdx].ns[site] = value;
-        }
-    }
-
-    for (std::size_t site1{}; site1 < numberOfSites; site1++) {
-        for (std::size_t site2 = site1; site2 < numberOfSites; site2++) {
-            SymmetricMatrix matrixElements = numberOfParticlesSquaredObservable(fockBase, eigenvectors,
-                                                                                site1, site2);
-            SymmetricMatrix evolutionTerms = calculateEvolutionTerms(std::move(matrixElements), fockBase,
-                                                                     eigenvectors, initialIdx);
-
-            for (std::size_t timeIdx{}; timeIdx < this->times.size(); timeIdx++) {
-                double time = this->times[timeIdx];
-                double value = calculateObservableValue(evolutionTerms, time, eigenenergies);
-                observablesEvolution[timeIdx].nns(site1, site2) = value;
-            }
-        }
-    }
-
-    return observablesEvolution;
-}
-
-double
-CorrelationsTimeEvolution::calculateObservableValue(const CorrelationsTimeEvolution::SymmetricMatrix &evolutionTerms,
-                                                    double time, const arma::vec &eigenenergies) const
-{
-    double value{};
-
-    for (std::size_t elemI{}; elemI < evolutionTerms.size(); elemI++) {
-        value += evolutionTerms(elemI, elemI);
-        for (std::size_t elemJ = elemI; elemJ < evolutionTerms.size(); elemJ++)
-            value += 2 * cos((eigenenergies[elemI] - eigenenergies[elemJ]) * time) * evolutionTerms(elemI, elemJ);
-    }
-    return value;
-}
-
-CorrelationsTimeEvolution::SymmetricMatrix
-CorrelationsTimeEvolution::calculateEvolutionTerms(CorrelationsTimeEvolution::SymmetricMatrix matrixElements,
-                                                   const FockBase &fockBase, const arma::mat &eigenvectors,
-                                                   std::size_t initialIdx) const
-{
-    for (std::size_t elemI{}; elemI < fockBase.size(); elemI++)
-        for (std::size_t elemJ = elemI; elemJ < fockBase.size(); elemJ++)
-            matrixElements(elemI, elemJ) *= eigenvectors(initialIdx, elemI) * eigenvectors(initialIdx, elemJ);
-    return matrixElements;
-}
-
-CorrelationsTimeEvolution::SymmetricMatrix
-CorrelationsTimeEvolution::numberOfParticlesObservable(const FockBase &fockBase, const arma::mat &eigenvectors,
-                                                       std::size_t site) const
-{
-    SymmetricMatrix matrixElements(fockBase.size());
-    for (std::size_t elemI{}; elemI < fockBase.size(); elemI++)
-        for (std::size_t elemJ = elemI; elemJ < fockBase.size(); elemJ++)
-            for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
-                matrixElements(elemI, elemJ) += eigenvectors(fockIdx, elemI) * eigenvectors(fockIdx, elemJ) * fockBase[fockIdx][site];
-    return matrixElements;
-}
-
-CorrelationsTimeEvolution::SymmetricMatrix
-CorrelationsTimeEvolution::numberOfParticlesSquaredObservable(const FockBase &fockBase, const arma::mat &eigenvectors,
-                                                              std::size_t site1, std::size_t site2) const
-{
-    SymmetricMatrix matrixElements(fockBase.size());
-    for (std::size_t elemI{}; elemI < fockBase.size(); elemI++) {
-        for (std::size_t elemJ = elemI; elemJ < fockBase.size(); elemJ++) {
-            for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++) {
-                matrixElements(elemI, elemJ) += eigenvectors(fockIdx, elemI) * eigenvectors(fockIdx, elemJ)
-                                                * fockBase[fockIdx][site1] * fockBase[fockIdx][site2];
-            }
-        }
-    }
-    return matrixElements;
-}
-
 std::string CorrelationsTimeEvolution::getName() const {
     return "corr";
 }
 
 void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
     Assert(!this->evolutions.empty());
-    
+
     auto headerPrinter = [](const auto &entry) { return entry.getHeader(); };
     std::transform(this->evolutions.begin(), this->evolutions.end(), std::ostream_iterator<std::string>(out, ""),
                    headerPrinter);
@@ -180,7 +84,6 @@ CorrelationsTimeEvolution::CorrelationsTimeEvolution(double minTime, double maxT
                                                      const std::vector<FockBase::Vector> &vectorsToEvolve)
         : borderSize{borderSize}
 {
-    Expects(minTime > 0);
     Expects(minTime < maxTime);
     Expects(numSteps >= 2);
     Expects(!vectorsToEvolve.empty());
@@ -191,6 +94,7 @@ CorrelationsTimeEvolution::CorrelationsTimeEvolution(double minTime, double maxT
         for (std::size_t step{}; step < numSteps; step++)
             this->times.push_back(minTime + static_cast<double>(step) * factor);
     } else if (timeScaleType == Logarithmic) {
+        Expects(minTime > 0);
         double logMinTime = std::log(minTime);
         double logMaxTime = std::log(maxTime);
         double factor = (logMaxTime - logMinTime) / (static_cast<double>(numSteps) - 1);
@@ -219,7 +123,9 @@ std::size_t CorrelationsTimeEvolution::getNumberOfSites() const {
     return this->evolutions.front().timeEntries.front().onsiteFluctuations.size();
 }
 
-void CorrelationsTimeEvolution::Correlations::addObservables(const Observables &observables, std::size_t borderSize) {
+void CorrelationsTimeEvolution::Correlations::addObservables(const OccupationEvolution::Observables &observables,
+                                                             std::size_t borderSize)
+{
     std::size_t numberOfSites = observables.ns.size();
     Expects(this->distance < numberOfSites - 2*borderSize);
 
@@ -246,7 +152,8 @@ std::ostream &operator<<(std::ostream &out, const CorrelationsTimeEvolution::Ons
     return out << onsiteFluctuations.rho;
 }
 
-void CorrelationsTimeEvolution::OnsiteFluctuations::addObservables(const Observables &observables) {
+void CorrelationsTimeEvolution::OnsiteFluctuations::addObservables(const OccupationEvolution::Observables &observables)
+{
     Expects(this->i < observables.ns.size());
 
     this->rho += observables.nns(this->i, this->i) - std::pow(observables.ns[this->i], 2);

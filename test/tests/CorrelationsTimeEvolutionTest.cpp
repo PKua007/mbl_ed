@@ -5,7 +5,7 @@
 #include <catch2/catch.hpp>
 #include <catch2/trompeloeil.hpp>
 
-#include "analyzer/tasks/CorrelationsTimeEvolution.h"
+#include "analyzer/tasks/correlations_time_evolution/CorrelationsTimeEvolution.h"
 #include "simulation/HamiltonianGenerator.h"
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/terms/HubbardHop.h"
@@ -26,7 +26,7 @@ TEST_CASE("CorrelationsTimeEvolution") {
     arma::eig_sym(eigenvalues, eigenvectors, hamiltonian);
     Eigensystem eigensystem(eigenvalues, eigenvectors, hamiltonianGenerator.getFockBase());
 
-    CorrelationsTimeEvolution correlationsTimeEvolution(11, 20, 10, CorrelationsTimeEvolution::Linear, 1,
+    CorrelationsTimeEvolution correlationsTimeEvolution(0, 1, 11, CorrelationsTimeEvolution::Linear, 1,
                                                         {{1, 1, 1, 1}, {2, 0, 2, 0}});
     correlationsTimeEvolution.analyze(eigensystem);
 
