@@ -9,6 +9,6 @@ add_executable(tests TestMain.cpp tests/FockBaseGeneratorTest.cpp tests/FockBase
         mocks/DiagonalTermMock.h mocks/HoppingTermMock.h tests/HubbardOnsite.cpp tests/CavityLongInteractionTest.cpp
         tests/OnsiteDisorderTest.cpp tests/HubbardHopTest.cpp tests/ConfigTest.cpp tests/CavityConstantsTest.cpp
         tests/CavityConstantsReaderTest.cpp tests/LookupCavityZ2Test.cpp tests/LookupCavityYZTest.cpp
-        mocks/DoubleHoppingTermMock.h tests/LookupCavityY2Test.cpp)
+        mocks/DoubleHoppingTermMock.h tests/LookupCavityY2Test.cpp tests/CorrelationsTimeEvolutionTest.cpp)
 target_link_libraries(tests PRIVATE mbl_ed_src Catch2::Catch2 trompeloeil)
 target_include_directories(tests PRIVATE ../test)

@@ -12,7 +12,7 @@ add_library(mbl_ed_src STATIC utils/Assertions.h simulation/FockBaseGenerator.cp
         simulation/HoppingTerm.h simulation/terms/HubbardHop.cpp simulation/terms/HubbardOnsite.cpp
         simulation/terms/OnsiteDisorder.h simulation/terms/CavityLongInteraction.cpp simulation/CavityConstants.cpp
         frontend/CavityConstantsReader.cpp simulation/terms/LookupCavityZ2.cpp simulation/terms/LookupCavityYZ.cpp
-        simulation/DoubleHoppingTerm.h simulation/terms/LookupCavityY2.cpp)
+        simulation/DoubleHoppingTerm.h simulation/terms/LookupCavityY2.cpp analyzer/tasks/CorrelationsTimeEvolution.cpp)
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)
 target_link_libraries(mbl_ed_src PUBLIC cxxopts stdc++fs)
