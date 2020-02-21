@@ -86,10 +86,12 @@ void CorrelationsTimeEntry::CorrelationsTimeEntry::addObservables(const Occupati
     for (auto &borderlessCorrelation : this->borderlessCorrelations)
         borderlessCorrelation.addObservables(observables, this->borderSize);
 
-    this->x += 2*std::abs(std::accumulate(this->correlations.begin(), this->correlations.end(), 0.,
-                                          [](double sum, const Correlations &corr) {
-                                              return sum + corr.distance * corr.G;
-                                          }));
+    // =, not +=, because this->correlations are already averaged!!! (or rather summed at this point)
+    this->x = 2*std::abs(std::accumulate(this->correlations.begin(), this->correlations.end(), 0.,
+                                         [](double sum, const Correlations &corr) {
+                                             return sum + corr.distance * corr.G;
+                                         }));
+
 }
 
 CorrelationsTimeEntry::CorrelationsTimeEntry::CorrelationsTimeEntry(double t, std::size_t borderSize,
