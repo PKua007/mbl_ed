@@ -9,6 +9,7 @@
 #include "utils/Assertions.h"
 #include "SymmetricMatrix.h"
 #include "OccupationEvolution.h"
+#include "CorrelationsTimeEntry.h"
 
 class CorrelationsTimeEvolution : public BulkAnalyzerTask {
 public:
@@ -18,48 +19,9 @@ public:
     };
 
 private:
-    struct Correlations {
-        std::size_t distance{};
-        double G{};
-
-        void addObservables(const OccupationEvolution::Observables &observables, std::size_t borderSize);
-        [[nodiscard]] std::string getHeader() const;
-        [[nodiscard]] std::string getValue(std::size_t meanEntries) const;
-    };
-
-    struct OnsiteFluctuations {
-        std::size_t i{};
-        double rho{};
-
-        void addObservables(const OccupationEvolution::Observables &observables);
-        [[nodiscard]] std::string getHeader() const;
-        [[nodiscard]] std::string getValue(std::size_t meanEntries) const;
-    };
-
-    struct TimeEntry {
-    private:
-        double t{};
-        double x{};
-        std::vector<Correlations> correlations{};
-        std::vector<Correlations> borderlessCorrelations{};
-        std::vector<OnsiteFluctuations> onsiteFluctuations{};
-
-        std::size_t borderSize{};
-        std::size_t meanEntries{};
-
-    public:
-        TimeEntry() = default;
-        TimeEntry(double t, std::size_t borderSize, std::size_t numberOfSites);
-
-        [[nodiscard]] std::size_t getNumberOfSites() const;
-        void addObservables(const OccupationEvolution::Observables &observables);
-        [[nodiscard]] std::string getHeader() const;
-        [[nodiscard]] std::string getValue() const;
-    };
-
     struct VectorEvolution {
         FockBase::Vector initialVector;
-        std::vector<TimeEntry> timeEntries{};
+        std::vector<CorrelationsTimeEntry> timeEntries{};
 
         [[nodiscard]] std::string getHeader() const;
     };
@@ -67,7 +29,6 @@ private:
     std::size_t borderSize{};
     std::vector<VectorEvolution> evolutions{};
     std::vector<double> times{};
-    std::size_t meanEntries{};
 
     [[nodiscard]] std::size_t getNumberOfSites() const;
     [[nodiscard]] bool hasTimeEntries() const;
