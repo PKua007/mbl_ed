@@ -13,31 +13,15 @@ void CorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem) {
 
     const auto &fockBase = eigensystem.getFockBase();
     std::size_t numberOfSites = fockBase.getNumberOfSites();
-    if (this->getNumberOfSites() != 0)
+    if (this->hasTimeEntries())
         Expects(numberOfSites == this->getNumberOfSites());
     Expects(numberOfSites - 2*this->borderSize >= 2);
 
-    if (this->getNumberOfSites() == 0) {
+    if (!this->hasTimeEntries()) {
         Assert(!this->evolutions.empty());
-        for (auto &evolution : this->evolutions) {
-            Assert(!evolution.timeEntries.empty());
-            for (auto &timeEntry : evolution.timeEntries) {
-                timeEntry.onsiteFluctuations.resize(numberOfSites);
-                std::size_t i{};
-                for (auto &onsiteFluctuationsEntry : timeEntry.onsiteFluctuations)
-                    onsiteFluctuationsEntry.i = i++;
-
-                timeEntry.correlations.resize(numberOfSites - 1);
-                std::size_t d = 1;
-                for (auto &correlationsEntry : timeEntry.correlations)
-                    correlationsEntry.distance = d++;
-
-                timeEntry.borderlessCorrelations.resize(numberOfSites - 1 - 2 * this->borderSize);
-                d = 1;
-                for (auto &borderlessCorrelationEntry : timeEntry.borderlessCorrelations)
-                    borderlessCorrelationEntry.distance = d++;
-            }
-        }
+        for (auto &evolution : this->evolutions)
+            for (double time : this->times)
+                evolution.timeEntries.emplace_back(time, this->borderSize, numberOfSites);
     }
 
     for (auto &evolution : this->evolutions) {
@@ -48,15 +32,11 @@ void CorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem) {
         for (std::size_t i{}; i < observablesEvolution.size(); i++) {
             auto &timeEntry = evolution.timeEntries[i];
             auto &observables = observablesEvolution[i];
-
-            for (auto &onsiteFluctuation : timeEntry.onsiteFluctuations)
-                onsiteFluctuation.addObservables(observables);
-            for (auto &correlations : timeEntry.correlations)
-                correlations.addObservables(observables, 0);
-            for (auto &borderlessCorrelations : timeEntry.borderlessCorrelations)
-                borderlessCorrelations.addObservables(observables, this->borderSize);
+            timeEntry.addObservables(observables);
         }
     }
+
+    this->meanEntries++;
 }
 
 std::string CorrelationsTimeEvolution::getName() const {
@@ -73,7 +53,7 @@ void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
 
     for (std::size_t i = 0; i < this->times.size(); i++) {
         for (const auto &evolution: this->evolutions)
-            out << evolution.timeEntries[i];
+            out << evolution.timeEntries[i].getValue();
         out << std::endl;
     }
 }
@@ -105,22 +85,18 @@ CorrelationsTimeEvolution::CorrelationsTimeEvolution(double minTime, double maxT
     }
 
     this->evolutions.reserve(vectorsToEvolve.size());
-    for (const auto &vectorToEvolve : vectorsToEvolve) {
-        std::vector<TimeEntry> timeEntries;
-        timeEntries.reserve(this->times.size());
-        for (double time : this->times) {
-            TimeEntry timeEntry;
-            timeEntry.t = time;
-            timeEntries.push_back(timeEntry);
-        }
-        this->evolutions.push_back({vectorToEvolve, timeEntries});
-    }
+    for (const auto &vectorToEvolve : vectorsToEvolve)
+        this->evolutions.push_back({vectorToEvolve, {}});
 }
 
 std::size_t CorrelationsTimeEvolution::getNumberOfSites() const {
+    Assert(this->hasTimeEntries());
+    return this->evolutions.front().timeEntries.front().getNumberOfSites();
+}
+
+bool CorrelationsTimeEvolution::hasTimeEntries() const {
     Assert(!this->evolutions.empty());
-    Assert(!this->evolutions.front().timeEntries.empty());
-    return this->evolutions.front().timeEntries.front().onsiteFluctuations.size();
+    return !this->evolutions.front().timeEntries.empty();
 }
 
 void CorrelationsTimeEvolution::Correlations::addObservables(const OccupationEvolution::Observables &observables,
@@ -144,12 +120,16 @@ std::string CorrelationsTimeEvolution::OnsiteFluctuations::getHeader() const {
     return "rho_" + std::to_string(this->i);
 }
 
-std::ostream &operator<<(std::ostream &out, const CorrelationsTimeEvolution::Correlations &corelations) {
-    return out << corelations.distance;
+std::string CorrelationsTimeEvolution::Correlations::getValue(std::size_t meanEntries) const {
+    std::ostringstream out;
+    out << (this->G / meanEntries);
+    return out.str();
 }
 
-std::ostream &operator<<(std::ostream &out, const CorrelationsTimeEvolution::OnsiteFluctuations &onsiteFluctuations) {
-    return out << onsiteFluctuations.rho;
+std::string CorrelationsTimeEvolution::OnsiteFluctuations::getValue(std::size_t meanEntries) const {
+    std::ostringstream out;
+    out << (this->rho / meanEntries);
+    return out.str();
 }
 
 void CorrelationsTimeEvolution::OnsiteFluctuations::addObservables(const OccupationEvolution::Observables &observables)
@@ -174,15 +154,59 @@ std::string CorrelationsTimeEvolution::TimeEntry::getHeader() const {
     return out.str();
 }
 
-std::ostream &operator<<(std::ostream &out, const CorrelationsTimeEvolution::TimeEntry &timeEntry) {
-    out << timeEntry.t << " " << timeEntry.x << " ";
-    std::copy(timeEntry.correlations.begin(), timeEntry.correlations.end(),
-              std::ostream_iterator<CorrelationsTimeEvolution::Correlations>(out, " "));
-    std::copy(timeEntry.borderlessCorrelations.begin(), timeEntry.borderlessCorrelations.end(),
-              std::ostream_iterator<CorrelationsTimeEvolution::Correlations>(out, " "));
-    std::copy(timeEntry.onsiteFluctuations.begin(), timeEntry.onsiteFluctuations.end(),
-              std::ostream_iterator<CorrelationsTimeEvolution::OnsiteFluctuations>(out, " "));
-    return out;
+std::string CorrelationsTimeEvolution::TimeEntry::getValue() const {
+    std::ostringstream out;
+    out << this->t << " " << (this->x/this->meanEntries) << " ";
+
+    auto valuePrinter = [this](const auto &entry) { return entry.getValue(meanEntries); };
+    std::transform(this->correlations.begin(), this->correlations.end(), std::ostream_iterator<std::string>(out, " "),
+                   valuePrinter);
+    std::transform(this->borderlessCorrelations.begin(), this->borderlessCorrelations.end(),
+                   std::ostream_iterator<std::string>(out, " "), valuePrinter);
+    std::transform(this->onsiteFluctuations.begin(), this->onsiteFluctuations.end(),
+                   std::ostream_iterator<std::string>(out, " "), valuePrinter);
+    return out.str();
+}
+
+void CorrelationsTimeEvolution::TimeEntry::addObservables(const OccupationEvolution::Observables &observables) {
+    this->meanEntries++;
+
+    for (auto &onsiteFluctuation : this->onsiteFluctuations)
+        onsiteFluctuation.addObservables(observables);
+    for (auto &correlation : this->correlations)
+        correlation.addObservables(observables, 0);
+    for (auto &borderlessCorrelation : this->borderlessCorrelations)
+        borderlessCorrelation.addObservables(observables, this->borderSize);
+
+    this->x += 2*std::abs(std::accumulate(this->correlations.begin(), this->correlations.end(), 0.,
+                                          [](double sum, const Correlations &corr) {
+                                              return sum + corr.distance * corr.G;
+                                          }));
+}
+
+CorrelationsTimeEvolution::TimeEntry::TimeEntry(double t, std::size_t borderSize, std::size_t numberOfSites)
+        : t{t}, borderSize{borderSize}
+{
+    Expects(numberOfSites - 2*this->borderSize >= 2);
+
+    this->onsiteFluctuations.resize(numberOfSites);
+    std::size_t i{};
+    for (auto &onsiteFluctuationsEntry : this->onsiteFluctuations)
+        onsiteFluctuationsEntry.i = i++;
+
+    this->correlations.resize(numberOfSites - 1);
+    std::size_t d = 1;
+    for (auto &correlationsEntry : this->correlations)
+        correlationsEntry.distance = d++;
+
+    this->borderlessCorrelations.resize(numberOfSites - 1 - 2 * this->borderSize);
+    d = 1;
+    for (auto &borderlessCorrelationEntry : this->borderlessCorrelations)
+        borderlessCorrelationEntry.distance = d++;
+}
+
+std::size_t CorrelationsTimeEvolution::TimeEntry::getNumberOfSites() const {
+    return 0;
 }
 
 std::string CorrelationsTimeEvolution::VectorEvolution::getHeader() const {
