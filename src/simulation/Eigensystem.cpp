@@ -145,3 +145,20 @@ const FockBase &Eigensystem::getFockBase() const {
 bool Eigensystem::hasFockBase() const {
     return this->fockBase != nullptr;
 }
+
+bool Eigensystem::isOrthonormal() const {
+    if (!this->hasEigenvectors_)
+        throw std::runtime_error("Eigensystem does not contain eigenvectors");
+
+    // we have up to this->fockBase->size() additions
+    double epsilon = std::numeric_limits<double>::epsilon() * this->size();
+
+    for (std::size_t i{}; i < this->size(); i++) {
+        for (std::size_t j = i + 1; j < this->size(); j++) {
+            double product = arma::dot(this->getEigenstate(i), this->getEigenstate(j));
+            if (std::abs(product) > epsilon)
+                return false;
+        }
+    }
+    return true;
+}

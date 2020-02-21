@@ -51,6 +51,7 @@ public:
     [[nodiscard]] const arma::mat &getEigenstates() const;
     [[nodiscard]] bool hasFockBase() const;
     [[nodiscard]] const FockBase &getFockBase() const;
+    [[nodiscard]] bool isOrthonormal() const;
 
     /**
      * @brief Returns eigenstate as column vector for eigenenergy of index @a i (in ascending order)

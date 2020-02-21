@@ -74,6 +74,35 @@ TEST_CASE("Eigensystem: eigenvectors normalization") {
     REQUIRE_THAT(eigensystem.getEigenstates(), IsApproxEqual(expectedEigenstates, 1e-15));
 }
 
+TEST_CASE("Eigensystem: orthonormality check") {
+    SECTION("not orthonormal") {
+        Eigensystem eigensystem({1, 2, 3, 4}, {{1, 1,  1,  1},
+                                               {1, -1, 0,  0},
+                                               {1, 1,  -2, 0},
+                                               {1, 1,  1,  -3}});
+
+        REQUIRE_FALSE(eigensystem.isOrthonormal());
+    }
+
+    SECTION("orthonormal") {
+        const double sq2 = std::sqrt(2);
+        const double sq6 = std::sqrt(6);
+        const double sq12 = std::sqrt(12);
+        Eigensystem eigensystem({1, 2, 3, 4}, {{   0.5,    0.5,   0.5,      0.5},
+                                               { 1/sq2, -1/sq2,     0,        0},
+                                               { 1/sq6,  1/sq6, -2/sq6,       0},
+                                               {1/sq12, 1/sq12, 1/sq12, -3/sq12}});
+
+        REQUIRE(eigensystem.isOrthonormal());
+    }
+
+    SECTION("no eigenvectors") {
+        Eigensystem eigensystem({1, 2, 3});
+
+        REQUIRE_THROWS(eigensystem.isOrthonormal());
+    }
+}
+
 TEST_CASE("Eigensystem: store/restore") {
     Eigensystem toStore({0, 0.25, 0.5, 1});
     Eigensystem toRestore({0, 0.1, 0.8, 1});
