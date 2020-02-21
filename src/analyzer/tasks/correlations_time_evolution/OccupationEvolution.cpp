@@ -5,9 +5,15 @@
 #include "OccupationEvolution.h"
 
 std::vector<OccupationEvolution::Observables> OccupationEvolution::perform(const std::vector<double> &times,
-                                                                           size_t initialIdx, const FockBase &fockBase,
+                                                                           size_t initialIdx,
                                                                            const Eigensystem &eigensystem)
 {
+    Expects(eigensystem.hasFockBase());
+#ifndef NDEBUG
+    Expects(eigensystem.isOrthonormal());
+#endif
+
+    const auto &fockBase = eigensystem.getFockBase();
     const auto &eigenvectors = eigensystem.getEigenstates();
     const auto &eigenenergies = eigensystem.getEigenenergies();
     std::size_t numberOfSites = fockBase.getNumberOfSites();
@@ -54,7 +60,7 @@ double OccupationEvolution::calculateObservableValue(const SymmetricMatrix &evol
 
     for (std::size_t elemI{}; elemI < evolutionTerms.size(); elemI++) {
         value += evolutionTerms(elemI, elemI);
-        for (std::size_t elemJ = elemI; elemJ < evolutionTerms.size(); elemJ++)
+        for (std::size_t elemJ = elemI + 1; elemJ < evolutionTerms.size(); elemJ++)
             value += 2 * std::cos((eigenenergies[elemI] - eigenenergies[elemJ]) * time) * evolutionTerms(elemI, elemJ);
     }
     return value;

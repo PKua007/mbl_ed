@@ -39,7 +39,7 @@ private:
 
 public:
     [[nodiscard]] static std::vector<Observables> perform(const std::vector<double> &times, size_t initialIdx,
-                                                          const FockBase &fockBase, const Eigensystem &eigensystem);
+                                                          const Eigensystem &eigensystem);
 };
 
 

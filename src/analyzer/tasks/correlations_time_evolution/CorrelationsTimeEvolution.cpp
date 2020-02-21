@@ -42,7 +42,7 @@ void CorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem) {
 
     for (auto &evolution : this->evolutions) {
         std::size_t initialIdx = *fockBase.findIndex(evolution.initialVector);
-        auto observablesEvolution = OccupationEvolution::perform(this->times, initialIdx, fockBase, eigensystem);
+        auto observablesEvolution = OccupationEvolution::perform(this->times, initialIdx, eigensystem);
 
         Assert(observablesEvolution.size() == evolution.timeEntries.size());
         for (std::size_t i{}; i < observablesEvolution.size(); i++) {
