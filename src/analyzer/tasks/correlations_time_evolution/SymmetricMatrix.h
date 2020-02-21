@@ -6,6 +6,7 @@
 #define MBL_ED_SYMMETRICMATRIX_H
 
 #include <vector>
+#include <armadillo>
 
 #include "utils/Assertions.h"
 
@@ -31,7 +32,18 @@ public:
     [[nodiscard]] std::size_t size() const { return this->size_; }
     [[nodiscard]] double &operator()(std::size_t i, std::size_t j) { return this->elements[this->idx(i, j)]; }
     [[nodiscard]] double operator()(std::size_t i, std::size_t j) const { return this->elements[this->idx(i, j)]; }
-};
 
+    [[nodiscard]] arma::mat toArma() const {
+        arma::mat arma_mat(this->size_, this->size_);
+        for (std::size_t i = 0; i < this->size_; i++)
+            for (std::size_t j = 0; j < this->size_; j++)
+                arma_mat(i, j) = this->operator()(i, j);
+        return arma_mat;
+    }
+
+    friend std::ostream &operator<<(std::ostream &out, const SymmetricMatrix &matrix) {
+        return out << matrix.toArma();
+    };
+};
 
 #endif //MBL_ED_SYMMETRICMATRIX_H
