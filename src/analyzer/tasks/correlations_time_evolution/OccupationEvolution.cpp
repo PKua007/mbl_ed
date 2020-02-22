@@ -24,8 +24,8 @@ std::vector<OccupationEvolution::Observables> OccupationEvolution::perform(const
                    [numberOfSites](double time) { return Observables(numberOfSites, time); });
 
     for (std::size_t site{}; site < numberOfSites; site++) {
-        SymmetricMatrix matrixElements = numberOfParticlesObservable(fockBase, eigenvectors, site);
-        SymmetricMatrix evolutionTerms = calculateEvolutionTerms(std::move(matrixElements), fockBase,
+        arma::mat matrixElements = numberOfParticlesObservable(fockBase, eigenvectors, site);
+        arma::mat evolutionTerms = calculateEvolutionTerms(std::move(matrixElements), fockBase,
                                                                  eigenvectors, initialIdx);
 
         for (std::size_t timeIdx{}; timeIdx < times.size(); timeIdx++) {
@@ -37,9 +37,9 @@ std::vector<OccupationEvolution::Observables> OccupationEvolution::perform(const
 
     for (std::size_t site1{}; site1 < numberOfSites; site1++) {
         for (std::size_t site2 = site1; site2 < numberOfSites; site2++) {
-            SymmetricMatrix matrixElements = numberOfParticlesSquaredObservable(fockBase, eigenvectors,
+            arma::mat matrixElements = numberOfParticlesSquaredObservable(fockBase, eigenvectors,
                                                                                 site1, site2);
-            SymmetricMatrix evolutionTerms = calculateEvolutionTerms(std::move(matrixElements), fockBase,
+            arma::mat evolutionTerms = calculateEvolutionTerms(std::move(matrixElements), fockBase,
                                                                      eigenvectors, initialIdx);
 
             for (std::size_t timeIdx{}; timeIdx < times.size(); timeIdx++) {
@@ -53,20 +53,20 @@ std::vector<OccupationEvolution::Observables> OccupationEvolution::perform(const
     return observablesEvolution;
 }
 
-double OccupationEvolution::calculateObservableValue(const SymmetricMatrix &evolutionTerms, double time,
+double OccupationEvolution::calculateObservableValue(const arma::mat &evolutionTerms, double time,
                                                      const arma::vec &eigenenergies)
 {
     double value{};
 
-    for (std::size_t elemI{}; elemI < evolutionTerms.size(); elemI++) {
+    for (std::size_t elemI{}; elemI < evolutionTerms.n_rows; elemI++) {
         value += evolutionTerms(elemI, elemI);
-        for (std::size_t elemJ = elemI + 1; elemJ < evolutionTerms.size(); elemJ++)
+        for (std::size_t elemJ = elemI + 1; elemJ < evolutionTerms.n_rows; elemJ++)
             value += 2 * std::cos((eigenenergies[elemI] - eigenenergies[elemJ]) * time) * evolutionTerms(elemI, elemJ);
     }
     return value;
 }
 
-SymmetricMatrix OccupationEvolution::calculateEvolutionTerms(SymmetricMatrix matrixElements, const FockBase &fockBase,
+arma::mat OccupationEvolution::calculateEvolutionTerms(arma::mat matrixElements, const FockBase &fockBase,
                                                              const arma::mat &eigenvectors, std::size_t initialIdx)
 {
     for (std::size_t elemI{}; elemI < fockBase.size(); elemI++)
@@ -75,29 +75,38 @@ SymmetricMatrix OccupationEvolution::calculateEvolutionTerms(SymmetricMatrix mat
     return matrixElements;
 }
 
-SymmetricMatrix OccupationEvolution::numberOfParticlesObservable(const FockBase &fockBase,
+arma::mat OccupationEvolution::numberOfParticlesObservable(const FockBase &fockBase,
                                                                  const arma::mat &eigenvectors, std::size_t site)
 {
-    SymmetricMatrix matrixElements(fockBase.size());
-    for (std::size_t elemI{}; elemI < fockBase.size(); elemI++)
-        for (std::size_t elemJ = elemI; elemJ < fockBase.size(); elemJ++)
-            for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
-                matrixElements(elemI, elemJ) += eigenvectors(fockIdx, elemI) * eigenvectors(fockIdx, elemJ) * fockBase[fockIdx][site];
-    return matrixElements;
+//    arma::mat matrixElements(fockBase.size(), fockBase.size(), arma::fill::zeros);
+//    for (std::size_t elemI{}; elemI < fockBase.size(); elemI++)
+//        for (std::size_t elemJ = elemI; elemJ < fockBase.size(); elemJ++)
+//            for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
+//                matrixElements(elemI, elemJ) += eigenvectors(fockIdx, elemI) * eigenvectors(fockIdx, elemJ) * fockBase[fockIdx][site];
+    arma::vec vec(fockBase.size());
+    for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
+        vec[fockIdx] = fockBase[fockIdx][site];
+
+    return eigenvectors.t() * arma::diagmat(vec) * eigenvectors;
 }
 
-SymmetricMatrix OccupationEvolution::numberOfParticlesSquaredObservable(const FockBase &fockBase,
+arma::mat OccupationEvolution::numberOfParticlesSquaredObservable(const FockBase &fockBase,
                                                                         const arma::mat &eigenvectors,
                                                                         std::size_t site1, std::size_t site2)
 {
-    SymmetricMatrix matrixElements(fockBase.size());
-    for (std::size_t elemI{}; elemI < fockBase.size(); elemI++) {
-        for (std::size_t elemJ = elemI; elemJ < fockBase.size(); elemJ++) {
-            for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++) {
-                matrixElements(elemI, elemJ) += eigenvectors(fockIdx, elemI) * eigenvectors(fockIdx, elemJ)
-                                                * fockBase[fockIdx][site1] * fockBase[fockIdx][site2];
-            }
-        }
-    }
-    return matrixElements;
+//    arma::mat matrixElements(fockBase.size(), fockBase.size(), arma::fill::zeros);
+//    for (std::size_t elemI{}; elemI < fockBase.size(); elemI++) {
+//        for (std::size_t elemJ = elemI; elemJ < fockBase.size(); elemJ++) {
+//            for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++) {
+//                matrixElements(elemI, elemJ) += eigenvectors(fockIdx, elemI) * eigenvectors(fockIdx, elemJ)
+//                                                * fockBase[fockIdx][site1] * fockBase[fockIdx][site2];
+//            }
+//        }
+//    }
+//    return matrixElements;
+    arma::vec vec(fockBase.size());
+    for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
+        vec[fockIdx] = fockBase[fockIdx][site1] * fockBase[fockIdx][site2];
+
+    return eigenvectors.t() * arma::diagmat(vec) * eigenvectors;
 }

@@ -23,18 +23,18 @@ public:
     };
 
 private:
-    [[nodiscard]] static SymmetricMatrix numberOfParticlesObservable(const FockBase &fockBase,
+    [[nodiscard]] static arma::mat numberOfParticlesObservable(const FockBase &fockBase,
                                                                      const arma::mat &eigenvectors, std::size_t site);
 
-    [[nodiscard]] static SymmetricMatrix numberOfParticlesSquaredObservable(const FockBase &fockBase,
+    [[nodiscard]] static arma::mat numberOfParticlesSquaredObservable(const FockBase &fockBase,
                                                                             const arma::mat &eigenvectors,
                                                                             std::size_t site1, std::size_t site2);
 
-    [[nodiscard]] static SymmetricMatrix calculateEvolutionTerms(SymmetricMatrix matrixElements,
+    [[nodiscard]] static arma::mat calculateEvolutionTerms(arma::mat matrixElements,
                                                                  const FockBase &fockBase,
                                                                  const arma::mat &eigenvectors, std::size_t initialIdx);
 
-    [[nodiscard]] static double calculateObservableValue(const SymmetricMatrix &evolutionTerms, double time,
+    [[nodiscard]] static double calculateObservableValue(const arma::mat &evolutionTerms, double time,
                                                          const arma::vec &eigenenergies);
 
 public:
