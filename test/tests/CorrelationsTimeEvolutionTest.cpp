@@ -43,7 +43,7 @@ TEST_CASE("CorrelationsTimeEvolution: benchmark") {
 }
 
 TEST_CASE("CorrelationsTimeEvolution: profiling") {
-    auto base = FockBaseGenerator{}.generate(5, 5);
+    auto base = FockBaseGenerator{}.generate(8, 8);
     HamiltonianGenerator hamiltonianGenerator(std::move(base), false);
     auto diagonal = std::make_unique<DiagonalTermMock>();
     using trompeloeil::_;
@@ -58,7 +58,7 @@ TEST_CASE("CorrelationsTimeEvolution: profiling") {
     Eigensystem eigensystem(eigenvalues, eigenvectors, hamiltonianGenerator.getFockBase());
 
     CorrelationsTimeEvolution correlationsTimeEvolution(0, 1, 11, CorrelationsTimeEvolution::Linear, 1,
-                                                        {{1, 1, 1, 1, 1}, {2, 0, 2, 0, 1}});
+                                                        {{1, 1, 1, 1, 1, 1, 1, 1}, {2, 0, 2, 0, 2, 0, 2, 0}});
     correlationsTimeEvolution.analyze(eigensystem);
 
     std::ostringstream out;
