@@ -39,7 +39,7 @@ std::vector<OccupationEvolution::Occupations>
 OccupationEvolution::doPerformEvolution(std::size_t numSteps, size_t initialFockStateIdx, const FockBase &fockBase,
                                         const arma::cx_mat &fockBasisEvolution,
                                         const std::vector<arma::vec> &numOfParticlesObservables,
-                                        const SymmetricMatrix<arma::vec> &numOfParticlesSquaresObservables)
+                                        const SymmetricMatrix<arma::vec> &numOfParticlesSquaredObservables)
 {
     arma::cx_vec evolvedState(fockBase.size(), arma::fill::zeros);
     evolvedState[initialFockStateIdx] = 1;
@@ -55,7 +55,7 @@ OccupationEvolution::doPerformEvolution(std::size_t numSteps, size_t initialFock
         for (std::size_t site1{}; site1 < numberOfSites; site1++) {
             for (std::size_t site2 = site1; site2 < numberOfSites; site2++) {
                 observablesEvolution[timeIdx].numParticlesSquared(site1, site2)
-                    = calculateObservableExpectedValue(numOfParticlesSquaresObservables(site1, site2), evolvedState);
+                    = calculateObservableExpectedValue(numOfParticlesSquaredObservables(site1, site2), evolvedState);
             }
         }
 

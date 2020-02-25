@@ -20,7 +20,7 @@ TEST_CASE("CorrelationsTimeEntry: basic") {
 
         REQUIRE(correlationsTimeEntry.getNumberOfSites() == 5);
         REQUIRE(correlationsTimeEntry.getHeader() == "t x G_1 G_2 G_3 G_4 G_1 G_2 rho_0 rho_1 rho_2 rho_3 rho_4 ");
-        REQUIRE_THAT(correlationsTimeEntry.getValue(), Catch::StartsWith("2 "));
+        REQUIRE_THAT(correlationsTimeEntry.toString(), Catch::StartsWith("2 "));
     }
 }
 
@@ -35,7 +35,7 @@ TEST_CASE("CorrelationsTimeEntry: single observables set") {
     CorrelationsTimeEntry correlationsTimeEntry(2, 1, 5);
 
     correlationsTimeEntry.addObservables(o);
-    std::istringstream out(correlationsTimeEntry.getValue());
+    std::istringstream out(correlationsTimeEntry.toString());
 
     double t, x, G_1, G_2, G_3, G_4, bG_1, bG_2, rho_0, rho_1, rho_2, rho_3, rho_4;
     out >> t >> x >> G_1 >> G_2 >> G_3 >> G_4 >> bG_1 >> bG_2 >> rho_0 >> rho_1 >> rho_2 >> rho_3 >> rho_4;
@@ -68,7 +68,7 @@ TEST_CASE("CorrelationsTimeEntry: averaging") {
 
     correlationsTimeEntry.addObservables(o1);
     correlationsTimeEntry.addObservables(o2);
-    std::istringstream out(correlationsTimeEntry.getValue());
+    std::istringstream out(correlationsTimeEntry.toString());
 
     double t, x, G_1, G_2, bG_1, bG_2, rho_0, rho_1, rho_2;
     out >> t >> x >> G_1 >> G_2 >> bG_1 >> bG_2 >> rho_0 >> rho_1 >> rho_2;

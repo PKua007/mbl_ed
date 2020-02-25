@@ -51,7 +51,7 @@ void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
 
     for (std::size_t i = 0; i < this->numSteps; i++) {
         for (const auto &evolution: this->evolutions)
-            out << evolution.timeEntries[i].getValue();
+            out << evolution.timeEntries[i].toString();
         out << std::endl;
     }
 }

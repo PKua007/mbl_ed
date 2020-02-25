@@ -37,7 +37,7 @@ private:
     [[nodiscard]] static std::vector<Occupations>
     doPerformEvolution(size_t numSteps, size_t initialFockStateIdx, const FockBase &fockBase,
                        const arma::cx_mat &fockBasisEvolution, const std::vector<arma::vec> &numOfParticlesObservables,
-                       const SymmetricMatrix<arma::vec> &numOfParticlesSquaresObservables);
+                       const SymmetricMatrix<arma::vec> &numOfParticlesSquaredObservables);
 
 public:
     [[nodiscard]] static std::vector<Occupations> perform(double minTime, double maxTime, std::size_t numSteps,
