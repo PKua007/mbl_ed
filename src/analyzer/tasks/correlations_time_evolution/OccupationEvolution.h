@@ -13,7 +13,7 @@ class OccupationEvolution {
 public:
     struct Occupations {
         std::vector<double> numParticles;
-        SymmetricMatrix numParticlesSquared;
+        SymmetricMatrix<double> numParticlesSquared;
 
         Occupations() = default;
         explicit Occupations(std::size_t numberOfSites)

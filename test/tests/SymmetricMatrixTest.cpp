@@ -10,13 +10,13 @@
 
 TEST_CASE("SymmetricMatrix: default initialization") {
     SECTION("empty") {
-        SymmetricMatrix matrix{};
+        SymmetricMatrix<double> matrix{};
 
         Expects(matrix.size() == 0);
     }
 
     SECTION("non-empty") {
-        SymmetricMatrix matrix(3);
+        SymmetricMatrix<double> matrix(3);
 
         Expects(matrix.size() == 3);
         Expects(matrix(0, 0) == 0); Expects(matrix(0, 1) == 0); Expects(matrix(0, 2) == 0);
@@ -27,7 +27,7 @@ TEST_CASE("SymmetricMatrix: default initialization") {
 
 TEST_CASE("SymmetricMatrix: read write") {
     SECTION("indices: smaller, bigger") {
-        SymmetricMatrix matrix(3);
+        SymmetricMatrix<double> matrix(3);
 
         matrix(0, 0) = 1;
         matrix(0, 1) = 2;
@@ -42,7 +42,7 @@ TEST_CASE("SymmetricMatrix: read write") {
     }
 
     SECTION("indices: bigger, smaller") {
-        SymmetricMatrix matrix(3);
+        SymmetricMatrix<double> matrix(3);
 
         matrix(0, 0) = 1;
         matrix(1, 0) = 2;
@@ -58,7 +58,7 @@ TEST_CASE("SymmetricMatrix: read write") {
 }
 
 TEST_CASE("SymmetricMatrix: bounds check") {
-    SymmetricMatrix matrix(3);
+    SymmetricMatrix<double> matrix(3);
 
     REQUIRE_THROWS(matrix(0, 3));
     REQUIRE_THROWS(matrix(3, 0));
@@ -67,7 +67,7 @@ TEST_CASE("SymmetricMatrix: bounds check") {
 }
 
 TEST_CASE("SymmetricMatrix: toArma") {
-    SymmetricMatrix matrix(3);
+    SymmetricMatrix<double> matrix(3);
 
     matrix(0, 0) = 1;
     matrix(1, 0) = 2;
