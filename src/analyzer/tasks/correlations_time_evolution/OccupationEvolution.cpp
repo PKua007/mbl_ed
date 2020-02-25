@@ -19,7 +19,6 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(doubl
     const auto &fockBase = eigensystem.getFockBase();
     const auto &eigenvectors = eigensystem.getEigenstates();
     const auto &eigenenergies = eigensystem.getEigenenergies();
-    std::size_t numberOfSites = fockBase.getNumberOfSites();
 
     double dt = (maxTime - minTime) / (static_cast<double>(numSteps) - 1);
 
@@ -27,13 +26,25 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(doubl
     arma::cx_vec diagonalEvolution = arma::exp(-1i * dt * eigenenergies);
     arma::cx_mat fockBasisEvolution = eigenvectors * arma::diagmat(diagonalEvolution) * eigenvectors.t();
 
-    std::vector<arma::vec> numOfParticlesObservables = prepareNumOfParticlesObservables(fockBase);
-    std::vector<std::vector<arma::vec>> numOfParticlesSquaresObservables = prepareNumOfParticlesSquaredObservable(
-            fockBase);
+    auto numOfParticlesObservables = prepareNumOfParticlesObservables(fockBase);
+    auto numOfParticlesSquaresObservables = prepareNumOfParticlesSquaredObservable(fockBase);
 
+    std::vector<Occupations> occupationEvolution = doPerformEvolution(numSteps, initialFockStateIdx, fockBase,
+                                                                      fockBasisEvolution, numOfParticlesObservables,
+                                                                      numOfParticlesSquaresObservables);
+    return occupationEvolution;
+}
+
+std::vector<OccupationEvolution::Occupations>
+OccupationEvolution::doPerformEvolution(std::size_t numSteps, size_t initialFockStateIdx, const FockBase &fockBase,
+                                        const arma::cx_mat &fockBasisEvolution,
+                                        const std::vector<arma::vec> &numOfParticlesObservables,
+                                        const SymmetricMatrix<arma::vec> &numOfParticlesSquaresObservables)
+{
     arma::cx_vec evolvedState(fockBase.size(), arma::fill::zeros);
     evolvedState[initialFockStateIdx] = 1;
 
+    std::size_t numberOfSites = fockBase.getNumberOfSites();
     std::vector<Occupations> observablesEvolution = prepareOccupationVector(numSteps, numberOfSites);
     for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {
         for (std::size_t site{}; site < numberOfSites; site++) {
@@ -44,25 +55,21 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(doubl
         for (std::size_t site1{}; site1 < numberOfSites; site1++) {
             for (std::size_t site2 = site1; site2 < numberOfSites; site2++) {
                 observablesEvolution[timeIdx].numParticlesSquared(site1, site2)
-                    = calculateObservableExpectedValue(numOfParticlesSquaresObservables[site1][site2], evolvedState);
+                    = calculateObservableExpectedValue(numOfParticlesSquaresObservables(site1, site2), evolvedState);
             }
         }
 
         evolvedState = fockBasisEvolution * evolvedState;
     }
-
     return observablesEvolution;
 }
 
-std::vector<std::vector<arma::vec>>
-OccupationEvolution::prepareNumOfParticlesSquaredObservable(const FockBase &fockBase) {
+SymmetricMatrix<arma::vec> OccupationEvolution::prepareNumOfParticlesSquaredObservable(const FockBase &fockBase) {
     std::size_t numberOfSites = fockBase.getNumberOfSites();
-    std::vector<std::vector<arma::vec>> result(numberOfSites);
-    for (auto &resultRow : result)
-        resultRow.resize(numberOfSites);
+    SymmetricMatrix<arma::vec> result(numberOfSites);
     for (std::size_t site1Idx{}; site1Idx < numberOfSites; site1Idx++)
         for (std::size_t site2Idx = site1Idx; site2Idx < numberOfSites; site2Idx++)
-            result[site1Idx][site2Idx] = numOfParticlesSquaredObservable(fockBase, site1Idx, site2Idx);
+            result(site1Idx, site2Idx) = numOfParticlesSquaredObservable(fockBase, site1Idx, site2Idx);
     return result;
 }
 

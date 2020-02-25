@@ -31,12 +31,13 @@ private:
                                                                  const arma::cx_vec &state);
 
     [[nodiscard]] static std::vector<Occupations> prepareOccupationVector(size_t numSteps, size_t numberOfSites);
-
-
     [[nodiscard]] static std::vector<arma::vec> prepareNumOfParticlesObservables(const FockBase &fockBase);
+    [[nodiscard]] static SymmetricMatrix<arma::vec> prepareNumOfParticlesSquaredObservable(const FockBase &fockBase);
 
-    [[nodiscard]] static std::vector<std::vector<arma::vec>>
-    prepareNumOfParticlesSquaredObservable(const FockBase &fockBase);
+    [[nodiscard]] static std::vector<Occupations>
+    doPerformEvolution(size_t numSteps, size_t initialFockStateIdx, const FockBase &fockBase,
+                       const arma::cx_mat &fockBasisEvolution, const std::vector<arma::vec> &numOfParticlesObservables,
+                       const SymmetricMatrix<arma::vec> &numOfParticlesSquaresObservables);
 
 public:
     [[nodiscard]] static std::vector<Occupations> perform(double minTime, double maxTime, std::size_t numSteps,

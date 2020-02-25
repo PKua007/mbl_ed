@@ -27,6 +27,9 @@ private:
     }
 
 public:
+    using iterator = typename std::vector<T>::iterator;
+    using const_iterator = typename std::vector<T>::const_iterator;
+
     SymmetricMatrix() = default;
     explicit SymmetricMatrix(std::size_t size_) : size_{size_}, elements(size_*(size_ + 1)/2) { }
 
@@ -48,6 +51,11 @@ public:
     operator<<(std::ostream &out, const SymmetricMatrix &matrix) {
         return out << matrix.toArma();
     }
+
+    [[nodiscard]] iterator begin() { return this->elements.begin(); }
+    [[nodiscard]] iterator end() { return this->elements.end(); }
+    [[nodiscard]] const_iterator begin() const { return this->elements.begin(); }
+    [[nodiscard]] const_iterator end() const { return this->elements.end(); }
 };
 
 #endif //MBL_ED_SYMMETRICMATRIX_H
