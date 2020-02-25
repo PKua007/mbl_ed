@@ -4,11 +4,14 @@
 
 #include "OccupationEvolution.h"
 
-std::vector<OccupationEvolution::Observables> OccupationEvolution::perform(const std::vector<double> &times,
+std::vector<OccupationEvolution::Observables> OccupationEvolution::perform(double minTime, double maxTime,
+                                                                        std::size_t numSteps,
                                                                            size_t initialIdx,
                                                                            const Eigensystem &eigensystem)
 {
     Expects(eigensystem.hasFockBase());
+    Expects(minTime < maxTime);
+    Expects(numSteps >= 2);
 #ifndef NDEBUG
     Expects(eigensystem.isOrthonormal());
 #endif
@@ -19,94 +22,72 @@ std::vector<OccupationEvolution::Observables> OccupationEvolution::perform(const
     std::size_t numberOfSites = fockBase.getNumberOfSites();
 
     std::vector<Observables> observablesEvolution;
-    observablesEvolution.resize(times.size());
-    std::transform(times.begin(), times.end(), observablesEvolution.begin(),
-                   [numberOfSites](double time) { return Observables(numberOfSites, time); });
+    observablesEvolution.resize(numSteps);
+    for (auto &observables : observablesEvolution)
+        observables = Observables(numberOfSites);
 
-    for (std::size_t site{}; site < numberOfSites; site++) {
-        arma::mat matrixElements = numberOfParticlesObservable(fockBase, eigenvectors, site);
-        arma::mat evolutionTerms = calculateEvolutionTerms(std::move(matrixElements), fockBase,
-                                                                 eigenvectors, initialIdx);
+    double dt = (maxTime - minTime) / (numSteps - 1);
+    using namespace std::complex_literals;
 
-        for (std::size_t timeIdx{}; timeIdx < times.size(); timeIdx++) {
-            double time = times[timeIdx];
-            double value = calculateObservableValue(evolutionTerms, time, eigenenergies);
-            observablesEvolution[timeIdx].ns[site] = value;
+    arma::cx_vec diagonalEvolution = arma::exp(-1i * dt * eigenenergies);
+    arma::cx_mat fockEvolution = eigenvectors * arma::diagmat(diagonalEvolution) * eigenvectors.t();
+
+    std::vector<arma::vec> ns(numberOfSites);
+    std::vector<std::vector<arma::vec>> nns(numberOfSites);
+    for (auto &nnsRow : nns)
+        nnsRow.resize(numberOfSites);
+
+    for (std::size_t site{}; site < numberOfSites; site++)
+        ns[site] = numberOfParticlesObservable(fockBase, eigenvectors, site);
+
+    for (std::size_t site1{}; site1 < numberOfSites; site1++)
+        for (std::size_t site2 = site1; site2 < numberOfSites; site2++)
+            nns[site1][site2] = numberOfParticlesSquaredObservable(fockBase, eigenvectors, site1, site2);
+
+    arma::cx_vec currentVector(fockBase.size(), arma::fill::zeros);
+    currentVector[initialIdx] = 1;
+
+    for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {
+        for (std::size_t site{}; site < numberOfSites; site++) {
+            observablesEvolution[timeIdx].ns[site] = calculateObservableValue(ns[site], currentVector);
         }
-    }
 
-    for (std::size_t site1{}; site1 < numberOfSites; site1++) {
-        for (std::size_t site2 = site1; site2 < numberOfSites; site2++) {
-            arma::mat matrixElements = numberOfParticlesSquaredObservable(fockBase, eigenvectors,
-                                                                                site1, site2);
-            arma::mat evolutionTerms = calculateEvolutionTerms(std::move(matrixElements), fockBase,
-                                                                     eigenvectors, initialIdx);
-
-            for (std::size_t timeIdx{}; timeIdx < times.size(); timeIdx++) {
-                double time = times[timeIdx];
-                double value = calculateObservableValue(evolutionTerms, time, eigenenergies);
-                observablesEvolution[timeIdx].nns(site1, site2) = value;
+        for (std::size_t site1{}; site1 < numberOfSites; site1++) {
+            for (std::size_t site2 = site1; site2 < numberOfSites; site2++) {
+                observablesEvolution[timeIdx].nns(site1, site2) = calculateObservableValue(nns[site1][site2],
+                                                                                           currentVector);
             }
         }
+
+        currentVector = fockEvolution * currentVector;
     }
 
     return observablesEvolution;
 }
 
-double OccupationEvolution::calculateObservableValue(const arma::mat &evolutionTerms, double time,
-                                                     const arma::vec &eigenenergies)
+double OccupationEvolution::calculateObservableValue(const arma::vec &observable, const arma::cx_vec &state)
 {
-    double value{};
-
-    for (std::size_t elemI{}; elemI < evolutionTerms.n_rows; elemI++) {
-        value += evolutionTerms(elemI, elemI);
-        for (std::size_t elemJ = elemI + 1; elemJ < evolutionTerms.n_rows; elemJ++)
-            value += 2 * std::cos((eigenenergies[elemI] - eigenenergies[elemJ]) * time) * evolutionTerms(elemI, elemJ);
-    }
-    return value;
+    arma::cx_double result = arma::as_scalar(state.t() * arma::diagmat(observable) * state);
+    return result.real();
 }
 
-arma::mat OccupationEvolution::calculateEvolutionTerms(arma::mat matrixElements, const FockBase &fockBase,
-                                                             const arma::mat &eigenvectors, std::size_t initialIdx)
-{
-    for (std::size_t elemI{}; elemI < fockBase.size(); elemI++)
-        for (std::size_t elemJ = elemI; elemJ < fockBase.size(); elemJ++)
-            matrixElements(elemI, elemJ) *= eigenvectors(initialIdx, elemI) * eigenvectors(initialIdx, elemJ);
-    return matrixElements;
-}
-
-arma::mat OccupationEvolution::numberOfParticlesObservable(const FockBase &fockBase,
+arma::vec OccupationEvolution::numberOfParticlesObservable(const FockBase &fockBase,
                                                                  const arma::mat &eigenvectors, std::size_t site)
 {
-//    arma::mat matrixElements(fockBase.size(), fockBase.size(), arma::fill::zeros);
-//    for (std::size_t elemI{}; elemI < fockBase.size(); elemI++)
-//        for (std::size_t elemJ = elemI; elemJ < fockBase.size(); elemJ++)
-//            for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
-//                matrixElements(elemI, elemJ) += eigenvectors(fockIdx, elemI) * eigenvectors(fockIdx, elemJ) * fockBase[fockIdx][site];
     arma::vec vec(fockBase.size());
     for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
         vec[fockIdx] = fockBase[fockIdx][site];
 
-    return eigenvectors.t() * arma::diagmat(vec) * eigenvectors;
+    return vec;
 }
 
-arma::mat OccupationEvolution::numberOfParticlesSquaredObservable(const FockBase &fockBase,
+arma::vec OccupationEvolution::numberOfParticlesSquaredObservable(const FockBase &fockBase,
                                                                         const arma::mat &eigenvectors,
                                                                         std::size_t site1, std::size_t site2)
 {
-//    arma::mat matrixElements(fockBase.size(), fockBase.size(), arma::fill::zeros);
-//    for (std::size_t elemI{}; elemI < fockBase.size(); elemI++) {
-//        for (std::size_t elemJ = elemI; elemJ < fockBase.size(); elemJ++) {
-//            for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++) {
-//                matrixElements(elemI, elemJ) += eigenvectors(fockIdx, elemI) * eigenvectors(fockIdx, elemJ)
-//                                                * fockBase[fockIdx][site1] * fockBase[fockIdx][site2];
-//            }
-//        }
-//    }
-//    return matrixElements;
     arma::vec vec(fockBase.size());
     for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
         vec[fockIdx] = fockBase[fockIdx][site1] * fockBase[fockIdx][site2];
 
-    return eigenvectors.t() * arma::diagmat(vec) * eigenvectors;
+    return vec;
 }

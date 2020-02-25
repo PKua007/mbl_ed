@@ -25,7 +25,7 @@ TEST_CASE("CorrelationsTimeEntry: basic") {
 }
 
 TEST_CASE("CorrelationsTimeEntry: single observables set") {
-    OccupationEvolution::Observables o(5, 2);
+    OccupationEvolution::Observables o(5);
     o.ns = {1, 2, 3, 4, 5};
     o.nns(0, 0) = 6; o.nns(0, 1) = 7; o.nns(0, 2) = 8; o.nns(0, 3) = 9; o.nns(0, 4) = 10;
     o.nns(1, 1) = 11; o.nns(1, 2) = 12; o.nns(1, 3) = 13; o.nns(1, 4) = 14;
@@ -55,7 +55,7 @@ TEST_CASE("CorrelationsTimeEntry: single observables set") {
 }
 
 TEST_CASE("CorrelationsTimeEntry: averaging") {
-    OccupationEvolution::Observables o1(3, 2), o2(3, 2);
+    OccupationEvolution::Observables o1(3), o2(3);
     o1.ns = {1, 2, 3};
     o1.nns(0, 0) = 4; o1.nns(0, 1) = 5; o1.nns(0, 2) = 6;
     o1.nns(1, 1) = 7; o1.nns(1, 2) = 8;

@@ -12,33 +12,28 @@
 class OccupationEvolution {
 public:
     struct Observables {
-        double time{};
         std::vector<double> ns;
         SymmetricMatrix nns;
 
         Observables() = default;
-        explicit Observables(std::size_t numberOfSites, double time)
-                : time{time}, ns(numberOfSites), nns(numberOfSites)
+        explicit Observables(std::size_t numberOfSites)
+                : ns(numberOfSites), nns(numberOfSites)
         { }
     };
 
 private:
-    [[nodiscard]] static arma::mat numberOfParticlesObservable(const FockBase &fockBase,
+    [[nodiscard]] static arma::vec numberOfParticlesObservable(const FockBase &fockBase,
                                                                      const arma::mat &eigenvectors, std::size_t site);
 
-    [[nodiscard]] static arma::mat numberOfParticlesSquaredObservable(const FockBase &fockBase,
+    [[nodiscard]] static arma::vec numberOfParticlesSquaredObservable(const FockBase &fockBase,
                                                                             const arma::mat &eigenvectors,
                                                                             std::size_t site1, std::size_t site2);
 
-    [[nodiscard]] static arma::mat calculateEvolutionTerms(arma::mat matrixElements,
-                                                                 const FockBase &fockBase,
-                                                                 const arma::mat &eigenvectors, std::size_t initialIdx);
-
-    [[nodiscard]] static double calculateObservableValue(const arma::mat &evolutionTerms, double time,
-                                                         const arma::vec &eigenenergies);
+    [[nodiscard]] static double calculateObservableValue(const arma::vec &observable, const arma::cx_vec &state);
 
 public:
-    [[nodiscard]] static std::vector<Observables> perform(const std::vector<double> &times, size_t initialIdx,
+    [[nodiscard]] static std::vector<Observables> perform(double minTime, double maxTime, std::size_t numSteps,
+                                                        size_t initialIdx,
                                                           const Eigensystem &eigensystem);
 };
 

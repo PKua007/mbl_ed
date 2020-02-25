@@ -26,7 +26,7 @@ void CorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem) {
 
     for (auto &evolution : this->evolutions) {
         std::size_t initialIdx = *fockBase.findIndex(evolution.initialVector);
-        auto observablesEvolution = OccupationEvolution::perform(this->times, initialIdx, eigensystem);
+        auto observablesEvolution = OccupationEvolution::perform(this->minTime, this->maxTime, this->numSteps, initialIdx, eigensystem);
 
         Assert(observablesEvolution.size() == evolution.timeEntries.size());
         for (std::size_t i{}; i < observablesEvolution.size(); i++) {
@@ -49,7 +49,7 @@ void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
                    headerPrinter);
     out << std::endl;
 
-    for (std::size_t i = 0; i < this->times.size(); i++) {
+    for (std::size_t i = 0; i < this->numSteps; i++) {
         for (const auto &evolution: this->evolutions)
             out << evolution.timeEntries[i].getValue();
         out << std::endl;
@@ -60,7 +60,7 @@ CorrelationsTimeEvolution::CorrelationsTimeEvolution(double minTime, double maxT
                                                      CorrelationsTimeEvolution::TimeScaleType timeScaleType,
                                                      std::size_t borderSize,
                                                      const std::vector<FockBase::Vector> &vectorsToEvolve)
-        : borderSize{borderSize}
+        : borderSize{borderSize}, minTime{minTime}, maxTime{maxTime}, numSteps{numSteps}
 {
     Expects(minTime < maxTime);
     Expects(numSteps >= 2);

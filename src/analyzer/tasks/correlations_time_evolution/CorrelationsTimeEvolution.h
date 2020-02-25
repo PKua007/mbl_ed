@@ -29,6 +29,9 @@ private:
     std::size_t borderSize{};
     std::vector<VectorEvolution> evolutions{};
     std::vector<double> times{};
+    double minTime{};
+    double maxTime{};
+    std::size_t numSteps{};
 
     [[nodiscard]] std::size_t getNumberOfSites() const;
     [[nodiscard]] bool hasTimeEntries() const;
