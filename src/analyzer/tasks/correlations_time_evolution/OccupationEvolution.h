@@ -11,29 +11,36 @@
 
 class OccupationEvolution {
 public:
-    struct Observables {
-        std::vector<double> ns;
-        SymmetricMatrix nns;
+    struct Occupations {
+        std::vector<double> numParticles;
+        SymmetricMatrix numParticlesSquared;
 
-        Observables() = default;
-        explicit Observables(std::size_t numberOfSites)
-                : ns(numberOfSites), nns(numberOfSites)
+        Occupations() = default;
+        explicit Occupations(std::size_t numberOfSites)
+                : numParticles(numberOfSites), numParticlesSquared(numberOfSites)
         { }
     };
 
 private:
-    [[nodiscard]] static arma::vec numberOfParticlesObservable(const FockBase &fockBase,
-                                                                     const arma::mat &eigenvectors, std::size_t site);
+    [[nodiscard]] static arma::vec numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx);
 
-    [[nodiscard]] static arma::vec numberOfParticlesSquaredObservable(const FockBase &fockBase,
-                                                                            const arma::mat &eigenvectors,
-                                                                            std::size_t site1, std::size_t site2);
+    [[nodiscard]] static arma::vec numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
+                                                                   std::size_t site2Idx);
 
-    [[nodiscard]] static double calculateObservableValue(const arma::vec &observable, const arma::cx_vec &state);
+    [[nodiscard]] static double calculateObservableExpectedValue(const arma::vec &observable,
+                                                                 const arma::cx_vec &state);
+
+    [[nodiscard]] static std::vector<Occupations> prepareOccupationVector(size_t numSteps, size_t numberOfSites);
+
+
+    [[nodiscard]] static std::vector<arma::vec> prepareNumOfParticlesObservables(const FockBase &fockBase);
+
+    [[nodiscard]] static std::vector<std::vector<arma::vec>>
+    prepareNumOfParticlesSquaredObservable(const FockBase &fockBase);
 
 public:
-    [[nodiscard]] static std::vector<Observables> perform(double minTime, double maxTime, std::size_t numSteps,
-                                                        size_t initialIdx,
+    [[nodiscard]] static std::vector<Occupations> perform(double minTime, double maxTime, std::size_t numSteps,
+                                                          std::size_t initialFockStateIdx,
                                                           const Eigensystem &eigensystem);
 };
 

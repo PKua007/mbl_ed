@@ -25,13 +25,13 @@ TEST_CASE("CorrelationsTimeEntry: basic") {
 }
 
 TEST_CASE("CorrelationsTimeEntry: single observables set") {
-    OccupationEvolution::Observables o(5);
-    o.ns = {1, 2, 3, 4, 5};
-    o.nns(0, 0) = 6; o.nns(0, 1) = 7; o.nns(0, 2) = 8; o.nns(0, 3) = 9; o.nns(0, 4) = 10;
-    o.nns(1, 1) = 11; o.nns(1, 2) = 12; o.nns(1, 3) = 13; o.nns(1, 4) = 14;
-    o.nns(2, 2) = 15; o.nns(2, 3) = 16; o.nns(2, 4) = 17;
-    o.nns(3, 3) = 18; o.nns(3, 4) = 19;
-    o.nns(4, 4) = 20;
+    OccupationEvolution::Occupations o(5);
+    o.numParticles = {1, 2, 3, 4, 5};
+    o.numParticlesSquared(0, 0) = 6; o.numParticlesSquared(0, 1) = 7; o.numParticlesSquared(0, 2) = 8; o.numParticlesSquared(0, 3) = 9; o.numParticlesSquared(0, 4) = 10;
+    o.numParticlesSquared(1, 1) = 11; o.numParticlesSquared(1, 2) = 12; o.numParticlesSquared(1, 3) = 13; o.numParticlesSquared(1, 4) = 14;
+    o.numParticlesSquared(2, 2) = 15; o.numParticlesSquared(2, 3) = 16; o.numParticlesSquared(2, 4) = 17;
+    o.numParticlesSquared(3, 3) = 18; o.numParticlesSquared(3, 4) = 19;
+    o.numParticlesSquared(4, 4) = 20;
     CorrelationsTimeEntry correlationsTimeEntry(2, 1, 5);
 
     correlationsTimeEntry.addObservables(o);
@@ -55,15 +55,15 @@ TEST_CASE("CorrelationsTimeEntry: single observables set") {
 }
 
 TEST_CASE("CorrelationsTimeEntry: averaging") {
-    OccupationEvolution::Observables o1(3), o2(3);
-    o1.ns = {1, 2, 3};
-    o1.nns(0, 0) = 4; o1.nns(0, 1) = 5; o1.nns(0, 2) = 6;
-    o1.nns(1, 1) = 7; o1.nns(1, 2) = 8;
-    o1.nns(2, 2) = 9;
-    o2.ns = {10, 11, 12};
-    o2.nns(0, 0) = 13; o2.nns(0, 1) = 14; o2.nns(0, 2) = 15;
-    o2.nns(1, 1) = 16; o2.nns(1, 2) = 17;
-    o2.nns(2, 2) = 18;
+    OccupationEvolution::Occupations o1(3), o2(3);
+    o1.numParticles = {1, 2, 3};
+    o1.numParticlesSquared(0, 0) = 4; o1.numParticlesSquared(0, 1) = 5; o1.numParticlesSquared(0, 2) = 6;
+    o1.numParticlesSquared(1, 1) = 7; o1.numParticlesSquared(1, 2) = 8;
+    o1.numParticlesSquared(2, 2) = 9;
+    o2.numParticles = {10, 11, 12};
+    o2.numParticlesSquared(0, 0) = 13; o2.numParticlesSquared(0, 1) = 14; o2.numParticlesSquared(0, 2) = 15;
+    o2.numParticlesSquared(1, 1) = 16; o2.numParticlesSquared(1, 2) = 17;
+    o2.numParticlesSquared(2, 2) = 18;
     CorrelationsTimeEntry correlationsTimeEntry(2, 0, 3);
 
     correlationsTimeEntry.addObservables(o1);

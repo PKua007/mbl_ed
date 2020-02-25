@@ -6,15 +6,15 @@
 
 #include <iterator>
 
-void CorrelationsTimeEntry::Correlations::addObservables(const OccupationEvolution::Observables &observables,
+void CorrelationsTimeEntry::Correlations::addObservables(const OccupationEvolution::Occupations &occupations,
                                                          std::size_t borderSize)
 {
-    std::size_t numberOfSites = observables.ns.size();
+    std::size_t numberOfSites = occupations.numParticles.size();
     Expects(this->distance < numberOfSites - 2*borderSize);
 
     double Gsum{};
     for (std::size_t i = borderSize; i < numberOfSites - this->distance - borderSize; i++)
-        Gsum += observables.nns(i, i + this->distance) - observables.ns[i]*observables.ns[i + this->distance];
+        Gsum += occupations.numParticlesSquared(i, i + this->distance) - occupations.numParticles[i] * occupations.numParticles[i + this->distance];
     std::size_t meanEntries_ = numberOfSites - this->distance - 2 * borderSize;
     this->G += Gsum / meanEntries_;
 }
@@ -39,10 +39,10 @@ std::string CorrelationsTimeEntry::OnsiteFluctuations::getValue(std::size_t mean
     return out.str();
 }
 
-void CorrelationsTimeEntry::OnsiteFluctuations::addObservables(const OccupationEvolution::Observables &observables) {
-    Expects(this->i < observables.ns.size());
+void CorrelationsTimeEntry::OnsiteFluctuations::addObservables(const OccupationEvolution::Occupations &occupations) {
+    Expects(this->i < occupations.numParticles.size());
 
-    this->rho += observables.nns(this->i, this->i) - std::pow(observables.ns[this->i], 2);
+    this->rho += occupations.numParticlesSquared(this->i, this->i) - std::pow(occupations.numParticles[this->i], 2);
 }
 
 std::string CorrelationsTimeEntry::CorrelationsTimeEntry::getHeader() const {
@@ -74,17 +74,17 @@ std::string CorrelationsTimeEntry::CorrelationsTimeEntry::getValue() const {
     return out.str();
 }
 
-void CorrelationsTimeEntry::CorrelationsTimeEntry::addObservables(const OccupationEvolution::Observables &observables) {
-    Expects(this->numberOfSites == observables.ns.size());
+void CorrelationsTimeEntry::CorrelationsTimeEntry::addObservables(const OccupationEvolution::Occupations &occupations) {
+    Expects(this->numberOfSites == occupations.numParticles.size());
 
     this->meanEntries++;
 
     for (auto &onsiteFluctuation : this->onsiteFluctuations)
-        onsiteFluctuation.addObservables(observables);
+        onsiteFluctuation.addObservables(occupations);
     for (auto &correlation : this->correlations)
-        correlation.addObservables(observables, 0);
+        correlation.addObservables(occupations, 0);
     for (auto &borderlessCorrelation : this->borderlessCorrelations)
-        borderlessCorrelation.addObservables(observables, this->borderSize);
+        borderlessCorrelation.addObservables(occupations, this->borderSize);
 
     // =, not +=, because this->correlations are already averaged!!! (or rather summed at this point)
     this->x = 2*std::abs(std::accumulate(this->correlations.begin(), this->correlations.end(), 0.,

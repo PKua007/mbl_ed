@@ -15,7 +15,7 @@ private:
         std::size_t distance{};
         double G{};
 
-        void addObservables(const OccupationEvolution::Observables &observables, std::size_t borderSize);
+        void addObservables(const OccupationEvolution::Occupations &occupations, std::size_t borderSize);
         [[nodiscard]] std::string getHeader() const;
         [[nodiscard]] std::string getValue(std::size_t meanEntries) const;
     };
@@ -24,7 +24,7 @@ private:
         std::size_t i{};
         double rho{};
 
-        void addObservables(const OccupationEvolution::Observables &observables);
+        void addObservables(const OccupationEvolution::Occupations &occupations);
         [[nodiscard]] std::string getHeader() const;
         [[nodiscard]] std::string getValue(std::size_t meanEntries) const;
     };
@@ -44,7 +44,7 @@ public:
     CorrelationsTimeEntry(double t, std::size_t borderSize, std::size_t numberOfSites);
 
     [[nodiscard]] std::size_t getNumberOfSites() const;
-    void addObservables(const OccupationEvolution::Observables &observables);
+    void addObservables(const OccupationEvolution::Occupations &occupations);
     [[nodiscard]] std::string getHeader() const;
     [[nodiscard]] std::string getValue() const;
 };

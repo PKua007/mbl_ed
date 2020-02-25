@@ -32,16 +32,16 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
     // 0 time - of course nothing should change from the initial state
     // only <n_1> != 0 (= 1), all <n_i n_j> = 0 apart from <n_1 n_1> = 1
     std::vector<double> nsExpected = {0, 1, 0, 0};
-    REQUIRE_THAT(evolution[0].ns, IsApproxEqual(nsExpected, 1e-15));
+    REQUIRE_THAT(evolution[0].numParticles, IsApproxEqual(nsExpected, 1e-15));
     arma::vec nnsExpected = {0, 1, 0, 0};
-    REQUIRE_THAT(evolution[0].nns.toArma(), IsApproxEqual(arma::mat(arma::diagmat(nnsExpected)), 1e-12));
+    REQUIRE_THAT(evolution[0].numParticlesSquared.toArma(), IsApproxEqual(arma::mat(arma::diagmat(nnsExpected)), 1e-12));
 
     // The values were calculated in Mathematica by creating hamiltonian in Fock basis from eigenvectors and
     // eigenvalues, computing |psi(t)> = e^(-iHt) |psi> explicitly and calculating all <psi(t)|observable|psi(t)>
     nsExpected = {0.3540367091367856, 0.2919265817264288, 0.2360244727578571, 0.11801223637892853};
-    REQUIRE_THAT(evolution[1].ns, IsApproxEqual(nsExpected, 1e-15));
+    REQUIRE_THAT(evolution[1].numParticles, IsApproxEqual(nsExpected, 1e-15));
     nnsExpected = arma::vec{0.3540367091367856, 0.2919265817264288, 0.2360244727578571, 0.11801223637892853};
-    REQUIRE_THAT(evolution[1].nns.toArma(), IsApproxEqual(arma::mat(arma::diagmat(nnsExpected)), 1e-12));
+    REQUIRE_THAT(evolution[1].numParticlesSquared.toArma(), IsApproxEqual(arma::mat(arma::diagmat(nnsExpected)), 1e-12));
 }
 
 TEST_CASE("OccupationEvolution: 2 bosons 2 sites") {
@@ -58,15 +58,15 @@ TEST_CASE("OccupationEvolution: 2 bosons 2 sites") {
     REQUIRE(evolution.size() == 2);
 
     // all <n_i> and <n_i n_j> = 1 for t = 0
-    REQUIRE(evolution[0].ns.size() == 2);
-    REQUIRE(evolution[0].ns[0] == Approx(1));
-    REQUIRE(evolution[0].ns[1] == Approx(1));
-    REQUIRE_THAT(evolution[0].nns.toArma(), IsApproxEqual(arma::mat{{1, 1}, {1, 1}}, 1e-12));
+    REQUIRE(evolution[0].numParticles.size() == 2);
+    REQUIRE(evolution[0].numParticles[0] == Approx(1));
+    REQUIRE(evolution[0].numParticles[1] == Approx(1));
+    REQUIRE_THAT(evolution[0].numParticlesSquared.toArma(), IsApproxEqual(arma::mat{{1, 1}, {1, 1}}, 1e-12));
 
-    REQUIRE(evolution[1].ns.size() == 2);
-    REQUIRE(evolution[1].ns[0] == Approx(1.0569754884490989));
-    REQUIRE(evolution[1].ns[1] == Approx(0.9430245115509011));
-    REQUIRE_THAT(evolution[1].nns.toArma(),
+    REQUIRE(evolution[1].numParticles.size() == 2);
+    REQUIRE(evolution[1].numParticles[0] == Approx(1.0569754884490989));
+    REQUIRE(evolution[1].numParticles[1] == Approx(0.9430245115509011));
+    REQUIRE_THAT(evolution[1].numParticlesSquared.toArma(),
                  IsApproxEqual(
                      arma::mat{{ 1.736972669993851, 0.3769783069043470},
                                {0.3769783069043470,  1.509070716197455}},
