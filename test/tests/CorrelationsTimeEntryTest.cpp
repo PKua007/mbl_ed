@@ -19,7 +19,7 @@ TEST_CASE("CorrelationsTimeEntry: basic") {
         CorrelationsTimeEntry correlationsTimeEntry(2, 1, 5);
 
         REQUIRE(correlationsTimeEntry.getNumberOfSites() == 5);
-        REQUIRE(correlationsTimeEntry.getHeader() == "t x G_1 G_2 G_3 G_4 G_1 G_2 rho_0 rho_1 rho_2 rho_3 rho_4 ");
+        REQUIRE(correlationsTimeEntry.getHeader() == "t G_1 G_2 G_3 G_4 G_1 G_2 rho_0 rho_1 rho_2 rho_3 rho_4 ");
         REQUIRE_THAT(correlationsTimeEntry.toString(), Catch::StartsWith("2 "));
     }
 }
@@ -37,10 +37,9 @@ TEST_CASE("CorrelationsTimeEntry: single observables set") {
     correlationsTimeEntry.addObservables(o);
     std::istringstream out(correlationsTimeEntry.toString());
 
-    double t, x, G_1, G_2, G_3, G_4, bG_1, bG_2, rho_0, rho_1, rho_2, rho_3, rho_4;
-    out >> t >> x >> G_1 >> G_2 >> G_3 >> G_4 >> bG_1 >> bG_2 >> rho_0 >> rho_1 >> rho_2 >> rho_3 >> rho_4;
+    double t, G_1, G_2, G_3, G_4, bG_1, bG_2, rho_0, rho_1, rho_2, rho_3, rho_4;
+    out >> t >> G_1 >> G_2 >> G_3 >> G_4 >> bG_1 >> bG_2 >> rho_0 >> rho_1 >> rho_2 >> rho_3 >> rho_4;
     REQUIRE(t == 2);
-    REQUIRE(x == 90);           // 2*(1*3.5 + 2*4 + 3*4.5 + 4*5) = 90
     REQUIRE(G_1 == 3.5);        // ((7 - 1*2) + (12 - 2*3) + (16 - 3*4) + (19 - 4*5)) / 4 = (5 + 6 + 4 - 1) / 4 = 3.5
     REQUIRE(G_2 == 4);          // ((8 - 1*3) + (13 - 2*4) + (17 - 3*5))/3 = (5 + 5 + 2) / 3 = 4
     REQUIRE(G_3 == 4.5);        // ((9 - 1*4) + (14 - 2*5)) / 2 = (5 + 4) / 2 = 4.5
@@ -70,10 +69,9 @@ TEST_CASE("CorrelationsTimeEntry: averaging") {
     correlationsTimeEntry.addObservables(o2);
     std::istringstream out(correlationsTimeEntry.toString());
 
-    double t, x, G_1, G_2, bG_1, bG_2, rho_0, rho_1, rho_2;
-    out >> t >> x >> G_1 >> G_2 >> bG_1 >> bG_2 >> rho_0 >> rho_1 >> rho_2;
+    double t, G_1, G_2, bG_1, bG_2, rho_0, rho_1, rho_2;
+    out >> t >> G_1 >> G_2 >> bG_1 >> bG_2 >> rho_0 >> rho_1 >> rho_2;
     REQUIRE(t == 2);
-    REQUIRE(x == 307);          // 1 -> 2*|1*2.5 + 2*3| = 17; 2 -> 2*|1*(-105.5) + 2*(-105)| = 631; avg = 307
     REQUIRE(G_1 == -51.5);      // 1->((5-1*2)+(8-2*3))/2=(3+2)/2=2.5; 2->((14-10*11)+(17-11*12))/2=-105.5; avg=-51.5
     REQUIRE(G_2 == -51);        // 1 -> (6 - 1*3) = 3; 2 -> (15 - 10*12) -> -105; avg = -51
     REQUIRE(bG_1 == -51.5);

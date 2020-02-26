@@ -58,7 +58,7 @@ void CorrelationsTimeEntry::OnsiteFluctuations::addObservables(const OccupationE
 std::string CorrelationsTimeEntry::CorrelationsTimeEntry::getHeader() const {
     std::ostringstream out;
 
-    out << "t x ";
+    out << "t ";
     auto headerPrinter = [](const auto &entry) { return entry.getHeader(); };
     std::transform(this->correlations.begin(), this->correlations.end(), std::ostream_iterator<std::string>(out, " "),
                    headerPrinter);
@@ -72,7 +72,7 @@ std::string CorrelationsTimeEntry::CorrelationsTimeEntry::getHeader() const {
 
 std::string CorrelationsTimeEntry::CorrelationsTimeEntry::toString() const {
     std::ostringstream out;
-    out << this->t << " " << (this->x/this->numberOfMeanEntries) << " ";
+    out << this->t << " ";
 
     auto valuePrinter = [this](const auto &entry) { return entry.toString(numberOfMeanEntries); };
     std::transform(this->correlations.begin(), this->correlations.end(), std::ostream_iterator<std::string>(out, " "),
@@ -95,13 +95,6 @@ void CorrelationsTimeEntry::CorrelationsTimeEntry::addObservables(const Occupati
         correlation.addObservables(occupations, 0);
     for (auto &borderlessCorrelation : this->borderlessCorrelations)
         borderlessCorrelation.addObservables(occupations, this->marginSize);
-
-    // =, not +=, because this->correlations are already averaged!!! (or rather summed at this point)
-    this->x = 2*std::abs(std::accumulate(this->correlations.begin(), this->correlations.end(), 0.,
-                                         [](double sum, const Correlations &corr) {
-                                             return sum + corr.d * corr.G_d;
-                                         }));
-
 }
 
 CorrelationsTimeEntry::CorrelationsTimeEntry::CorrelationsTimeEntry(double t, std::size_t marginSize,

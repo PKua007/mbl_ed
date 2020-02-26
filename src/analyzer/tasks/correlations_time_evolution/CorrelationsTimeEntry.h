@@ -30,7 +30,6 @@ private:
     };
 
     double t{};
-    double x{};
     std::vector<Correlations> correlations{};
     std::vector<Correlations> borderlessCorrelations{};
     std::vector<OnsiteFluctuations> onsiteFluctuations{};
