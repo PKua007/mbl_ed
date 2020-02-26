@@ -12,12 +12,6 @@
 #include "CorrelationsTimeEntry.h"
 
 class CorrelationsTimeEvolution : public BulkAnalyzerTask {
-public:
-    enum TimeScaleType {
-        Linear,
-        Logarithmic
-    };
-
 private:
     struct VectorEvolution {
         FockBase::Vector initialVector;
@@ -37,8 +31,8 @@ private:
     [[nodiscard]] bool hasTimeEntries() const;
 
 public:
-    CorrelationsTimeEvolution(double minTime, double maxTime, std::size_t numSteps, TimeScaleType timeScaleType,
-                              std::size_t borderSize, const std::vector<FockBase::Vector> &vectorsToEvolve);
+    CorrelationsTimeEvolution(double minTime, double maxTime, std::size_t numSteps, std::size_t borderSize,
+                              const std::vector<FockBase::Vector> &vectorsToEvolve);
 
     void analyze(const Eigensystem &eigensystem) override;
     [[nodiscard]] std::string getName() const override;
