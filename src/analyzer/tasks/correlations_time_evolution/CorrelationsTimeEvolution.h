@@ -18,17 +18,20 @@ private:
         std::vector<CorrelationsTimeEntry> timeEntries{};
 
         [[nodiscard]] std::string getHeader() const;
+
+    private:
+        std::string getInitialVectorSignature() const;
     };
 
-    std::size_t borderSize{};
-    std::vector<VectorEvolution> evolutions{};
-    std::vector<double> times{};
+    std::size_t marginSize{};
+    std::vector<VectorEvolution> vectorEvolutions{};
     double minTime{};
     double maxTime{};
     std::size_t numSteps{};
 
     [[nodiscard]] std::size_t getNumberOfSites() const;
-    [[nodiscard]] bool hasTimeEntries() const;
+    [[nodiscard]] bool numberOfSitesDetermined() const;
+    void prepareTimeEntriesForNumberOfSites(std::size_t numberOfSites);
 
 public:
     CorrelationsTimeEvolution(double minTime, double maxTime, std::size_t numSteps, std::size_t borderSize,
