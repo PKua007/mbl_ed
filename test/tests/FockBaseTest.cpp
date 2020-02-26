@@ -68,10 +68,12 @@ TEST_CASE("FockBase: searching") {
         auto index0 = base.findIndex(FockBase::Vector{1, 1, 3});
         auto index1 = base.findIndex(FockBase::Vector{4, 5, 6, 7});
         auto index2 = base.findIndex(FockBase::Vector{2, 2, 1});
+        auto index3 = base.findIndex(FockBase::Vector{1, 2, 3, 0});
 
         REQUIRE(index0 == std::nullopt);
         REQUIRE(index1 == std::nullopt);
         REQUIRE(index2 == std::nullopt);
+        REQUIRE(index3 == std::nullopt);
     }
 }
 
