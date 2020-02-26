@@ -20,7 +20,7 @@ private:
     std::ostream &out;
 
     auto buildHamiltonianGenerator(const Parameters &params, RND &rnd);
-    Analyzer prepareAnalyzer(const std::vector<std::string> &tasks);
+    Analyzer prepareAnalyzer(const std::vector<std::string> &tasks, const Parameters &params);
 
     template<template <typename> typename AveragingModel_t>
     void perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator, std::unique_ptr<RND>,

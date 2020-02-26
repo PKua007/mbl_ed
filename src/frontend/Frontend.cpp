@@ -24,6 +24,7 @@
 #include "analyzer/tasks/CDF.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/InverseParticipationRatio.h"
+#include "analyzer/tasks/correlations_time_evolution/CorrelationsTimeEvolution.h"
 
 #include "utils/Fold.h"
 #include "utils/Utils.h"
@@ -122,7 +123,7 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
 /**
  * @brief Takes a vector of @a tasks with parameters and parses them to AnalyzerTask -s
  */
-Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
+Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks, const Parameters &params) {
     Analyzer analyzer;
     for (const auto &task : tasks) {
         std::istringstream taskStream(task);
@@ -158,6 +159,23 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks) {
             ValidateMsg(taskStream, "Wrong format, use: cdf [number of bins]");
             Validate(bins >= 2);
             analyzer.addTask(std::make_unique<CDF>(bins));
+        } else if (taskName == "evolution") {
+            if (params.N != params.K || params.K % 2 != 0)
+                throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
+            double minTime, maxTime;
+            std::size_t numSteps, marginSize;
+            taskStream >> minTime >> maxTime >> numSteps >> marginSize;
+            ValidateMsg(taskStream, "Wrong format, use: evolution [min time] [max time] [number of steps] "
+                                    "[margin size]");
+            Validate(minTime < maxTime);
+            Validate(numSteps >= 2);
+            Validate(marginSize * 2 < params.K);
+            FockBase::Vector uniform(params.K, 1);
+            FockBase::Vector densityWave(params.K);
+            for (std::size_t i{}; i < densityWave.size(); i += 2)
+                densityWave[i] = 2;
+            analyzer.addTask(std::make_unique<CorrelationsTimeEvolution>(minTime, maxTime, numSteps, marginSize,
+                             std::vector<FockBase::Vector>{uniform, densityWave}));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
         }
@@ -236,7 +254,7 @@ void Frontend::simulate(int argc, char **argv) {
     auto rnd = std::make_unique<RND>(params.from + params.seed);
     auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd);
 
-    Analyzer analyzer = prepareAnalyzer(onTheFlyTasks);
+    Analyzer analyzer = prepareAnalyzer(onTheFlyTasks, params);
 
     // Prepare and run simulations
     SimulationParameters simulationParams;
@@ -329,7 +347,7 @@ void Frontend::analyze(int argc, char **argv) {
             die("Parameters to print: parameter " + param + " is unknown");
 
     // Load eigenenergies and analyze them
-    Analyzer analyzer = prepareAnalyzer(tasks);
+    Analyzer analyzer = prepareAnalyzer(tasks, params);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())

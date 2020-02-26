@@ -34,7 +34,7 @@ private:
     void prepareTimeEntriesForNumberOfSites(std::size_t numberOfSites);
 
 public:
-    CorrelationsTimeEvolution(double minTime, double maxTime, std::size_t numSteps, std::size_t borderSize,
+    CorrelationsTimeEvolution(double minTime, double maxTime, std::size_t numSteps, std::size_t marginSize,
                               const std::vector<FockBase::Vector> &vectorsToEvolve);
 
     void analyze(const Eigensystem &eigensystem) override;

@@ -50,7 +50,7 @@ void CorrelationsTimeEvolution::prepareTimeEntriesForNumberOfSites(std::size_t n
 }
 
 std::string CorrelationsTimeEvolution::getName() const {
-    return "corr";
+    return "evolution";
 }
 
 void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
@@ -69,9 +69,9 @@ void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
 }
 
 CorrelationsTimeEvolution::CorrelationsTimeEvolution(double minTime, double maxTime, std::size_t numSteps,
-                                                     std::size_t borderSize,
+                                                     std::size_t marginSize,
                                                      const std::vector<FockBase::Vector> &vectorsToEvolve)
-        : marginSize{borderSize}, minTime{minTime}, maxTime{maxTime}, numSteps{numSteps}
+        : marginSize{marginSize}, minTime{minTime}, maxTime{maxTime}, numSteps{numSteps}
 {
     Expects(minTime < maxTime);
     Expects(numSteps >= 2);
