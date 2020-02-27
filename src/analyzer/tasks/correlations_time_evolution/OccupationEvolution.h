@@ -40,7 +40,7 @@ private:
                        const SymmetricMatrix<arma::vec> &numOfParticlesSquaredObservables);
 
 public:
-    [[nodiscard]] static std::vector<Occupations> perform(double minTime, double maxTime, std::size_t numSteps,
+    [[nodiscard]] static std::vector<Occupations> perform(double maxTime, std::size_t numSteps,
                                                           std::size_t initialFockStateIdx,
                                                           const Eigensystem &eigensystem);
 };

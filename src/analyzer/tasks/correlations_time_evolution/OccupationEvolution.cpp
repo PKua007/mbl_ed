@@ -4,13 +4,12 @@
 
 #include "OccupationEvolution.h"
 
-std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(double minTime, double maxTime,
-                                                                           std::size_t numSteps,
+std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(double maxTime, std::size_t numSteps,
                                                                            std::size_t initialFockStateIdx,
                                                                            const Eigensystem &eigensystem)
 {
     Expects(eigensystem.hasFockBase());
-    Expects(minTime < maxTime);
+    Expects(maxTime > 0);
     Expects(numSteps >= 2);
 #ifndef NDEBUG
     Expects(eigensystem.isOrthonormal());
@@ -20,7 +19,7 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(doubl
     const auto &eigenvectors = eigensystem.getEigenstates();
     const auto &eigenenergies = eigensystem.getEigenenergies();
 
-    double dt = (maxTime - minTime) / (static_cast<double>(numSteps) - 1);
+    double dt = maxTime / (static_cast<double>(numSteps) - 1);
 
     using namespace std::complex_literals;
     arma::cx_vec diagonalEvolution = arma::exp(-1i * dt * eigenenergies);

@@ -27,8 +27,8 @@ void CorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem) {
 
     for (auto &evolution : this->vectorEvolutions) {
         std::size_t initialIdx = *fockBase.findIndex(evolution.initialVector);
-        auto observablesEvolution = OccupationEvolution::perform(this->minTime, this->maxTime, this->numSteps,
-                                                                 initialIdx, eigensystem);
+        auto observablesEvolution = OccupationEvolution::perform(this->maxTime, this->numSteps, initialIdx,
+                                                                 eigensystem);
 
         Assert(observablesEvolution.size() == evolution.timeEntries.size());
         for (std::size_t i{}; i < observablesEvolution.size(); i++) {
@@ -43,7 +43,7 @@ void CorrelationsTimeEvolution::prepareTimeEntriesForNumberOfSites(std::size_t n
     Assert(!this->vectorEvolutions.empty());
     for (auto &evolution : vectorEvolutions) {
         for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {
-            double time = minTime + (maxTime - minTime) / (static_cast<double>(numSteps) - 1) * timeIdx;
+            double time = maxTime / (static_cast<double>(numSteps) - 1) * timeIdx;
             evolution.timeEntries.emplace_back(time, marginSize, numberOfSites);
         }
     }
@@ -68,12 +68,11 @@ void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
     }
 }
 
-CorrelationsTimeEvolution::CorrelationsTimeEvolution(double minTime, double maxTime, std::size_t numSteps,
-                                                     std::size_t marginSize,
+CorrelationsTimeEvolution::CorrelationsTimeEvolution(double maxTime, std::size_t numSteps, std::size_t marginSize,
                                                      const std::vector<FockBase::Vector> &vectorsToEvolve)
-        : marginSize{marginSize}, minTime{minTime}, maxTime{maxTime}, numSteps{numSteps}
+        : marginSize{marginSize}, maxTime{maxTime}, numSteps{numSteps}
 {
-    Expects(minTime < maxTime);
+    Expects(maxTime > 0);
     Expects(numSteps >= 2);
     Expects(!vectorsToEvolve.empty());
 

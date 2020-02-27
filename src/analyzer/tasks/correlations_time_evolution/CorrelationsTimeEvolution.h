@@ -20,12 +20,11 @@ private:
         [[nodiscard]] std::string getHeader() const;
 
     private:
-        std::string getInitialVectorSignature() const;
+        [[nodiscard]] std::string getInitialVectorSignature() const;
     };
 
     std::size_t marginSize{};
     std::vector<VectorEvolution> vectorEvolutions{};
-    double minTime{};
     double maxTime{};
     std::size_t numSteps{};
 
@@ -34,7 +33,7 @@ private:
     void prepareTimeEntriesForNumberOfSites(std::size_t numberOfSites);
 
 public:
-    CorrelationsTimeEvolution(double minTime, double maxTime, std::size_t numSteps, std::size_t marginSize,
+    CorrelationsTimeEvolution(double maxTime, std::size_t numSteps, std::size_t marginSize,
                               const std::vector<FockBase::Vector> &vectorsToEvolve);
 
     void analyze(const Eigensystem &eigensystem) override;

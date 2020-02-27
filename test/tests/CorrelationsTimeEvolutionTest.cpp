@@ -53,7 +53,7 @@ TEST_CASE("CorrelationsTimeEvolution: benchmark") {
 TEST_CASE("CorrelationsTimeEvolution: header") {
     auto fockBase = FockBaseGenerator{}.generate(1, 5);
     Eigensystem eigensystem({1, 1, 1, 1, 1}, arma::eye(5, 5), std::move(fockBase));
-    CorrelationsTimeEvolution evolution(0, 2, 2, 1, {{1, 0, 0, 0, 0}, {0, 1, 0, 0, 0}});
+    CorrelationsTimeEvolution evolution(2, 2, 1, {{1, 0, 0, 0, 0}, {0, 1, 0, 0, 0}});
 
     evolution.analyze(eigensystem);
     std::stringstream out;
@@ -68,7 +68,7 @@ TEST_CASE("CorrelationsTimeEvolution: header") {
 TEST_CASE("CorrelationsTimeEvolution: times") {
     auto fockBase = FockBaseGenerator{}.generate(1, 2);
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), std::move(fockBase));
-    CorrelationsTimeEvolution evolution(0.25, 0.75, 3, 0, {{1, 0}});
+    CorrelationsTimeEvolution evolution(0.5, 3, 0, {{1, 0}});
 
     evolution.analyze(eigensystem);
     std::stringstream out;
@@ -78,11 +78,11 @@ TEST_CASE("CorrelationsTimeEvolution: times") {
     std::getline(out, line);
     double t, G_1, bG_1, rho_1, rho2;
     out >> t >> G_1 >> bG_1 >> rho_1 >> rho2;
+    REQUIRE(t == 0);
+    out >> t >> G_1 >> bG_1 >> rho_1 >> rho2;
     REQUIRE(t == 0.25);
     out >> t >> G_1 >> bG_1 >> rho_1 >> rho2;
-    REQUIRE(t == 0.5);
-    out >> t >> G_1 >> bG_1 >> rho_1 >> rho2;
-    REQUIRE(t == 0.75);
+    REQUIRE(t == 0.50);
 }
 
 TEST_CASE("CorrelationsTimeEvolution: throw on non-matching eigensystems") {
@@ -90,7 +90,7 @@ TEST_CASE("CorrelationsTimeEvolution: throw on non-matching eigensystems") {
     Eigensystem eigensystem1({1, 1}, arma::eye(2, 2), std::move(fockBase1));
     auto fockBase2 = FockBaseGenerator{}.generate(1, 3);
     Eigensystem eigensystem2({1, 1, 1}, arma::eye(3, 3), std::move(fockBase1));
-    CorrelationsTimeEvolution evolution(0, 2, 2, 0, {{1, 0}});
+    CorrelationsTimeEvolution evolution(2, 2, 0, {{1, 0}});
     evolution.analyze(eigensystem1);
 
     REQUIRE_THROWS(evolution.analyze(eigensystem2));
@@ -99,8 +99,8 @@ TEST_CASE("CorrelationsTimeEvolution: throw on non-matching eigensystems") {
 TEST_CASE("CorrelationsTimeEvolution: throw on wrong initial vectors") {
     auto fockBase = FockBaseGenerator{}.generate(1, 2);
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), std::move(fockBase));
-    CorrelationsTimeEvolution corr1(0, 2, 2, 0, {{1, 0, 0}});
-    CorrelationsTimeEvolution corr2(0, 2, 2, 0, {{0, 2}});
+    CorrelationsTimeEvolution corr1(2, 2, 0, {{1, 0, 0}});
+    CorrelationsTimeEvolution corr2(2, 2, 0, {{0, 2}});
 
     REQUIRE_THROWS(corr1.analyze(eigensystem));
     REQUIRE_THROWS(corr2.analyze(eigensystem));
