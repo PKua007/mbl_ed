@@ -6,17 +6,20 @@
 
 #include <iterator>
 
-void CorrelationsTimeEntry::Correlations::addObservables(const OccupationEvolution::Occupations &occupations,
-                                                         std::size_t marginSize_)
+/**
+ * @brief The method calculates the site-averaged correlations from given @a occupations and adds the result to G_d.
+ * This sum is used in toString() to calculate the average.
+ */
+void CorrelationsTimeEntry::Correlations::addObservables(const OccupationEvolution::Occupations &occupations)
 {
     std::size_t numberOfSites_ = occupations.numParticles.size();
-    Expects(numberOfSites_ > 2 * marginSize_) ;
-    std::size_t borderlessNumberOfSites = numberOfSites_ - 2 * marginSize_;
+    Expects(numberOfSites_ > 2 * this->marginSize) ;
+    std::size_t borderlessNumberOfSites = numberOfSites_ - 2 * this->marginSize;
     Expects(this->d < borderlessNumberOfSites);
 
     double GSiteSum{};
-    std::size_t minFirstSite = marginSize_;
-    std::size_t maxFirstSite = numberOfSites_ - this->d - marginSize_ - 1;
+    std::size_t minFirstSite = this->marginSize;
+    std::size_t maxFirstSite = numberOfSites_ - this->d - this->marginSize - 1;
     for (std::size_t firstSite = minFirstSite; firstSite <= maxFirstSite; firstSite++) {
         std::size_t secondSite = firstSite + this->d;
         double singleG = occupations.numParticlesSquared(firstSite, secondSite) -
@@ -26,36 +29,55 @@ void CorrelationsTimeEntry::Correlations::addObservables(const OccupationEvoluti
     std::size_t meanEntries_ = borderlessNumberOfSites - this->d;
     double GSiteAverage = GSiteSum / meanEntries_;
     this->G_d += GSiteAverage;
+    this->numberOfMeanEntries++;
 }
 
-std::string CorrelationsTimeEntry::Correlations::getHeader() const {
+[[nodiscard]] std::string CorrelationsTimeEntry::Correlations::getHeader() const {
     return "G_" + std::to_string(this->d);
+}
+
+[[nodiscard]] std::string CorrelationsTimeEntry::Correlations::toString() const {
+    std::ostringstream out;
+    out << (this->G_d / this->numberOfMeanEntries);
+    return out.str();
+}
+
+/**
+ * @brief The method calculates the site-averaged onsite fluctuations from given @a occupations and adds the result to
+ * rho_i. This sum is used in toString() to calculate the average.
+ */
+void CorrelationsTimeEntry::OnsiteFluctuations::addObservables(const OccupationEvolution::Occupations &occupations) {
+    Expects(this->i < occupations.numParticles.size());
+
+    this->rho_i += occupations.numParticlesSquared(this->i, this->i)
+                   - std::pow(occupations.numParticles[this->i], 2);
+    this->numberOfMeanEntries++;
 }
 
 std::string CorrelationsTimeEntry::OnsiteFluctuations::getHeader() const {
     return "rho_" + std::to_string(this->i);
 }
 
-std::string CorrelationsTimeEntry::Correlations::toString(std::size_t numberOfMeanEntries_) const {
+std::string CorrelationsTimeEntry::OnsiteFluctuations::toString() const {
     std::ostringstream out;
-    out << (this->G_d / numberOfMeanEntries_);
+    out << (this->rho_i / this->numberOfMeanEntries);
     return out.str();
 }
 
-std::string CorrelationsTimeEntry::OnsiteFluctuations::toString(std::size_t numberOfMeanEntries_) const {
-    std::ostringstream out;
-    out << (this->rho_i / numberOfMeanEntries_);
-    return out.str();
+void CorrelationsTimeEntry::addObservables(const OccupationEvolution::Occupations &occupations) {
+    Expects(this->numberOfSites == occupations.numParticles.size());
+
+    this->numberOfMeanEntries++;
+
+    for (auto &onsiteFluctuation : this->onsiteFluctuations)
+        onsiteFluctuation.addObservables(occupations);
+    for (auto &correlation : this->correlations)
+        correlation.addObservables(occupations);
+    for (auto &borderlessCorrelation : this->borderlessCorrelations)
+        borderlessCorrelation.addObservables(occupations);
 }
 
-void CorrelationsTimeEntry::OnsiteFluctuations::addObservables(const OccupationEvolution::Occupations &occupations) {
-    Expects(this->i < occupations.numParticles.size());
-
-    this->rho_i += occupations.numParticlesSquared(this->i, this->i)
-                   - std::pow(occupations.numParticles[this->i], 2);
-}
-
-std::string CorrelationsTimeEntry::CorrelationsTimeEntry::getHeader() const {
+std::string CorrelationsTimeEntry::getHeader() const {
     std::ostringstream out;
 
     out << "t ";
@@ -70,11 +92,11 @@ std::string CorrelationsTimeEntry::CorrelationsTimeEntry::getHeader() const {
     return out.str();
 }
 
-std::string CorrelationsTimeEntry::CorrelationsTimeEntry::toString() const {
+std::string CorrelationsTimeEntry::toString() const {
     std::ostringstream out;
     out << this->t << " ";
 
-    auto valuePrinter = [this](const auto &entry) { return entry.toString(numberOfMeanEntries); };
+    auto valuePrinter = [](const auto &entry) { return entry.toString(); };
     std::transform(this->correlations.begin(), this->correlations.end(), std::ostream_iterator<std::string>(out, " "),
                    valuePrinter);
     std::transform(this->borderlessCorrelations.begin(), this->borderlessCorrelations.end(),
@@ -84,51 +106,43 @@ std::string CorrelationsTimeEntry::CorrelationsTimeEntry::toString() const {
     return out.str();
 }
 
-void CorrelationsTimeEntry::CorrelationsTimeEntry::addObservables(const OccupationEvolution::Occupations &occupations) {
-    Expects(this->numberOfSites == occupations.numParticles.size());
-
-    this->numberOfMeanEntries++;
-
-    for (auto &onsiteFluctuation : this->onsiteFluctuations)
-        onsiteFluctuation.addObservables(occupations);
-    for (auto &correlation : this->correlations)
-        correlation.addObservables(occupations, 0);
-    for (auto &borderlessCorrelation : this->borderlessCorrelations)
-        borderlessCorrelation.addObservables(occupations, this->marginSize);
-}
-
-CorrelationsTimeEntry::CorrelationsTimeEntry::CorrelationsTimeEntry(double t, std::size_t marginSize,
-                                                                    std::size_t numberOfSites)
-        : t{t}, marginSize{marginSize}, numberOfSites{numberOfSites}
+CorrelationsTimeEntry::CorrelationsTimeEntry(double t, std::size_t marginSize, std::size_t numberOfSites)
+        : t{t}, numberOfSites{numberOfSites}
 {
     Expects(this->numberOfSites > 0);
-    Expects(this->numberOfSites > 2*this->marginSize);
-    std::size_t borderlessNumberOfSites = this->numberOfSites - 2*this->marginSize;
+    Expects(this->numberOfSites > 2*marginSize);
+    std::size_t borderlessNumberOfSites = this->numberOfSites - 2*marginSize;
     Expects(borderlessNumberOfSites >= 2);
 
-    this->populateOnsiteFluctuations(this->onsiteFluctuations, this->numberOfSites);
-    this->populateCorrelations(this->correlations, this->numberOfSites);
-    this->populateCorrelations(this->borderlessCorrelations, borderlessNumberOfSites);
+    this->populateOnsiteFluctuations(this->onsiteFluctuations);
+    this->populateCorrelations(this->correlations, 0);
+    this->populateCorrelations(this->borderlessCorrelations, marginSize);
 }
 
+/**
+ * @brief Populates given @a correlationsVector with Correlations for a given margin size.
+ */
 void CorrelationsTimeEntry::populateCorrelations(std::vector<Correlations> &correlationsVector,
-                                                 std::size_t numberOfSites_) const
+                                                 std::size_t marginSize_) const
 {
-    correlationsVector.resize(numberOfSites_ - 1);
+    std::size_t borderlessNumberOfSites = this->numberOfSites - 2*marginSize_;
+    correlationsVector.resize(borderlessNumberOfSites - 1);
     std::size_t d = 1;
     for (auto &correlationsEntry : correlationsVector)
-        correlationsEntry.d = d++;
+        correlationsEntry = Correlations(d++, marginSize_);
 }
 
-void CorrelationsTimeEntry::populateOnsiteFluctuations(std::vector<OnsiteFluctuations> &onsiteFluctuationsVector,
-                                                       std::size_t numberOfSites_) const
+/**
+ * @brief Populates given @a onsiteFluctuationsVector with OnsiteFluctuations.
+ */
+void CorrelationsTimeEntry::populateOnsiteFluctuations(std::vector<OnsiteFluctuations> &onsiteFluctuationsVector) const
 {
-    onsiteFluctuationsVector.resize(numberOfSites_);
+    onsiteFluctuationsVector.resize(this->numberOfSites);
     std::size_t i{};
     for (auto &onsiteFluctuationsEntry : onsiteFluctuationsVector)
-        onsiteFluctuationsEntry.i = i++;
+        onsiteFluctuationsEntry = OnsiteFluctuations(i++);
 }
 
-std::size_t CorrelationsTimeEntry::CorrelationsTimeEntry::getNumberOfSites() const {
+std::size_t CorrelationsTimeEntry::getNumberOfSites() const {
     return this->numberOfSites;
 }

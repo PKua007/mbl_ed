@@ -26,7 +26,7 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(doubl
     arma::cx_mat fockBasisEvolution = eigenvectors * arma::diagmat(diagonalEvolution) * eigenvectors.t();
 
     auto numOfParticlesObservables = prepareNumOfParticlesObservables(fockBase);
-    auto numOfParticlesSquaresObservables = prepareNumOfParticlesSquaredObservable(fockBase);
+    auto numOfParticlesSquaresObservables = prepareNumOfParticlesSquaredObservables(fockBase);
 
     std::vector<Occupations> occupationEvolution = doPerformEvolution(numSteps, initialFockStateIdx, fockBase,
                                                                       fockBasisEvolution, numOfParticlesObservables,
@@ -34,6 +34,9 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(doubl
     return occupationEvolution;
 }
 
+/**
+ * @brief Based on the prepared evolution operator and observavles, do the actual evolution.
+ */
 std::vector<OccupationEvolution::Occupations>
 OccupationEvolution::doPerformEvolution(std::size_t numSteps, size_t initialFockStateIdx, const FockBase &fockBase,
                                         const arma::cx_mat &fockBasisEvolution,
@@ -63,7 +66,10 @@ OccupationEvolution::doPerformEvolution(std::size_t numSteps, size_t initialFock
     return observablesEvolution;
 }
 
-SymmetricMatrix<arma::vec> OccupationEvolution::prepareNumOfParticlesSquaredObservable(const FockBase &fockBase) {
+/**
+ * @brief Prepare all pairs of n_i*n_j observables in the diagonal form and return SymmetricMatrix of them.
+ */
+SymmetricMatrix<arma::vec> OccupationEvolution::prepareNumOfParticlesSquaredObservables(const FockBase &fockBase) {
     std::size_t numberOfSites = fockBase.getNumberOfSites();
     SymmetricMatrix<arma::vec> result(numberOfSites);
     for (std::size_t site1Idx{}; site1Idx < numberOfSites; site1Idx++)
@@ -72,6 +78,9 @@ SymmetricMatrix<arma::vec> OccupationEvolution::prepareNumOfParticlesSquaredObse
     return result;
 }
 
+/**
+ * @brief Prepare all n_i observables in the diagonal form and return vector of them.
+ */
 std::vector<arma::vec> OccupationEvolution::prepareNumOfParticlesObservables(const FockBase &fockBase) {
     std::size_t numberOfSites = fockBase.getNumberOfSites();
     std::vector<arma::vec> result(numberOfSites);
@@ -80,6 +89,9 @@ std::vector<arma::vec> OccupationEvolution::prepareNumOfParticlesObservables(con
     return result;
 }
 
+/**
+ * @brief Initialize a vector of Occupations for given number of time steps and number of sites.
+ */
 std::vector<OccupationEvolution::Occupations> OccupationEvolution::prepareOccupationVector(std::size_t numSteps,
                                                                                            std::size_t numberOfSites)
 {
@@ -95,6 +107,9 @@ double OccupationEvolution::calculateObservableExpectedValue(const arma::vec &ob
     return result.real();
 }
 
+/**
+ * @param Return the diagonal of n_siteIdx observable in the diagonal basis.
+ */
 arma::vec OccupationEvolution::numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx) {
     arma::vec result(fockBase.size());
     for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
@@ -102,6 +117,9 @@ arma::vec OccupationEvolution::numOfParticlesObservable(const FockBase &fockBase
     return result;
 }
 
+/**
+ * @param Return the diagonal of n_site1Idx * n_site2Idx observable in the diagonal basis.
+ */
 arma::vec OccupationEvolution::numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
                                                                std::size_t site2Idx)
 {
