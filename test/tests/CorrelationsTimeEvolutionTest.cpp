@@ -61,8 +61,8 @@ TEST_CASE("CorrelationsTimeEvolution: header") {
 
     std::string line;
     std::getline(out, line);
-    REQUIRE(line == "1.0.0.0.0_t G_1 G_2 G_3 G_4 G_1 G_2 rho_0 rho_1 rho_2 rho_3 rho_4 "
-                    "0.1.0.0.0_t G_1 G_2 G_3 G_4 G_1 G_2 rho_0 rho_1 rho_2 rho_3 rho_4 ");
+    REQUIRE(line == "1.0.0.0.0_t G_1 G_2 G_3 G_4 G_1 G_2 rho_0 rho_1 rho_2 rho_3 rho_4 n_0 n_1 n_2 n_3 n_4 "
+                    "0.1.0.0.0_t G_1 G_2 G_3 G_4 G_1 G_2 rho_0 rho_1 rho_2 rho_3 rho_4 n_0 n_1 n_2 n_3 n_4 ");
 }
 
 TEST_CASE("CorrelationsTimeEvolution: times") {
@@ -76,12 +76,12 @@ TEST_CASE("CorrelationsTimeEvolution: times") {
 
     std::string line;
     std::getline(out, line);
-    double t, G_1, bG_1, rho_1, rho2;
-    out >> t >> G_1 >> bG_1 >> rho_1 >> rho2;
+    double t, G_1, bG_1, rho_0, rho_1, n_0, n_1;
+    out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
     REQUIRE(t == 0);
-    out >> t >> G_1 >> bG_1 >> rho_1 >> rho2;
+    out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
     REQUIRE(t == 0.25);
-    out >> t >> G_1 >> bG_1 >> rho_1 >> rho2;
+    out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
     REQUIRE(t == 0.50);
 }
 

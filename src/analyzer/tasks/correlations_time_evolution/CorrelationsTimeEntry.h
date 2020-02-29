@@ -11,7 +11,8 @@
 
 /**
  * @brief Class collecting OccupationEvolution::Occupations for subsequent eigensystems and calculating disorder
- * averages of correlations and fluctuations calculated from before mentioned occupations for a specific moment of time.
+ * averages of correlations as well as onsite occupations and fluctuations calculated from before mentioned occupations
+ * for a specific moment of time.
  * @details The class contains:
  * <ul>
  *     <li>site-averaged correlations, for all distanced from 1 to <em> number of sites - 1 </em>
@@ -19,6 +20,7 @@
  *     <li>site-averaget correlations, but taking into account only sites after removing a few on the borders
  *     (@a marginSize parameters from the constructor)
  *     <li>onsite fluctuations (see CorrelationsTimeEntry::OnsiteFluctuations in the code)
+ *     <li>onsite occupaitons (see CorrelationsTimeEntry::OnsiteOccupations in the code)
  * </ul>
  */
 class CorrelationsTimeEntry {
@@ -66,15 +68,36 @@ private:
         [[nodiscard]] std::string toString() const;
     };
 
+    /**
+     * @brief Onsite mean occupations for a site @a i defined as <n_i>. The values are calculated from
+     * OccupationEvolution::Occupations observables and can be added multiple times - they are then averaged.
+     */
+    class OnsiteOccupations {
+    private:
+        std::size_t i{};
+        double n_i{};
+        std::size_t numberOfMeanEntries{};
+
+    public:
+        OnsiteOccupations() = default;
+        explicit OnsiteOccupations(std::size_t i) : i{i} { }
+
+        void addObservables(const OccupationEvolution::Occupations &occupations);
+        [[nodiscard]] std::string getHeader() const;
+        [[nodiscard]] std::string toString() const;
+    };
+
     double t{};
     std::vector<Correlations> correlations{};
     std::vector<Correlations> borderlessCorrelations{};
     std::vector<OnsiteFluctuations> onsiteFluctuations{};
+    std::vector<OnsiteOccupations> onsiteOccupations{};
 
     std::size_t numberOfSites{};
     std::size_t numberOfMeanEntries{};
 
     void populateOnsiteFluctuations(std::vector<OnsiteFluctuations> &onsiteFluctuationsVector) const;
+    void populateOnsiteOccupations(std::vector<OnsiteOccupations> &onsiteOccupationsVector) const;
     void populateCorrelations(std::vector<Correlations> &correlationsVector, std::size_t marginSize_) const;
 
 public:

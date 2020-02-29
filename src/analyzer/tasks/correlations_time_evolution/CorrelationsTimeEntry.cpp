@@ -64,6 +64,27 @@ std::string CorrelationsTimeEntry::OnsiteFluctuations::toString() const {
     return out.str();
 }
 
+/**
+ * @brief The method calculates the mean onsite occupaitons from given @a occupations and adds the result to n_i. This
+ * sum is used in toString() to calculate the average.
+ */
+void CorrelationsTimeEntry::OnsiteOccupations::addObservables(const OccupationEvolution::Occupations &occupations) {
+    Expects(this->i < occupations.numParticles.size());
+
+    this->n_i += occupations.numParticles[this->i];
+    this->numberOfMeanEntries++;
+}
+
+std::string CorrelationsTimeEntry::OnsiteOccupations::getHeader() const {
+    return "n_" + std::to_string(this->i);
+}
+
+std::string CorrelationsTimeEntry::OnsiteOccupations::toString() const {
+    std::ostringstream out;
+    out << (this->n_i / this->numberOfMeanEntries);
+    return out.str();
+}
+
 void CorrelationsTimeEntry::addObservables(const OccupationEvolution::Occupations &occupations) {
     Expects(this->numberOfSites == occupations.numParticles.size());
 
@@ -71,6 +92,8 @@ void CorrelationsTimeEntry::addObservables(const OccupationEvolution::Occupation
 
     for (auto &onsiteFluctuation : this->onsiteFluctuations)
         onsiteFluctuation.addObservables(occupations);
+    for (auto &onsiteOccupation : this->onsiteOccupations)
+        onsiteOccupation.addObservables(occupations);
     for (auto &correlation : this->correlations)
         correlation.addObservables(occupations);
     for (auto &borderlessCorrelation : this->borderlessCorrelations)
@@ -88,6 +111,8 @@ std::string CorrelationsTimeEntry::getHeader() const {
                    std::ostream_iterator<std::string>(out, " "), headerPrinter);
     std::transform(this->onsiteFluctuations.begin(), this->onsiteFluctuations.end(),
                    std::ostream_iterator<std::string>(out, " "), headerPrinter);
+    std::transform(this->onsiteOccupations.begin(), this->onsiteOccupations.end(),
+                   std::ostream_iterator<std::string>(out, " "), headerPrinter);
 
     return out.str();
 }
@@ -103,6 +128,8 @@ std::string CorrelationsTimeEntry::toString() const {
                    std::ostream_iterator<std::string>(out, " "), valuePrinter);
     std::transform(this->onsiteFluctuations.begin(), this->onsiteFluctuations.end(),
                    std::ostream_iterator<std::string>(out, " "), valuePrinter);
+    std::transform(this->onsiteOccupations.begin(), this->onsiteOccupations.end(),
+                   std::ostream_iterator<std::string>(out, " "), valuePrinter);
     return out.str();
 }
 
@@ -115,6 +142,7 @@ CorrelationsTimeEntry::CorrelationsTimeEntry(double t, std::size_t marginSize, s
     Expects(borderlessNumberOfSites >= 2);
 
     this->populateOnsiteFluctuations(this->onsiteFluctuations);
+    this->populateOnsiteOccupations(this->onsiteOccupations);
     this->populateCorrelations(this->correlations, 0);
     this->populateCorrelations(this->borderlessCorrelations, marginSize);
 }
@@ -141,6 +169,17 @@ void CorrelationsTimeEntry::populateOnsiteFluctuations(std::vector<OnsiteFluctua
     std::size_t i{};
     for (auto &onsiteFluctuationsEntry : onsiteFluctuationsVector)
         onsiteFluctuationsEntry = OnsiteFluctuations(i++);
+}
+
+/**
+ * @brief Populates given @a onsiteOccupationsVector with OnsiteOccupations.
+ */
+void CorrelationsTimeEntry::populateOnsiteOccupations(std::vector<OnsiteOccupations> &onsiteOccupationsVector) const
+{
+    onsiteOccupationsVector.resize(this->numberOfSites);
+    std::size_t i{};
+    for (auto &onsiteFluctuationsEntry : onsiteOccupationsVector)
+        onsiteFluctuationsEntry = OnsiteOccupations (i++);
 }
 
 std::size_t CorrelationsTimeEntry::getNumberOfSites() const {

@@ -51,7 +51,7 @@ public:
 
     /**
      * @brief Adds another Eigensystem to the analyzis, to all observables means are enriched by more data.
-     * @details The number of sites and number of particles are determined in the first invokation and must be kept the
+     * @details The number of sites and number of particles are determined in the first invocation and must be kept the
      * same in next ones.
      */
     void analyze(const Eigensystem &eigensystem) override;
