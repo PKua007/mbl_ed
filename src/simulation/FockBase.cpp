@@ -30,6 +30,9 @@ const FockBase::Vector &FockBase::operator[](std::size_t i) const {
 }
 
 std::optional<std::size_t> FockBase::findIndex(const FockBase::Vector &vector) const {
+    if (vector.size() != this->getNumberOfSites())
+        return std::nullopt;
+
     auto it = this->indexMap.find(this->computeHash(vector));
     if (it == this->indexMap.end())
         return std::nullopt;

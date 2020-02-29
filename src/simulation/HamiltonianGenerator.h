@@ -36,21 +36,21 @@ struct HopData {
 class HamiltonianGenerator {
 private:
     const bool usePBC;
-    std::unique_ptr<FockBase> fockBase;
+    std::shared_ptr<const FockBase> fockBase;
     std::vector<std::unique_ptr<DiagonalTerm>> diagonalTerms;
     std::vector<std::unique_ptr<HoppingTerm>> hoppingTerms;
     std::vector<std::unique_ptr<DoubleHoppingTerm>> doubleHoppingTerms;
 
     [[nodiscard]] std::optional<HopData>
     hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
-    auto calculateDoubleHopMatrixElement(const HopData &firstHop, const HopData &secondHop) const;
+    [[nodiscard]] auto calculateDoubleHopMatrixElement(const HopData &firstHop, const HopData &secondHop) const;
     void performSecondHop(arma::mat &result, std::size_t fromIdx, const HopData &firstHop) const;
     void addDiagonalTerms(arma::mat &result, std::size_t vectorIdx) const;
     void addHoppingTerms(arma::mat &result, std::size_t fromIdx) const;
     void addDoubleHoppingTerms(arma::mat &result, std::size_t fromIdx) const;
 
 public:
-    HamiltonianGenerator(std::unique_ptr<FockBase> fockBase, bool usePBC)
+    HamiltonianGenerator(std::shared_ptr<const FockBase> fockBase, bool usePBC)
             : usePBC{usePBC}, fockBase{std::move(fockBase)}
     { }
     virtual ~HamiltonianGenerator() = default;
@@ -87,7 +87,7 @@ public:
      */
     [[nodiscard]] std::vector<std::unique_ptr<DoubleHoppingTerm>> &getDoubleHoppingTerms();
 
-    [[nodiscard]] const FockBase &getFockBase() const;
+    [[nodiscard]] const std::shared_ptr<const FockBase> &getFockBase() const { return this->fockBase; };
     [[nodiscard]] bool usingPBC() const { return this->usePBC; }
 };
 

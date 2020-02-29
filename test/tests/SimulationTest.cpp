@@ -37,6 +37,10 @@ namespace {
         [[nodiscard]] arma::mat generate() const {
             return this->matrices.at(simulationIndex - 1);
         }
+
+        [[nodiscard]] std::shared_ptr<const FockBase> getFockBase() const {
+            return nullptr;
+        }
     };
 
     class MockAveragingModel {

@@ -102,7 +102,7 @@ TEST_CASE("HamiltonianGenerator: double hop 2 on 3") {
 TEST_CASE("HamiltonianGenerator: diagonal") {
     auto diagonal = std::make_unique<DiagonalTermMock>();
     ALLOW_CALL(*diagonal, calculate(_, _))
-        .RETURN(_2.getFockBase().findIndex(_1).value());
+        .RETURN(_2.getFockBase()->findIndex(_1).value());
     FockBaseGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 3);
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);

@@ -8,6 +8,8 @@
 #include <vector>
 #include <armadillo>
 
+#include "FockBase.h"
+
 /**
  * @brief A system of eigenenergies in ascending order with corresponding eigenvectors normalized to a unity.
  *
@@ -18,6 +20,7 @@ private:
     arma::vec eigenenergies;
     arma::mat eigenstates;
     bool hasEigenvectors_{};
+    std::shared_ptr<const FockBase> fockBase;
 
     void sortEigenenergiesAndNormalizeEigenstates();
     void sortEigenenergies();
@@ -29,22 +32,26 @@ public:
      * @brief Constructs a system: eigenvalues are entries in @a eigenvalues vector and eigenvectors are corresponding
      * columns in @a eigenvectors matrix.
      *
-     * Eigenvalues are sorted in ascending order and eigenvectors are normalized to unity.
+     * Eigenvalues are sorted in ascending order and eigenvectors are normalized to unity. @a fockBase can be omitted,
+     * but when it's not, the size must match the number of eigenvalues.
      */
-    Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors);
+    Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::shared_ptr<const FockBase> fockBase = nullptr);
 
     /**
      * @brief Constructs a system without eigenvectors: eigenvalues are entries in @a eigengenvalues.
      *
      * Eigenvalues are sorted in ascending order.
      */
-    explicit Eigensystem(arma::vec eigenvalues);
+    explicit Eigensystem(arma::vec eigenvalues, std::shared_ptr<const FockBase> fockBase = nullptr);
 
     [[nodiscard]] std::size_t size() const;
     [[nodiscard]] bool empty() const;
     [[nodiscard]] bool hasEigenvectors() const;
     [[nodiscard]] const arma::vec &getEigenenergies() const;
     [[nodiscard]] const arma::mat &getEigenstates() const;
+    [[nodiscard]] bool hasFockBase() const;
+    [[nodiscard]] const FockBase &getFockBase() const;
+    [[nodiscard]] bool isOrthonormal() const;
 
     /**
      * @brief Returns eigenstate as column vector for eigenenergy of index @a i (in ascending order)
@@ -64,7 +71,7 @@ public:
      */
     [[nodiscard]] std::vector<std::size_t> getIndicesOfNormalizedEnergiesInBand(double epsilon, double delta) const;
     void store(std::ostream &eigenenergiesOut) const;
-    void restore(std::istream &in);
+    void restore(std::istream &in, std::shared_ptr<const FockBase> fockBase = nullptr);
 
     friend bool operator==(const Eigensystem &lhs, const Eigensystem &rhs);
     friend bool operator!=(const Eigensystem &lhs, const Eigensystem &rhs);

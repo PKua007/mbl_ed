@@ -74,6 +74,35 @@ TEST_CASE("Eigensystem: eigenvectors normalization") {
     REQUIRE_THAT(eigensystem.getEigenstates(), IsApproxEqual(expectedEigenstates, 1e-15));
 }
 
+TEST_CASE("Eigensystem: orthonormality check") {
+    SECTION("not orthonormal") {
+        Eigensystem eigensystem({1, 2, 3, 4}, {{1, 1,  1,  1},
+                                               {1, -1, 0,  0},
+                                               {1, 1,  -2, 0},
+                                               {1, 1,  1,  -3}});
+
+        REQUIRE_FALSE(eigensystem.isOrthonormal());
+    }
+
+    SECTION("orthonormal") {
+        const double sq2 = std::sqrt(2);
+        const double sq6 = std::sqrt(6);
+        const double sq12 = std::sqrt(12);
+        Eigensystem eigensystem({1, 2, 3, 4}, {{   0.5,    0.5,   0.5,      0.5},
+                                               { 1/sq2, -1/sq2,     0,        0},
+                                               { 1/sq6,  1/sq6, -2/sq6,       0},
+                                               {1/sq12, 1/sq12, 1/sq12, -3/sq12}});
+
+        REQUIRE(eigensystem.isOrthonormal());
+    }
+
+    SECTION("no eigenvectors") {
+        Eigensystem eigensystem({1, 2, 3});
+
+        REQUIRE_THROWS(eigensystem.isOrthonormal());
+    }
+}
+
 TEST_CASE("Eigensystem: store/restore") {
     Eigensystem toStore({0, 0.25, 0.5, 1});
     Eigensystem toRestore({0, 0.1, 0.8, 1});
@@ -120,4 +149,32 @@ TEST_CASE("Eigensystem: get indices of eigenenergies in band - incorrect") {
     REQUIRE_THROWS(eigensystem.getIndicesOfNormalizedEnergiesInBand(0.1, 0.3));
     REQUIRE_THROWS(eigensystem.getIndicesOfNormalizedEnergiesInBand(0.4, 0));
     REQUIRE_THROWS(eigensystem.getIndicesOfNormalizedEnergiesInBand(0.4, -0.1));
+}
+
+TEST_CASE("Eigensystem: FockBase") {
+    auto base = std::make_shared<FockBase>();
+    base->add({2, 0});
+    base->add({1, 1});
+    base->add({0, 2});
+
+    SECTION("valid construction") {
+        REQUIRE_NOTHROW(Eigensystem({0, 0.5, 1}, base));
+        REQUIRE(Eigensystem({0, 0.5, 1}, base).hasFockBase());
+        REQUIRE_FALSE(Eigensystem({0, 0.5, 1}).hasFockBase());
+        REQUIRE_NOTHROW(Eigensystem({0, 0.5, 1}, {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}, base));
+    }
+
+    SECTION("invalid construction") {
+        REQUIRE_THROWS(Eigensystem({0, 1}, base));
+        REQUIRE_THROWS(Eigensystem({0, 1}, {{1, 0, }, {0, 1}}, base));
+    }
+
+    SECTION("restore") {
+        Eigensystem eigensystem({0, 1});
+        Eigensystem saved({0, 0.5, 1});
+        std::stringstream stream;
+        saved.store(stream);
+
+        REQUIRE_NOTHROW(eigensystem.restore(stream, base));
+    }
 }
