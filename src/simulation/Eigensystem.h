@@ -6,6 +6,8 @@
 #define MBL_ED_EIGENSYSTEM_H
 
 #include <vector>
+#include <memory>
+
 #include <armadillo>
 
 #include "FockBase.h"

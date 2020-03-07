@@ -12,9 +12,9 @@ void Analyzer::addTask(std::unique_ptr<AnalyzerTask> task) {
     this->tasks.push_back(std::move(task));
 }
 
-void Analyzer::analyze(const Eigensystem &eigensystem) {
-    using namespace std::placeholders;
-    std::for_each(this->tasks.begin(), this->tasks.end(), std::bind(&AnalyzerTask::analyze, _1, eigensystem));
+void Analyzer::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+    for (auto &task : this->tasks)
+        task->analyze(eigensystem, logger);
 }
 
 void Analyzer::storeBulkResults(const std::string &fileSignature) const {

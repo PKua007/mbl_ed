@@ -362,7 +362,7 @@ void Frontend::analyze(int argc, char **argv) {
 
         Eigensystem eigensystem;
         eigensystem.restore(energiesFile, base);
-        analyzer.analyze(eigensystem);
+        analyzer.analyze(eigensystem, std::cout);
     }
 
     // Save results

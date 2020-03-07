@@ -44,7 +44,7 @@ public:
     /**
      * @brief Performs all analzyer tasks added by Analyzer::addTask on this @a eigensystem.
      */
-    void analyze(const Eigensystem &eigensystem);
+    void analyze(const Eigensystem &eigensystem, std::ostream &logger);
 
     /**
      * @brief Returns a vector of names of fields imploded from all InlineAnalyzerTask -s. The order is the same

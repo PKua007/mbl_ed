@@ -48,8 +48,9 @@ public:
      *
      * Multiple invocations result in adding more points to the average.
      * @param eigensystem Eigensystem to fetch data points from
+     * @param logger unused
      */
-    void analyze(const Eigensystem &eigensystem) override;
+    void analyze(const Eigensystem &eigensystem, std::ostream &logger) override;
     [[nodiscard]] std::string getName() const override;
     [[nodiscard]] std::vector<std::string> getResultHeader() const override;
     [[nodiscard]] std::vector<std::string> getResultFields() const override;

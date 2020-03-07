@@ -12,7 +12,9 @@ MeanGapRatio::MeanGapRatio(double relativeMiddleEnergy, double relativeMargin)
     Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
 }
 
-void MeanGapRatio::analyze(const Eigensystem &eigensystem) {
+void MeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+    static_cast<void>(logger);
+
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
     auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
                                                                         this->relativeMargin);

@@ -25,8 +25,6 @@ private:
         std::vector<CorrelationsTimeEntry> timeEntries{};
 
         [[nodiscard]] std::string getHeader() const;
-
-    private:
         [[nodiscard]] std::string getInitialVectorSignature() const;
     };
 
@@ -54,7 +52,7 @@ public:
      * @details The number of sites and number of particles are determined in the first invocation and must be kept the
      * same in next ones.
      */
-    void analyze(const Eigensystem &eigensystem) override;
+    void analyze(const Eigensystem &eigensystem, std::ostream &logger) override;
 
     [[nodiscard]] std::string getName() const override;
 

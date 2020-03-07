@@ -99,12 +99,17 @@ public:
      */
     void perform(std::ostream &logger, Analyzer_t &analyzer) {
         for (std::size_t i = this->params.from; i < this->params.to; i++) {
-            logger << "[Simulation::perform] Performing simulation " << i << "... " << std::flush;
+            logger << "[Simulation::perform] Performing diagonalization " << i << "... " << std::flush;
+            arma::wall_clock timer;
+            timer.tic();
             Eigensystem eigensystem = this->performSingleSimulation(i);
-            analyzer.analyze(eigensystem);
+            logger << "done (" << timer.toc() << " s). Analyzing... " << std::flush;
+
+            timer.tic();
+            analyzer.analyze(eigensystem, logger);
             if (this->params.saveEigenenergies)
                 this->doSaveEigenenergies(eigensystem, i);
-            logger << "done." << std::endl;
+            logger << "done (" << timer.toc() << " s)." << std::endl;
         }
     }
 };

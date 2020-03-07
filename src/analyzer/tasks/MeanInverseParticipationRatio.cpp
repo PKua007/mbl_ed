@@ -12,7 +12,9 @@ MeanInverseParticipationRatio::MeanInverseParticipationRatio(double relativeMidd
     Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
 }
 
-void MeanInverseParticipationRatio::analyze(const Eigensystem &eigensystem) {
+void MeanInverseParticipationRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+    static_cast<void>(logger);
+
     Expects(eigensystem.hasEigenvectors());
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
     auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,

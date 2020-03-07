@@ -10,7 +10,9 @@
 #include "utils/Assertions.h"
 #include "CDF.h"
 
-void CDF::analyze(const Eigensystem &eigensystem) {
+void CDF::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+    static_cast<void>(logger);
+
     for (auto &cdfEntry : this->cdfTable)
         cdfEntry.push_back(0);
 

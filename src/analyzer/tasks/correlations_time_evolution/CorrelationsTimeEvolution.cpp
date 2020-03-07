@@ -7,7 +7,7 @@
 #include "CorrelationsTimeEvolution.h"
 #include "utils/Assertions.h"
 
-void CorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem) {
+void CorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
     Expects(eigensystem.hasEigenvectors());
     Expects(eigensystem.hasFockBase());
 
@@ -26,9 +26,11 @@ void CorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem) {
         this->prepareTimeEntriesForNumberOfSites(numberOfSites);
 
     for (auto &evolution : this->vectorEvolutions) {
+        logger << "[CorrelationsTimeEvolution::analyze] Evolving vector ";
+        logger << evolution.getInitialVectorSignature() << std::endl;
         std::size_t initialIdx = *fockBase.findIndex(evolution.initialVector);
         auto observablesEvolution = OccupationEvolution::perform(this->maxTime, this->numSteps, initialIdx,
-                                                                 eigensystem);
+                                                                 eigensystem, logger);
 
         Assert(observablesEvolution.size() == evolution.timeEntries.size());
         for (std::size_t i{}; i < observablesEvolution.size(); i++) {

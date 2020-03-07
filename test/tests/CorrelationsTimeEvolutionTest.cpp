@@ -8,7 +8,7 @@
 #include "analyzer/tasks/correlations_time_evolution/CorrelationsTimeEvolution.h"
 #include "simulation/FockBaseGenerator.h"
 
-/*
+
 
 #include <chrono>
 #include <catch2/trompeloeil.hpp>
@@ -32,7 +32,7 @@ TEST_CASE("CorrelationsTimeEvolution: benchmark") {
     arma::eig_sym(eigenvalues, eigenvectors, hamiltonian);
     Eigensystem eigensystem(eigenvalues, eigenvectors, hamiltonianGenerator.getFockBase());
 
-    CorrelationsTimeEvolution correlationsTimeEvolution(0, 1, 11, CorrelationsTimeEvolution::Linear, 1,
+    CorrelationsTimeEvolution correlationsTimeEvolution(0, 1, 11, 1,
                                                         {{1, 1, 1, 1, 1, 1, 1, 1}, {2, 0, 2, 0, 2, 0, 2, 0}});
 
     // Warmup
@@ -47,8 +47,6 @@ TEST_CASE("CorrelationsTimeEvolution: benchmark") {
 
     std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
 }
-
-*/
 
 TEST_CASE("CorrelationsTimeEvolution: header") {
     auto fockBase = FockBaseGenerator{}.generate(1, 5);
