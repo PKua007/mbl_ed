@@ -134,8 +134,19 @@ std::string Parameters::doubleToString(double d) const {
 std::string Parameters::getOutputFileSignature() const {
     std::ostringstream filename;
     filename << "N." << this->N << "_K." << this->K;
+    this->appendHamiltonianTermsSignature(filename);
+    return filename.str();
+}
 
-    for (const auto &term : this->hamiltonianTerms) {
+std::string Parameters::getOutputFileSignatureWithRange() const {
+    std::ostringstream filename;
+    filename << "N." << this->N << "_K." << this->K << "_from." << this->from << "_to." << this->to;
+    this->appendHamiltonianTermsSignature(filename);
+    return filename.str();
+}
+
+void Parameters::appendHamiltonianTermsSignature(std::ostringstream &filename) const {
+    for (const auto &term : hamiltonianTerms) {
         const auto &termParams = term.second;
         for (const auto &termParam : termParams.getKeys()) {
             std::string paramValue = termParams.getString(termParam);
@@ -152,8 +163,6 @@ std::string Parameters::getOutputFileSignature() const {
             filename << "_" << termParam << "." << paramValue;
         }
     }
-
-    return filename.str();
 }
 
 bool Parameters::hasParam(const std::string &name) const {

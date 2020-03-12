@@ -88,7 +88,7 @@ void IO::storeAnalyzerResults(const Parameters &params, const Analyzer &analyzer
     }
 
     this->logger << std::endl << "Storing bulk results... " << std::flush;
-    analyzer.storeBulkResults(params.getOutputFileSignature());
+    analyzer.storeBulkResults(params.getOutputFileSignatureWithRange());
     this->logger << "done." << std::endl;
 }
 

@@ -68,7 +68,7 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
         } else if (termName == "lookupCavityZ2") {
             double U1 = termParams.getDouble("U1");
             Validate(U1 >= 0);
-            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::string cavityConstantsFilename = termParams.getString("ccfile");
             std::ifstream cavityConstantsFile(cavityConstantsFilename);
             if (!cavityConstantsFile)
                 throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
@@ -77,7 +77,7 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
         } else if (termName == "lookupCavityYZ") {
             double U1 = termParams.getDouble("U1");
             Validate(U1 >= 0);
-            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::string cavityConstantsFilename = termParams.getString("ccfile");
             std::ifstream cavityConstantsFile(cavityConstantsFilename);
             if (!cavityConstantsFile)
                 throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
@@ -86,7 +86,7 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
         } else if (termName == "lookupCavityY2") {
             double U1 = termParams.getDouble("U1");
             Validate(U1 >= 0);
-            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::string cavityConstantsFilename = termParams.getString("ccfile");
             std::ifstream cavityConstantsFile(cavityConstantsFilename);
             if (!cavityConstantsFile)
                 throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
@@ -95,7 +95,7 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
         } else if (termName == "lookupCavityZ2_YZ") {
             double U1 = termParams.getDouble("U1");
             Validate(U1 >= 0);
-            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::string cavityConstantsFilename = termParams.getString("ccfile");
             std::ifstream cavityConstantsFile(cavityConstantsFilename);
             if (!cavityConstantsFile)
                 throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
@@ -105,7 +105,7 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
         } else if (termName == "lookupCavityZ2_YZ_Y2") {
             double U1 = termParams.getDouble("U1");
             Validate(U1 >= 0);
-            std::string cavityConstantsFilename = termParams.getString("cavityConstantsFilename");
+            std::string cavityConstantsFilename = termParams.getString("ccfile");
             std::ifstream cavityConstantsFile(cavityConstantsFilename);
             if (!cavityConstantsFile)
                 throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");

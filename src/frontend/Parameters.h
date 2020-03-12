@@ -27,6 +27,7 @@ class Parameters {
 private:
     void autocompleteAndValidate();
     [[nodiscard]] std::string doubleToString(double d) const;
+    void appendHamiltonianTermsSignature(std::ostringstream &filename) const;
 
 public:
     /* All of these are described in input.ini */
@@ -75,6 +76,11 @@ public:
      * may change often, consult the source code.
      */
     [[nodiscard]] std::string getOutputFileSignature() const;
+
+    /**
+     * @brief The same as getOutputFileSignature(), but parameters Parameters::from and Parameters::to are included.
+     */
+    [[nodiscard]] std::string getOutputFileSignatureWithRange() const;
 };
 
 
