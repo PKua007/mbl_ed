@@ -72,7 +72,7 @@ void Parameters::autocompleteAndValidate() {
 }
 
 void Parameters::print(std::ostream &out) const {
-    out << "General parameters:" << std::endl;
+    out << "[Parameters::print] General parameters:" << std::endl;
     out << "N                     : " << this->N << std::endl;
     out << "K                     : " << this->K << std::endl;
     out << "averagingModel        : " << this->averagingModel << std::endl;
@@ -85,7 +85,7 @@ void Parameters::print(std::ostream &out) const {
     out << "seed                  : " << this->seed << std::endl;
 
     out << std::endl;
-    out << "Hamiltonian terms:" << std::endl;
+    out << "[Parameters::print] Hamiltonian terms:" << std::endl;
     for (const auto &term : this->hamiltonianTerms) {
         out << "-- " << term.first << ":" << std::endl;
         out << term.second;

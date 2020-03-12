@@ -4,6 +4,7 @@
 
 #include <cxxopts.hpp>
 #include <filesystem>
+#include <omp.h>
 
 #include "Frontend.h"
 #include "IO.h"
@@ -255,6 +256,9 @@ void Frontend::simulate(int argc, char **argv) {
     auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd);
 
     Analyzer analyzer = prepareAnalyzer(onTheFlyTasks, params);
+
+    // OpenMP info
+    std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
     // Prepare and run simulations
     SimulationParameters simulationParams;
