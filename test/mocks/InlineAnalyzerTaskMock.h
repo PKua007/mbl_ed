@@ -13,7 +13,7 @@ class InlineAnalyzerTaskMock  : public trompeloeil::mock_interface<InlineAnalyze
 public:
     IMPLEMENT_CONST_MOCK0(getResultHeader);
     IMPLEMENT_CONST_MOCK0(getResultFields);
-    IMPLEMENT_MOCK1(analyze);
+    IMPLEMENT_MOCK2(analyze);
     IMPLEMENT_CONST_MOCK0(getName);
 };
 

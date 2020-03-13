@@ -64,7 +64,7 @@ namespace {
             REQUIRE(index == 4);
         }
 
-        void analyze(const Eigensystem &eigensystem) {
+        void analyze(const Eigensystem &eigensystem, std::ostream &logger) {
             REQUIRE(index >= 1);
             REQUIRE(index <= 3);
             const auto &eigenenergies = eigensystem.getEigenenergies();

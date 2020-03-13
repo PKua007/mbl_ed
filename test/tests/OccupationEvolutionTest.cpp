@@ -21,10 +21,11 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
                                            { 1/sq2, -1/sq2,      0,       0},
                                            { 1/sq6,  1/sq6, -2/sq6,       0},
                                            {1/sq12, 1/sq12, 1/sq12, -3/sq12}}, std::move(fockBase));
+    std::ostringstream logger;
 
 
     // Initial state - {0, 1, 0, 0}
-    auto evolution = OccupationEvolution::perform(2, 2, 1, eigensystem);
+    auto evolution = OccupationEvolution::perform(2, 2, 1, eigensystem, logger);
 
 
     REQUIRE(evolution.size() == 2);
@@ -49,10 +50,11 @@ TEST_CASE("OccupationEvolution: 2 bosons 2 sites") {
     Eigensystem eigensystem({1, 2, 3}, {{ 3, 2,  6},
                                         {-6, 3,  2},
                                         { 2, 6, -3}}, std::move(fockBase));
+    std::ostringstream logger;
 
 
     // Initial vector - {1, 1}
-    auto evolution = OccupationEvolution::perform(2, 2, 1, eigensystem);
+    auto evolution = OccupationEvolution::perform(2, 2, 1, eigensystem, logger);
 
 
     REQUIRE(evolution.size() == 2);

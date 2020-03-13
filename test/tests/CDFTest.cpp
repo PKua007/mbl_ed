@@ -16,7 +16,8 @@ TEST_CASE("CDF: name") {
 TEST_CASE("CDF: single set") {
     SECTION("already normalized") {
         CDF cdf(6);
-        cdf.analyze(Eigensystem({0, 0.05, 0.1, 0.2, 0.4, 0.5, 0.7, 0.8, 0.9, 1.0}));
+        std::ostringstream logger;
+        cdf.analyze(Eigensystem({0, 0.05, 0.1, 0.2, 0.4, 0.5, 0.7, 0.8, 0.9, 1.0}), logger);
 
         std::ostringstream out;
         cdf.storeResult(out);
@@ -29,7 +30,8 @@ TEST_CASE("CDF: single set") {
 
     SECTION("normalization") {
         CDF cdf(6);
-        cdf.analyze(Eigensystem({1, 1.5, 2, 3, 5, 6, 8, 9, 10, 11}));
+        std::ostringstream logger;
+        cdf.analyze(Eigensystem({1, 1.5, 2, 3, 5, 6, 8, 9, 10, 11}), logger);
 
         std::ostringstream out;
         cdf.storeResult(out);
@@ -43,8 +45,9 @@ TEST_CASE("CDF: single set") {
 
 TEST_CASE("CDF: two sets") {
     CDF cdf(6);
-    cdf.analyze(Eigensystem({0, 0.05, 0.1, 0.2, 0.4, 0.5, 0.7, 0.8, 0.9, 1.0}));
-    cdf.analyze(Eigensystem({0, 0.1, 0.3, 0.4, 0.5, 0.6, 0.8, 0.85, 0.95, 1.0}));
+    std::ostringstream logger;
+    cdf.analyze(Eigensystem({0, 0.05, 0.1, 0.2, 0.4, 0.5, 0.7, 0.8, 0.9, 1.0}), logger);
+    cdf.analyze(Eigensystem({0, 0.1, 0.3, 0.4, 0.5, 0.6, 0.8, 0.85, 0.95, 1.0}), logger);
 
     std::ostringstream out;
     cdf.storeResult(out);
@@ -58,7 +61,8 @@ TEST_CASE("CDF: two sets") {
 TEST_CASE("CDF: corner cases") {
     SECTION("only 2 energies") {
         CDF cdf(3);
-        cdf.analyze(Eigensystem({0, 1}));
+        std::ostringstream logger;
+        cdf.analyze(Eigensystem({0, 1}), logger);
 
         std::ostringstream out;
         cdf.storeResult(out);
@@ -70,7 +74,8 @@ TEST_CASE("CDF: corner cases") {
 
     SECTION("only 2 bins") {
         CDF cdf(2);
-        cdf.analyze(Eigensystem({0, 0.1, 0.8, 1}));
+        std::ostringstream logger;
+        cdf.analyze(Eigensystem({0, 0.1, 0.8, 1}), logger);
 
         std::ostringstream out;
         cdf.storeResult(out);

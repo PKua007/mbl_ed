@@ -13,7 +13,7 @@
 class BulkAnalyzerTaskMock : public trompeloeil::mock_interface<BulkAnalyzerTask> {
 public:
     IMPLEMENT_CONST_MOCK1(storeResult);
-    IMPLEMENT_MOCK1(analyze);
+    IMPLEMENT_MOCK2(analyze);
     IMPLEMENT_CONST_MOCK0(getName);
 };
 
