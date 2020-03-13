@@ -163,19 +163,36 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks, const 
         } else if (taskName == "evolution") {
             if (params.N != params.K || params.K % 2 != 0)
                 throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
+
             double maxTime;
             std::size_t numSteps, marginSize;
-            taskStream >> maxTime >> numSteps >> marginSize;
-            ValidateMsg(taskStream, "Wrong format, use: evolution [max time] [number of steps] [margin size]");
+            std::string vectorsToEvolveStr;
+            taskStream >> maxTime >> numSteps >> marginSize >> vectorsToEvolveStr;
+            ValidateMsg(taskStream, "Wrong format, use: evolution [max time] [number of steps] [margin size] "
+                                    "[vectors to evolve - unif/dw/both]\nunif - 1.1.1.1; dw - 2.0.2.0; both - both ;)");
             Validate(maxTime > 0);
             Validate(numSteps >= 2);
             Validate(marginSize * 2 < params.K);
+
             FockBase::Vector uniform(params.K, 1);
             FockBase::Vector densityWave(params.K);
             for (std::size_t i{}; i < densityWave.size(); i += 2)
                 densityWave[i] = 2;
+            std::vector<FockBase::Vector> vectorsToEvolve;
+
+            if (vectorsToEvolveStr == "unif") {
+                vectorsToEvolve = {uniform};
+            } else if (vectorsToEvolveStr == "dw") {
+                vectorsToEvolve = {densityWave};
+            } else if (vectorsToEvolveStr == "both") {
+                vectorsToEvolve = {uniform, densityWave};
+            } else {
+                throw ValidationException("vectors to evolve must be unif/dw/both"
+                                          "\nunif - 1.1.1.1; dw - 2.0.2.0; both - both ;)");
+            }
+
             analyzer.addTask(std::make_unique<CorrelationsTimeEvolution>(
-                    maxTime, numSteps, marginSize,std::vector<FockBase::Vector>{uniform, densityWave}
+                    maxTime, numSteps, marginSize, vectorsToEvolve
             ));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
