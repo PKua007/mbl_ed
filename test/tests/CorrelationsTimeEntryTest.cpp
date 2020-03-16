@@ -19,7 +19,7 @@ TEST_CASE("CorrelationsTimeEntry: basic") {
         CorrelationsTimeEntry correlationsTimeEntry(2, 1, 5);
 
         REQUIRE(correlationsTimeEntry.getNumberOfSites() == 5);
-        REQUIRE(correlationsTimeEntry.getHeader() == "t G_1 G_2 G_3 G_4 G_1 G_2 rho_0 rho_1 rho_2 rho_3 rho_4 "
+        REQUIRE(correlationsTimeEntry.getHeader() == "t Gm0_1 Gm0_2 Gm0_3 Gm0_4 Gm1_1 Gm1_2 rho_0 rho_1 rho_2 rho_3 rho_4 "
                                                      "n_0 n_1 n_2 n_3 n_4 ");
         REQUIRE_THAT(correlationsTimeEntry.toString(), Catch::StartsWith("2 "));
     }

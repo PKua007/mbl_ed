@@ -60,8 +60,8 @@ TEST_CASE("CorrelationsTimeEvolution: header") {
 
     std::string line;
     std::getline(out, line);
-    REQUIRE(line == "1.0.0.0.0_t G_1 G_2 G_3 G_4 G_1 G_2 rho_0 rho_1 rho_2 rho_3 rho_4 n_0 n_1 n_2 n_3 n_4 "
-                    "0.1.0.0.0_t G_1 G_2 G_3 G_4 G_1 G_2 rho_0 rho_1 rho_2 rho_3 rho_4 n_0 n_1 n_2 n_3 n_4 ");
+    REQUIRE(line == "1.0.0.0.0_t Gm0_1 Gm0_2 Gm0_3 Gm0_4 Gm1_1 Gm1_2 rho_0 rho_1 rho_2 rho_3 rho_4 n_0 n_1 n_2 n_3 n_4 "
+                    "0.1.0.0.0_t Gm0_1 Gm0_2 Gm0_3 Gm0_4 Gm1_1 Gm1_2 rho_0 rho_1 rho_2 rho_3 rho_4 n_0 n_1 n_2 n_3 n_4 ");
 }
 
 TEST_CASE("CorrelationsTimeEvolution: times") {

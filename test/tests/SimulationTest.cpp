@@ -65,6 +65,8 @@ namespace {
         }
 
         void analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+            static_cast<void>(logger);
+
             REQUIRE(index >= 1);
             REQUIRE(index <= 3);
             const auto &eigenenergies = eigensystem.getEigenenergies();
