@@ -58,6 +58,13 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
             auto disorderGenerator = std::make_unique<UniformGenerator>(-W, W);
             generator->addDiagonalTerm(std::make_unique<OnsiteDisorder<UniformGenerator>>(std::move(disorderGenerator),
                                                                                           numberOfSites, rnd));
+        } else if (termName == "quasiperiodicDisorder") {
+            double W = termParams.getDouble("W");
+            double beta = termParams.getDouble("beta");
+            double phi0 = termParams.getDouble("phi0");
+            Validate(W >= 0);
+            Validate(beta > 0);
+            generator->addDiagonalTerm(std::make_unique<QuasiperiodicDisorder>(W, beta, phi0));
         } else if (termName == "cavityLongInteractions") {
             double U1 = termParams.getDouble("U1");
             double beta = termParams.getDouble("beta");

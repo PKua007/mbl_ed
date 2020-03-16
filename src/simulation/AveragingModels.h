@@ -6,11 +6,13 @@
 #define MBL_ED_AVERAGINGMODELS_H
 
 #include <cmath>
+#include <simulation/terms/QuasiperiodicDisorder.h>
 
 #include "simulation/terms/LookupCavityZ2.h"
 #include "simulation/terms/LookupCavityYZ.h"
 #include "simulation/terms/LookupCavityY2.h"
 #include "simulation/terms/CavityLongInteraction.h"
+#include "simulation/terms/QuasiperiodicDisorder.h"
 #include "simulation/terms/OnsiteDisorder.h"
 
 #include "utils/Assertions.h"
@@ -75,6 +77,13 @@ public:
             } catch (std::bad_cast &e) { static_cast<void>(e); }
 
             try {
+                auto &quasiperiodicDisorder = dynamic_cast<QuasiperiodicDisorder&>(*diagonalTerm);
+                double phi0 = M_PI * simulationIndex / numberOfSimulations;
+                quasiperiodicDisorder.setPhi0(phi0);
+                termFound = true;
+            } catch (std::bad_cast &e) { static_cast<void>(e); }
+
+            try {
                 auto &onsiteDisorder = dynamic_cast<OnsiteDisorder<DisorderGenerator_t>&>(*diagonalTerm);
                 onsiteDisorder.resampleOnsiteEnergies(rnd);
                 termFound = true;
@@ -105,6 +114,11 @@ public:
 
         bool termFound{};
         for (auto &diagonalTerm : hamiltonianGenerator.getDiagonalTerms()) {
+            try {
+                auto &quasiperiodicDisorder = dynamic_cast<QuasiperiodicDisorder&>(*diagonalTerm);
+                quasiperiodicDisorder.setPhi0(2*M_PI*rnd());
+                termFound = true;
+            } catch (std::bad_cast &e) { static_cast<void>(e); }
             try {
                 auto &longIteraction = dynamic_cast<CavityLongInteraction&>(*diagonalTerm);
                 longIteraction.setPhi0(2*M_PI*rnd());
