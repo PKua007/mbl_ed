@@ -33,7 +33,7 @@ void CorrelationsTimeEntry::Correlations::addObservables(const OccupationEvoluti
 }
 
 [[nodiscard]] std::string CorrelationsTimeEntry::Correlations::getHeader() const {
-    return "G_" + std::to_string(this->d);
+    return "Gm" + std::to_string(this->marginSize) + "_" + std::to_string(this->d);
 }
 
 [[nodiscard]] std::string CorrelationsTimeEntry::Correlations::toString() const {
