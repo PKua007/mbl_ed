@@ -17,7 +17,6 @@ QuasiperiodicDisorder::QuasiperiodicDisorder(double W, double beta, double phi0)
 double QuasiperiodicDisorder::calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) {
     static_cast<void>(generator);
 
-    std::vector<double> elementwiseEnergies;
     double energy{};
     for (std::size_t i{}; i < vector.size(); i++)
         energy += vector[i] * this->W * std::cos(2*M_PI*this->beta*i + this->phi0);

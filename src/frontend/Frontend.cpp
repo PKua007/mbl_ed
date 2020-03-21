@@ -18,6 +18,7 @@
 #include "simulation/terms/HubbardHop.h"
 #include "simulation/terms/CavityLongInteraction.h"
 #include "simulation/terms/HubbardOnsite.h"
+#include "simulation/terms/ListOnsite.h"
 #include "simulation/terms/LookupCavityZ2.h"
 #include "simulation/terms/LookupCavityYZ.h"
 #include "simulation/terms/LookupCavityY2.h"
@@ -58,6 +59,13 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
             auto disorderGenerator = std::make_unique<UniformGenerator>(-W, W);
             generator->addDiagonalTerm(std::make_unique<OnsiteDisorder<UniformGenerator>>(std::move(disorderGenerator),
                                                                                           numberOfSites, rnd));
+        } else if (termName == "listOnsite") {
+            auto stringValues = explode(termParams.getString("values"), ',');
+            Validate(stringValues.size() == numberOfSites);
+            std::vector<double> values(stringValues.size());
+            std::transform(stringValues.begin(), stringValues.end(), values.begin(),
+                           [](auto s){ return std::stod(s); });
+            generator->addDiagonalTerm(std::make_unique<ListOnsite>(values));
         } else if (termName == "quasiperiodicDisorder") {
             double W = termParams.getDouble("W");
             double beta = termParams.getDouble("beta");
@@ -292,7 +300,10 @@ void Frontend::simulate(int argc, char **argv) {
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
     simulationParams.fileSignature = directory / params.getOutputFileSignature();
-    if (params.averagingModel == "uniformPhi0") {
+    if (params.averagingModel == "none") {
+        perform_simulations<DummyAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
+                                                 simulationParams);
+    } else if (params.averagingModel == "uniformPhi0") {
         perform_simulations<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
                                                        simulationParams);
     } else if (params.averagingModel == "randomPhi0") {

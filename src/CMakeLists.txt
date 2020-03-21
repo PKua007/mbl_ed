@@ -16,7 +16,7 @@ add_library(mbl_ed_src STATIC utils/Assertions.h simulation/FockBaseGenerator.cp
         analyzer/tasks/correlations_time_evolution/CorrelationsTimeEvolution.cpp
         analyzer/tasks/correlations_time_evolution/OccupationEvolution.cpp
         analyzer/tasks/correlations_time_evolution/SymmetricMatrix.h
-        analyzer/tasks/correlations_time_evolution/CorrelationsTimeEntry.cpp simulation/terms/QuasiperiodicDisorder.cpp simulation/terms/QuasiperiodicDisorder.h)
+        analyzer/tasks/correlations_time_evolution/CorrelationsTimeEntry.cpp simulation/terms/QuasiperiodicDisorder.cpp simulation/terms/QuasiperiodicDisorder.h simulation/terms/ListOnsite.cpp simulation/terms/ListOnsite.h)
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)
 target_link_libraries(mbl_ed_src PUBLIC cxxopts stdc++fs)

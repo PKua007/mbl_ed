@@ -20,6 +20,22 @@
 #include "RND.h"
 
 /**
+ * @brief Averaging model, which does nothing.
+ */
+template<typename DisorderGenerator_t>
+class DummyAveragingModel {
+public:
+    static void setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
+                                          std::size_t simulationIndex, std::size_t numberOfSimulations)
+    {
+        static_cast<void>(simulationIndex);
+        static_cast<void>(numberOfSimulations);
+        static_cast<void>(rnd);
+        static_cast<void>(hamiltonianGenerator);
+    }
+};
+
+/**
  * @brief Averaging model, used in Simulation, which samples new onsite disorder terms for each simulation.
  * @tparam DisorderGenerator_t disorder generator used
  */
