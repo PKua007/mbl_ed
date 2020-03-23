@@ -38,22 +38,25 @@ public:
     };
 
 private:
-    [[nodiscard]] static arma::vec numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx);
+    [[nodiscard]] static arma::sp_vec numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx);
 
-    [[nodiscard]] static arma::vec numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
-                                                                   std::size_t site2Idx);
+    [[nodiscard]] static arma::sp_vec numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
+                                                                      std::size_t site2Idx);
 
-    [[nodiscard]] static double calculateObservableExpectedValue(const arma::vec &observable,
+    [[nodiscard]] static double calculateObservableExpectedValue(const arma::sp_vec &observable,
                                                                  const arma::cx_vec &state);
 
     [[nodiscard]] static std::vector<Occupations> prepareOccupationVector(size_t numSteps, size_t numberOfSites);
-    [[nodiscard]] static std::vector<arma::vec> prepareNumOfParticlesObservables(const FockBase &fockBase);
-    [[nodiscard]] static SymmetricMatrix<arma::vec> prepareNumOfParticlesSquaredObservables(const FockBase &fockBase);
+    [[nodiscard]] static std::vector<arma::sp_vec> prepareNumOfParticlesObservables(const FockBase &fockBase);
+
+    [[nodiscard]] static SymmetricMatrix<arma::sp_vec>
+    prepareNumOfParticlesSquaredObservables(const FockBase &fockBase);
 
     [[nodiscard]] static std::vector<Occupations>
     doPerformEvolution(size_t numSteps, size_t initialFockStateIdx, const FockBase &fockBase,
-                       const arma::cx_mat &fockBasisEvolution, const std::vector<arma::vec> &numOfParticlesObservables,
-                       const SymmetricMatrix<arma::vec> &numOfParticlesSquaredObservables, std::ostream &logger);
+                       const arma::cx_mat &fockBasisEvolution,
+                       const std::vector<arma::sp_vec> &numOfParticlesObservables,
+                       const SymmetricMatrix<arma::sp_vec> &numOfParticlesSquaredObservables, std::ostream &logger);
 
 public:
     /**
