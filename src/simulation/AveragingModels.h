@@ -94,7 +94,7 @@ public:
 
             try {
                 auto &quasiperiodicDisorder = dynamic_cast<QuasiperiodicDisorder&>(*diagonalTerm);
-                double phi0 = M_PI * simulationIndex / numberOfSimulations;
+                double phi0 = 2 * M_PI * simulationIndex / numberOfSimulations;
                 quasiperiodicDisorder.setPhi0(phi0);
                 termFound = true;
             } catch (std::bad_cast &e) { static_cast<void>(e); }
