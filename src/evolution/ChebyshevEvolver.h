@@ -17,8 +17,11 @@ private:
     std::size_t N{};
     double t{};
     double dt{};
+    double Nfactor{};
 
 public:
+    explicit ChebyshevEvolver(double Nfactor = 1.5);
+
     void prepareFor(const arma::sp_mat &hamiltonian, const arma::cx_vec &initialState, double tMax,
                     std::size_t steps) override;
     void evolve() override;

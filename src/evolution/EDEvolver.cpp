@@ -21,7 +21,7 @@ void EDEvolver::prepareFor(const arma::sp_mat &hamiltonian, const arma::cx_vec &
     arma::mat eigvec;
     arma::vec eigval;
     Assert(arma::eig_sym(eigval, eigvec, arma::mat(hamiltonian)));
-    arma::cx_vec diagonalEvolution = arma::exp(-1i * tMax * eigval);
+    arma::cx_vec diagonalEvolution = arma::exp(-1i * this->dt * eigval);
     this->evolutionOperator = eigvec * arma::diagmat(diagonalEvolution) * eigvec.t();
 }
 

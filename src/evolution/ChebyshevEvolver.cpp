@@ -9,6 +9,10 @@
 
 using namespace std::complex_literals;
 
+ChebyshevEvolver::ChebyshevEvolver(double Nfactor) : Nfactor{Nfactor} {
+    Expects(Nfactor > 0);
+}
+
 void ChebyshevEvolver::prepareFor(const arma::sp_mat &hamiltonian, const arma::cx_vec &initialState, double tMax,
                                   std::size_t steps) {
     Expects(tMax > 0);
@@ -27,7 +31,7 @@ void ChebyshevEvolver::prepareFor(const arma::sp_mat &hamiltonian, const arma::c
     this->b = (Emax + Emin) / 2;
 
     arma::sp_mat hamiltonianRescaled = (hamiltonian - arma::speye(arma::size(hamiltonian)) * this->b) / this->a;
-    this->N = static_cast<std::size_t>(1.5 * 2 * this->a * tMax);
+    this->N = static_cast<std::size_t>(this->Nfactor * 2 * this->a * tMax);
 
     this->chebyshevVectors.resize(N + 1);
     this->chebyshevVectors[0] = initialState;
