@@ -56,7 +56,7 @@ TEST_CASE("LookupCavityYZ: integration with HamiltonianGenerator") {
     cavityConstants.addRealisation(CavityConstants::Realisation{0.4, {{1, 2, 3}, {4, 5, 6}}});
     generator.addHoppingTerm(std::make_unique<LookupCavityYZ>(2, cavityConstants));
 
-    auto result = generator.generate();
+    arma::mat result = arma::mat(generator.generate());
 
     arma::mat expected = {{  0, -33,   0},
                           {-33,   0, -51},

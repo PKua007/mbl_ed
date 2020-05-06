@@ -41,7 +41,7 @@ private:
     Eigensystem performSingleSimulation(std::size_t simulationIndex) {
         AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, simulationIndex,
                                                     this->params.totalSimulations);
-        arma::mat hamiltonian = this->hamiltonianGenerator->generate();
+        arma::mat hamiltonian = arma::mat(this->hamiltonianGenerator->generate());
 
         arma::vec armaEnergies;
         arma::mat armaEigvec;
