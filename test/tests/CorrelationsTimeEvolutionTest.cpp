@@ -49,9 +49,9 @@
 }*/
 
 TEST_CASE("EDCorrelationsTimeEvolution: header") {
-    auto fockBase = FockBaseGenerator{}.generate(1, 5);
-    Eigensystem eigensystem({1, 1, 1, 1, 1}, arma::eye(5, 5), std::move(fockBase));
-    EDCorrelationsTimeEvolution evolution(2, 2, 1, {{1, 0, 0, 0, 0}, {0, 1, 0, 0, 0}});
+    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 5));
+    Eigensystem eigensystem({1, 1, 1, 1, 1}, arma::eye(5, 5), fockBase);
+    EDCorrelationsTimeEvolution evolution(2, 2, 5, 1, fockBase, {{1, 0, 0, 0, 0}, {0, 1, 0, 0, 0}});
     std::ostringstream logger;
 
     evolution.analyze(eigensystem, logger);
@@ -65,9 +65,9 @@ TEST_CASE("EDCorrelationsTimeEvolution: header") {
 }
 
 TEST_CASE("EDCorrelationsTimeEvolution: times") {
-    auto fockBase = FockBaseGenerator{}.generate(1, 2);
-    Eigensystem eigensystem({1, 1}, arma::eye(2, 2), std::move(fockBase));
-    EDCorrelationsTimeEvolution evolution(0.5, 3, 0, {{1, 0}});
+    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
+    Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
+    EDCorrelationsTimeEvolution evolution(0.5, 3, 2, 0, fockBase, {{1, 0}});
     std::ostringstream logger;
 
     evolution.analyze(eigensystem, logger);
@@ -86,11 +86,11 @@ TEST_CASE("EDCorrelationsTimeEvolution: times") {
 }
 
 TEST_CASE("EDCorrelationsTimeEvolution: throw on non-matching eigensystems") {
-    auto fockBase1 = FockBaseGenerator{}.generate(1, 2);
-    Eigensystem eigensystem1({1, 1}, arma::eye(2, 2), std::move(fockBase1));
+    auto fockBase1 = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
+    Eigensystem eigensystem1({1, 1}, arma::eye(2, 2), fockBase1);
     auto fockBase2 = FockBaseGenerator{}.generate(1, 3);
-    Eigensystem eigensystem2({1, 1, 1}, arma::eye(3, 3), std::move(fockBase1));
-    EDCorrelationsTimeEvolution evolution(2, 2, 0, {{1, 0}});
+    Eigensystem eigensystem2({1, 1, 1}, arma::eye(3, 3), std::move(fockBase2));
+    EDCorrelationsTimeEvolution evolution(2, 2, 2, 0, fockBase1, {{1, 0}});
     std::ostringstream logger;
     evolution.analyze(eigensystem1, logger);
 
@@ -98,10 +98,10 @@ TEST_CASE("EDCorrelationsTimeEvolution: throw on non-matching eigensystems") {
 }
 
 TEST_CASE("EDCorrelationsTimeEvolution: throw on wrong initial vectors") {
-    auto fockBase = FockBaseGenerator{}.generate(1, 2);
-    Eigensystem eigensystem({1, 1}, arma::eye(2, 2), std::move(fockBase));
-    EDCorrelationsTimeEvolution corr1(2, 2, 0, {{1, 0, 0}});
-    EDCorrelationsTimeEvolution corr2(2, 2, 0, {{0, 2}});
+    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
+    Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
+    EDCorrelationsTimeEvolution corr1(2, 2, 2, 0, fockBase, {{1, 0, 0}});
+    EDCorrelationsTimeEvolution corr2(2, 2, 2, 0, fockBase, {{0, 2}});
     std::ostringstream logger;
 
     REQUIRE_THROWS(corr1.analyze(eigensystem, logger));

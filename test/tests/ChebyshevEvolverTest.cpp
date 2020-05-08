@@ -37,8 +37,12 @@ TEST_CASE("Evolvers test") {
     expected[5] = -0.4619155288962375 + -0.2981800634501822i;
 
     SECTION("EDEvolver") {
-        EDEvolver edEvolver;
-        edEvolver.prepareFor(H, psi0, 2, 2);
+        arma::vec eigval;
+        arma::mat eigvec;
+        REQUIRE(arma::eig_sym(eigval, eigvec, arma::mat(H)));
+        Eigensystem eigensystem(eigval, eigvec);
+        EDEvolver edEvolver(eigensystem);
+        edEvolver.prepareFor(psi0, 2, 2);
         edEvolver.evolve();
 
         REQUIRE(arma::norm(edEvolver.getCurrentState() - expected) < 1e-8);
@@ -46,7 +50,7 @@ TEST_CASE("Evolvers test") {
         SECTION("second run - reset") {
             // Different evolution - different number of steps - but time after first step coincides with previous one
             // However not to use exactly the same, we take -psi0
-            edEvolver.prepareFor(H, -psi0, 4, 3);
+            edEvolver.prepareFor(-psi0, 4, 3);
             edEvolver.evolve();
 
             REQUIRE(arma::norm(edEvolver.getCurrentState() - (-expected)) < 1e-8);
@@ -55,8 +59,8 @@ TEST_CASE("Evolvers test") {
 
     SECTION("ChebyshevEvolver") {
         // For such a small system default Nfactor is too small and precision is lost
-        ChebyshevEvolver chebyshevEvolver(2);
-        chebyshevEvolver.prepareFor(H, psi0, 2, 2);
+        ChebyshevEvolver chebyshevEvolver(H, 2);
+        chebyshevEvolver.prepareFor(psi0, 2, 2);
         chebyshevEvolver.evolve();
 
         REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - expected) < 1e-8);
@@ -64,7 +68,7 @@ TEST_CASE("Evolvers test") {
         SECTION("second run - reset") {
             // Different evolution - different number of steps - but time after first step coincides with previous one
             // However not to use exactly the same, we take -psi0
-            chebyshevEvolver.prepareFor(H, -psi0, 4, 3);
+            chebyshevEvolver.prepareFor(-psi0, 4, 3);
             chebyshevEvolver.evolve();
 
             REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - (-expected)) < 1e-8);

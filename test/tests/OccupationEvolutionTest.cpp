@@ -9,10 +9,11 @@
 #include "matchers/VectorApproxEqualMatcher.h"
 
 #include "evolution/OccupationEvolution.h"
+#include "evolution/EDEvolver.h"
 #include "simulation/FockBaseGenerator.h"
 
 TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
-    auto fockBase = FockBaseGenerator{}.generate(1, 4);
+    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 4));
     // Just a random nontrivial orthogonal matrix as eigenstates
     const double sq2 = std::sqrt(2);
     const double sq6 = std::sqrt(6);
@@ -20,12 +21,13 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
     Eigensystem eigensystem({1, 2, 3, 4}, {{   0.5,    0.5,    0.5,     0.5},
                                            { 1/sq2, -1/sq2,      0,       0},
                                            { 1/sq6,  1/sq6, -2/sq6,       0},
-                                           {1/sq12, 1/sq12, 1/sq12, -3/sq12}}, std::move(fockBase));
+                                           {1/sq12, 1/sq12, 1/sq12, -3/sq12}}, fockBase);
     std::ostringstream logger;
+    EDEvolver evolver(eigensystem);
 
 
     // Initial state - {0, 1, 0, 0}
-    auto evolution = OccupationEvolution::perform(2, 2, 1, eigensystem, logger);
+    auto evolution = OccupationEvolution::perform(2, 2, 1, *fockBase, evolver, logger);
 
 
     REQUIRE(evolution.size() == 2);
@@ -46,15 +48,16 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
 }
 
 TEST_CASE("OccupationEvolution: 2 bosons 2 sites") {
-    auto fockBase = FockBaseGenerator{}.generate(2, 2);
+    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(2, 2));
     Eigensystem eigensystem({1, 2, 3}, {{ 3, 2,  6},
                                         {-6, 3,  2},
-                                        { 2, 6, -3}}, std::move(fockBase));
+                                        { 2, 6, -3}}, fockBase);
+    EDEvolver evolver(eigensystem);
     std::ostringstream logger;
 
 
     // Initial vector - {1, 1}
-    auto evolution = OccupationEvolution::perform(2, 2, 1, eigensystem, logger);
+    auto evolution = OccupationEvolution::perform(2, 2, 1, *fockBase, evolver, logger);
 
 
     REQUIRE(evolution.size() == 2);
