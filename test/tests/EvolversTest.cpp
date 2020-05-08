@@ -47,6 +47,11 @@ TEST_CASE("Evolvers test") {
 
         REQUIRE(arma::norm(edEvolver.getCurrentState() - expected) < 1e-8);
 
+        SECTION("throw on to many evolutions") {
+            edEvolver.evolve(); // 1 more step is permitted for convenience
+            REQUIRE_THROWS(edEvolver.evolve());
+        }
+
         SECTION("second run - reset") {
             // Different evolution - different number of steps - but time after first step coincides with previous one
             // However not to use exactly the same, we take -psi0
@@ -64,6 +69,11 @@ TEST_CASE("Evolvers test") {
         chebyshevEvolver.evolve();
 
         REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - expected) < 1e-8);
+
+        SECTION("throw on to many evolutions") {
+            chebyshevEvolver.evolve(); // 1 more step is permitted for convenience
+            REQUIRE_THROWS(chebyshevEvolver.evolve());
+        }
 
         SECTION("second run - reset") {
             // Different evolution - different number of steps - but time after first step coincides with previous one

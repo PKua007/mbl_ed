@@ -16,6 +16,8 @@ private:
     arma::cx_vec currentState;
     double dt{};
     double t{};
+    std::size_t step{};
+    std::size_t steps{};
 
 public:
     explicit EDEvolver(const Eigensystem &eigensystem);
@@ -24,7 +26,6 @@ public:
                     std::size_t steps) override;
     void evolve() override;
     [[nodiscard]] const arma::cx_vec &getCurrentState() const override;
-    [[nodiscard]] double getCurrentTime() const override;
 };
 
 

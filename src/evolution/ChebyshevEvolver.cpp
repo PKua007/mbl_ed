@@ -22,6 +22,8 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double tMax,
     this->t = 0;
     this->dt = tMax / static_cast<double>(steps - 1);
     this->currentState = initialState;
+    this->step = 0;
+    this->steps = steps;
 
     arma::vec minEigval, maxEigval;
     Assert(arma::eigs_sym(minEigval, this->hamiltonian, 5, "sa"));
@@ -42,6 +44,10 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double tMax,
 }
 
 void ChebyshevEvolver::evolve() {
+    // Actually this->step == this->steps - 1 here will give 1 step too much, but do not throw for convenience of use
+    Assert(this->step < this->steps);
+    this->step++;
+
     this->t += this->dt;
 
     this->currentState.fill(arma::fill::zeros);
@@ -54,8 +60,4 @@ void ChebyshevEvolver::evolve() {
 
 const arma::cx_vec &ChebyshevEvolver::getCurrentState() const {
     return this->currentState;
-}
-
-double ChebyshevEvolver::getCurrentTime() const {
-    return this->t;
 }

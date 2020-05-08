@@ -15,7 +15,6 @@ public:
                             std::size_t steps) = 0;
     virtual void evolve() = 0;
     [[nodiscard]] virtual const arma::cx_vec &getCurrentState() const = 0;
-    [[nodiscard]] virtual double getCurrentTime() const = 0;
 };
 
 #endif //MBL_ED_EVOLVER_H
