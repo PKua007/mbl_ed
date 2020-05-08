@@ -17,6 +17,7 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double tMax,
                                   std::size_t steps) {
     Expects(tMax > 0);
     Expects(steps >= 2);
+    Expects(initialState.size() == this->hamiltonian.n_cols);
 
     this->t = 0;
     this->dt = tMax / static_cast<double>(steps - 1);

@@ -13,6 +13,7 @@ void EDEvolver::prepareFor(const arma::cx_vec &initialState, double tMax,
                            std::size_t steps) {
     Expects(tMax > 0);
     Expects(steps >= 2);
+    Expects(initialState.size() == this->eigensystem.size());
 
     this->t = 0;
     this->dt = tMax / static_cast<double>(steps - 1);
@@ -35,4 +36,8 @@ const arma::cx_vec &EDEvolver::getCurrentState() const {
 
 double EDEvolver::getCurrentTime() const {
     return this->t;
+}
+
+EDEvolver::EDEvolver(Eigensystem eigensystem) : eigensystem{std::move(eigensystem)} {
+    Expects(eigensystem.hasEigenvectors());
 }

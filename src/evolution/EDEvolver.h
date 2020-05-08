@@ -18,8 +18,7 @@ private:
     double t{};
 
 public:
-    explicit EDEvolver(Eigensystem eigensystem) : eigensystem{std::move(eigensystem)}
-    { }
+    explicit EDEvolver(Eigensystem eigensystem);
 
     void prepareFor(const arma::cx_vec &initialState, double tMax,
                     std::size_t steps) override;
