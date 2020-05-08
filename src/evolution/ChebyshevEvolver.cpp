@@ -9,11 +9,11 @@
 
 using namespace std::complex_literals;
 
-ChebyshevEvolver::ChebyshevEvolver(double Nfactor) : Nfactor{Nfactor} {
+ChebyshevEvolver::ChebyshevEvolver(arma::sp_mat hamiltonian, double Nfactor) : hamiltonian{std::move(hamiltonian)}, Nfactor{Nfactor} {
     Expects(Nfactor > 0);
 }
 
-void ChebyshevEvolver::prepareFor(const arma::sp_mat &hamiltonian, const arma::cx_vec &initialState, double tMax,
+void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double tMax,
                                   std::size_t steps) {
     Expects(tMax > 0);
     Expects(steps >= 2);
@@ -23,14 +23,14 @@ void ChebyshevEvolver::prepareFor(const arma::sp_mat &hamiltonian, const arma::c
     this->currentState = initialState;
 
     arma::vec minEigval, maxEigval;
-    Assert(arma::eigs_sym(minEigval, hamiltonian, 5, "sa"));
-    Assert(arma::eigs_sym(maxEigval, hamiltonian, 5, "la"));
+    Assert(arma::eigs_sym(minEigval, this->hamiltonian, 5, "sa"));
+    Assert(arma::eigs_sym(maxEigval, this->hamiltonian, 5, "la"));
     double Emin = minEigval.front();
     double Emax = maxEigval.back();
     this->a = (Emax - Emin) / 2;
     this->b = (Emax + Emin) / 2;
 
-    arma::sp_mat hamiltonianRescaled = (hamiltonian - arma::speye(arma::size(hamiltonian)) * this->b) / this->a;
+    arma::sp_mat hamiltonianRescaled = (this->hamiltonian - arma::speye(arma::size(this->hamiltonian)) * this->b) / this->a;
     this->N = static_cast<std::size_t>(this->Nfactor * 2 * this->a * tMax);
 
     this->chebyshevVectors.resize(N + 1);

@@ -10,6 +10,7 @@
 
 class ChebyshevEvolver : public Evolver {
 private:
+    arma::sp_mat hamiltonian;
     std::vector<arma::cx_vec> chebyshevVectors;
     arma::cx_vec currentState;
     double a{};
@@ -20,9 +21,9 @@ private:
     double Nfactor{};
 
 public:
-    explicit ChebyshevEvolver(double Nfactor = 1.5);
+    explicit ChebyshevEvolver(arma::sp_mat hamiltonian, double Nfactor = 1.5);
 
-    void prepareFor(const arma::sp_mat &hamiltonian, const arma::cx_vec &initialState, double tMax,
+    void prepareFor(const arma::cx_vec &initialState, double tMax,
                     std::size_t steps) override;
     void evolve() override;
     [[nodiscard]] const arma::cx_vec &getCurrentState() const override;

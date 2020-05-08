@@ -1,21 +1,18 @@
 //
-// Created by Piotr Kubala on 17/02/2020.
+// Created by pkua on 08.05.2020.
 //
 
 #ifndef MBL_ED_CORRELATIONSTIMEEVOLUTION_H
 #define MBL_ED_CORRELATIONSTIMEEVOLUTION_H
 
-#include "analyzer/BulkAnalyzerTask.h"
-#include "utils/Assertions.h"
+#include <memory>
+
 #include "SymmetricMatrix.h"
 #include "OccupationEvolution.h"
 #include "CorrelationsTimeEntry.h"
+#include "Evolver.h"
 
-/**
- * @brief BulkAnalyzerTask, which performs time evolution of correlations and fluctuations for a few given Fock states.
- * @details Consult CorrelationsTimeEntry and its helper classes for the description.
- */
-class CorrelationsTimeEvolution : public BulkAnalyzerTask {
+class CorrelationsTimeEvolution {
 private:
     /**
      * @brief Evolution of observables for the specifit initial Fock state.
@@ -28,14 +25,14 @@ private:
         [[nodiscard]] std::string getInitialVectorSignature() const;
     };
 
+    std::shared_ptr<FockBase> fockBase;
     std::size_t marginSize{};
+    std::size_t numberOfSites{};
     std::vector<VectorEvolution> vectorEvolutions{};
     double maxTime{};
     std::size_t numSteps{};
 
     [[nodiscard]] std::size_t getNumberOfSites() const;
-    [[nodiscard]] bool numberOfSitesDetermined() const;
-    void prepareTimeEntriesForNumberOfSites(std::size_t numberOfSites);
 
 public:
     /**
@@ -44,17 +41,16 @@ public:
      * @details Consult CorrelationTimeEntry for the description of @a marginSize. The evolution will be performed
      * separately for all @a vectorsToEvolve. To know what observables are measures, check CorrelationTimeEntry.
      */
-    CorrelationsTimeEvolution(double maxTime, std::size_t numSteps, std::size_t marginSize,
-                              const std::vector<FockBase::Vector> &vectorsToEvolve);
+    CorrelationsTimeEvolution(double maxTime, std::size_t numSteps, std::size_t numberOfSites, std::size_t marginSize,
+                              std::shared_ptr<FockBase> fockBase, const std::vector<FockBase::Vector> &vectorsToEvolve);
 
     /**
      * @brief Adds another Eigensystem to the analyzis, to all observables means are enriched by more data.
      * @details The number of sites and number of particles are determined in the first invocation and must be kept the
      * same in next ones.
      */
-    void analyze(const Eigensystem &eigensystem, std::ostream &logger) override;
+    void addEvolution(Evolver &evolver, std::ostream &logger);
 
-    [[nodiscard]] std::string getName() const override;
 
     /**
      * @brief Stores the result to @a out in the form of a table with a header.
@@ -72,7 +68,7 @@ public:
      * 1 [values] 1 [values]
      * </pre>
      */
-    void storeResult(std::ostream &out) const override;
+    void storeResult(std::ostream &out) const;
 };
 
 

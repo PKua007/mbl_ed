@@ -6,35 +6,26 @@
 
 std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(double maxTime, std::size_t numSteps,
                                                                            std::size_t initialFockStateIdx,
-                                                                           const Eigensystem &eigensystem,
-                                                                           std::ostream &logger)
+                                                                           const FockBase &fockBase, Evolver &evolver, std::ostream &logger)
 {
-    Expects(eigensystem.hasFockBase());
     Expects(maxTime > 0);
     Expects(numSteps >= 2);
-#ifndef NDEBUG
-    Expects(eigensystem.isOrthonormal());
-#endif
-
-    const auto &fockBase = eigensystem.getFockBase();
-    const auto &eigenvectors = eigensystem.getEigenstates();
-    const auto &eigenenergies = eigensystem.getEigenenergies();
-
-    double dt = maxTime / (static_cast<double>(numSteps) - 1);
 
     using namespace std::complex_literals;
     logger << "[OccupationEvolution::perform] Calculating evolution operator... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
-    arma::cx_vec diagonalEvolution = arma::exp(-1i * dt * eigenenergies);
-    arma::cx_mat fockBasisEvolution = eigenvectors * arma::diagmat(diagonalEvolution) * eigenvectors.t();
+
+    arma::cx_vec evolvedState(fockBase.size(), arma::fill::zeros);
+    evolvedState[initialFockStateIdx] = 1;
+
+    evolver.prepareFor(evolvedState, maxTime, numSteps);
     logger << "done (" << timer.toc() << " s)." << std::endl;
 
     auto numOfParticlesObservables = prepareNumOfParticlesObservables(fockBase);
     auto numOfParticlesSquaresObservables = prepareNumOfParticlesSquaredObservables(fockBase);
 
-    std::vector<Occupations> occupationEvolution = doPerformEvolution(numSteps, initialFockStateIdx, fockBase,
-                                                                      fockBasisEvolution, numOfParticlesObservables,
+    std::vector<Occupations> occupationEvolution = doPerformEvolution(numSteps, evolver, numOfParticlesObservables,
                                                                       numOfParticlesSquaresObservables, logger);
     return occupationEvolution;
 }
@@ -43,17 +34,13 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(doubl
  * @brief Based on the prepared evolution operator and observavles, do the actual evolution.
  */
 std::vector<OccupationEvolution::Occupations>
-OccupationEvolution::doPerformEvolution(std::size_t numSteps, size_t initialFockStateIdx, const FockBase &fockBase,
-                                        const arma::cx_mat &fockBasisEvolution,
+OccupationEvolution::doPerformEvolution(std::size_t numSteps, Evolver &evolver,
                                         const std::vector<arma::sp_vec> &numOfParticlesObservables,
                                         const SymmetricMatrix<arma::sp_vec> &numOfParticlesSquaredObservables,
                                         std::ostream &logger)
 {
-    arma::cx_vec evolvedState(fockBase.size(), arma::fill::zeros);
-    evolvedState[initialFockStateIdx] = 1;
-
     arma::wall_clock timer;
-    std::size_t numberOfSites = fockBase.getNumberOfSites();
+    std::size_t numberOfSites = numOfParticlesObservables.size();
     std::vector<Occupations> observablesEvolution = prepareOccupationVector(numSteps, numberOfSites);
     for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {
         logger << "[OccupationEvolution::doPerformEvolution] Calculating expectation values for time step ";
@@ -61,19 +48,19 @@ OccupationEvolution::doPerformEvolution(std::size_t numSteps, size_t initialFock
         timer.tic();
         for (std::size_t site{}; site < numberOfSites; site++) {
             observablesEvolution[timeIdx].numParticles[site]
-                = calculateObservableExpectedValue(numOfParticlesObservables[site], evolvedState);
+                = calculateObservableExpectedValue(numOfParticlesObservables[site], evolver.getCurrentState());
         }
 
         for (std::size_t site1{}; site1 < numberOfSites; site1++) {
             for (std::size_t site2 = site1; site2 < numberOfSites; site2++) {
                 observablesEvolution[timeIdx].numParticlesSquared(site1, site2)
-                    = calculateObservableExpectedValue(numOfParticlesSquaredObservables(site1, site2), evolvedState);
+                    = calculateObservableExpectedValue(numOfParticlesSquaredObservables(site1, site2), evolver.getCurrentState());
             }
         }
         logger << "done (" << timer.toc() << " s). Evolving the state... " << std::flush;
 
         timer.tic();
-        evolvedState = fockBasisEvolution * evolvedState;
+        evolver.evolve();
         logger << "done (" << timer.toc() << " s)." << std::endl;
     }
     return observablesEvolution;

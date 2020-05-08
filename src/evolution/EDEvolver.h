@@ -5,18 +5,23 @@
 #ifndef MBL_ED_EDEVOLVER_H
 #define MBL_ED_EDEVOLVER_H
 
-
 #include "Evolver.h"
+
+#include "simulation/Eigensystem.h"
 
 class EDEvolver : public Evolver {
 private:
+    Eigensystem eigensystem;
     arma::cx_mat evolutionOperator;
     arma::cx_vec currentState;
     double dt{};
     double t{};
 
 public:
-    void prepareFor(const arma::sp_mat &hamiltonian, const arma::cx_vec &initialState, double tMax,
+    explicit EDEvolver(Eigensystem eigensystem) : eigensystem{std::move(eigensystem)}
+    { }
+
+    void prepareFor(const arma::cx_vec &initialState, double tMax,
                     std::size_t steps) override;
     void evolve() override;
     [[nodiscard]] const arma::cx_vec &getCurrentState() const override;

@@ -26,7 +26,7 @@
 #include "analyzer/tasks/CDF.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/InverseParticipationRatio.h"
-#include "analyzer/tasks/correlations_time_evolution/CorrelationsTimeEvolution.h"
+#include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
 
 #include "utils/Fold.h"
 #include "utils/Utils.h"
@@ -35,12 +35,9 @@
 /**
  * @brief Builds hamiltonian generator parsing all general parameters and hamiltonian terms from @ params
  */
-auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
-    FockBaseGenerator baseGenerator;
-    auto base = baseGenerator.generate(params.N, params.K);
-    std::size_t numberOfSites = base->getNumberOfSites();
-
-    auto generator = std::make_unique<HamiltonianGenerator>(std::move(base), params.usePeriodicBC);
+auto Frontend::buildHamiltonianGenerator(const Parameters &params, std::shared_ptr<FockBase> fockBase, RND &rnd) {
+    std::size_t numberOfSites = fockBase->getNumberOfSites();
+    auto generator = std::make_unique<HamiltonianGenerator>(fockBase, params.usePeriodicBC);
 
     for (auto &term : params.hamiltonianTerms) {
         std::string termName = term.first;
@@ -139,7 +136,8 @@ auto Frontend::buildHamiltonianGenerator(const Parameters &params, RND &rnd) {
 /**
  * @brief Takes a vector of @a tasks with parameters and parses them to AnalyzerTask -s
  */
-Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks, const Parameters &params) {
+Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks, const Parameters &params,
+                                    std::shared_ptr<FockBase> fockBase) {
     Analyzer analyzer;
     for (const auto &task : tasks) {
         std::istringstream taskStream(task);
@@ -206,8 +204,8 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks, const 
                                           "\nunif - 1.1.1.1; dw - 2.0.2.0; both - both ;)");
             }
 
-            analyzer.addTask(std::make_unique<CorrelationsTimeEvolution>(
-                    maxTime, numSteps, marginSize, vectorsToEvolve
+            analyzer.addTask(std::make_unique<EDCorrelationsTimeEvolution>(
+                    maxTime, numSteps, params.K, marginSize, fockBase, vectorsToEvolve
             ));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
@@ -284,10 +282,13 @@ void Frontend::simulate(int argc, char **argv) {
         if (!params.hasParam(param))
             die("Parameters to print: parameter " + param + " is unknown");
 
-    auto rnd = std::make_unique<RND>(params.from + params.seed);
-    auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, *rnd);
+    FockBaseGenerator baseGenerator;
+    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
 
-    Analyzer analyzer = prepareAnalyzer(onTheFlyTasks, params);
+    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, base, *rnd);
+
+    Analyzer analyzer = prepareAnalyzer(onTheFlyTasks, params, base);
 
     // OpenMP info
     std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
@@ -385,15 +386,16 @@ void Frontend::analyze(int argc, char **argv) {
         if (!params.hasParam(param))
             die("Parameters to print: parameter " + param + " is unknown");
 
+    FockBaseGenerator baseGenerator;
+    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+
     // Load eigenenergies and analyze them
-    Analyzer analyzer = prepareAnalyzer(tasks, params);
+    Analyzer analyzer = prepareAnalyzer(tasks, params, base);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())
         die("No eigenenergy files were found.");
 
-    FockBaseGenerator baseGenerator;
-    auto base = std::shared_ptr<FockBase>(baseGenerator.generate(params.N, params.K));
     for (const auto &energiesFilename : energiesFilenames) {
         std::ifstream energiesFile(energiesFilename);
         if (!energiesFile)

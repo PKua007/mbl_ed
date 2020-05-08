@@ -7,7 +7,7 @@
 
 #include "SymmetricMatrix.h"
 #include "simulation/FockBase.h"
-#include "simulation/Eigensystem.h"
+#include "Evolver.h"
 
 /**
  * @brief The class performing time evolution of @f$ \left< \hat{n}_i \right> @f$ and
@@ -53,10 +53,10 @@ private:
     prepareNumOfParticlesSquaredObservables(const FockBase &fockBase);
 
     [[nodiscard]] static std::vector<Occupations>
-    doPerformEvolution(size_t numSteps, size_t initialFockStateIdx, const FockBase &fockBase,
-                       const arma::cx_mat &fockBasisEvolution,
+    doPerformEvolution(std::size_t numSteps, Evolver &evolver,
                        const std::vector<arma::sp_vec> &numOfParticlesObservables,
-                       const SymmetricMatrix<arma::sp_vec> &numOfParticlesSquaredObservables, std::ostream &logger);
+                       const SymmetricMatrix<arma::sp_vec> &numOfParticlesSquaredObservables,
+                       std::ostream &logger);
 
 public:
     /**
@@ -68,7 +68,7 @@ public:
      */
     [[nodiscard]] static std::vector<Occupations> perform(double maxTime, std::size_t numSteps,
                                                           std::size_t initialFockStateIdx,
-                                                          const Eigensystem &eigensystem, std::ostream &logger);
+                                                          const FockBase &fockBase, Evolver &evolver, std::ostream &logger);
 };
 
 

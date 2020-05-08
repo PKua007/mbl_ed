@@ -9,7 +9,7 @@
 
 using namespace std::complex_literals;
 
-void EDEvolver::prepareFor(const arma::sp_mat &hamiltonian, const arma::cx_vec &initialState, double tMax,
+void EDEvolver::prepareFor(const arma::cx_vec &initialState, double tMax,
                            std::size_t steps) {
     Expects(tMax > 0);
     Expects(steps >= 2);
@@ -18,9 +18,8 @@ void EDEvolver::prepareFor(const arma::sp_mat &hamiltonian, const arma::cx_vec &
     this->dt = tMax / static_cast<double>(steps - 1);
     this->currentState = initialState;
 
-    arma::mat eigvec;
-    arma::vec eigval;
-    Assert(arma::eig_sym(eigval, eigvec, arma::mat(hamiltonian)));
+    arma::mat eigvec = this->eigensystem.getEigenstates();
+    arma::vec eigval = this->eigensystem.getEigenenergies();
     arma::cx_vec diagonalEvolution = arma::exp(-1i * this->dt * eigval);
     this->evolutionOperator = eigvec * arma::diagmat(diagonalEvolution) * eigvec.t();
 }

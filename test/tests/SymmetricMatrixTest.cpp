@@ -6,7 +6,7 @@
 
 #include "matchers/ArmaApproxEqualMatcher.h"
 
-#include "analyzer/tasks/correlations_time_evolution/SymmetricMatrix.h"
+#include "evolution/SymmetricMatrix.h"
 
 TEST_CASE("SymmetricMatrix: default initialization") {
     SECTION("empty") {

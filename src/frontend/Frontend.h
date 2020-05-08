@@ -19,8 +19,9 @@ class Frontend {
 private:
     std::ostream &out;
 
-    auto buildHamiltonianGenerator(const Parameters &params, RND &rnd);
-    Analyzer prepareAnalyzer(const std::vector<std::string> &tasks, const Parameters &params);
+    auto buildHamiltonianGenerator(const Parameters &params, std::shared_ptr<FockBase> fockBase, RND &rnd);
+    Analyzer prepareAnalyzer(const std::vector<std::string> &tasks, const Parameters &params,
+                             std::shared_ptr<FockBase> fockBase);
 
     template<template <typename> typename AveragingModel_t>
     void perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator, std::unique_ptr<RND>,

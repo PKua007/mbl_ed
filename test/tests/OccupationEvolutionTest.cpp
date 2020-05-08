@@ -8,7 +8,7 @@
 #include "matchers/ArmaApproxEqualMatcher.h"
 #include "matchers/VectorApproxEqualMatcher.h"
 
-#include "analyzer/tasks/correlations_time_evolution/OccupationEvolution.h"
+#include "evolution/OccupationEvolution.h"
 #include "simulation/FockBaseGenerator.h"
 
 TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
