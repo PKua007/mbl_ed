@@ -38,6 +38,6 @@ double EDEvolver::getCurrentTime() const {
     return this->t;
 }
 
-EDEvolver::EDEvolver(Eigensystem eigensystem) : eigensystem{std::move(eigensystem)} {
+EDEvolver::EDEvolver(const Eigensystem &eigensystem) : eigensystem{eigensystem} {
     Expects(eigensystem.hasEigenvectors());
 }

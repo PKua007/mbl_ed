@@ -9,7 +9,7 @@
 
 using namespace std::complex_literals;
 
-ChebyshevEvolver::ChebyshevEvolver(arma::sp_mat hamiltonian, double Nfactor) : hamiltonian{std::move(hamiltonian)}, Nfactor{Nfactor} {
+ChebyshevEvolver::ChebyshevEvolver(const arma::sp_mat &hamiltonian, double Nfactor) : hamiltonian{std::move(hamiltonian)}, Nfactor{Nfactor} {
     Expects(Nfactor > 0);
 }
 

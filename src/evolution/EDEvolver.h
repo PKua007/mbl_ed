@@ -11,14 +11,14 @@
 
 class EDEvolver : public Evolver {
 private:
-    Eigensystem eigensystem;
+    const Eigensystem &eigensystem;
     arma::cx_mat evolutionOperator;
     arma::cx_vec currentState;
     double dt{};
     double t{};
 
 public:
-    explicit EDEvolver(Eigensystem eigensystem);
+    explicit EDEvolver(const Eigensystem &eigensystem);
 
     void prepareFor(const arma::cx_vec &initialState, double tMax,
                     std::size_t steps) override;
