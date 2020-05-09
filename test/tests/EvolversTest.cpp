@@ -63,8 +63,7 @@ TEST_CASE("Evolvers test") {
     }
 
     SECTION("ChebyshevEvolver") {
-        // For such a small system default Nfactor is too small and precision is lost
-        ChebyshevEvolver chebyshevEvolver(H, 2);
+        ChebyshevEvolver chebyshevEvolver(H);
         chebyshevEvolver.prepareFor(psi0, 2, 2);
         chebyshevEvolver.evolve();
 
@@ -83,5 +82,24 @@ TEST_CASE("Evolvers test") {
 
             REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - (-expected)) < 1e-8);
         }
+    }
+
+    SECTION("ChebyshevEvolver - long times with rebuilds") {
+        // We compare EDEvolver result ...
+        arma::vec eigval;
+        arma::mat eigvec;
+        REQUIRE(arma::eig_sym(eigval, eigvec, arma::mat(H)));
+        Eigensystem eigensystem(eigval, eigvec);
+        EDEvolver edEvolver(eigensystem);
+        edEvolver.prepareFor(psi0, 100, 2);
+        edEvolver.evolve();
+        // ... with out ChebyshevEvolver
+        ChebyshevEvolver chebyshevEvolver(H, 50);
+        chebyshevEvolver.prepareFor(psi0, 100, 101);
+
+        for (std::size_t i{}; i < 100; i++)
+            chebyshevEvolver.evolve();
+
+        REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - edEvolver.getCurrentState()) < 1e-8);
     }
 }
