@@ -28,6 +28,8 @@
 #include "analyzer/tasks/InverseParticipationRatio.h"
 #include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
 
+#include "evolution/ChebyshevEvolution.h"
+
 #include "utils/Fold.h"
 #include "utils/Utils.h"
 #include "utils/Assertions.h"
@@ -177,36 +179,22 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks, const 
             if (params.N != params.K || params.K % 2 != 0)
                 throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
 
-            double maxTime;
-            std::size_t numSteps, marginSize;
+            CorrelationsTimeEvolutionParameters evolutionParameters;
+            evolutionParameters.fockBase = fockBase;
+            evolutionParameters.numberOfSites = params.K;
+
             std::string vectorsToEvolveStr;
-            taskStream >> maxTime >> numSteps >> marginSize >> vectorsToEvolveStr;
+            taskStream >> evolutionParameters.maxTime >> evolutionParameters.numSteps >> evolutionParameters.marginSize;
+            taskStream >> vectorsToEvolveStr;
             ValidateMsg(taskStream, "Wrong format, use: evolution [max time] [number of steps] [margin size] "
                                     "[vectors to evolve - unif/dw/both]\nunif - 1.1.1.1; dw - 2.0.2.0; both - both ;)");
-            Validate(maxTime > 0);
-            Validate(numSteps >= 2);
-            Validate(marginSize * 2 < params.K);
+            Validate(evolutionParameters.maxTime > 0);
+            Validate(evolutionParameters.numSteps >= 2);
+            Validate(evolutionParameters.marginSize * 2 < params.K);
 
-            FockBase::Vector uniform(params.K, 1);
-            FockBase::Vector densityWave(params.K);
-            for (std::size_t i{}; i < densityWave.size(); i += 2)
-                densityWave[i] = 2;
-            std::vector<FockBase::Vector> vectorsToEvolve;
+            evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveStr);
 
-            if (vectorsToEvolveStr == "unif") {
-                vectorsToEvolve = {uniform};
-            } else if (vectorsToEvolveStr == "dw") {
-                vectorsToEvolve = {densityWave};
-            } else if (vectorsToEvolveStr == "both") {
-                vectorsToEvolve = {uniform, densityWave};
-            } else {
-                throw ValidationException("vectors to evolve must be unif/dw/both"
-                                          "\nunif - 1.1.1.1; dw - 2.0.2.0; both - both ;)");
-            }
-
-            analyzer.addTask(std::make_unique<EDCorrelationsTimeEvolution>(
-                    maxTime, numSteps, params.K, marginSize, fockBase, vectorsToEvolve
-            ));
+            analyzer.addTask(std::make_unique<EDCorrelationsTimeEvolution>(evolutionParameters));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
         }
@@ -222,6 +210,18 @@ void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator> hamilto
     using TheSimulation = Simulation<HamiltonianGenerator, AveragingModel_t<UniformGenerator>>;
     TheSimulation simulation(std::move(hamiltonianGenerator), std::move(rnd), simulationParameters);
     simulation.perform(this->out, analyzer);
+}
+
+template<template <typename> typename AveragingModel_t>
+void Frontend::perform_chebyshev_evolution(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
+                                           std::unique_ptr<RND> rnd, std::size_t from, std::size_t to,
+                                           std::size_t totalSimulations,
+                                           const CorrelationsTimeEvolutionParameters &evolutionParameters)
+{
+    using TheEvolution = ChebyshevEvolution<HamiltonianGenerator, AveragingModel_t<UniformGenerator>>;
+    TheEvolution evolution(std::move(hamiltonianGenerator), std::move(rnd), from, to, totalSimulations,
+                           evolutionParameters);
+    evolution.perform(this->out);
 }
 
 void Frontend::simulate(int argc, char **argv) {
@@ -412,6 +412,110 @@ void Frontend::analyze(int argc, char **argv) {
         io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
     else
         io.storeAnalyzerResults(params, analyzer, paramsToPrint, outputFilename);
+}
+
+void Frontend::chebyshev(int argc, char **argv) {
+    // Parse options
+    cxxopts::Options options(argv[0],
+                             Fold("Chebyshev")
+                                     .width(80));
+
+    std::string inputFilename;
+    std::vector<std::string> overridenParams;
+    double maxTime{};
+    std::size_t numSteps{};
+    std::size_t marginSize{};
+    std::string vectorsToEvolveTag;
+
+    options.add_options()
+            ("h,help", "prints help for this mode")
+            ("i,input", "file with parameters. See input.ini for parameters description",
+             cxxopts::value<std::string>(inputFilename))
+            ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
+                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
+                            "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
+             cxxopts::value<std::vector<std::string>>(overridenParams))
+            ("t,max_time", "max_time", cxxopts::value<double>(maxTime))
+            ("s,num_steps", "num_steps", cxxopts::value<std::size_t>(numSteps))
+            ("m,margin", "margin", cxxopts::value<std::size_t>(marginSize))
+            ("v,vectors", "vectors", cxxopts::value<std::string>(vectorsToEvolveTag));
+
+    auto parsedOptions = options.parse(argc, argv);
+    if (parsedOptions.count("help")) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    // Validate parsed options - input file
+    std::string cmd(argv[0]);
+    if (argc != 1)
+        die("Unexpected positional arguments. See " + cmd + " --help");
+    if (!parsedOptions.count("input"))
+        die("Input file must be specified with option -i [input file name]");
+
+    // Prepare parameters
+    IO io(std::cout);
+    Parameters params = io.loadParameters(inputFilename, overridenParams);
+    params.print(std::cout);
+    std::cout << std::endl;
+
+    // Validate rest of the options
+    if (!parsedOptions.count("max_time"))
+        die("You have to specify max evolution time using -t [max time]");
+    if (maxTime <= 0)
+        die("Max evolution time should be > 0");
+    if (!parsedOptions.count("num_steps"))
+        die("You have to specify number of evolution steps using -s [number of steps]");
+    if (numSteps < 2)
+        die("There should be at least 2 steps (initial state is counted as 1st step)");
+    if (!parsedOptions.count("margin"))
+        die("You have to specify margin size using -m [margin size]");
+    if (marginSize * 2 > params.K - 2)
+        die("Margin is too big - there should be at least 2 sites left.");
+    if (!parsedOptions.count("vectors"))
+        die("You have to specify vectors to evolve using -v [unif/dw/both]");
+    // Validation of vectors is done later
+
+    FockBaseGenerator baseGenerator;
+    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+
+    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, base, *rnd);
+
+    // OpenMP info
+    std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+
+    // Prepare and run evolutions
+    CorrelationsTimeEvolutionParameters evolutionParameters;
+    evolutionParameters.maxTime = maxTime;
+    evolutionParameters.numberOfSites = params.K;
+    evolutionParameters.fockBase = base;
+    evolutionParameters.marginSize = marginSize;
+    evolutionParameters.numSteps = numSteps;
+    evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveTag); // This one also does the validation
+    if (params.averagingModel == "none") {
+        perform_chebyshev_evolution<DummyAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params.from,
+                                                         params.to,
+                                                         params.totalSimulations, evolutionParameters);
+    } else if (params.averagingModel == "uniformPhi0") {
+        perform_chebyshev_evolution<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
+                                                               params.from, params.to,
+                                                               params.totalSimulations, evolutionParameters);
+    } else if (params.averagingModel == "randomPhi0") {
+        perform_chebyshev_evolution<RandomPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
+                                                              params.from, params.to,
+                                                              params.totalSimulations, evolutionParameters);
+    } else if (params.averagingModel == "onsiteDisorder") {
+        perform_chebyshev_evolution<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
+                                                                  params.from, params.to,
+                                                                  params.totalSimulations, evolutionParameters);
+    } else if (params.averagingModel == "cavityConstants") {
+        perform_chebyshev_evolution<CavityConstantsAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
+                                                                   params.from, params.to,
+                                                                   params.totalSimulations, evolutionParameters);
+    } else {
+        die("Unknown averaging model: " + params.averagingModel);
+    }
 }
 
 void Frontend::printGeneralHelp(const std::string &cmd) {

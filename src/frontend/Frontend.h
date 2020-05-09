@@ -6,6 +6,7 @@
 #define MBL_ED_FRONTEND_H
 
 
+#include <evolution/CorrelationsTimeEvolutionParameters.h>
 #include "analyzer/Analyzer.h"
 #include "Parameters.h"
 #include "simulation/SimulationParameters.h"
@@ -27,11 +28,18 @@ private:
     void perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator, std::unique_ptr<RND>,
                              Analyzer &analyzer, const SimulationParameters &simulationParameters);
 
+    template<template <typename> typename AveragingModel_t>
+    void perform_chebyshev_evolution(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
+                                     std::unique_ptr<RND> rnd, std::size_t from, std::size_t to,
+                                     std::size_t totalSimulations,
+                                     const CorrelationsTimeEvolutionParameters &evolutionParameters);
+
 public:
     explicit Frontend(std::ostream &out) : out{out} { }
 
     void simulate(int argc, char **argv);
     void analyze(int argc, char **argv);
+    void chebyshev(int argc, char **argv);
     void printGeneralHelp(const std::string &cmd);
 };
 

@@ -43,17 +43,16 @@ void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
     }
 }
 
-CorrelationsTimeEvolution::CorrelationsTimeEvolution(double maxTime, std::size_t numSteps, std::size_t numberOfSites,
-                                                     std::size_t marginSize, std::shared_ptr<FockBase> fockBase,
-                                                     const std::vector<FockBase::Vector> &vectorsToEvolve)
-        : fockBase{std::move(fockBase)}, marginSize{marginSize}, maxTime{maxTime}, numSteps{numSteps}
+CorrelationsTimeEvolution::CorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters)
+        : fockBase{parameters.fockBase}, marginSize{parameters.marginSize},
+          numberOfSites{parameters.numberOfSites}, maxTime{parameters.maxTime}, numSteps{parameters.numSteps}
 {
     Expects(maxTime > 0);
     Expects(numSteps >= 2);
-    Expects(!vectorsToEvolve.empty());
+    Expects(!parameters.vectorsToEvolve.empty());
 
-    this->vectorEvolutions.reserve(vectorsToEvolve.size());
-    for (const auto &vectorToEvolve : vectorsToEvolve) {
+    this->vectorEvolutions.reserve(parameters.vectorsToEvolve.size());
+    for (const auto &vectorToEvolve : parameters.vectorsToEvolve) {
         VectorEvolution evolution;
         evolution.initialVector = vectorToEvolve;
         for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {

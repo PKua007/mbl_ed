@@ -11,6 +11,7 @@
 #include "OccupationEvolution.h"
 #include "CorrelationsTimeEntry.h"
 #include "Evolver.h"
+#include "CorrelationsTimeEvolutionParameters.h"
 
 class CorrelationsTimeEvolution {
 private:
@@ -41,8 +42,7 @@ public:
      * @details Consult CorrelationTimeEntry for the description of @a marginSize. The evolution will be performed
      * separately for all @a vectorsToEvolve. To know what observables are measures, check CorrelationTimeEntry.
      */
-    CorrelationsTimeEvolution(double maxTime, std::size_t numSteps, std::size_t numberOfSites, std::size_t marginSize,
-                              std::shared_ptr<FockBase> fockBase, const std::vector<FockBase::Vector> &vectorsToEvolve);
+    explicit CorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters);
 
     /**
      * @brief Adds another Eigensystem to the analyzis, to all observables means are enriched by more data.

@@ -21,7 +21,6 @@ void EDCorrelationsTimeEvolution::storeResult(std::ostream &out) const {
     this->correlationsTimeEvolution.storeResult(out);
 }
 
-EDCorrelationsTimeEvolution::EDCorrelationsTimeEvolution(double maxTime, std::size_t numSteps, std::size_t numberOfSites, std::size_t marginSize,
-                                                         std::shared_ptr<FockBase> fockBase, const std::vector<FockBase::Vector> &vectorsToEvolve)
-        : correlationsTimeEvolution(maxTime, numSteps, numberOfSites, marginSize, std::move(fockBase), vectorsToEvolve)
+EDCorrelationsTimeEvolution::EDCorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters)
+        : correlationsTimeEvolution(parameters)
 { }

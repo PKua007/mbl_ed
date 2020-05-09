@@ -8,6 +8,7 @@
 #include "analyzer/BulkAnalyzerTask.h"
 #include "utils/Assertions.h"
 #include "evolution/CorrelationsTimeEvolution.h"
+#include "evolution/CorrelationsTimeEvolutionParameters.h"
 
 /**
  * @brief BulkAnalyzerTask, which performs time evolution of correlations and fluctuations for a few given Fock states.
@@ -24,8 +25,7 @@ public:
      * @details Consult CorrelationTimeEntry for the description of @a marginSize. The evolution will be performed
      * separately for all @a vectorsToEvolve. To know what observables are measures, check CorrelationTimeEntry.
      */
-    EDCorrelationsTimeEvolution(double maxTime, std::size_t numSteps, std::size_t numbefOfSites, std::size_t marginSize,
-                                std::shared_ptr<FockBase> fockBase, const std::vector<FockBase::Vector> &vectorsToEvolve);
+    EDCorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters);
 
     /**
      * @brief Adds another Eigensystem to the analyzis, to all observables means are enriched by more data.

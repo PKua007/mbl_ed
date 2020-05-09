@@ -76,5 +76,5 @@ const arma::cx_vec &ChebyshevEvolver::getCurrentState() const {
 }
 
 double ChebyshevEvolver::getMaxTimeForN() const {
-    return maxTimeForN;
+    return this->maxTimeForN;
 }
