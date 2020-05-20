@@ -9,8 +9,8 @@
 
 using namespace std::complex_literals;
 
-ChebyshevEvolver::ChebyshevEvolver(const arma::sp_mat &hamiltonian, std::size_t N, double Nfactor)
-        : hamiltonian{hamiltonian}, N{N}, Nfactor{Nfactor}
+ChebyshevEvolver::ChebyshevEvolver(const arma::sp_mat &hamiltonian, double Nfactor)
+        : hamiltonian{hamiltonian}, Nfactor{Nfactor}
 {
     Expects(Nfactor > 0);
 }
@@ -22,7 +22,7 @@ void ChebyshevEvolver::rebuildChebychevVectors(const arma::cx_vec &initialState)
     this->chebyshevVectors[0] = initialState;
     this->chebyshevVectors[1] = hamiltonianRescaled * initialState;
     for (std::size_t i = 2; i <= N; i++) {
-        std::cout << "Building order " << i << std::endl;
+        //std::cout << "Building order " << i << std::endl;
         this->chebyshevVectors[i] =
                 2 * hamiltonianRescaled * this->chebyshevVectors[i - 1] - this->chebyshevVectors[i - 2];
     }
@@ -40,55 +40,45 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTi
     this->step = 0;
     this->steps = steps;
 
-//    arma::vec minEigval, maxEigval;
-//    std::cout << "sa... " << std::flush;
-//    arma::wall_clock timer;
-//    timer.tic();
-//    Assert(arma::eigs_sym(minEigval, this->hamiltonian, 20, "sa"));
-//    std::cout << "done (" << timer.toc() << "). la... " << std::flush;
-//    timer.tic();
-//    Assert(arma::eigs_sym(maxEigval, this->hamiltonian, 20, "la"));
-//    std::cout << "done (" << timer.toc() << "). " << std::flush;
-    //double Emin = minEigval.front();
-    //double Emax = maxEigval.back();
-    double Emin = -31.80130421278989;
-    double Emax = 306.9052833537735;
-    //std::cout.precision(16);
-    //std::cout << Emin << " " << Emax << ". " << std::flush;
+    std::size_t numVals = std::min<std::size_t>(20, this->hamiltonian.n_rows - 1);
+
+    arma::vec minEigval, maxEigval;
+    std::cout << "sa... " << std::flush;
+    arma::wall_clock timer;
+    timer.tic();
+    Assert(arma::eigs_sym(minEigval, this->hamiltonian, numVals, "sa"));
+    std::cout << "done (" << timer.toc() << " s). la... " << std::flush;
+    timer.tic();
+    Assert(arma::eigs_sym(maxEigval, this->hamiltonian, numVals, "la"));
+    std::cout << "done (" << timer.toc() << " s). " << std::flush;
+    double Emin = minEigval.front();
+    double Emax = maxEigval.back();
+//    double Emin = -31.80130421278989;
+//    double Emax = 306.9052833537735;
     this->a = (Emax - Emin) / 2;
     this->b = (Emax + Emin) / 2;
 
-    this->maxTimeForN = this->N / (this->Nfactor * this->a * 2);
-    std::cout << "maxTime: " << this->maxTimeForN << std::endl;
-    Expects(this->maxTimeForN > this->dt);
-
-    this->rebuildChebychevVectors(initialState);
+    this->N = static_cast<size_t>(this->Nfactor * 2 * this->a * this->dt);
+    Assert(this->N >= 1);
+    std::cout << this->N << " orders needed. " << std::flush;
 }
 
 void ChebyshevEvolver::evolve() {
     // Actually this->step == this->steps - 1 here will give 1 step too much, but do not throw for convenience of use
     Assert(this->step < this->steps);
     this->step++;
-
-    if (this->t + this->dt > this->maxTimeForN) {
-        this->t = 0;
-        this->rebuildChebychevVectors(this->currentState);
-    }
-
     this->t += this->dt;
+
+    this->rebuildChebychevVectors(this->currentState);
 
     this->currentState.fill(arma::fill::zeros);
     for (std::size_t k = 1; k <= this->N; k++)
-        this->currentState += std::pow(-1i, k) * std::cyl_bessel_j(k, this->a * this->t) * this->chebyshevVectors[k];
+        this->currentState += std::pow(-1i, k) * std::cyl_bessel_j(k, this->a * this->dt) * this->chebyshevVectors[k];
     this->currentState *= 2;
-    this->currentState += this->chebyshevVectors[0] * std::cyl_bessel_j(0, this->a * this->t);
-    this->currentState *= std::exp(-1i * this->b * this->t);
+    this->currentState += this->chebyshevVectors[0] * std::cyl_bessel_j(0, this->a * this->dt);
+    this->currentState *= std::exp(-1i * this->b * this->dt);
 }
 
 const arma::cx_vec &ChebyshevEvolver::getCurrentState() const {
     return this->currentState;
-}
-
-double ChebyshevEvolver::getMaxTimeForN() const {
-    return this->maxTimeForN;
 }
