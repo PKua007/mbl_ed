@@ -26,7 +26,7 @@ private:
     void rebuildChebychevVectors(const arma::cx_vec &initialState);
 
 public:
-    explicit ChebyshevEvolver(const arma::sp_mat &hamiltonian, std::size_t N = 1000, double Nfactor = 1.5);
+    explicit ChebyshevEvolver(const arma::sp_mat &hamiltonian, std::size_t N = 100, double Nfactor = 1);
 
     void prepareFor(const arma::cx_vec &initialState, double maxTime,
                     std::size_t steps) override;

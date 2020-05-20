@@ -21,8 +21,11 @@ void ChebyshevEvolver::rebuildChebychevVectors(const arma::cx_vec &initialState)
     this->chebyshevVectors.resize(N + 1);
     this->chebyshevVectors[0] = initialState;
     this->chebyshevVectors[1] = hamiltonianRescaled * initialState;
-    for (std::size_t i = 2; i <= N; i++)
-        this->chebyshevVectors[i] = 2 * hamiltonianRescaled * this->chebyshevVectors[i - 1] - this->chebyshevVectors[i - 2];
+    for (std::size_t i = 2; i <= N; i++) {
+        std::cout << "Building order " << i << std::endl;
+        this->chebyshevVectors[i] =
+                2 * hamiltonianRescaled * this->chebyshevVectors[i - 1] - this->chebyshevVectors[i - 2];
+    }
 }
 
 void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTime,
@@ -37,15 +40,26 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTi
     this->step = 0;
     this->steps = steps;
 
-    arma::vec minEigval, maxEigval;
-    Assert(arma::eigs_sym(minEigval, this->hamiltonian, 5, "sa"));
-    Assert(arma::eigs_sym(maxEigval, this->hamiltonian, 5, "la"));
-    double Emin = minEigval.front();
-    double Emax = maxEigval.back();
+//    arma::vec minEigval, maxEigval;
+//    std::cout << "sa... " << std::flush;
+//    arma::wall_clock timer;
+//    timer.tic();
+//    Assert(arma::eigs_sym(minEigval, this->hamiltonian, 20, "sa"));
+//    std::cout << "done (" << timer.toc() << "). la... " << std::flush;
+//    timer.tic();
+//    Assert(arma::eigs_sym(maxEigval, this->hamiltonian, 20, "la"));
+//    std::cout << "done (" << timer.toc() << "). " << std::flush;
+    //double Emin = minEigval.front();
+    //double Emax = maxEigval.back();
+    double Emin = -31.80130421278989;
+    double Emax = 306.9052833537735;
+    //std::cout.precision(16);
+    //std::cout << Emin << " " << Emax << ". " << std::flush;
     this->a = (Emax - Emin) / 2;
     this->b = (Emax + Emin) / 2;
 
     this->maxTimeForN = this->N / (this->Nfactor * this->a * 2);
+    std::cout << "maxTime: " << this->maxTimeForN << std::endl;
     Expects(this->maxTimeForN > this->dt);
 
     this->rebuildChebychevVectors(initialState);
