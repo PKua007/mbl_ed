@@ -35,8 +35,8 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(doubl
  */
 std::vector<OccupationEvolution::Occupations>
 OccupationEvolution::doPerformEvolution(std::size_t numSteps, Evolver &evolver,
-                                        const std::vector<arma::sp_vec> &numOfParticlesObservables,
-                                        const SymmetricMatrix<arma::sp_vec> &numOfParticlesSquaredObservables,
+                                        const std::vector<std::valarray<double>> &numOfParticlesObservables,
+                                        const SymmetricMatrix<std::valarray<double>> &numOfParticlesSquaredObservables,
                                         std::ostream &logger)
 {
     arma::wall_clock timer;
@@ -69,9 +69,9 @@ OccupationEvolution::doPerformEvolution(std::size_t numSteps, Evolver &evolver,
 /**
  * @brief Prepare all pairs of n_i*n_j observables in the diagonal form and return SymmetricMatrix of them.
  */
-SymmetricMatrix<arma::sp_vec> OccupationEvolution::prepareNumOfParticlesSquaredObservables(const FockBase &fockBase) {
+SymmetricMatrix<std::valarray<double>> OccupationEvolution::prepareNumOfParticlesSquaredObservables(const FockBase &fockBase) {
     std::size_t numberOfSites = fockBase.getNumberOfSites();
-    SymmetricMatrix<arma::sp_vec> result(numberOfSites);
+    SymmetricMatrix<std::valarray<double>> result(numberOfSites);
     for (std::size_t site1Idx{}; site1Idx < numberOfSites; site1Idx++)
         for (std::size_t site2Idx = site1Idx; site2Idx < numberOfSites; site2Idx++)
             result(site1Idx, site2Idx) = numOfParticlesSquaredObservable(fockBase, site1Idx, site2Idx);
@@ -81,9 +81,9 @@ SymmetricMatrix<arma::sp_vec> OccupationEvolution::prepareNumOfParticlesSquaredO
 /**
  * @brief Prepare all n_i observables in the diagonal form and return vector of them.
  */
-std::vector<arma::sp_vec> OccupationEvolution::prepareNumOfParticlesObservables(const FockBase &fockBase) {
+std::vector<std::valarray<double>> OccupationEvolution::prepareNumOfParticlesObservables(const FockBase &fockBase) {
     std::size_t numberOfSites = fockBase.getNumberOfSites();
-    std::vector<arma::sp_vec> result(numberOfSites);
+    std::vector<std::valarray<double>> result(numberOfSites);
     for (std::size_t siteIdx{}; siteIdx < numberOfSites; siteIdx++)
         result[siteIdx] = numOfParticlesObservable(fockBase, siteIdx);
     return result;
@@ -102,17 +102,21 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::prepareOccupa
     return result;
 }
 
-double OccupationEvolution::calculateObservableExpectedValue(const arma::sp_vec &observable, const arma::cx_vec &state)
+double OccupationEvolution::calculateObservableExpectedValue(const std::valarray<double> &observable, const arma::cx_vec &state)
 {
-    arma::cx_double result = arma::as_scalar(state.t() * arma::diagmat(observable) * state);
-    return result.real();
+    std::valarray<double> stateSq(state.size());
+
+    for (std::size_t i = 0; i < state.size(); i++)
+        stateSq[i] = state[i].real()*state[i].real() + state[i].imag()*state[i].imag();
+
+    return (stateSq * observable).sum();
 }
 
 /**
  * @param Return the diagonal of n_siteIdx observable in the diagonal basis.
  */
-arma::sp_vec OccupationEvolution::numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx) {
-    arma::sp_vec result(fockBase.size());
+std::valarray<double> OccupationEvolution::numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx) {
+    std::valarray<double> result(fockBase.size());
     for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
         result[fockIdx] = fockBase[fockIdx][siteIdx];
     return result;
@@ -121,10 +125,10 @@ arma::sp_vec OccupationEvolution::numOfParticlesObservable(const FockBase &fockB
 /**
  * @param Return the diagonal of n_site1Idx * n_site2Idx observable in the diagonal basis.
  */
-arma::sp_vec OccupationEvolution::numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
+std::valarray<double> OccupationEvolution::numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
                                                                   std::size_t site2Idx)
 {
-    arma::sp_vec result(fockBase.size());
+    std::valarray<double> result(fockBase.size());
     for (std::size_t fockIdx{}; fockIdx < fockBase.size(); fockIdx++)
         result[fockIdx] = fockBase[fockIdx][site1Idx] * fockBase[fockIdx][site2Idx];
     return result;

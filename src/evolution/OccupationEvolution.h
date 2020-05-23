@@ -5,6 +5,8 @@
 #ifndef MBL_ED_OCCUPATIONEVOLUTION_H
 #define MBL_ED_OCCUPATIONEVOLUTION_H
 
+#include <valarray>
+
 #include "SymmetricMatrix.h"
 #include "simulation/FockBase.h"
 #include "Evolver.h"
@@ -38,24 +40,24 @@ public:
     };
 
 private:
-    [[nodiscard]] static arma::sp_vec numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx);
+    [[nodiscard]] static std::valarray<double> numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx);
 
-    [[nodiscard]] static arma::sp_vec numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
+    [[nodiscard]] static std::valarray<double> numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
                                                                       std::size_t site2Idx);
 
-    [[nodiscard]] static double calculateObservableExpectedValue(const arma::sp_vec &observable,
+    [[nodiscard]] static double calculateObservableExpectedValue(const std::valarray<double> &observable,
                                                                  const arma::cx_vec &state);
 
     [[nodiscard]] static std::vector<Occupations> prepareOccupationVector(size_t numSteps, size_t numberOfSites);
-    [[nodiscard]] static std::vector<arma::sp_vec> prepareNumOfParticlesObservables(const FockBase &fockBase);
+    [[nodiscard]] static std::vector<std::valarray<double>> prepareNumOfParticlesObservables(const FockBase &fockBase);
 
-    [[nodiscard]] static SymmetricMatrix<arma::sp_vec>
+    [[nodiscard]] static SymmetricMatrix<std::valarray<double>>
     prepareNumOfParticlesSquaredObservables(const FockBase &fockBase);
 
     [[nodiscard]] static std::vector<Occupations>
     doPerformEvolution(std::size_t numSteps, Evolver &evolver,
-                       const std::vector<arma::sp_vec> &numOfParticlesObservables,
-                       const SymmetricMatrix<arma::sp_vec> &numOfParticlesSquaredObservables,
+                       const std::vector<std::valarray<double>> &numOfParticlesObservables,
+                       const SymmetricMatrix<std::valarray<double>> &numOfParticlesSquaredObservables,
                        std::ostream &logger);
 
 public:
