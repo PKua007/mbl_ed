@@ -40,25 +40,23 @@ public:
     };
 
 private:
-    [[nodiscard]] static std::valarray<double> numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx);
+    [[nodiscard]] static arma::vec numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx);
 
-    [[nodiscard]] static std::valarray<double> numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
-                                                                      std::size_t site2Idx);
+    [[nodiscard]] static arma::vec numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
+                                                                   std::size_t site2Idx);
 
-    [[nodiscard]] static double calculateObservableExpectedValue(const std::valarray<double> &observable,
+    [[nodiscard]] static double calculateObservableExpectedValue(const arma::vec &observable,
                                                                  const arma::cx_vec &state);
 
     [[nodiscard]] static std::vector<Occupations> prepareOccupationVector(size_t numSteps, size_t numberOfSites);
-    [[nodiscard]] static std::vector<std::valarray<double>> prepareNumOfParticlesObservables(const FockBase &fockBase);
+    [[nodiscard]] static std::vector<arma::vec> prepareNumOfParticlesObservables(const FockBase &fockBase);
 
-    [[nodiscard]] static SymmetricMatrix<std::valarray<double>>
+    [[nodiscard]] static SymmetricMatrix<arma::vec>
     prepareNumOfParticlesSquaredObservables(const FockBase &fockBase);
 
     [[nodiscard]] static std::vector<Occupations>
-    doPerformEvolution(std::size_t numSteps, Evolver &evolver,
-                       const std::vector<std::valarray<double>> &numOfParticlesObservables,
-                       const SymmetricMatrix<std::valarray<double>> &numOfParticlesSquaredObservables,
-                       std::ostream &logger);
+    doPerformEvolution(std::size_t numSteps, Evolver &evolver, const std::vector<arma::vec> &numOfParticlesObservables,
+                       const SymmetricMatrix<arma::vec> &numOfParticlesSquaredObservables, std::ostream &logger);
 
 public:
     /**
@@ -70,7 +68,8 @@ public:
      */
     [[nodiscard]] static std::vector<Occupations> perform(double maxTime, std::size_t numSteps,
                                                           std::size_t initialFockStateIdx,
-                                                          const FockBase &fockBase, Evolver &evolver, std::ostream &logger);
+                                                          const FockBase &fockBase, Evolver &evolver,
+                                                          std::ostream &logger);
 };
 
 
