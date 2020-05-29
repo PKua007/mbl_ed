@@ -20,15 +20,16 @@ private:
     std::size_t from{};
     std::size_t to{};
     std::size_t totalSimulations{};
+    std::string fileSignature{};
 
 public:
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND> rnd,
                        std::unique_ptr<FileOstreamProvider> ostreamProvider, std::size_t from,
                        std::size_t to, std::size_t totalSimulations,
-                       const CorrelationsTimeEvolutionParameters &parameters)
+                       const CorrelationsTimeEvolutionParameters &parameters, const std::string &fileSignature)
             : hamiltonianGenerator{std::move(hamiltonianGenerator)}, rnd{std::move(rnd)},
               ostreamProvider{std::move(ostreamProvider)}, correlationsTimeEvolution(parameters),
-              from{from}, to{to}, totalSimulations{totalSimulations}
+              from{from}, to{to}, totalSimulations{totalSimulations}, fileSignature{fileSignature}
     {
         Expects(this->totalSimulations > 0);
         Expects(this->from < this->to);
@@ -37,9 +38,9 @@ public:
 
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND> rnd,
                        std::size_t from, std::size_t to, std::size_t totalSimulations,
-                       const CorrelationsTimeEvolutionParameters &parameters)
+                       const CorrelationsTimeEvolutionParameters &parameters, const std::string &fileSignature)
             : ChebyshevEvolution(std::move(hamiltonianGenerator), std::move(rnd), std::make_unique<FileOstreamProvider>(),
-                                 from, to, totalSimulations, parameters)
+                                 from, to, totalSimulations, parameters, fileSignature)
     { }
 
     void perform(std::ostream &logger) {
@@ -60,8 +61,10 @@ public:
             this->correlationsTimeEvolution.addEvolution(evolver, logger);
         }
 
-        auto file = this->ostreamProvider->openFile("test.txt");
+        std::string filename = this->fileSignature + "_evolution.txt";
+        auto file = this->ostreamProvider->openFile(filename);
         this->correlationsTimeEvolution.storeResult(*file);
+        logger << "[ChebyshevEvolution::perform] Observables stores to " << filename << std::endl;
     }
 };
 

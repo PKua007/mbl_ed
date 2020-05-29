@@ -214,13 +214,12 @@ void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator> hamilto
 
 template<template <typename> typename AveragingModel_t>
 void Frontend::perform_chebyshev_evolution(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
-                                           std::unique_ptr<RND> rnd, std::size_t from, std::size_t to,
-                                           std::size_t totalSimulations,
+                                           std::unique_ptr<RND> rnd, const Parameters &params,
                                            const CorrelationsTimeEvolutionParameters &evolutionParameters)
 {
     using TheEvolution = ChebyshevEvolution<HamiltonianGenerator, AveragingModel_t<UniformGenerator>>;
-    TheEvolution evolution(std::move(hamiltonianGenerator), std::move(rnd), from, to, totalSimulations,
-                           evolutionParameters);
+    TheEvolution evolution(std::move(hamiltonianGenerator), std::move(rnd), params.from, params.to,
+                           params.totalSimulations, evolutionParameters, params.getOutputFileSignatureWithRange());
     evolution.perform(this->out);
 }
 
@@ -494,25 +493,20 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParameters.numSteps = numSteps;
     evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveTag); // This one also does the validation
     if (params.averagingModel == "none") {
-        perform_chebyshev_evolution<DummyAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params.from,
-                                                         params.to,
-                                                         params.totalSimulations, evolutionParameters);
+        perform_chebyshev_evolution<DummyAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params,
+                                                         evolutionParameters);
     } else if (params.averagingModel == "uniformPhi0") {
-        perform_chebyshev_evolution<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
-                                                               params.from, params.to,
-                                                               params.totalSimulations, evolutionParameters);
+        perform_chebyshev_evolution<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params,
+                                                               evolutionParameters);
     } else if (params.averagingModel == "randomPhi0") {
-        perform_chebyshev_evolution<RandomPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
-                                                              params.from, params.to,
-                                                              params.totalSimulations, evolutionParameters);
+        perform_chebyshev_evolution<RandomPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params,
+                                                              evolutionParameters);
     } else if (params.averagingModel == "onsiteDisorder") {
         perform_chebyshev_evolution<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
-                                                                  params.from, params.to,
-                                                                  params.totalSimulations, evolutionParameters);
+                                                                  params, evolutionParameters);
     } else if (params.averagingModel == "cavityConstants") {
         perform_chebyshev_evolution<CavityConstantsAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
-                                                                   params.from, params.to,
-                                                                   params.totalSimulations, evolutionParameters);
+                                                                   params, evolutionParameters);
     } else {
         die("Unknown averaging model: " + params.averagingModel);
     }

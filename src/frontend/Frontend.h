@@ -30,8 +30,7 @@ private:
 
     template<template <typename> typename AveragingModel_t>
     void perform_chebyshev_evolution(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
-                                     std::unique_ptr<RND> rnd, std::size_t from, std::size_t to,
-                                     std::size_t totalSimulations,
+                                     std::unique_ptr<RND> rnd, const Parameters &params,
                                      const CorrelationsTimeEvolutionParameters &evolutionParameters);
 
 public:
