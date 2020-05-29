@@ -45,7 +45,7 @@ TEST_CASE("Evolvers test") {
         edEvolver.prepareFor(psi0, 2, 2);
         edEvolver.evolve();
 
-        REQUIRE(arma::norm(edEvolver.getCurrentState() - expected) < 1e-12);
+        REQUIRE(arma::norm(edEvolver.getCurrentState() - expected) < 1e-11);
 
         SECTION("throw on to many evolutions") {
             edEvolver.evolve(); // 1 more step is permitted for convenience
@@ -58,7 +58,7 @@ TEST_CASE("Evolvers test") {
             edEvolver.prepareFor(-psi0, 4, 3);
             edEvolver.evolve();
 
-            REQUIRE(arma::norm(edEvolver.getCurrentState() - (-expected)) < 1e-12);
+            REQUIRE(arma::norm(edEvolver.getCurrentState() - (-expected)) < 1e-11);
         }
     }
 
@@ -67,7 +67,7 @@ TEST_CASE("Evolvers test") {
         chebyshevEvolver.prepareFor(psi0, 2, 2);
         chebyshevEvolver.evolve();
 
-        REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - expected) < 1e-12);
+        REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - expected) < 1e-11);
 
         SECTION("throw on to many evolutions") {
             chebyshevEvolver.evolve(); // 1 more step is permitted for convenience
@@ -80,7 +80,7 @@ TEST_CASE("Evolvers test") {
             chebyshevEvolver.prepareFor(-psi0, 4, 3);
             chebyshevEvolver.evolve();
 
-            REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - (-expected)) < 1e-12);
+            REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - (-expected)) < 1e-11);
         }
     }
 
@@ -100,6 +100,6 @@ TEST_CASE("Evolvers test") {
         for (std::size_t i{}; i < 100; i++)
             chebyshevEvolver.evolve();
 
-        REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - edEvolver.getCurrentState()) < 1e-12);
+        REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - edEvolver.getCurrentState()) < 1e-8);
     }
 }

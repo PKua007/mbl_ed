@@ -22,7 +22,7 @@ private:
     std::size_t step{};
     std::size_t steps{};
 
-    void rebuildChebychevVectors(const arma::cx_vec &initialState);
+    arma::cx_vec evolveVector(const arma::cx_vec &initialState);
 
 public:
     explicit ChebyshevEvolver(const arma::sp_mat &hamiltonian, double Nfactor = 1);

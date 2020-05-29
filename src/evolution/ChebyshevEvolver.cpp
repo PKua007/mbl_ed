@@ -15,17 +15,29 @@ ChebyshevEvolver::ChebyshevEvolver(const arma::sp_mat &hamiltonian, double Nfact
     Expects(Nfactor > 0);
 }
 
-void ChebyshevEvolver::rebuildChebychevVectors(const arma::cx_vec &initialState) {
+arma::cx_vec ChebyshevEvolver::evolveVector(const arma::cx_vec &initialState) {
     arma::sp_mat hamiltonianRescaled = (this->hamiltonian - arma::speye(arma::size(this->hamiltonian)) * this->b) / this->a;
 
-    this->chebyshevVectors.resize(N + 1);
-    this->chebyshevVectors[0] = initialState;
-    this->chebyshevVectors[1] = hamiltonianRescaled * initialState;
+    //this->chebyshevVectors.resize(N + 1);
+    arma::cx_mat prevprev = initialState;
+    arma::cx_mat prev = hamiltonianRescaled * initialState;
+    arma::cx_mat current;
+    arma::cx_vec result(arma::size(initialState), arma::fill::zeros);
+
+    result += initialState * std::cyl_bessel_j(0, this->a * this->dt);
+    result += 2. * -1i * std::cyl_bessel_j(1, this->a * this->dt) * prev;
+
     for (std::size_t i = 2; i <= N; i++) {
         //std::cout << "Building order " << i << std::endl;
-        this->chebyshevVectors[i] =
-                2 * hamiltonianRescaled * this->chebyshevVectors[i - 1] - this->chebyshevVectors[i - 2];
+        current = 2 * hamiltonianRescaled * prev - prevprev;
+        result += 2. * std::pow(-1i, i) * std::cyl_bessel_j(i, this->a * this->dt) * current;
+        prevprev = prev;
+        prev = current;
     }
+
+    result *= std::exp(-1i * this->b * this->dt);
+
+    return result;
 }
 
 void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTime,
@@ -43,14 +55,14 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTi
     std::size_t numVals = std::min<std::size_t>(20, this->hamiltonian.n_rows - 1);
 
     arma::vec minEigval, maxEigval;
-    std::cout << "sa... " << std::flush;
+    std::cout << "Calculating Emin... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     Assert(arma::eigs_sym(minEigval, this->hamiltonian, numVals, "sa"));
-    std::cout << "done (" << timer.toc() << " s). la... " << std::flush;
+    std::cout << "done (" << timer.toc() << " s). Emax... " << std::flush;
     timer.tic();
     Assert(arma::eigs_sym(maxEigval, this->hamiltonian, numVals, "la"));
-    std::cout << "done (" << timer.toc() << " s). " << std::flush;
+    std::cout << "done (" << timer.toc() << " s). " << std::endl;
     double Emin = minEigval.front();
     double Emax = maxEigval.back();
 //    double Emin = -31.80130421278989;
@@ -58,9 +70,40 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTi
     this->a = (Emax - Emin) / 2;
     this->b = (Emax + Emin) / 2;
 
-    this->N = static_cast<size_t>(this->Nfactor * 2 * this->a * this->dt);
-    Assert(this->N >= 1);
-    std::cout << this->N << " orders needed. " << std::flush;
+//    this->N = static_cast<size_t>(this->Nfactor * 2 * this->a * this->dt);
+//    Assert(this->N >= 1);
+
+    this->N = 1;
+    arma::cx_vec evolved;
+    double normDiff{};
+
+    std::cout << "Optimizing Chebyshev expansion order:" << std::endl;
+    do {
+        this->N *= 2;
+        std::cout << "Trying " << this->N << "... " << std::flush;
+        evolved = this->evolveVector(initialState);
+        normDiff = std::abs(1 - arma::norm(evolved));
+        std::cout << "Norm difference: " << normDiff << std::endl;
+    } while (normDiff > 1e-12);
+
+    std::size_t minN = this->N / 2;
+    std::size_t maxN = this->N;
+
+    do {
+        std::size_t midN = (minN + maxN) / 2;
+        this->N = midN;
+        std::cout << "Trying " << this->N << "... " << std::flush;
+        evolved = evolveVector(initialState);
+        normDiff = std::abs(1 - arma::norm(evolved));
+        std::cout << "Norm difference: " << normDiff << std::endl;
+
+        if (normDiff <= 1e-12)
+            maxN = midN;
+        else
+            minN = midN;
+    } while (maxN - minN > 1);
+
+    std::cout << "Optimal orders needed: " << this->N << std::endl;
 }
 
 void ChebyshevEvolver::evolve() {
@@ -69,14 +112,7 @@ void ChebyshevEvolver::evolve() {
     this->step++;
     this->t += this->dt;
 
-    this->rebuildChebychevVectors(this->currentState);
-
-    this->currentState.fill(arma::fill::zeros);
-    for (std::size_t k = 1; k <= this->N; k++)
-        this->currentState += std::pow(-1i, k) * std::cyl_bessel_j(k, this->a * this->dt) * this->chebyshevVectors[k];
-    this->currentState *= 2;
-    this->currentState += this->chebyshevVectors[0] * std::cyl_bessel_j(0, this->a * this->dt);
-    this->currentState *= std::exp(-1i * this->b * this->dt);
+    this->currentState = this->evolveVector(this->currentState);
 }
 
 const arma::cx_vec &ChebyshevEvolver::getCurrentState() const {
