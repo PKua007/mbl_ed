@@ -13,10 +13,17 @@
 #include "Evolver.h"
 #include "CorrelationsTimeEvolutionParameters.h"
 
+/**
+ * @brief The class supervising the whole process of performing the evolution and calculating the observables for
+ * some discrete time steps.
+ * @details The subsequents evolutions are performed when addEvolution() is invoked and the overall results are
+ * averaged. The evolution is perform for one or more initial states. For details on observables measured check
+ * CorrelationsTimeEntry.
+ */
 class CorrelationsTimeEvolution {
 private:
     /**
-     * @brief Evolution of observables for the specifit initial Fock state.
+     * @brief Evolution of observables for the specific initial Fock state.
      */
     struct VectorEvolution {
         FockBase::Vector initialVector;
@@ -37,20 +44,17 @@ private:
 
 public:
     /**
-     * @brief Creates the class, which will perform evolution from 0 to @a maxTime time, dividing it into @a numSteps
-     * steps.
-     * @details Consult CorrelationTimeEntry for the description of @a marginSize. The evolution will be performed
-     * separately for all @a vectorsToEvolve. To know what observables are measures, check CorrelationTimeEntry.
+     * @brief Creates the class, which will perform evolution parametrised by @a parameters
+     * @details The evolution will be performed separately for all @a vectorsToEvolve. To know what observables are
+     * measured, check CorrelationTimeEntry.
      */
     explicit CorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters);
 
     /**
-     * @brief Adds another Eigensystem to the analyzis, to all observables means are enriched by more data.
-     * @details The number of sites and number of particles are determined in the first invocation and must be kept the
-     * same in next ones.
+     * @brief Adds another evolution to the analyzis.
+     * @details The actual evolution is done by the given @a evolver. New data are averaged will the old ones.
      */
     void addEvolution(Evolver &evolver, std::ostream &logger);
-
 
     /**
      * @brief Stores the result to @a out in the form of a table with a header.
@@ -59,7 +63,8 @@ public:
      * CorrelationsTimeEntry::getHeader and the values are for subsequent times and are constructed by
      * CorrelationsTimeEntry::toString. Moreover, to the first column name, in header, namely time, a representation
      * of the initial vector is prepended in the form of site1occupaiton.site2occupaiton.[...].lastSiteOccupation_.
-     * <p> To sum up, for 2 vectors, {1, 1, 1, 1} and {2, 0, 2, 0}, for @a maxTime = 1 and @a numSteps = 3, it will
+     * <p> To sum up, for 2 vectors, {1, 1, 1, 1} and {2, 0, 2, 0}, for @a maxTime = 1 and @a numSteps = 3
+     * (see CorrelationsTimeEvolutionParameters), it will
      * look like:
      * <pre>
      * 1.1.1.1_t [observables] 2.0.2.0_t [observables]

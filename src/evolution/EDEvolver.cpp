@@ -7,19 +7,17 @@
 #include "EDEvolver.h"
 #include "utils/Assertions.h"
 
-using namespace std::complex_literals;
-
-void EDEvolver::prepareFor(const arma::cx_vec &initialState, double tMax,
-                           std::size_t steps) {
-    Expects(tMax > 0);
-    Expects(steps >= 2);
+void EDEvolver::prepareFor(const arma::cx_vec &initialState, double maxTime, std::size_t numSteps_) {
+    Expects(maxTime > 0);
+    Expects(numSteps_ >= 2);
     Expects(initialState.size() == this->eigensystem.size());
 
-    this->dt = tMax / static_cast<double>(steps - 1);
+    this->dt = maxTime / static_cast<double>(numSteps_ - 1);
     this->currentState = initialState;
-    this->step = 0;
-    this->steps = steps;
+    this->currentStep = 0;
+    this->numSteps = numSteps_;
 
+    using namespace std::complex_literals;
     arma::mat eigvec = this->eigensystem.getEigenstates();
     arma::vec eigval = this->eigensystem.getEigenenergies();
     arma::cx_vec diagonalEvolution = arma::exp(-1i * this->dt * eigval);
@@ -27,9 +25,10 @@ void EDEvolver::prepareFor(const arma::cx_vec &initialState, double tMax,
 }
 
 void EDEvolver::evolve() {
-    // Actually this->step == this->steps - 1 here will give 1 step too much, but do not throw for convenience of use
-    Assert(this->step < this->steps);
-    this->step++;
+    // Actually this->currentStep == this->steps - 1 here will give 1 step too much, but do not throw for
+    // convenience of use
+    Assert(this->currentStep < this->numSteps);
+    this->currentStep++;
     this->currentState = this->evolutionOperator * this->currentState;
 }
 

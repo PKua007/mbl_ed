@@ -14,7 +14,7 @@
 /**
  * @brief The class performing time evolution of @f$ \left< \hat{n}_i \right> @f$ and
  * @f$ \left< \hat{n}_i \hat{n}_j \right> @f$ expected values of observables, where @f$ \hat{n}_i @f$ is onsite number
- * of parcitles observable.
+ * of particles observable.
  */
 class OccupationEvolution {
 public:
@@ -41,18 +41,13 @@ public:
 
 private:
     [[nodiscard]] static arma::vec numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx);
-
     [[nodiscard]] static arma::vec numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
                                                                    std::size_t site2Idx);
-
     [[nodiscard]] static double calculateObservableExpectedValue(const arma::vec &observable,
                                                                  const arma::cx_vec &state);
-
     [[nodiscard]] static std::vector<Occupations> prepareOccupationVector(size_t numSteps, size_t numberOfSites);
     [[nodiscard]] static std::vector<arma::vec> prepareNumOfParticlesObservables(const FockBase &fockBase);
-
-    [[nodiscard]] static SymmetricMatrix<arma::vec>
-    prepareNumOfParticlesSquaredObservables(const FockBase &fockBase);
+    [[nodiscard]] static SymmetricMatrix<arma::vec> prepareNumOfParticlesSquaredObservables(const FockBase &fockBase);
 
     [[nodiscard]] static std::vector<Occupations>
     doPerformEvolution(std::size_t numSteps, Evolver &evolver, const std::vector<arma::vec> &numOfParticlesObservables,
@@ -62,7 +57,7 @@ public:
     /**
      * @brief Perform the evolution of the fock state of index @a initialFockStateIdx, from 0 to @a maxTime, dividing
      * it into @a numSteps steps.
-     * @details The evolution operator is created from eigenenergies and eigenstates from @a eigensystem.
+     * @details The actual evolution is performed by a given Evolver.
      * @return The vector of Occupations, where elements corresponds to expected values of observables in subsequent
      * time steps.
      */

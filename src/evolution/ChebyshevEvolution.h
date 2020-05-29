@@ -24,7 +24,8 @@ private:
 public:
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND> rnd,
                        std::unique_ptr<FileOstreamProvider> ostreamProvider, std::size_t from,
-                       std::size_t to, std::size_t totalSimulations, const CorrelationsTimeEvolutionParameters &parameters)
+                       std::size_t to, std::size_t totalSimulations,
+                       const CorrelationsTimeEvolutionParameters &parameters)
             : hamiltonianGenerator{std::move(hamiltonianGenerator)}, rnd{std::move(rnd)},
               ostreamProvider{std::move(ostreamProvider)}, correlationsTimeEvolution(parameters),
               from{from}, to{to}, totalSimulations{totalSimulations}
@@ -35,7 +36,8 @@ public:
     }
 
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND> rnd,
-                       std::size_t from, std::size_t to, std::size_t totalSimulations, const CorrelationsTimeEvolutionParameters &parameters)
+                       std::size_t from, std::size_t to, std::size_t totalSimulations,
+                       const CorrelationsTimeEvolutionParameters &parameters)
             : ChebyshevEvolution(std::move(hamiltonianGenerator), std::move(rnd), std::make_unique<FileOstreamProvider>(),
                                  from, to, totalSimulations, parameters)
     { }

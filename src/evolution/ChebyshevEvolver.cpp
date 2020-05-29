@@ -114,7 +114,8 @@ void ChebyshevEvolver::findSpectrumRange() {
 }
 
 void ChebyshevEvolver::evolve() {
-    // Actually this->step == this->steps - 1 here will give 1 step too much, but do not throw for convenience of use
+    // Actually this->currentStep == this->steps - 1 here will give 1 step too much, but do not throw for convenience of
+    // use
     Assert(this->currentStep < this->maxSteps);
     this->currentStep++;
     this->t += this->dt;

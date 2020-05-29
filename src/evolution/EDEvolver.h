@@ -9,6 +9,9 @@
 
 #include "simulation/Eigensystem.h"
 
+/**
+ * @brief Evolver using exact diagonalization technique.
+ */
 class EDEvolver : public Evolver {
 private:
     const Eigensystem &eigensystem;
@@ -16,14 +19,16 @@ private:
     arma::cx_vec currentState;
     double dt{};
     double t{};
-    std::size_t step{};
-    std::size_t steps{};
+    std::size_t currentStep{};
+    std::size_t numSteps{};
 
 public:
+    /**
+     * @brief Constructs the evolver using the given @a eigensystem.
+     */
     explicit EDEvolver(const Eigensystem &eigensystem);
 
-    void prepareFor(const arma::cx_vec &initialState, double tMax,
-                    std::size_t steps) override;
+    void prepareFor(const arma::cx_vec &initialState, double maxTime, std::size_t numSteps_) override;
     void evolve() override;
     [[nodiscard]] const arma::cx_vec &getCurrentState() const override;
 };

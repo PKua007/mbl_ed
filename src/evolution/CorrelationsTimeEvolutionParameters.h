@@ -11,14 +11,37 @@
 #include "simulation/FockBase.h"
 #include "utils/Assertions.h"
 
+/**
+ * @brief Parameters of time evolution.
+ */
 struct CorrelationsTimeEvolutionParameters {
+    /**
+     * @brief Maximal time to evolve to.
+     */
     double maxTime{};
+
+    /**
+     * @brief Number of steps to divide evolution into (including 0)
+     */
     std::size_t numSteps{};
     std::size_t numberOfSites{};
+
+    /**
+     * @brief Margin size for borderless observables (see CorrelationsTimeEntry)
+     */
     std::size_t marginSize{};
     std::shared_ptr<FockBase> fockBase{};
     std::vector<FockBase::Vector> vectorsToEvolve{};
 
+    /**
+     * @brief Constructs CorrelationsTimeEvolutionParameters::vectorsToEvolve from a string @a tag.
+     * @details Supported tags (for 4 sites), giving appropriate vectors:
+     * <ul>
+     * <li> unif - 1.1.1.1
+     * <li> dw - 2.0.2.0
+     * <li> both - 1.1.1.1, 2.0.2.0
+     * </ul>
+     */
     void setVectorsToEvolveFromTag(const std::string &tag) {
         Expects(this->numberOfSites > 0);
 
