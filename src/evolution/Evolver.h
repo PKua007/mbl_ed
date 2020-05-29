@@ -11,8 +11,7 @@ class Evolver {
 public:
     virtual ~Evolver() = default;
 
-    virtual void prepareFor(const arma::cx_vec &initialState, double tMax,
-                            std::size_t steps) = 0;
+    virtual void prepareFor(const arma::cx_vec &initialState, double maxTime, std::size_t numSteps) = 0;
     virtual void evolve() = 0;
     [[nodiscard]] virtual const arma::cx_vec &getCurrentState() const = 0;
 };

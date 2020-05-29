@@ -64,7 +64,7 @@ TEST_CASE("Evolvers test") {
     }
 
     SECTION("ChebyshevEvolver") {
-        ChebyshevEvolver chebyshevEvolver(H, logger, 2);
+        ChebyshevEvolver chebyshevEvolver(H, logger);
         chebyshevEvolver.prepareFor(psi0, 2, 2);
         chebyshevEvolver.evolve();
 
@@ -95,7 +95,7 @@ TEST_CASE("Evolvers test") {
         edEvolver.prepareFor(psi0, 100, 2);
         edEvolver.evolve();
         // ... with out ChebyshevEvolver
-        ChebyshevEvolver chebyshevEvolver(H, logger, 50);
+        ChebyshevEvolver chebyshevEvolver(H, logger);
         chebyshevEvolver.prepareFor(psi0, 100, 101);
 
         for (std::size_t i{}; i < 100; i++)
