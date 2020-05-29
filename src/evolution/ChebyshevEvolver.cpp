@@ -9,8 +9,8 @@
 
 using namespace std::complex_literals;
 
-ChebyshevEvolver::ChebyshevEvolver(const arma::sp_mat &hamiltonian, double Nfactor)
-        : hamiltonian{hamiltonian}, Nfactor{Nfactor}
+ChebyshevEvolver::ChebyshevEvolver(const arma::sp_mat &hamiltonian, std::ostream &logger, double Nfactor)
+        : hamiltonian{hamiltonian}, Nfactor{Nfactor}, logger{logger}
 {
     Expects(Nfactor > 0);
 }
@@ -55,14 +55,14 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTi
     std::size_t numVals = std::min<std::size_t>(20, this->hamiltonian.n_rows - 1);
 
     arma::vec minEigval, maxEigval;
-    std::cout << "Calculating Emin... " << std::flush;
+    this->logger << "[ChebyshevEvolver::prepareFor] Calculating Emin... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     Assert(arma::eigs_sym(minEigval, this->hamiltonian, numVals, "sa"));
-    std::cout << "done (" << timer.toc() << " s). Emax... " << std::flush;
+    this->logger << "done (" << timer.toc() << " s). Emax... " << std::flush;
     timer.tic();
     Assert(arma::eigs_sym(maxEigval, this->hamiltonian, numVals, "la"));
-    std::cout << "done (" << timer.toc() << " s). " << std::endl;
+    this->logger << "done (" << timer.toc() << " s). " << std::endl;
     double Emin = minEigval.front();
     double Emax = maxEigval.back();
 //    double Emin = -31.80130421278989;
@@ -77,13 +77,13 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTi
     arma::cx_vec evolved;
     double normDiff{};
 
-    std::cout << "Optimizing Chebyshev expansion order:" << std::endl;
+    this->logger << "[ChebyshevEvolver::prepareFor] Optimizing Chebyshev expansion order:" << std::endl;
     do {
         this->N *= 2;
-        std::cout << "Trying " << this->N << "... " << std::flush;
+        this->logger << "[ChebyshevEvolver::prepareFor] Trying " << this->N << "... " << std::flush;
         evolved = this->evolveVector(initialState);
         normDiff = std::abs(1 - arma::norm(evolved));
-        std::cout << "Norm difference: " << normDiff << std::endl;
+        this->logger << "Norm difference: " << normDiff << std::endl;
     } while (normDiff > 1e-12);
 
     std::size_t minN = this->N / 2;
@@ -92,10 +92,10 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTi
     do {
         std::size_t midN = (minN + maxN) / 2;
         this->N = midN;
-        std::cout << "Trying " << this->N << "... " << std::flush;
+        this->logger << "[ChebyshevEvolver::prepareFor] Trying " << this->N << "... " << std::flush;
         evolved = evolveVector(initialState);
         normDiff = std::abs(1 - arma::norm(evolved));
-        std::cout << "Norm difference: " << normDiff << std::endl;
+        this->logger << "Norm difference: " << normDiff << std::endl;
 
         if (normDiff <= 1e-12)
             maxN = midN;
@@ -103,7 +103,7 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTi
             minN = midN;
     } while (maxN - minN > 1);
 
-    std::cout << "Optimal orders needed: " << this->N << std::endl;
+    this->logger << "[ChebyshevEvolver::prepareFor] Optimal orders needed: " << this->N << std::endl;
 }
 
 void ChebyshevEvolver::evolve() {

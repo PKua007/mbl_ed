@@ -13,7 +13,7 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(doubl
     Expects(numSteps >= 2);
 
     using namespace std::complex_literals;
-    logger << "[OccupationEvolution::perform] Calculating evolution operator... " << std::flush;
+    logger << "[OccupationEvolution::perform] Calculating evolution operator... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
 
@@ -21,7 +21,8 @@ std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(doubl
     evolvedState[initialFockStateIdx] = 1;
 
     evolver.prepareFor(evolvedState, maxTime, numSteps);
-    logger << "done (" << timer.toc() << " s)." << std::endl;
+    logger << "[OccupationEvolution::perform] Calculating evolution operator done (" << timer.toc() << " s).";
+    logger << std::endl;
 
     auto numOfParticlesObservables = prepareNumOfParticlesObservables(fockBase);
     auto numOfParticlesSquaresObservables = prepareNumOfParticlesSquaredObservables(fockBase);

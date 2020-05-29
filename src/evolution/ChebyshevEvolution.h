@@ -51,11 +51,7 @@ public:
             arma::sp_mat hamiltonian = this->hamiltonianGenerator->generate();
             logger << "done (" << timer.toc() << " s)" << std::endl;
 
-            logger << "[ChebyshevEvolution::perform] Preparing evolution... " << std::flush;
-            timer.tic();
-            ChebyshevEvolver evolver(hamiltonian);
-            logger << "done (" << timer.toc() << " s)" << std::endl;
-
+            ChebyshevEvolver evolver(hamiltonian, logger);
             this->correlationsTimeEvolution.addEvolution(evolver, logger);
         }
 

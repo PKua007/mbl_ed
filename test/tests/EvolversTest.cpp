@@ -24,6 +24,7 @@ TEST_CASE("Evolvers test") {
     hamiltonianGenerator.addHoppingTerm(std::make_unique<HubbardHop>(1));
     hamiltonianGenerator.addDiagonalTerm(std::make_unique<HubbardOnsite>(2));
     auto H = hamiltonianGenerator.generate();
+    std::ostringstream logger;
 
     arma::cx_vec psi0(basis->size(), arma::fill::zeros);
     psi0[0] = 1;
@@ -63,7 +64,7 @@ TEST_CASE("Evolvers test") {
     }
 
     SECTION("ChebyshevEvolver") {
-        ChebyshevEvolver chebyshevEvolver(H, 2);
+        ChebyshevEvolver chebyshevEvolver(H, logger, 2);
         chebyshevEvolver.prepareFor(psi0, 2, 2);
         chebyshevEvolver.evolve();
 
@@ -94,7 +95,7 @@ TEST_CASE("Evolvers test") {
         edEvolver.prepareFor(psi0, 100, 2);
         edEvolver.evolve();
         // ... with out ChebyshevEvolver
-        ChebyshevEvolver chebyshevEvolver(H, 50);
+        ChebyshevEvolver chebyshevEvolver(H, logger, 50);
         chebyshevEvolver.prepareFor(psi0, 100, 101);
 
         for (std::size_t i{}; i < 100; i++)

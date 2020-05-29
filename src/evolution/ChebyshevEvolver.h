@@ -21,11 +21,12 @@ private:
     double Nfactor{};
     std::size_t step{};
     std::size_t steps{};
+    std::ostream &logger;
 
     arma::cx_vec evolveVector(const arma::cx_vec &initialState);
 
 public:
-    explicit ChebyshevEvolver(const arma::sp_mat &hamiltonian, double Nfactor = 1);
+    explicit ChebyshevEvolver(const arma::sp_mat &hamiltonian, std::ostream &logger, double Nfactor = 1);
 
     void prepareFor(const arma::cx_vec &initialState, double maxTime,
                     std::size_t steps) override;
