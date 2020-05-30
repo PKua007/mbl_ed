@@ -16,6 +16,11 @@
  * @brief Parameters of time evolution.
  */
 struct CorrelationsTimeEvolutionParameters {
+    /**
+     * @brief How the times are sampled.
+     * @details Fox example, if it is {{maxTime = 1, numSteps = 2}, {maxTime = 3, numSteps = 1}}, the resulting times
+     * should be 0, 0.5, 1, 3
+     */
     std::vector<EvolutionTimeSegment> timeSegmentation;
     std::size_t numberOfSites{};
 

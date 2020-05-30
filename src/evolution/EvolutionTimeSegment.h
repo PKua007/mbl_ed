@@ -9,6 +9,10 @@
 
 #include "utils/Assertions.h"
 
+/**
+ * @brief A class representing time segment in time evolution.
+ * @details For example, @a maxTime = 3, @a numSteps = 3 represents time interval od length 3 divided into 3 parts.
+ */
 struct EvolutionTimeSegment {
     double maxTime{};
     std::size_t numSteps{};
@@ -19,6 +23,9 @@ struct EvolutionTimeSegment {
         Expects(numSteps > 0);
     }
 
+    /**
+     * @brief Stream extraction operator expecting format "maxTime numSteps"
+     */
     friend std::istream &operator>>(std::istream &in, EvolutionTimeSegment &segment) {
         double maxTime_{};
         std::size_t numSteps_{};

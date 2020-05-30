@@ -63,7 +63,7 @@ public:
      * @brief Perform the evolution of the fock state of index @a initialFockStateIdx for times specified by
      * @a timeSegmentation.
      * @details The actual evolution is performed by a given Evolver. Time segmentation is described in
-     * CorrelationsTimeEvolution.
+     * CorrelationsTimeEvolutionParameters.
      * @return The vector of Occupations, where elements corresponds to expected values of observables in subsequent
      * time steps.
      */

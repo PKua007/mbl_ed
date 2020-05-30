@@ -56,13 +56,16 @@ CorrelationsTimeEvolution::CorrelationsTimeEvolution(const CorrelationsTimeEvolu
         evolution.initialVector = vectorToEvolve;
 
         double lastMaxTime{};
+        // Prepare entries for each time segment
         for (const auto &timeSegment : this->timeSegmentation) {
             for (std::size_t timeIdx{}; timeIdx < timeSegment.numSteps; timeIdx++) {
-                double time = lastMaxTime + (timeSegment.maxTime - lastMaxTime) / static_cast<double>(timeSegment.numSteps) * timeIdx;
+                double time = lastMaxTime + (timeSegment.maxTime - lastMaxTime)
+                              / static_cast<double>(timeSegment.numSteps) * timeIdx;
                 evolution.timeEntries.emplace_back(time, marginSize, numberOfSites);
             }
             lastMaxTime = timeSegment.maxTime;
         }
+        // The last step should be separately added
         evolution.timeEntries.emplace_back(lastMaxTime, marginSize, numberOfSites);
 
         this->vectorEvolutions.push_back(evolution);
