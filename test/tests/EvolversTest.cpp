@@ -85,7 +85,7 @@ TEST_CASE("Evolvers test") {
         }
     }
 
-    SECTION("ChebyshevEvolver - long times with rebuilds") {
+    SECTION("ChebyshevEvolver - long times") {
         // We compare EDEvolver result ...
         arma::vec eigval;
         arma::mat eigvec;
@@ -94,7 +94,7 @@ TEST_CASE("Evolvers test") {
         EDEvolver edEvolver(eigensystem);
         edEvolver.prepareFor(psi0, 100, 2);
         edEvolver.evolve();
-        // ... with out ChebyshevEvolver
+        // ... with our ChebyshevEvolver
         ChebyshevEvolver chebyshevEvolver(H, logger);
         chebyshevEvolver.prepareFor(psi0, 100, 101);
 

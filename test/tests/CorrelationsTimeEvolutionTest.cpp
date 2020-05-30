@@ -67,7 +67,7 @@ TEST_CASE("EDCorrelationsTimeEvolution: header") {
 TEST_CASE("EDCorrelationsTimeEvolution: times") {
     auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
-    EDCorrelationsTimeEvolution evolution({{{0.5, 2}}, 2, 0, fockBase, {{1, 0}}});
+    EDCorrelationsTimeEvolution evolution({{{1, 2}, {3, 1}}, 2, 0, fockBase, {{1, 0}}});
     std::ostringstream logger;
 
     evolution.analyze(eigensystem, logger);
@@ -80,9 +80,11 @@ TEST_CASE("EDCorrelationsTimeEvolution: times") {
     out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
     REQUIRE(t == 0);
     out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
-    REQUIRE(t == 0.25);
+    REQUIRE(t == 0.5);
     out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
-    REQUIRE(t == 0.50);
+    REQUIRE(t == 1);
+    out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
+    REQUIRE(t == 3);
 }
 
 TEST_CASE("EDCorrelationsTimeEvolution: throw on non-matching eigensystems") {

@@ -25,26 +25,34 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
     std::ostringstream logger;
     EDEvolver evolver(eigensystem);
 
-
-    // Initial state - {0, 1, 0, 0}
-    auto evolution = OccupationEvolution::perform({{2, 1}}, 1, *fockBase, evolver, logger);
-
-
-    REQUIRE(evolution.size() == 2);
-
-    // 0 time - of course nothing should change from the initial state
-    // only <n_1> != 0 (= 1), all <n_i n_j> = 0 apart from <n_1 n_1> = 1
-    std::vector<double> nsExpected = {0, 1, 0, 0};
-    REQUIRE_THAT(evolution[0].numParticles, IsApproxEqual(nsExpected, 1e-15));
-    arma::vec nnsExpected = {0, 1, 0, 0};
-    REQUIRE_THAT(evolution[0].numParticlesSquared.toArma(), IsApproxEqual(arma::mat(arma::diagmat(nnsExpected)), 1e-12));
-
     // The values were calculated in Mathematica by creating hamiltonian in Fock basis from eigenvectors and
     // eigenvalues, computing |psi(t)> = e^(-iHt) |psi> explicitly and calculating all <psi(t)|observable|psi(t)>
-    nsExpected = {0.3540367091367856, 0.2919265817264288, 0.2360244727578571, 0.11801223637892853};
-    REQUIRE_THAT(evolution[1].numParticles, IsApproxEqual(nsExpected, 1e-15));
-    nnsExpected = arma::vec{0.3540367091367856, 0.2919265817264288, 0.2360244727578571, 0.11801223637892853};
-    REQUIRE_THAT(evolution[1].numParticlesSquared.toArma(), IsApproxEqual(arma::mat(arma::diagmat(nnsExpected)), 1e-12));
+    std::vector<double> nsT0 = {0, 1, 0, 0};
+    arma::vec nnsT0 = {0, 1, 0, 0};
+    std::vector<double> nsT2 = {0.3540367091367856, 0.2919265817264288, 0.2360244727578571, 0.11801223637892853};
+    arma::vec nnsT2 = arma::vec{0.3540367091367856, 0.2919265817264288, 0.2360244727578571, 0.11801223637892853};
+
+    SECTION("single time segment - t = 0, 2") {
+        // Initial state - {0, 1, 0, 0}
+        auto evolution = OccupationEvolution::perform({{2, 1}}, 1, *fockBase, evolver, logger);
+
+        REQUIRE(evolution.size() == 2);
+        REQUIRE_THAT(evolution[0].numParticles, IsApproxEqual(nsT0, 1e-15));
+        REQUIRE_THAT(evolution[0].numParticlesSquared.toArma(),IsApproxEqual(arma::mat(arma::diagmat(nnsT0)), 1e-15));
+        REQUIRE_THAT(evolution[1].numParticles, IsApproxEqual(nsT2, 1e-12));
+        REQUIRE_THAT(evolution[1].numParticlesSquared.toArma(),IsApproxEqual(arma::mat(arma::diagmat(nnsT2)), 1e-12));
+    }
+
+    SECTION("2 time segments - t = 0, 0.5, 1, 2") {
+        // Initial state - {0, 1, 0, 0}
+        auto evolution = OccupationEvolution::perform({{1, 2}, {2, 1}}, 1, *fockBase, evolver, logger);
+
+        REQUIRE(evolution.size() == 4);
+        REQUIRE_THAT(evolution[0].numParticles, IsApproxEqual(nsT0, 1e-15));
+        REQUIRE_THAT(evolution[0].numParticlesSquared.toArma(),IsApproxEqual(arma::mat(arma::diagmat(nnsT0)), 1e-15));
+        REQUIRE_THAT(evolution[3].numParticles, IsApproxEqual(nsT2, 1e-12));
+        REQUIRE_THAT(evolution[3].numParticlesSquared.toArma(),IsApproxEqual(arma::mat(arma::diagmat(nnsT2)), 1e-12));
+    }
 }
 
 TEST_CASE("OccupationEvolution: 2 bosons 2 sites") {
