@@ -37,8 +37,7 @@ private:
     std::size_t marginSize{};
     std::size_t numberOfSites{};
     std::vector<VectorEvolution> vectorEvolutions{};
-    double maxTime{};
-    std::size_t numSteps{};
+    std::vector<EvolutionTimeSegment> timeSegmentation{};
 
     [[nodiscard]] std::size_t getNumberOfSites() const;
 

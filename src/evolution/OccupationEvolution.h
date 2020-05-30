@@ -10,6 +10,7 @@
 #include "SymmetricMatrix.h"
 #include "simulation/FockBase.h"
 #include "Evolver.h"
+#include "EvolutionTimeSegment.h"
 
 /**
  * @brief The class performing time evolution of @f$ \left< \hat{n}_i \right> @f$ and
@@ -61,7 +62,7 @@ public:
      * @return The vector of Occupations, where elements corresponds to expected values of observables in subsequent
      * time steps.
      */
-    [[nodiscard]] static std::vector<Occupations> perform(double maxTime, std::size_t numSteps,
+    [[nodiscard]] static std::vector<Occupations> perform(const std::vector<EvolutionTimeSegment> &timeSegmentation,
                                                           std::size_t initialFockStateIdx,
                                                           const FockBase &fockBase, Evolver &evolver,
                                                           std::ostream &logger);

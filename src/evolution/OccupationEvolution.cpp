@@ -4,31 +4,39 @@
 
 #include "OccupationEvolution.h"
 
-std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(double maxTime, std::size_t numSteps,
+std::vector<OccupationEvolution::Occupations> OccupationEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSegmentation,
                                                                            std::size_t initialFockStateIdx,
                                                                            const FockBase &fockBase, Evolver &evolver,
                                                                            std::ostream &logger)
 {
-    Expects(maxTime > 0);
-    Expects(numSteps >= 2);
-
     using namespace std::complex_literals;
-    logger << "[OccupationEvolution::perform] Calculating evolution operator... " << std::endl;
-    arma::wall_clock timer;
-    timer.tic();
 
     arma::cx_vec evolvedState(fockBase.size(), arma::fill::zeros);
     evolvedState[initialFockStateIdx] = 1;
 
-    evolver.prepareFor(evolvedState, maxTime, numSteps);
-    logger << "[OccupationEvolution::perform] Calculating evolution operator done (" << timer.toc() << " s).";
-    logger << std::endl;
-
     auto numOfParticlesObservables = prepareNumOfParticlesObservables(fockBase);
     auto numOfParticlesSquaresObservables = prepareNumOfParticlesSquaredObservables(fockBase);
 
-    std::vector<Occupations> occupationEvolution = doPerformEvolution(numSteps, evolver, numOfParticlesObservables,
-                                                                      numOfParticlesSquaresObservables, logger);
+    std::vector<Occupations> occupationEvolution;
+    double lastMaxTime{};
+    for (const auto &timeSegment : timeSegmentation) {
+        logger << "[OccupationEvolution::perform] Calculating evolution operator... " << std::endl;
+        arma::wall_clock timer;
+        timer.tic();
+        evolver.prepareFor(evolvedState, timeSegment.maxTime - lastMaxTime, timeSegment.numSteps + 1);
+        logger << "[OccupationEvolution::perform] Calculating evolution operator done (" << timer.toc() << " s).";
+        logger << std::endl;
+
+        std::vector<Occupations> evolutionSegment = doPerformEvolution(timeSegment.numSteps, evolver, numOfParticlesObservables,
+                                                                          numOfParticlesSquaresObservables, logger);
+        occupationEvolution.insert(occupationEvolution.end(), evolutionSegment.begin(), evolutionSegment.end());
+        evolvedState = evolver.getCurrentState();
+        lastMaxTime = timeSegment.maxTime;
+    }
+    std::vector<Occupations> lastStep = doPerformEvolution(1, evolver, numOfParticlesObservables,
+                                                                   numOfParticlesSquaresObservables, logger);
+    occupationEvolution.push_back(lastStep.front());
+
     return occupationEvolution;
 }
 

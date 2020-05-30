@@ -10,20 +10,13 @@
 
 #include "simulation/FockBase.h"
 #include "utils/Assertions.h"
+#include "EvolutionTimeSegment.h"
 
 /**
  * @brief Parameters of time evolution.
  */
 struct CorrelationsTimeEvolutionParameters {
-    /**
-     * @brief Maximal time to evolve to.
-     */
-    double maxTime{};
-
-    /**
-     * @brief Number of steps to divide evolution into (including 0)
-     */
-    std::size_t numSteps{};
+    std::vector<EvolutionTimeSegment> timeSegmentation;
     std::size_t numberOfSites{};
 
     /**

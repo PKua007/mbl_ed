@@ -56,6 +56,7 @@ void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTi
 void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
     arma::cx_vec evolvedState;
     double normLeakage{};
+    double initialNorm = arma::norm(initialState);
 
     this->logger << "[ChebyshevEvolver::prepareFor] Optimizing Chebyshev expansion order:" << std::endl;
 
@@ -65,7 +66,7 @@ void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
         this->N *= 2;
         this->logger << "[ChebyshevEvolver::prepareFor] Trying " << this->N << "... " << std::flush;
         evolvedState = this->evolveState(initialState);
-        normLeakage = std::abs(1 - arma::norm(evolvedState));
+        normLeakage = std::abs(initialNorm - arma::norm(evolvedState));
         this->logger << "Norm leakage: " << normLeakage << std::endl;
     } while (normLeakage > MAXIMAL_NORM_LEAKAGE);
 
@@ -77,7 +78,7 @@ void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
         this->N = midN;
         this->logger << "[ChebyshevEvolver::prepareFor] Trying " << this->N << "... " << std::flush;
         evolvedState = this->evolveState(initialState);
-        normLeakage = std::abs(1 - arma::norm(evolvedState));
+        normLeakage = std::abs(initialNorm - arma::norm(evolvedState));
         this->logger << "Norm leakage: " << normLeakage << std::endl;
 
         if (normLeakage <= MAXIMAL_NORM_LEAKAGE)

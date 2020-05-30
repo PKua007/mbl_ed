@@ -184,12 +184,15 @@ Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks, const 
             evolutionParameters.numberOfSites = params.K;
 
             std::string vectorsToEvolveStr;
-            taskStream >> evolutionParameters.maxTime >> evolutionParameters.numSteps >> evolutionParameters.marginSize;
+            double maxTime;
+            std::size_t numSteps;
+            taskStream >> maxTime >> numSteps >> evolutionParameters.marginSize;
+            evolutionParameters.timeSegmentation.push_back({maxTime, numSteps});
             taskStream >> vectorsToEvolveStr;
             ValidateMsg(taskStream, "Wrong format, use: evolution [max time] [number of steps] [margin size] "
                                     "[vectors to evolve - unif/dw/both]\nunif - 1.1.1.1; dw - 2.0.2.0; both - both ;)");
-            Validate(evolutionParameters.maxTime > 0);
-            Validate(evolutionParameters.numSteps >= 2);
+            Validate(evolutionParameters.timeSegmentation[0].maxTime > 0);
+            Validate(evolutionParameters.timeSegmentation[0].numSteps >= 2);
             Validate(evolutionParameters.marginSize * 2 < params.K);
 
             evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveStr);
@@ -486,11 +489,10 @@ void Frontend::chebyshev(int argc, char **argv) {
 
     // Prepare and run evolutions
     CorrelationsTimeEvolutionParameters evolutionParameters;
-    evolutionParameters.maxTime = maxTime;
+    evolutionParameters.timeSegmentation.push_back({maxTime, numSteps});
     evolutionParameters.numberOfSites = params.K;
     evolutionParameters.fockBase = base;
     evolutionParameters.marginSize = marginSize;
-    evolutionParameters.numSteps = numSteps;
     evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveTag); // This one also does the validation
     if (params.averagingModel == "none") {
         perform_chebyshev_evolution<DummyAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params,

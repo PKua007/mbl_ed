@@ -16,7 +16,7 @@ void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &log
 
         auto initialIdx = fockBase->findIndex(evolution.initialVector);
         Assert(initialIdx.has_value());
-        auto observablesEvolution = OccupationEvolution::perform(this->maxTime, this->numSteps, *initialIdx,
+        auto observablesEvolution = OccupationEvolution::perform(this->timeSegmentation, *initialIdx,
                                                                  *this->fockBase, evolver, logger);
 
         Assert(observablesEvolution.size() == evolution.timeEntries.size());
@@ -36,7 +36,8 @@ void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
                    headerPrinter);
     out << std::endl;
 
-    for (std::size_t timeIdx{}; timeIdx < this->numSteps; timeIdx++) {
+    std::size_t numSteps = this->vectorEvolutions.front().timeEntries.size();
+    for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {
         for (const auto &evolution: this->vectorEvolutions)
             out << evolution.timeEntries[timeIdx].toString();
         out << std::endl;
@@ -45,20 +46,24 @@ void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
 
 CorrelationsTimeEvolution::CorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters)
         : fockBase{parameters.fockBase}, marginSize{parameters.marginSize},
-          numberOfSites{parameters.numberOfSites}, maxTime{parameters.maxTime}, numSteps{parameters.numSteps}
+          numberOfSites{parameters.numberOfSites}, timeSegmentation{parameters.timeSegmentation}
 {
-    Expects(maxTime > 0);
-    Expects(numSteps >= 2);
     Expects(!parameters.vectorsToEvolve.empty());
 
     this->vectorEvolutions.reserve(parameters.vectorsToEvolve.size());
     for (const auto &vectorToEvolve : parameters.vectorsToEvolve) {
         VectorEvolution evolution;
         evolution.initialVector = vectorToEvolve;
-        for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {
-            double time = maxTime / (static_cast<double>(numSteps) - 1) * timeIdx;
-            evolution.timeEntries.emplace_back(time, marginSize, numberOfSites);
+
+        double lastMaxTime{};
+        for (const auto &timeSegment : this->timeSegmentation) {
+            for (std::size_t timeIdx{}; timeIdx < timeSegment.numSteps; timeIdx++) {
+                double time = lastMaxTime + (timeSegment.maxTime - lastMaxTime) / static_cast<double>(timeSegment.numSteps) * timeIdx;
+                evolution.timeEntries.emplace_back(time, marginSize, numberOfSites);
+            }
+            lastMaxTime = timeSegment.maxTime;
         }
+        evolution.timeEntries.emplace_back(lastMaxTime, marginSize, numberOfSites);
 
         this->vectorEvolutions.push_back(evolution);
     }

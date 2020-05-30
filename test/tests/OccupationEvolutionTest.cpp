@@ -27,7 +27,7 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
 
 
     // Initial state - {0, 1, 0, 0}
-    auto evolution = OccupationEvolution::perform(2, 2, 1, *fockBase, evolver, logger);
+    auto evolution = OccupationEvolution::perform({{2, 1}}, 1, *fockBase, evolver, logger);
 
 
     REQUIRE(evolution.size() == 2);
@@ -57,7 +57,7 @@ TEST_CASE("OccupationEvolution: 2 bosons 2 sites") {
 
 
     // Initial vector - {1, 1}
-    auto evolution = OccupationEvolution::perform(2, 2, 1, *fockBase, evolver, logger);
+    auto evolution = OccupationEvolution::perform({{2, 1}}, 1, *fockBase, evolver, logger);
 
 
     REQUIRE(evolution.size() == 2);
