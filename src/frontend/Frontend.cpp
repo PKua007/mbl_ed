@@ -424,8 +424,7 @@ void Frontend::chebyshev(int argc, char **argv) {
 
     std::string inputFilename;
     std::vector<std::string> overridenParams;
-    double maxTime{};
-    std::size_t numSteps{};
+    std::string timeSegmentation{};
     std::size_t marginSize{};
     std::string vectorsToEvolveTag;
 
@@ -437,8 +436,7 @@ void Frontend::chebyshev(int argc, char **argv) {
                             "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
                             "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
              cxxopts::value<std::vector<std::string>>(overridenParams))
-            ("t,max_time", "max_time", cxxopts::value<double>(maxTime))
-            ("s,num_steps", "num_steps", cxxopts::value<std::size_t>(numSteps))
+            ("t,time_segmentation", "time_segmentation", cxxopts::value<std::string>(timeSegmentation))
             ("m,margin", "margin", cxxopts::value<std::size_t>(marginSize))
             ("v,vectors", "vectors", cxxopts::value<std::string>(vectorsToEvolveTag));
 
@@ -462,14 +460,8 @@ void Frontend::chebyshev(int argc, char **argv) {
     std::cout << std::endl;
 
     // Validate rest of the options
-    if (!parsedOptions.count("max_time"))
+    if (!parsedOptions.count("time_segmentation"))
         die("You have to specify max evolution time using -t [max time]");
-    if (maxTime <= 0)
-        die("Max evolution time should be > 0");
-    if (!parsedOptions.count("num_steps"))
-        die("You have to specify number of evolution steps using -s [number of steps]");
-    if (numSteps < 2)
-        die("There should be at least 2 steps (initial state is counted as 1st step)");
     if (!parsedOptions.count("margin"))
         die("You have to specify margin size using -m [margin size]");
     if (marginSize * 2 > params.K - 2)
@@ -489,7 +481,11 @@ void Frontend::chebyshev(int argc, char **argv) {
 
     // Prepare and run evolutions
     CorrelationsTimeEvolutionParameters evolutionParameters;
-    evolutionParameters.timeSegmentation.push_back({maxTime, numSteps});
+
+    std::istringstream timeSegmentationStream(timeSegmentation);
+    std::copy(std::istream_iterator<EvolutionTimeSegment>(timeSegmentationStream),
+              std::istream_iterator<EvolutionTimeSegment>(),
+              std::back_inserter(evolutionParameters.timeSegmentation));
     evolutionParameters.numberOfSites = params.K;
     evolutionParameters.fockBase = base;
     evolutionParameters.marginSize = marginSize;
