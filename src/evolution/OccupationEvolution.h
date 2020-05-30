@@ -5,7 +5,8 @@
 #ifndef MBL_ED_OCCUPATIONEVOLUTION_H
 #define MBL_ED_OCCUPATIONEVOLUTION_H
 
-#include <valarray>
+#include <memory>
+#include <utility>
 
 #include "SymmetricMatrix.h"
 #include "simulation/FockBase.h"
@@ -41,31 +42,34 @@ public:
     };
 
 private:
-    [[nodiscard]] static arma::vec numOfParticlesObservable(const FockBase &fockBase, std::size_t siteIdx);
-    [[nodiscard]] static arma::vec numOfParticlesSquaredObservable(const FockBase &fockBase, std::size_t site1Idx,
-                                                                   std::size_t site2Idx);
-    [[nodiscard]] static double calculateObservableExpectedValue(const arma::vec &observable,
-                                                                 const arma::cx_vec &state);
-    [[nodiscard]] static std::vector<Occupations> prepareOccupationVector(size_t numSteps, size_t numberOfSites);
-    [[nodiscard]] static std::vector<arma::vec> prepareNumOfParticlesObservables(const FockBase &fockBase);
-    [[nodiscard]] static SymmetricMatrix<arma::vec> prepareNumOfParticlesSquaredObservables(const FockBase &fockBase);
+    std::shared_ptr<FockBase> fockBase;
+    std::vector<arma::vec> numOfParticlesObservables;
+    SymmetricMatrix<arma::vec> numOfParticlesSquaredObservables;
+    std::size_t timeStep{};
 
-    [[nodiscard]] static std::vector<Occupations>
-    doPerformEvolution(std::size_t numSteps, Evolver &evolver, const std::vector<arma::vec> &numOfParticlesObservables,
-                       const SymmetricMatrix<arma::vec> &numOfParticlesSquaredObservables, std::ostream &logger);
+    [[nodiscard]] arma::vec calculateNumOfParticlesObservable(std::size_t siteIdx) const;
+    [[nodiscard]] arma::vec calculateNumOfParticlesSquaredObservable(std::size_t site1Idx, std::size_t site2Idx) const;
+    [[nodiscard]] double calculateObservableExpectedValue(const arma::vec &observable, const arma::cx_vec &state) const;
+    [[nodiscard]] std::vector<Occupations> prepareOccupationVector(size_t numSteps, size_t numberOfSites);
+    void prepareNumOfParticlesObservables();
+    void prepareNumOfParticlesSquaredObservables();
+    [[nodiscard]] std::vector<Occupations> performTimeSegmentEvolution(std::size_t numSteps, Evolver &evolver,
+                                                                       std::ostream &logger);
 
 public:
+    explicit OccupationEvolution(std::shared_ptr<FockBase> fockBase);
+
     /**
-     * @brief Perform the evolution of the fock state of index @a initialFockStateIdx, from 0 to @a maxTime, dividing
-     * it into @a numSteps steps.
-     * @details The actual evolution is performed by a given Evolver.
+     * @brief Perform the evolution of the fock state of index @a initialFockStateIdx for times specified by
+     * @a timeSegmentation.
+     * @details The actual evolution is performed by a given Evolver. Time segmentation is described in
+     * CorrelationsTimeEvolution.
      * @return The vector of Occupations, where elements corresponds to expected values of observables in subsequent
      * time steps.
      */
-    [[nodiscard]] static std::vector<Occupations> perform(const std::vector<EvolutionTimeSegment> &timeSegmentation,
-                                                          std::size_t initialFockStateIdx,
-                                                          const FockBase &fockBase, Evolver &evolver,
-                                                          std::ostream &logger);
+    [[nodiscard]] std::vector<Occupations> perform(const std::vector<EvolutionTimeSegment> &timeSegmentation,
+                                                   std::size_t initialFockStateIdx, Evolver &evolver,
+                                                   std::ostream &logger);
 };
 
 

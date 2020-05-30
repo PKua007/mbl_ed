@@ -16,8 +16,8 @@ void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &log
 
         auto initialIdx = fockBase->findIndex(evolution.initialVector);
         Assert(initialIdx.has_value());
-        auto observablesEvolution = OccupationEvolution::perform(this->timeSegmentation, *initialIdx,
-                                                                 *this->fockBase, evolver, logger);
+        OccupationEvolution occupationEvolution(this->fockBase);
+        auto observablesEvolution = occupationEvolution.perform(this->timeSegmentation, *initialIdx, evolver, logger);
 
         Assert(observablesEvolution.size() == evolution.timeEntries.size());
         for (std::size_t i{}; i < observablesEvolution.size(); i++) {

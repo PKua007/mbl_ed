@@ -34,7 +34,8 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
 
     SECTION("single time segment - t = 0, 2") {
         // Initial state - {0, 1, 0, 0}
-        auto evolution = OccupationEvolution::perform({{2, 1}}, 1, *fockBase, evolver, logger);
+        OccupationEvolution occupationEvolution(fockBase);
+        auto evolution = occupationEvolution.perform({{2, 1}}, 1, evolver, logger);
 
         REQUIRE(evolution.size() == 2);
         REQUIRE_THAT(evolution[0].numParticles, IsApproxEqual(nsT0, 1e-15));
@@ -45,7 +46,8 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
 
     SECTION("2 time segments - t = 0, 0.5, 1, 2") {
         // Initial state - {0, 1, 0, 0}
-        auto evolution = OccupationEvolution::perform({{1, 2}, {2, 1}}, 1, *fockBase, evolver, logger);
+        OccupationEvolution occupationEvolution(fockBase);
+        auto evolution = occupationEvolution.perform({{1, 2}, {2, 1}}, 1, evolver, logger);
 
         REQUIRE(evolution.size() == 4);
         REQUIRE_THAT(evolution[0].numParticles, IsApproxEqual(nsT0, 1e-15));
@@ -65,7 +67,8 @@ TEST_CASE("OccupationEvolution: 2 bosons 2 sites") {
 
 
     // Initial vector - {1, 1}
-    auto evolution = OccupationEvolution::perform({{2, 1}}, 1, *fockBase, evolver, logger);
+    OccupationEvolution occupationEvolution(fockBase);
+    auto evolution = occupationEvolution.perform({{2, 1}}, 1, evolver, logger);
 
 
     REQUIRE(evolution.size() == 2);
