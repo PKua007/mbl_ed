@@ -20,7 +20,7 @@ OccupationEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSegmen
         logger << "[OccupationEvolution::perform] Calculating evolution operator... " << std::endl;
         arma::wall_clock timer;
         timer.tic();
-        evolver.prepareFor(evolvedState, timeSegment.maxTime - lastMaxTime, timeSegment.numSteps + 1);
+        evolver.prepareFor(evolvedState, timeSegment.maxTime - lastMaxTime, timeSegment.numSteps);
         logger << "[OccupationEvolution::perform] Calculating evolution operator done (" << timer.toc() << " s).";
         logger << std::endl;
 

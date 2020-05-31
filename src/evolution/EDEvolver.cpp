@@ -9,10 +9,10 @@
 
 void EDEvolver::prepareFor(const arma::cx_vec &initialState, double maxTime, std::size_t numSteps_) {
     Expects(maxTime > 0);
-    Expects(numSteps_ >= 2);
+    Expects(numSteps_ > 0);
     Expects(initialState.size() == this->eigensystem.size());
 
-    this->dt = maxTime / static_cast<double>(numSteps_ - 1);
+    this->dt = maxTime / static_cast<double>(numSteps_);
     this->currentState = initialState;
     this->currentStep = 0;
     this->numSteps = numSteps_;
@@ -25,9 +25,8 @@ void EDEvolver::prepareFor(const arma::cx_vec &initialState, double maxTime, std
 }
 
 void EDEvolver::evolve() {
-    // Actually this->currentStep == this->steps - 1 here will give 1 step too much, but do not throw for
-    // convenience of use
-    Assert(this->currentStep < this->numSteps);
+    // Actually this->currentStep == this->steps here will give 1 step too much, but do not throw for convenience of use
+    Assert(this->currentStep <= this->numSteps);
     this->currentStep++;
     this->currentState = this->evolutionOperator * this->currentState;
 }

@@ -43,7 +43,7 @@ TEST_CASE("Evolvers test") {
         REQUIRE(arma::eig_sym(eigval, eigvec, arma::mat(H)));
         Eigensystem eigensystem(eigval, eigvec);
         EDEvolver edEvolver(eigensystem);
-        edEvolver.prepareFor(psi0, 2, 2);
+        edEvolver.prepareFor(psi0, 2, 1);
         edEvolver.evolve();
 
         REQUIRE(arma::norm(edEvolver.getCurrentState() - expected) < 1e-11);
@@ -56,7 +56,7 @@ TEST_CASE("Evolvers test") {
         SECTION("second run - reset") {
             // Different evolution - different number of steps - but time after first step coincides with previous one
             // However not to use exactly the same, we take -psi0
-            edEvolver.prepareFor(-psi0, 4, 3);
+            edEvolver.prepareFor(-psi0, 4, 2);
             edEvolver.evolve();
 
             REQUIRE(arma::norm(edEvolver.getCurrentState() - (-expected)) < 1e-11);
@@ -65,7 +65,7 @@ TEST_CASE("Evolvers test") {
 
     SECTION("ChebyshevEvolver") {
         ChebyshevEvolver chebyshevEvolver(H, logger);
-        chebyshevEvolver.prepareFor(psi0, 2, 2);
+        chebyshevEvolver.prepareFor(psi0, 2, 1);
         chebyshevEvolver.evolve();
 
         REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - expected) < 1e-11);
@@ -78,7 +78,7 @@ TEST_CASE("Evolvers test") {
         SECTION("second run - reset") {
             // Different evolution - different number of steps - but time after first step coincides with previous one
             // However not to use exactly the same, we take -psi0
-            chebyshevEvolver.prepareFor(-psi0, 4, 3);
+            chebyshevEvolver.prepareFor(-psi0, 4, 2);
             chebyshevEvolver.evolve();
 
             REQUIRE(arma::norm(chebyshevEvolver.getCurrentState() - (-expected)) < 1e-11);
@@ -92,11 +92,11 @@ TEST_CASE("Evolvers test") {
         REQUIRE(arma::eig_sym(eigval, eigvec, arma::mat(H)));
         Eigensystem eigensystem(eigval, eigvec);
         EDEvolver edEvolver(eigensystem);
-        edEvolver.prepareFor(psi0, 100, 2);
+        edEvolver.prepareFor(psi0, 100, 1);
         edEvolver.evolve();
         // ... with our ChebyshevEvolver
         ChebyshevEvolver chebyshevEvolver(H, logger);
-        chebyshevEvolver.prepareFor(psi0, 100, 101);
+        chebyshevEvolver.prepareFor(psi0, 100, 100);
 
         for (std::size_t i{}; i < 100; i++)
             chebyshevEvolver.evolve();

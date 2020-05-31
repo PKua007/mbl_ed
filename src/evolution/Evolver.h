@@ -18,7 +18,7 @@ public:
      * @brief Prepares the evolution for a specific state, starting from t = 0 to @a maxTime.
      * @param initialState state to evolve
      * @param maxTime target time to evolve to
-     * @param numSteps steps to divide the target time into. t = 0 is counted as the first step
+     * @param numSteps steps to divide the target time into. t = 0 is not counted
      */
     virtual void prepareFor(const arma::cx_vec &initialState, double maxTime, std::size_t numSteps) = 0;
 

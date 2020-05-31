@@ -37,11 +37,11 @@ arma::cx_vec ChebyshevEvolver::evolveState(const arma::cx_vec &state) {
 
 void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTime, std::size_t maxSteps_) {
     Expects(maxTime > 0);
-    Expects(maxSteps_ >= 2);
+    Expects(maxSteps_ > 0);
     Expects(initialState.size() == this->hamiltonian.n_cols);
 
     this->t = 0;
-    this->dt = maxTime / static_cast<double>(maxSteps_ - 1);
+    this->dt = maxTime / static_cast<double>(maxSteps_);
     this->currentState = initialState;
     this->currentStep = 0;
     this->maxSteps = maxSteps_;
@@ -115,9 +115,8 @@ void ChebyshevEvolver::findSpectrumRange() {
 }
 
 void ChebyshevEvolver::evolve() {
-    // Actually this->currentStep == this->steps - 1 here will give 1 step too much, but do not throw for convenience of
-    // use
-    Assert(this->currentStep < this->maxSteps);
+    // Actually this->currentStep == this->steps here will give 1 step too much, but do not throw for convenience of use
+    Assert(this->currentStep <= this->maxSteps);
     this->currentStep++;
     this->t += this->dt;
 
