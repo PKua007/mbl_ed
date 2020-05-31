@@ -47,7 +47,7 @@ TEST_CASE("HamiltonianGenerator: non-periodic hop") {
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
     hamiltonianGenerator.addHoppingTerm(std::move(hopping));
 
-    arma::mat result = hamiltonianGenerator.generate();
+    arma::mat result = arma::mat(hamiltonianGenerator.generate());
 
     arma::mat expected = {{0,       M_SQRT2, 0, 0,       0,       0},
                           {M_SQRT2, 0,       1, M_SQRT2, 0,       0},
@@ -69,7 +69,7 @@ TEST_CASE("HamiltonianGenerator: double hop 2 on 2") {
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
     hamiltonianGenerator.addDoubleHoppingTerm(std::move(hopping));
 
-    arma::mat result = hamiltonianGenerator.generate();
+    arma::mat result = arma::mat(hamiltonianGenerator.generate());
 
     arma::mat expected = {{2, 0, 2},
                           {0, 4, 0},
@@ -88,7 +88,7 @@ TEST_CASE("HamiltonianGenerator: double hop 2 on 3") {
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
     hamiltonianGenerator.addDoubleHoppingTerm(std::move(hopping));
 
-    arma::mat result = hamiltonianGenerator.generate();
+    arma::mat result = arma::mat(hamiltonianGenerator.generate());
 
     arma::mat expected = {{      2, 0,   M_SQRT2,         2, 0,       0},
                           {      0, 5,         0,         0, 3,       0},
@@ -108,7 +108,7 @@ TEST_CASE("HamiltonianGenerator: diagonal") {
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);
     hamiltonianGenerator.addDiagonalTerm(std::move(diagonal));
 
-    arma::mat result = hamiltonianGenerator.generate();
+    arma::mat result = arma::mat(hamiltonianGenerator.generate());
 
     arma::mat expected = arma::diagmat(arma::vec{0, 1, 2, 3, 4, 5});
     REQUIRE_THAT(result, IsApproxEqual(expected, 1e-8));

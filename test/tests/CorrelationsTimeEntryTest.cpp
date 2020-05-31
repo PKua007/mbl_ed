@@ -6,7 +6,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "analyzer/tasks/correlations_time_evolution/CorrelationsTimeEntry.h"
+#include "evolution/CorrelationsTimeEntry.h"
 
 TEST_CASE("CorrelationsTimeEntry: basic") {
     SECTION("empty") {

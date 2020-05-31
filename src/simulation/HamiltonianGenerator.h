@@ -44,10 +44,10 @@ private:
     [[nodiscard]] std::optional<HopData>
     hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
     [[nodiscard]] auto calculateDoubleHopMatrixElement(const HopData &firstHop, const HopData &secondHop) const;
-    void performSecondHop(arma::mat &result, std::size_t fromIdx, const HopData &firstHop) const;
-    void addDiagonalTerms(arma::mat &result, std::size_t vectorIdx) const;
-    void addHoppingTerms(arma::mat &result, std::size_t fromIdx) const;
-    void addDoubleHoppingTerms(arma::mat &result, std::size_t fromIdx) const;
+    void performSecondHop(arma::sp_mat &result, std::size_t fromIdx, const HopData &firstHop) const;
+    void addDiagonalTerms(arma::sp_mat &result, std::size_t vectorIdx) const;
+    void addHoppingTerms(arma::sp_mat &result, std::size_t fromIdx) const;
+    void addDoubleHoppingTerms(arma::sp_mat &result, std::size_t fromIdx) const;
 
 public:
     HamiltonianGenerator(std::shared_ptr<const FockBase> fockBase, bool usePBC)
@@ -60,7 +60,7 @@ public:
      * @details For HoppingTerms -s, it produces them by doing one-site hop on each base vector and finding which
      * another base vector is obtained that way.
      */
-    [[nodiscard]] arma::mat generate() const;
+    [[nodiscard]] arma::sp_mat generate() const;
 
     /**
      * @brief Returns the distance between sites of given indices.

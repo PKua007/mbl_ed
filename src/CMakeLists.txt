@@ -13,10 +13,11 @@ add_library(mbl_ed_src STATIC utils/Assertions.h simulation/FockBaseGenerator.cp
         simulation/terms/OnsiteDisorder.h simulation/terms/CavityLongInteraction.cpp simulation/CavityConstants.cpp
         frontend/CavityConstantsReader.cpp simulation/terms/LookupCavityZ2.cpp simulation/terms/LookupCavityYZ.cpp
         simulation/DoubleHoppingTerm.h simulation/terms/LookupCavityY2.cpp
-        analyzer/tasks/correlations_time_evolution/CorrelationsTimeEvolution.cpp
-        analyzer/tasks/correlations_time_evolution/OccupationEvolution.cpp
-        analyzer/tasks/correlations_time_evolution/SymmetricMatrix.h
-        analyzer/tasks/correlations_time_evolution/CorrelationsTimeEntry.cpp simulation/terms/QuasiperiodicDisorder.cpp simulation/terms/QuasiperiodicDisorder.h simulation/terms/ListOnsite.cpp simulation/terms/ListOnsite.h)
+        analyzer/tasks/EDCorrelationsTimeEvolution.cpp evolution/OccupationEvolution.cpp evolution/SymmetricMatrix.h
+        evolution/CorrelationsTimeEntry.cpp simulation/terms/QuasiperiodicDisorder.cpp
+        simulation/terms/QuasiperiodicDisorder.h simulation/terms/ListOnsite.cpp evolution/Evolver.h
+        evolution/EDEvolver.cpp evolution/ChebyshevEvolver.cpp evolution/CorrelationsTimeEvolution.cpp
+        evolution/ChebyshevEvolution.h evolution/CorrelationsTimeEvolutionParameters.h evolution/EvolutionTimeSegment.h)
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)
 target_link_libraries(mbl_ed_src PUBLIC cxxopts stdc++fs)

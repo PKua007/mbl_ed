@@ -5,7 +5,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "analyzer/tasks/correlations_time_evolution/CorrelationsTimeEvolution.h"
+#include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
 #include "simulation/FockBaseGenerator.h"
 
 
@@ -17,7 +17,7 @@
 #include "simulation/terms/HubbardHop.h"
 #include "mocks/DiagonalTermMock.h"
 
-/*TEST_CASE("CorrelationsTimeEvolution: benchmark") {
+/*TEST_CASE("EDCorrelationsTimeEvolution: benchmark") {
     auto base = FockBaseGenerator{}.generate(6, 6);
     HamiltonianGenerator hamiltonianGenerator(std::move(base), false);
     auto diagonal = std::make_unique<DiagonalTermMock>();
@@ -32,7 +32,7 @@
     arma::eig_sym(eigenvalues, eigenvectors, hamiltonian);
     Eigensystem eigensystem(eigenvalues, eigenvectors, hamiltonianGenerator.getFockBase());
 
-    CorrelationsTimeEvolution correlationsTimeEvolution(1, 11, 1,
+    EDCorrelationsTimeEvolution correlationsTimeEvolution(1, 11, 1,
                                                         {{1, 1, 1, 1, 1, 1, 1, 1}, {2, 0, 2, 0, 2, 0, 2, 0}});
 
     // Warmup
@@ -48,10 +48,10 @@
     std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
 }*/
 
-TEST_CASE("CorrelationsTimeEvolution: header") {
-    auto fockBase = FockBaseGenerator{}.generate(1, 5);
-    Eigensystem eigensystem({1, 1, 1, 1, 1}, arma::eye(5, 5), std::move(fockBase));
-    CorrelationsTimeEvolution evolution(2, 2, 1, {{1, 0, 0, 0, 0}, {0, 1, 0, 0, 0}});
+TEST_CASE("EDCorrelationsTimeEvolution: header") {
+    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 5));
+    Eigensystem eigensystem({1, 1, 1, 1, 1}, arma::eye(5, 5), fockBase);
+    EDCorrelationsTimeEvolution evolution({{{2, 1}}, 5, 1, fockBase, {{1, 0, 0, 0, 0}, {0, 1, 0, 0, 0}}});
     std::ostringstream logger;
 
     evolution.analyze(eigensystem, logger);
@@ -64,10 +64,10 @@ TEST_CASE("CorrelationsTimeEvolution: header") {
                     "0.1.0.0.0_t Gm0_1 Gm0_2 Gm0_3 Gm0_4 Gm1_1 Gm1_2 rho_0 rho_1 rho_2 rho_3 rho_4 n_0 n_1 n_2 n_3 n_4 ");
 }
 
-TEST_CASE("CorrelationsTimeEvolution: times") {
-    auto fockBase = FockBaseGenerator{}.generate(1, 2);
-    Eigensystem eigensystem({1, 1}, arma::eye(2, 2), std::move(fockBase));
-    CorrelationsTimeEvolution evolution(0.5, 3, 0, {{1, 0}});
+TEST_CASE("EDCorrelationsTimeEvolution: times") {
+    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
+    Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
+    EDCorrelationsTimeEvolution evolution({{{1, 2}, {3, 1}}, 2, 0, fockBase, {{1, 0}}});
     std::ostringstream logger;
 
     evolution.analyze(eigensystem, logger);
@@ -80,28 +80,30 @@ TEST_CASE("CorrelationsTimeEvolution: times") {
     out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
     REQUIRE(t == 0);
     out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
-    REQUIRE(t == 0.25);
+    REQUIRE(t == 0.5);
     out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
-    REQUIRE(t == 0.50);
+    REQUIRE(t == 1);
+    out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
+    REQUIRE(t == 3);
 }
 
-TEST_CASE("CorrelationsTimeEvolution: throw on non-matching eigensystems") {
-    auto fockBase1 = FockBaseGenerator{}.generate(1, 2);
-    Eigensystem eigensystem1({1, 1}, arma::eye(2, 2), std::move(fockBase1));
+TEST_CASE("EDCorrelationsTimeEvolution: throw on non-matching eigensystems") {
+    auto fockBase1 = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
+    Eigensystem eigensystem1({1, 1}, arma::eye(2, 2), fockBase1);
     auto fockBase2 = FockBaseGenerator{}.generate(1, 3);
-    Eigensystem eigensystem2({1, 1, 1}, arma::eye(3, 3), std::move(fockBase1));
-    CorrelationsTimeEvolution evolution(2, 2, 0, {{1, 0}});
+    Eigensystem eigensystem2({1, 1, 1}, arma::eye(3, 3), std::move(fockBase2));
+    EDCorrelationsTimeEvolution evolution({{{2, 1}}, 2, 0, fockBase1, {{1, 0}}});
     std::ostringstream logger;
     evolution.analyze(eigensystem1, logger);
 
     REQUIRE_THROWS(evolution.analyze(eigensystem2, logger));
 }
 
-TEST_CASE("CorrelationsTimeEvolution: throw on wrong initial vectors") {
-    auto fockBase = FockBaseGenerator{}.generate(1, 2);
-    Eigensystem eigensystem({1, 1}, arma::eye(2, 2), std::move(fockBase));
-    CorrelationsTimeEvolution corr1(2, 2, 0, {{1, 0, 0}});
-    CorrelationsTimeEvolution corr2(2, 2, 0, {{0, 2}});
+TEST_CASE("EDCorrelationsTimeEvolution: throw on wrong initial vectors") {
+    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
+    Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
+    EDCorrelationsTimeEvolution corr1({{{2, 1}}, 2, 0, fockBase, {{1, 0, 0}}});
+    EDCorrelationsTimeEvolution corr2({{{2, 1}}, 2, 0, fockBase, {{0, 2}}});
     std::ostringstream logger;
 
     REQUIRE_THROWS(corr1.analyze(eigensystem, logger));

@@ -36,8 +36,8 @@ HamiltonianGenerator::hoppingAction(const FockBase::Vector &fromVector, std::siz
     return result;
 }
 
-arma::mat HamiltonianGenerator::generate() const {
-    arma::mat result(this->fockBase->size(), this->fockBase->size(), arma::fill::zeros);
+arma::sp_mat HamiltonianGenerator::generate() const {
+    arma::sp_mat result(this->fockBase->size(), this->fockBase->size());
     for (std::size_t vectorIdx = 0; vectorIdx < this->fockBase->size(); vectorIdx++) {
         if (!this->diagonalTerms.empty())
             this->addDiagonalTerms(result, vectorIdx);
@@ -49,12 +49,12 @@ arma::mat HamiltonianGenerator::generate() const {
     return result;
 }
 
-void HamiltonianGenerator::addDiagonalTerms(arma::mat &result, std::size_t vectorIdx) const {
+void HamiltonianGenerator::addDiagonalTerms(arma::sp_mat &result, std::size_t vectorIdx) const {
     for (auto &diagonalTerm : this->diagonalTerms)
         result(vectorIdx, vectorIdx) += diagonalTerm->calculate((*this->fockBase)[vectorIdx], *this);
 }
 
-void HamiltonianGenerator::addHoppingTerms(arma::mat &result, std::size_t fromIdx) const {
+void HamiltonianGenerator::addHoppingTerms(arma::sp_mat &result, std::size_t fromIdx) const {
     for (std::size_t fromSite = 0; fromSite < this->fockBase->getNumberOfSites(); fromSite++) {
         auto hopData = this->hoppingAction((*this->fockBase)[fromIdx], fromSite, fromSite + 1);
         if (hopData == std::nullopt)
@@ -83,7 +83,7 @@ auto HamiltonianGenerator::calculateDoubleHopMatrixElement(const HopData &firstH
     return std::make_tuple(matrixElement, toIdx);
 }
 
-void HamiltonianGenerator::performSecondHop(arma::mat &result, std::size_t fromIdx, const HopData &firstHop) const {
+void HamiltonianGenerator::performSecondHop(arma::sp_mat &result, std::size_t fromIdx, const HopData &firstHop) const {
     for (std::size_t fromSite2 = 0; fromSite2 < this->fockBase->getNumberOfSites(); fromSite2++) {
         auto secondHopForward = this->hoppingAction(firstHop.toVector, fromSite2, fromSite2 + 1);
         if (secondHopForward != std::nullopt) {
@@ -99,7 +99,7 @@ void HamiltonianGenerator::performSecondHop(arma::mat &result, std::size_t fromI
     }
 }
 
-void HamiltonianGenerator::addDoubleHoppingTerms(arma::mat &result, std::size_t fromIdx) const {
+void HamiltonianGenerator::addDoubleHoppingTerms(arma::sp_mat &result, std::size_t fromIdx) const {
     for (std::size_t fromSite1 = 0; fromSite1 < this->fockBase->getNumberOfSites(); fromSite1++) {
         auto firstHopForward = this->hoppingAction((*this->fockBase)[fromIdx], fromSite1, fromSite1 + 1);
         if (firstHopForward != std::nullopt)

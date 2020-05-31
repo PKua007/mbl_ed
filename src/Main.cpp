@@ -28,6 +28,8 @@ int main(int argc, char **argv) {
         frontend.simulate(argc, argv);
     } else if (mode == "analyze") {
         frontend.analyze(argc, argv);
+    } else if (mode == "chebyshev") {
+        frontend.chebyshev(argc, argv);
     } else {
         die("Unknown mode " + mode);
     }

@@ -2,40 +2,21 @@
 // Created by Piotr Kubala on 17/02/2020.
 //
 
-#ifndef MBL_ED_CORRELATIONSTIMEEVOLUTION_H
-#define MBL_ED_CORRELATIONSTIMEEVOLUTION_H
+#ifndef MBL_ED_EDCORRELATIONSTIMEEVOLUTION_H
+#define MBL_ED_EDCORRELATIONSTIMEEVOLUTION_H
 
 #include "analyzer/BulkAnalyzerTask.h"
 #include "utils/Assertions.h"
-#include "SymmetricMatrix.h"
-#include "OccupationEvolution.h"
-#include "CorrelationsTimeEntry.h"
+#include "evolution/CorrelationsTimeEvolution.h"
+#include "evolution/CorrelationsTimeEvolutionParameters.h"
 
 /**
  * @brief BulkAnalyzerTask, which performs time evolution of correlations and fluctuations for a few given Fock states.
  * @details Consult CorrelationsTimeEntry and its helper classes for the description.
  */
-class CorrelationsTimeEvolution : public BulkAnalyzerTask {
+class EDCorrelationsTimeEvolution : public BulkAnalyzerTask {
 private:
-    /**
-     * @brief Evolution of observables for the specifit initial Fock state.
-     */
-    struct VectorEvolution {
-        FockBase::Vector initialVector;
-        std::vector<CorrelationsTimeEntry> timeEntries{};
-
-        [[nodiscard]] std::string getHeader() const;
-        [[nodiscard]] std::string getInitialVectorSignature() const;
-    };
-
-    std::size_t marginSize{};
-    std::vector<VectorEvolution> vectorEvolutions{};
-    double maxTime{};
-    std::size_t numSteps{};
-
-    [[nodiscard]] std::size_t getNumberOfSites() const;
-    [[nodiscard]] bool numberOfSitesDetermined() const;
-    void prepareTimeEntriesForNumberOfSites(std::size_t numberOfSites);
+    CorrelationsTimeEvolution correlationsTimeEvolution;
 
 public:
     /**
@@ -44,8 +25,7 @@ public:
      * @details Consult CorrelationTimeEntry for the description of @a marginSize. The evolution will be performed
      * separately for all @a vectorsToEvolve. To know what observables are measures, check CorrelationTimeEntry.
      */
-    CorrelationsTimeEvolution(double maxTime, std::size_t numSteps, std::size_t marginSize,
-                              const std::vector<FockBase::Vector> &vectorsToEvolve);
+    EDCorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters);
 
     /**
      * @brief Adds another Eigensystem to the analyzis, to all observables means are enriched by more data.
@@ -76,4 +56,4 @@ public:
 };
 
 
-#endif //MBL_ED_CORRELATIONSTIMEEVOLUTION_H
+#endif //MBL_ED_EDCORRELATIONSTIMEEVOLUTION_H
