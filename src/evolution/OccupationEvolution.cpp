@@ -9,6 +9,7 @@ OccupationEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSegmen
                              Evolver &evolver, std::ostream &logger)
 {
     this->timeStep = 0;
+    this->time = 0;
 
     arma::cx_vec evolvedState(this->fockBase->size(), arma::fill::zeros);
     evolvedState[initialFockStateIdx] = 1;
@@ -45,8 +46,8 @@ OccupationEvolution::performTimeSegmentEvolution(std::size_t numSteps, Evolver &
     std::size_t numberOfSites = this->fockBase->getNumberOfSites();
     std::vector<Occupations> observablesEvolution = this->prepareOccupationVector(numSteps, numberOfSites);
     for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {
-        logger << "[OccupationEvolution::performTimeSegmentEvolution] Calculating expectation values for time step ";
-        logger << this->timeStep << "... " << std::flush;
+        logger << "[OccupationEvolution::performTimeSegmentEvolution] Calculating expectation values for step ";
+        logger << this->timeStep << ", time " << this->time << "... " << std::flush;
         timer.tic();
         for (std::size_t site{}; site < numberOfSites; site++) {
             observablesEvolution[timeIdx].numParticles[site]
@@ -67,6 +68,7 @@ OccupationEvolution::performTimeSegmentEvolution(std::size_t numSteps, Evolver &
         logger << "done (" << timer.toc() << " s)." << std::endl;
 
         this->timeStep++;
+        this->time += evolver.getDt();
     }
     return observablesEvolution;
 }

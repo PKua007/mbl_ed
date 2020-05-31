@@ -45,8 +45,10 @@ public:
 
     void perform(std::ostream &logger) {
         for (std::size_t i = this->from; i < this->to; i++) {
+            arma::wall_clock wholeTimer;
             arma::wall_clock timer;
 
+            wholeTimer.tic();
             logger << "[ChebyshevEvolution::perform] Performing evolution " << i << "... " << std::endl;
             logger << "[ChebyshevEvolution::perform] Preparing hamiltonian... " << std::flush;
             timer.tic();
@@ -59,6 +61,7 @@ public:
             ChebyshevEvolver evolver(hamiltonian, logger);
             logger << "[ChebyshevEvolution::perform] Preparing evolver done (" << timer.toc() << " s)." << std::endl;
             this->correlationsTimeEvolution.addEvolution(evolver, logger);
+            logger << "[ChebyshevEvolution::perform] Whole evolution took " << wholeTimer.toc() << " s." << std::endl;
         }
 
         std::string filename = this->fileSignature + "_evolution.txt";

@@ -39,3 +39,7 @@ const arma::cx_vec &EDEvolver::getCurrentState() const {
 EDEvolver::EDEvolver(const Eigensystem &eigensystem) : eigensystem{eigensystem} {
     Expects(eigensystem.hasEigenvectors());
 }
+
+double EDEvolver::getDt() const {
+    return this->dt;
+}

@@ -29,6 +29,7 @@ public:
     virtual void evolve() = 0;
 
     [[nodiscard]] virtual const arma::cx_vec &getCurrentState() const = 0;
+    [[nodiscard]] virtual double getDt() const = 0;
 };
 
 #endif //MBL_ED_EVOLVER_H

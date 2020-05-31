@@ -46,6 +46,7 @@ private:
     std::vector<arma::vec> numOfParticlesObservables;
     SymmetricMatrix<arma::vec> numOfParticlesSquaredObservables;
     std::size_t timeStep{};
+    double time{};
 
     [[nodiscard]] arma::vec calculateNumOfParticlesObservable(std::size_t siteIdx) const;
     [[nodiscard]] arma::vec calculateNumOfParticlesSquaredObservable(std::size_t site1Idx, std::size_t site2Idx) const;

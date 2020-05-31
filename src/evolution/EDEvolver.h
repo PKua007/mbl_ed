@@ -31,6 +31,7 @@ public:
     void prepareFor(const arma::cx_vec &initialState, double maxTime, std::size_t numSteps_) override;
     void evolve() override;
     [[nodiscard]] const arma::cx_vec &getCurrentState() const override;
+    [[nodiscard]] double getDt() const override;
 };
 
 

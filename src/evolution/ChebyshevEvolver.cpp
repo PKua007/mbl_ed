@@ -133,3 +133,7 @@ ChebyshevEvolver::ChebyshevEvolver(const arma::sp_mat &hamiltonian, std::ostream
 {
     this->findSpectrumRange();
 }
+
+double ChebyshevEvolver::getDt() const {
+    return this->dt;
+}
