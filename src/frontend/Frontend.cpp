@@ -419,8 +419,7 @@ void Frontend::analyze(int argc, char **argv) {
 void Frontend::chebyshev(int argc, char **argv) {
     // Parse options
     cxxopts::Options options(argv[0],
-                             Fold("Chebyshev")
-                                     .width(80));
+                             Fold("Performs evolution using Chebyshev expansion technique.").width(80));
 
     std::string inputFilename;
     std::vector<std::string> overridenParams;
@@ -433,12 +432,17 @@ void Frontend::chebyshev(int argc, char **argv) {
             ("i,input", "file with parameters. See input.ini for parameters description",
              cxxopts::value<std::string>(inputFilename))
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
-                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
+                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input "
                             "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
              cxxopts::value<std::vector<std::string>>(overridenParams))
-            ("t,time_segmentation", "time_segmentation", cxxopts::value<std::string>(timeSegmentation))
-            ("m,margin", "margin", cxxopts::value<std::size_t>(marginSize))
-            ("v,vectors", "vectors", cxxopts::value<std::string>(vectorsToEvolveTag));
+            ("t,time_segmentation", "describes the time span and how it should be divided, in format: [time 1] [number "
+                                    "of steps 1] [time 2] [number of steps 2] ... . For example, '1 2 5 4' divides 0-1 "
+                                    "in 2 and 1-5 in 4, giving times: 0, 0.5, 1, 2, 3, 4, 5",
+             cxxopts::value<std::string>(timeSegmentation))
+            ("m,margin", "margin size - one averaging of correlations is done for all sites, the second one for all "
+                         "but a given margin from both sides", cxxopts::value<std::size_t>(marginSize))
+            ("v,vectors", "vectors to evolve. Available options: unif/dw/both; unif - 1.1.1.1; dw - 2.0.2.0;"
+                          " both - both ;)", cxxopts::value<std::string>(vectorsToEvolveTag));
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
@@ -522,7 +526,10 @@ void Frontend::printGeneralHelp(const std::string &cmd) {
                       "be performed on the fly.").width(80).margin(4) << std::endl;
     std::cout << "analyze" << std::endl;
     std::cout << Fold("Performs one or more analyzer tasks after loading simulation results from the files.")
-            .width(80).margin(4) << std::endl;
+                 .width(80).margin(4) << std::endl;
+    std::cout << "chebyshev" << std::endl;
+    std::cout << Fold("Performs time evolution using Chebyshev expansion technique.")
+                 .width(80).margin(4) << std::endl;
     std::cout << std::endl;
     std::cout << "Type " + cmd + " [mode] --help to get help on the specific mode." << std::endl;
 }
