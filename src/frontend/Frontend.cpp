@@ -8,6 +8,7 @@
 
 #include "Frontend.h"
 #include "HamiltonianGeneratorBuilder.h"
+#include "AnalyzerBuilder.h"
 #include "IO.h"
 
 #include "simulation/Simulation.h"
@@ -15,87 +16,12 @@
 #include "simulation/AveragingModels.h"
 #include "simulation/DisorderGenerators.h"
 
-#include "analyzer/tasks/CDF.h"
-#include "analyzer/tasks/MeanInverseParticipationRatio.h"
-#include "analyzer/tasks/InverseParticipationRatio.h"
-#include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
-
 #include "evolution/ChebyshevEvolution.h"
 
 #include "utils/Fold.h"
 #include "utils/Utils.h"
 #include "utils/Assertions.h"
 
-
-/**
- * @brief Takes a vector of @a tasks with parameters and parses them to AnalyzerTask -s
- */
-Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks, const Parameters &params,
-                                    std::shared_ptr<FockBase> fockBase) {
-    Analyzer analyzer;
-    for (const auto &task : tasks) {
-        std::istringstream taskStream(task);
-        std::string taskName;
-        taskStream >> taskName;
-        if (taskName == "mgr") {
-            double mgrCenter, mgrMargin;
-            taskStream >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: mgr [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer.addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
-        } else if (taskName == "mipr") {
-            double mgrCenter, mgrMargin;
-            taskStream >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: mipr [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer.addTask(std::make_unique<MeanInverseParticipationRatio>(mgrCenter, mgrMargin));
-        } else if (taskName == "ipr") {
-            double mgrCenter, mgrMargin;
-            taskStream >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: ipr [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer.addTask(std::make_unique<InverseParticipationRatio>(mgrCenter, mgrMargin));
-        } else if (taskName == "cdf") {
-            std::size_t bins;
-            taskStream >> bins;
-            ValidateMsg(taskStream, "Wrong format, use: cdf [number of bins]");
-            Validate(bins >= 2);
-            analyzer.addTask(std::make_unique<CDF>(bins));
-        } else if (taskName == "evolution") {
-            if (params.N != params.K || params.K % 2 != 0)
-                throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
-
-            CorrelationsTimeEvolutionParameters evolutionParameters;
-            evolutionParameters.fockBase = fockBase;
-            evolutionParameters.numberOfSites = params.K;
-
-            std::string vectorsToEvolveStr;
-            double maxTime;
-            std::size_t numSteps;
-            taskStream >> maxTime >> numSteps >> evolutionParameters.marginSize;
-            evolutionParameters.timeSegmentation.push_back({maxTime, numSteps});
-            taskStream >> vectorsToEvolveStr;
-            ValidateMsg(taskStream, "Wrong format, use: evolution [max time] [number of steps] [margin size] "
-                                    "[vectors to evolve - unif/dw/both]\nunif - 1.1.1.1; dw - 2.0.2.0; both - both ;)");
-            Validate(evolutionParameters.timeSegmentation[0].maxTime > 0);
-            Validate(evolutionParameters.timeSegmentation[0].numSteps >= 2);
-            Validate(evolutionParameters.marginSize * 2 < params.K);
-
-            evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveStr);
-
-            analyzer.addTask(std::make_unique<EDCorrelationsTimeEvolution>(evolutionParameters));
-        } else {
-            throw ValidationException("Unknown analyzer task: " + taskName);
-        }
-    }
-    return analyzer;
-}
 
 template<template <typename> typename AveragingModel_t>
 void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
@@ -182,7 +108,7 @@ void Frontend::simulate(int argc, char **argv) {
     auto rnd = std::make_unique<RND>(params.from + params.seed);
     auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
 
-    Analyzer analyzer = prepareAnalyzer(onTheFlyTasks, params, base);
+    Analyzer analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, base);
 
     // OpenMP info
     std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
@@ -284,7 +210,7 @@ void Frontend::analyze(int argc, char **argv) {
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
 
     // Load eigenenergies and analyze them
-    Analyzer analyzer = prepareAnalyzer(tasks, params, base);
+    Analyzer analyzer = AnalyzerBuilder{}.build(tasks, params, base);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())

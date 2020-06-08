@@ -20,9 +20,6 @@ class Frontend {
 private:
     std::ostream &out;
 
-    Analyzer prepareAnalyzer(const std::vector<std::string> &tasks, const Parameters &params,
-                             std::shared_ptr<FockBase> fockBase);
-
     template<template <typename> typename AveragingModel_t>
     void perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator, std::unique_ptr<RND>,
                              Analyzer &analyzer, const SimulationParameters &simulationParameters);
