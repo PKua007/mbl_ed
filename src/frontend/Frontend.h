@@ -20,11 +20,11 @@ class Frontend {
 private:
     std::ostream &out;
 
-    template<template <typename> typename AveragingModel_t>
+    template<typename AveragingModel_t>
     void perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator, std::unique_ptr<RND>,
                              Analyzer &analyzer, const SimulationParameters &simulationParameters);
 
-    template<template <typename> typename AveragingModel_t>
+    template<typename AveragingModel_t>
     void perform_chebyshev_evolution(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
                                      std::unique_ptr<RND> rnd, const Parameters &params,
                                      const CorrelationsTimeEvolutionParameters &evolutionParameters);

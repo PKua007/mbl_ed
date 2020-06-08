@@ -13,8 +13,14 @@
 
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
-#include "simulation/AveragingModels.h"
-#include "simulation/DisorderGenerators.h"
+#include "simulation/AveragingModel.h"
+#include "simulation/DisorderGenerator.h"
+
+#include "simulation/averaging_models/DummyAveragingModel.h"
+#include "simulation/averaging_models/UniformPhi0AveragingModel.h"
+#include "simulation/averaging_models/RandomPhi0AveragingModel.h"
+#include "simulation/averaging_models/OnsiteDisorderAveragingModel.h"
+#include "simulation/averaging_models/CavityConstantsAveragingModel.h"
 
 #include "evolution/ChebyshevEvolution.h"
 
@@ -23,22 +29,22 @@
 #include "utils/Assertions.h"
 
 
-template<template <typename> typename AveragingModel_t>
+template<typename AveragingModel_t>
 void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
                                    std::unique_ptr<RND> rnd, Analyzer &analyzer,
                                    const SimulationParameters &simulationParameters)
 {
-    using TheSimulation = Simulation<HamiltonianGenerator, AveragingModel_t<UniformGenerator>>;
+    using TheSimulation = Simulation<HamiltonianGenerator, AveragingModel_t>;
     TheSimulation simulation(std::move(hamiltonianGenerator), std::move(rnd), simulationParameters);
     simulation.perform(this->out, analyzer);
 }
 
-template<template <typename> typename AveragingModel_t>
+template<typename AveragingModel_t>
 void Frontend::perform_chebyshev_evolution(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
                                            std::unique_ptr<RND> rnd, const Parameters &params,
                                            const CorrelationsTimeEvolutionParameters &evolutionParameters)
 {
-    using TheEvolution = ChebyshevEvolution<HamiltonianGenerator, AveragingModel_t<UniformGenerator>>;
+    using TheEvolution = ChebyshevEvolution<HamiltonianGenerator, AveragingModel_t>;
     TheEvolution evolution(std::move(hamiltonianGenerator), std::move(rnd), params.from, params.to,
                            params.totalSimulations, evolutionParameters, params.getOutputFileSignatureWithRange());
     evolution.perform(this->out);

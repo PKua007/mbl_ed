@@ -6,7 +6,7 @@
 
 #include "mocks/RNDMock.h"
 
-#include "simulation/AveragingModels.h"
+#include "simulation/AveragingModel.h"
 
 /*namespace {
     class MockHamiltonianGenerator {

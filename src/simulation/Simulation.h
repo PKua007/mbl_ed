@@ -39,7 +39,7 @@ private:
     SimulationParameters params;
 
     Eigensystem performSingleSimulation(std::size_t simulationIndex) {
-        AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, simulationIndex,
+        AveragingModel_t{}.setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, simulationIndex,
                                                     this->params.totalSimulations);
         arma::mat hamiltonian = arma::mat(this->hamiltonianGenerator->generate());
 

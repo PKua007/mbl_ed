@@ -7,7 +7,7 @@
 #include "utils/Assertions.h"
 #include "utils/Utils.h"
 #include "CavityConstantsReader.h"
-#include "simulation/DisorderGenerators.h"
+#include "simulation/DisorderGenerator.h"
 #include "simulation/terms/OnsiteDisorder.h"
 #include "simulation/terms/HubbardHop.h"
 #include "simulation/terms/CavityLongInteraction.h"
@@ -17,6 +17,7 @@
 #include "simulation/terms/LookupCavityZ2.h"
 #include "simulation/terms/LookupCavityYZ.h"
 #include "simulation/terms/LookupCavityY2.h"
+#include "simulation/disorder_generators/UniformGenerator.h"
 
 std::unique_ptr<HamiltonianGenerator>
 HamiltonianGeneratorBuilder::build(const Parameters &params, std::shared_ptr<FockBase> fockBase, RND &rnd) {
@@ -39,7 +40,7 @@ HamiltonianGeneratorBuilder::build(const Parameters &params, std::shared_ptr<Foc
             Validate(W >= 0);
             auto disorderGenerator = std::make_unique<UniformGenerator>(-W, W);
             generator->addDiagonalTerm(
-                    std::make_unique < OnsiteDisorder < UniformGenerator >> (std::move(disorderGenerator),
+                    std::make_unique < OnsiteDisorder > (std::move(disorderGenerator),
                     numberOfSites, rnd));
         } else if (termName == "listOnsite") {
             auto stringValues = explode(termParams.getString("values"), ',');

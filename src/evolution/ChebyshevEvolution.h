@@ -52,7 +52,7 @@ public:
             logger << "[ChebyshevEvolution::perform] Performing evolution " << i << "... " << std::endl;
             logger << "[ChebyshevEvolution::perform] Preparing hamiltonian... " << std::flush;
             timer.tic();
-            AveragingModel_t::setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, i, this->totalSimulations);
+            AveragingModel_t{}.setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, i, this->totalSimulations);
             arma::sp_mat hamiltonian = this->hamiltonianGenerator->generate();
             logger << "done (" << timer.toc() << " s)" << std::endl;
 
