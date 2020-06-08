@@ -17,7 +17,7 @@ add_library(mbl_ed_src STATIC utils/Assertions.h simulation/FockBaseGenerator.cp
         evolution/CorrelationsTimeEntry.cpp simulation/terms/QuasiperiodicDisorder.cpp
         simulation/terms/QuasiperiodicDisorder.h simulation/terms/ListOnsite.cpp evolution/Evolver.h
         evolution/EDEvolver.cpp evolution/ChebyshevEvolver.cpp evolution/CorrelationsTimeEvolution.cpp
-        evolution/ChebyshevEvolution.h evolution/CorrelationsTimeEvolutionParameters.h evolution/EvolutionTimeSegment.h frontend/HamiltonianGeneratorBuilder.cpp frontend/HamiltonianGeneratorBuilder.h frontend/AnalyzerBuilder.cpp frontend/AnalyzerBuilder.h simulation/terms/OnsiteDisorder.cpp)
+        evolution/ChebyshevEvolution.h evolution/CorrelationsTimeEvolutionParameters.h evolution/EvolutionTimeSegment.h frontend/HamiltonianGeneratorBuilder.cpp frontend/HamiltonianGeneratorBuilder.h frontend/AnalyzerBuilder.cpp frontend/AnalyzerBuilder.h simulation/terms/OnsiteDisorder.cpp frontend/AveragingModelFactory.cpp frontend/AveragingModelFactory.h)
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)
 target_link_libraries(mbl_ed_src PUBLIC cxxopts stdc++fs)

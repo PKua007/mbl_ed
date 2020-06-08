@@ -9,18 +9,13 @@
 #include "Frontend.h"
 #include "HamiltonianGeneratorBuilder.h"
 #include "AnalyzerBuilder.h"
+#include "AveragingModelFactory.h"
 #include "IO.h"
 
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/AveragingModel.h"
 #include "simulation/DisorderGenerator.h"
-
-#include "simulation/averaging_models/DummyAveragingModel.h"
-#include "simulation/averaging_models/UniformPhi0AveragingModel.h"
-#include "simulation/averaging_models/RandomPhi0AveragingModel.h"
-#include "simulation/averaging_models/OnsiteDisorderAveragingModel.h"
-#include "simulation/averaging_models/CavityConstantsAveragingModel.h"
 
 #include "evolution/ChebyshevEvolution.h"
 
@@ -98,20 +93,7 @@ void Frontend::simulate(int argc, char **argv) {
     // OpenMP info
     std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
-    std::unique_ptr<AveragingModel> averagingModel;
-    if (params.averagingModel == "none") {
-        averagingModel = std::make_unique<DummyAveragingModel>();
-    } else if (params.averagingModel == "uniformPhi0") {
-        averagingModel = std::make_unique<UniformPhi0AveragingModel>();
-    } else if (params.averagingModel == "randomPhi0") {
-        averagingModel = std::make_unique<RandomPhi0AveragingModel>();
-    } else if (params.averagingModel == "onsiteDisorder") {
-        averagingModel = std::make_unique<OnsiteDisorderAveragingModel>();
-    } else if (params.averagingModel == "cavityConstants") {
-        averagingModel = std::make_unique<CavityConstantsAveragingModel>();
-    } else {
-        die("Unknown averaging model: " + params.averagingModel);
-    }
+    auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run simulations
     SimulationParameters simulationParams;
@@ -298,20 +280,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParameters.marginSize = marginSize;
     evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveTag); // This one also does the validation
 
-    std::unique_ptr<AveragingModel> averagingModel;
-    if (params.averagingModel == "none") {
-        averagingModel = std::make_unique<DummyAveragingModel>();
-    } else if (params.averagingModel == "uniformPhi0") {
-        averagingModel = std::make_unique<UniformPhi0AveragingModel>();
-    } else if (params.averagingModel == "randomPhi0") {
-        averagingModel = std::make_unique<RandomPhi0AveragingModel>();
-    } else if (params.averagingModel == "onsiteDisorder") {
-        averagingModel = std::make_unique<OnsiteDisorderAveragingModel>();
-    } else if (params.averagingModel == "cavityConstants") {
-        averagingModel = std::make_unique<CavityConstantsAveragingModel>();
-    } else {
-        die("Unknown averaging model: " + params.averagingModel);
-    }
+    auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), params.from, params.to,
                            params.totalSimulations, evolutionParameters, params.getOutputFileSignatureWithRange());
