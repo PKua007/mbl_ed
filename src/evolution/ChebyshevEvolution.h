@@ -5,15 +5,18 @@
 #ifndef MBL_ED_CHEBYSHEVEVOLUTION_H
 #define MBL_ED_CHEBYSHEVEVOLUTION_H
 
+#include <utility>
+
 #include "CorrelationsTimeEvolution.h"
 #include "CorrelationsTimeEvolutionParameters.h"
 #include "ChebyshevEvolver.h"
 #include "simulation/RND.h"
 
-template<typename HamiltonianGenerator_t, typename AveragingModel_t>
+template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel>
 class ChebyshevEvolution {
 private:
     std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;
+    std::unique_ptr<AveragingModel_t> averagingModel;
     std::unique_ptr<RND> rnd;
     std::unique_ptr<FileOstreamProvider> ostreamProvider;
     CorrelationsTimeEvolution correlationsTimeEvolution;
@@ -23,23 +26,26 @@ private:
     std::string fileSignature{};
 
 public:
-    ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND> rnd,
+    ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+                       std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
                        std::unique_ptr<FileOstreamProvider> ostreamProvider, std::size_t from,
                        std::size_t to, std::size_t totalSimulations,
-                       const CorrelationsTimeEvolutionParameters &parameters, const std::string &fileSignature)
-            : hamiltonianGenerator{std::move(hamiltonianGenerator)}, rnd{std::move(rnd)},
+                       const CorrelationsTimeEvolutionParameters &parameters, std::string fileSignature)
+            : hamiltonianGenerator{std::move(hamiltonianGenerator)},
+              averagingModel{std::move(averagingModel)}, rnd{std::move(rnd)},
               ostreamProvider{std::move(ostreamProvider)}, correlationsTimeEvolution(parameters),
-              from{from}, to{to}, totalSimulations{totalSimulations}, fileSignature{fileSignature}
+              from{from}, to{to}, totalSimulations{totalSimulations}, fileSignature{std::move(fileSignature)}
     {
         Expects(this->totalSimulations > 0);
         Expects(this->from < this->to);
         Expects(this->to <= this->totalSimulations);
     }
 
-    ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND> rnd,
+    ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+                       std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
                        std::size_t from, std::size_t to, std::size_t totalSimulations,
                        const CorrelationsTimeEvolutionParameters &parameters, const std::string &fileSignature)
-            : ChebyshevEvolution(std::move(hamiltonianGenerator), std::move(rnd), std::make_unique<FileOstreamProvider>(),
+            : ChebyshevEvolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), std::make_unique<FileOstreamProvider>(),
                                  from, to, totalSimulations, parameters, fileSignature)
     { }
 
@@ -52,7 +58,7 @@ public:
             logger << "[ChebyshevEvolution::perform] Performing evolution " << i << "... " << std::endl;
             logger << "[ChebyshevEvolution::perform] Preparing hamiltonian... " << std::flush;
             timer.tic();
-            AveragingModel_t{}.setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, i, this->totalSimulations);
+            this->averagingModel->setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, i, this->totalSimulations);
             arma::sp_mat hamiltonian = this->hamiltonianGenerator->generate();
             logger << "done (" << timer.toc() << " s)" << std::endl;
 

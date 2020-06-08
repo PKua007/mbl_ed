@@ -29,27 +29,6 @@
 #include "utils/Assertions.h"
 
 
-template<typename AveragingModel_t>
-void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
-                                   std::unique_ptr<RND> rnd, Analyzer &analyzer,
-                                   const SimulationParameters &simulationParameters)
-{
-    using TheSimulation = Simulation<HamiltonianGenerator, AveragingModel_t>;
-    TheSimulation simulation(std::move(hamiltonianGenerator), std::move(rnd), simulationParameters);
-    simulation.perform(this->out, analyzer);
-}
-
-template<typename AveragingModel_t>
-void Frontend::perform_chebyshev_evolution(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
-                                           std::unique_ptr<RND> rnd, const Parameters &params,
-                                           const CorrelationsTimeEvolutionParameters &evolutionParameters)
-{
-    using TheEvolution = ChebyshevEvolution<HamiltonianGenerator, AveragingModel_t>;
-    TheEvolution evolution(std::move(hamiltonianGenerator), std::move(rnd), params.from, params.to,
-                           params.totalSimulations, evolutionParameters, params.getOutputFileSignatureWithRange());
-    evolution.perform(this->out);
-}
-
 void Frontend::simulate(int argc, char **argv) {
     // Parse options
     cxxopts::Options options(argv[0],
@@ -119,6 +98,21 @@ void Frontend::simulate(int argc, char **argv) {
     // OpenMP info
     std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
+    std::unique_ptr<AveragingModel> averagingModel;
+    if (params.averagingModel == "none") {
+        averagingModel = std::make_unique<DummyAveragingModel>();
+    } else if (params.averagingModel == "uniformPhi0") {
+        averagingModel = std::make_unique<UniformPhi0AveragingModel>();
+    } else if (params.averagingModel == "randomPhi0") {
+        averagingModel = std::make_unique<RandomPhi0AveragingModel>();
+    } else if (params.averagingModel == "onsiteDisorder") {
+        averagingModel = std::make_unique<OnsiteDisorderAveragingModel>();
+    } else if (params.averagingModel == "cavityConstants") {
+        averagingModel = std::make_unique<CavityConstantsAveragingModel>();
+    } else {
+        die("Unknown averaging model: " + params.averagingModel);
+    }
+
     // Prepare and run simulations
     SimulationParameters simulationParams;
     simulationParams.from = params.from;
@@ -127,24 +121,9 @@ void Frontend::simulate(int argc, char **argv) {
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
     simulationParams.fileSignature = directory / params.getOutputFileSignature();
-    if (params.averagingModel == "none") {
-        perform_simulations<DummyAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
-                                                 simulationParams);
-    } else if (params.averagingModel == "uniformPhi0") {
-        perform_simulations<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
-                                                       simulationParams);
-    } else if (params.averagingModel == "randomPhi0") {
-        perform_simulations<RandomPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
-                                                      simulationParams);
-    } else if (params.averagingModel == "onsiteDisorder") {
-        perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
-                                                          simulationParams);
-    } else if (params.averagingModel == "cavityConstants") {
-        perform_simulations<CavityConstantsAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
-                                                           simulationParams);
-    } else {
-        die("Unknown averaging model: " + params.averagingModel);
-    }
+
+    Simulation simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationParams);
+    simulation.perform(this->out, analyzer);
 
     // Save results
     io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
@@ -318,24 +297,25 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParameters.fockBase = base;
     evolutionParameters.marginSize = marginSize;
     evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveTag); // This one also does the validation
+
+    std::unique_ptr<AveragingModel> averagingModel;
     if (params.averagingModel == "none") {
-        perform_chebyshev_evolution<DummyAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params,
-                                                         evolutionParameters);
+        averagingModel = std::make_unique<DummyAveragingModel>();
     } else if (params.averagingModel == "uniformPhi0") {
-        perform_chebyshev_evolution<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params,
-                                                               evolutionParameters);
+        averagingModel = std::make_unique<UniformPhi0AveragingModel>();
     } else if (params.averagingModel == "randomPhi0") {
-        perform_chebyshev_evolution<RandomPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params,
-                                                              evolutionParameters);
+        averagingModel = std::make_unique<RandomPhi0AveragingModel>();
     } else if (params.averagingModel == "onsiteDisorder") {
-        perform_chebyshev_evolution<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
-                                                                  params, evolutionParameters);
+        averagingModel = std::make_unique<OnsiteDisorderAveragingModel>();
     } else if (params.averagingModel == "cavityConstants") {
-        perform_chebyshev_evolution<CavityConstantsAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
-                                                                   params, evolutionParameters);
+        averagingModel = std::make_unique<CavityConstantsAveragingModel>();
     } else {
         die("Unknown averaging model: " + params.averagingModel);
     }
+
+    ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), params.from, params.to,
+                           params.totalSimulations, evolutionParameters, params.getOutputFileSignatureWithRange());
+    evolution.perform(this->out);
 }
 
 void Frontend::printGeneralHelp(const std::string &cmd) {

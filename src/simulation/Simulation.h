@@ -19,27 +19,29 @@
 #include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/Analyzer.h"
 #include "Eigensystem.h"
+#include "HamiltonianGenerator.h"
 #include "SimulationParameters.h"
 #include "RND.h"
+#include "AveragingModel.h"
 
 /**
  * @brief A class performing a series of diagonalizations and optionaly some analyzer tasks.
  * @details Each simulation consists of: generating new hamiltonian according to @a AveragingModel_t,
  * diagonalisation, optionally saving eigenvalues and optionally doing some AnalyzerTask -s.
  * @tparam HamiltonianGenerator_t the concrete hamiltonian generator to use
- * @tparam AveragingModel_t the concrete averaging model to use
  * @tparam Analyzer_t the concrete analyzer to use
  */
-template<typename HamiltonianGenerator_t, typename AveragingModel_t, typename Analyzer_t = Analyzer>
+template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel, typename Analyzer_t = Analyzer>
 class Simulation {
 private:
     std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;
+    std::unique_ptr<AveragingModel_t> averagingModel;
     std::unique_ptr<RND> rnd;
     std::unique_ptr<FileOstreamProvider> ostreamProvider;
     SimulationParameters params;
 
     Eigensystem performSingleSimulation(std::size_t simulationIndex) {
-        AveragingModel_t{}.setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, simulationIndex,
+        this->averagingModel->setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, simulationIndex,
                                                     this->params.totalSimulations);
         arma::mat hamiltonian = arma::mat(this->hamiltonianGenerator->generate());
 
@@ -67,9 +69,10 @@ public:
     /**
      * @brief The constructor with mockable eigenenergy file creating using own FileOstreamProvider.
      */
-    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND> rnd,
+    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+            std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
                std::unique_ptr<FileOstreamProvider> ostreamProvider, SimulationParameters simulationParameters)
-            : hamiltonianGenerator{std::move(hamiltonianGenerator)}, rnd{std::move(rnd)},
+            : hamiltonianGenerator{std::move(hamiltonianGenerator)}, averagingModel{std::move(averagingModel)}, rnd{std::move(rnd)},
               ostreamProvider{std::move(ostreamProvider)}, params{std::move(simulationParameters)}
     {
         Expects(this->params.totalSimulations > 0);
@@ -81,9 +84,9 @@ public:
      * @brief The non-mockable constructor which will pass FileOstreamProvider which actually creates files to store
      * eigenenrgies.
      */
-    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<RND> rnd,
+    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
                const SimulationParameters &simulationParameters)
-            : Simulation(std::move(hamiltonianGenerator), std::move(rnd), std::make_unique<FileOstreamProvider>(),
+            : Simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), std::make_unique<FileOstreamProvider>(),
                          simulationParameters)
     { }
 
