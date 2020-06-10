@@ -11,17 +11,16 @@
 #include "simulation/averaging_models/CavityConstantsAveragingModel.h"
 
 std::unique_ptr<AveragingModel> AveragingModelFactory::create(const std::string &name) {
-    if (name == "none") {
+    if (name == "none")
         return std::make_unique<DummyAveragingModel>();
-    } else if (name == "uniformPhi0") {
+    else if (name == "uniformPhi0")
         return std::make_unique<UniformPhi0AveragingModel>();
-    } else if (name == "randomPhi0") {
+    else if (name == "randomPhi0")
         return std::make_unique<RandomPhi0AveragingModel>();
-    } else if (name == "onsiteDisorder") {
+    else if (name == "onsiteDisorder")
         return std::make_unique<OnsiteDisorderAveragingModel>();
-    } else if (name == "cavityConstants") {
+    else if (name == "cavityConstants")
         return std::make_unique<CavityConstantsAveragingModel>();
-    } else {
+    else
         throw std::runtime_error("Unknown averaging model: " + name);
-    }
 }

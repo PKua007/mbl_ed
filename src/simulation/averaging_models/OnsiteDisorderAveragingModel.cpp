@@ -9,7 +9,8 @@
 
 void OnsiteDisorderAveragingModel::setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
                                                              unsigned long simulationIndex,
-                                                             unsigned long numberOfSimulations) {
+                                                             unsigned long numberOfSimulations)
+{
     static_cast<void>(simulationIndex);
     static_cast<void>(numberOfSimulations);
 

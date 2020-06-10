@@ -9,7 +9,7 @@
 #include "simulation/DisorderGenerator.h"
 
 /**
- * @brief Disorder generator wich just samples random number from [min, max).
+ * @brief DisorderGenerator which just samples uniform number from [@a min, @a max).
  */
 class UniformGenerator : public DisorderGenerator {
 private:

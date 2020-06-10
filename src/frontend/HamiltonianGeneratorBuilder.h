@@ -12,6 +12,10 @@
 #include "Parameters.h"
 
 
+/**
+ * @brief A class responsible for building HamiltonianGenerator based on Parameters.
+ * @details It is extracted from Frontend mainly for decreasing compilation times.
+ */
 class HamiltonianGeneratorBuilder {
 public:
     std::unique_ptr<HamiltonianGenerator> build(const Parameters &params, std::shared_ptr<FockBase> fockBase, RND &rnd);

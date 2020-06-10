@@ -10,10 +10,16 @@
 #include "analyzer/Analyzer.h"
 #include "Parameters.h"
 
+/**
+ * @brief A class responsible for building the Analyzer class based on the vector of given tasks and Parameters.
+ * @details Extracted from Frontend mainly to reduce compilation times.
+ */
 class AnalyzerBuilder {
 public:
-    Analyzer build(const std::vector<std::string> &tasks, const Parameters &params,
-                                    std::shared_ptr<FockBase> fockBase);
+    /**
+     * @brief Prepares the Analyzer. Parsing @a tasks includes also validation and throwing exceptions if needed.
+     */
+    Analyzer build(const std::vector<std::string> &tasks, const Parameters &params, std::shared_ptr<FockBase> fockBase);
 };
 
 

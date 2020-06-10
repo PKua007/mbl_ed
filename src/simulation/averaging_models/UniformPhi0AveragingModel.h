@@ -14,15 +14,14 @@
  * @brief Averaging model, used in Simulation, which distributes evenly phi0 values across simulations based on
  * @a simulationIndex and @a numberOfSimulations.
  * @details Onsite disorder is also resampled.
- * @tparam DisorderGenerator_t disorder generator used
  */
 class UniformPhi0AveragingModel : public AveragingModel {
 public:
     /**
      * @brief The method looks for CavityLongInteraction and OnsiteDisorder terms in the @a hamiltonianGenerator.
      */
-    void setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
-                                          std::size_t simulationIndex, std::size_t numberOfSimulations) override;
+    void setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd, std::size_t simulationIndex,
+                                   std::size_t numberOfSimulations) override;
 };
 
 

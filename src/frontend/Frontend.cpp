@@ -82,17 +82,15 @@ void Frontend::simulate(int argc, char **argv) {
         if (!params.hasParam(param))
             die("Parameters to print: parameter " + param + " is unknown");
 
-    FockBaseGenerator baseGenerator;
-    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-
-    auto rnd = std::make_unique<RND>(params.from + params.seed);
-    auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
-
-    Analyzer analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, base);
-
     // OpenMP info
     std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
+    // Generate Fock basis, prepare HamiltonianGenerator, Analyzer and AveragingModel
+    FockBaseGenerator baseGenerator;
+    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
+    Analyzer analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, base);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run simulations
@@ -259,14 +257,15 @@ void Frontend::chebyshev(int argc, char **argv) {
         die("You have to specify vectors to evolve using -v [unif/dw/both]");
     // Validation of vectors is done later
 
-    FockBaseGenerator baseGenerator;
-    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-
-    auto rnd = std::make_unique<RND>(params.from + params.seed);
-    auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
-
     // OpenMP info
     std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+
+    // Prepare FockBasis, HamiltonianGenerator, Analyzer and AveragingModel
+    FockBaseGenerator baseGenerator;
+    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
+    auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run evolutions
     CorrelationsTimeEvolutionParameters evolutionParameters;
@@ -280,10 +279,9 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParameters.marginSize = marginSize;
     evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveTag); // This one also does the validation
 
-    auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
-
-    ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), params.from, params.to,
-                           params.totalSimulations, evolutionParameters, params.getOutputFileSignatureWithRange());
+    ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                                 params.from, params.to, params.totalSimulations, evolutionParameters,
+                                 params.getOutputFileSignatureWithRange());
     evolution.perform(this->out);
 }
 

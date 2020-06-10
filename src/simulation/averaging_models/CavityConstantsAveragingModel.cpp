@@ -12,7 +12,8 @@
 
 void CavityConstantsAveragingModel::setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
                                                               unsigned long simulationIndex,
-                                                              unsigned long numberOfSimulations) {
+                                                              unsigned long numberOfSimulations)
+{
     Expects(numberOfSimulations > 0);
     Expects(simulationIndex < numberOfSimulations);
 

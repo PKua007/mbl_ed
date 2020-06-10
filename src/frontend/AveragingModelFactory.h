@@ -10,6 +10,10 @@
 
 #include "simulation/AveragingModel.h"
 
+/**
+ * @brief A class creating appropriate AveragingModel based on its name.
+ * @details Extracted from Frontend mainly to decrease compilation times.
+ */
 class AveragingModelFactory {
 public:
     std::unique_ptr<AveragingModel> create(const std::string &name);

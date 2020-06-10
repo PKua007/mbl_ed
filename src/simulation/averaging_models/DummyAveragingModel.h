@@ -14,8 +14,8 @@
  */
 class DummyAveragingModel : public AveragingModel {
 public:
-    void setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
-                                          std::size_t simulationIndex, std::size_t numberOfSimulations) override
+    void setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd, std::size_t simulationIndex,
+                                   std::size_t numberOfSimulations) override
     {
         static_cast<void>(simulationIndex);
         static_cast<void>(numberOfSimulations);

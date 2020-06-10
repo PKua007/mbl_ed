@@ -7,8 +7,14 @@
 
 #include "RND.h"
 
+/**
+ * @brief A class sampling random chemical potential for OnsiteDisorder class from a giver distribution.
+ */
 class DisorderGenerator {
 public:
+    /**
+     * @brief Sample next chemical potential using passed @a rnd.
+     */
     virtual double generate(RND &rnd) = 0;
 };
 

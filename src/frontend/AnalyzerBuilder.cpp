@@ -14,7 +14,8 @@
 #include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
 
 Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
-                                                 std::shared_ptr<FockBase> fockBase) {
+                                std::shared_ptr<FockBase> fockBase)
+{
     Analyzer analyzer;
     for (const auto &task : tasks) {
         std::istringstream taskStream(task);

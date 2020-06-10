@@ -27,11 +27,15 @@
 /**
  * @brief A class performing a series of diagonalizations and optionaly some analyzer tasks.
  * @details Each simulation consists of: generating new hamiltonian according to @a AveragingModel_t,
- * diagonalisation, optionally saving eigenvalues and optionally doing some AnalyzerTask -s.
+ * diagonalisation, optionally saving eigenvalues and optionally doing some AnalyzerTask -s. Also, note, that the
+ * template parameters default to standard classes and exist solely for testing purposes. See the default classes'
+ * descriptions for the details of what they do.
  * @tparam HamiltonianGenerator_t the concrete hamiltonian generator to use
  * @tparam Analyzer_t the concrete analyzer to use
+ * @tparam AveragingModel_t the concrete analyzer model
  */
-template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel, typename Analyzer_t = Analyzer>
+template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel,
+         typename Analyzer_t = Analyzer>
 class Simulation {
 private:
     std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;

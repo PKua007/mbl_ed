@@ -14,7 +14,7 @@
 #include "simulation/HamiltonianGenerator.h"
 
 /**
- * @brief Class responsible for communication between the user and simulation backend.
+ * @brief Class responsible for the communication between the user and the simulation backend.
  */
 class Frontend {
 private:

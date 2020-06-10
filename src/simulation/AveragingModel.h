@@ -19,10 +19,20 @@
 #include "HamiltonianGenerator.h"
 #include "RND.h"
 
+/**
+ * @brief A class responsible for a specific reparametrising the HamiltonianGenerator for each new simulation.
+ * @details Implementations can do stuff like sampling new random disorder terms, introducing random (or uniformly
+ * spaces) phases, and so on.
+ */
 class AveragingModel {
 public:
+    /**
+     * @brief Prepares @a hamiltonianGenerator for a new simulation.
+     * @details @a rnd is used for resampling random stuff, while @a simulationIndex and @a numberOfSimulations
+     * probably form uniformly spreading some parameter among all simulations.
+     */
     virtual void setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
-                                      std::size_t simulationIndex, std::size_t numberOfSimulations) = 0;
+                                           std::size_t simulationIndex, std::size_t numberOfSimulations) = 0;
 };
 
 #endif //MBL_ED_AVERAGINGMODEL_H

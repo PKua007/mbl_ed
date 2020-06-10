@@ -5,7 +5,8 @@
 #include "RandomPhi0AveragingModel.h"
 
 void RandomPhi0AveragingModel::setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
-                                                         std::size_t simulationIndex, std::size_t numberOfSimulations) {
+                                                         std::size_t simulationIndex, std::size_t numberOfSimulations)
+{
     Expects(numberOfSimulations > 0);
     Expects(simulationIndex < numberOfSimulations);
 
