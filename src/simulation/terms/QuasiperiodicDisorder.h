@@ -16,7 +16,6 @@
  * where \f$ i \f$ is the number of site, \f$ K \f$ is the total number of sites, \f$ \hat{b}_i \f$ is annihilation
  * operator, \f$ \hat{n}_i = \hat{b}_i^\dagger\hat{b}_i \f$. The rest of parameters are in the constructor (also
  * \f$ \phi_0 \f$ can be changed by setPhi0().
- * @tparam DisorderGenerator The concrete disorded generator, whose operator() is used to sample the disorder.
  */
 class QuasiperiodicDisorder : public DiagonalTerm {double U1{};
     double W{};

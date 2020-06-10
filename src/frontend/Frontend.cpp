@@ -7,26 +7,15 @@
 #include <omp.h>
 
 #include "Frontend.h"
+#include "HamiltonianGeneratorBuilder.h"
+#include "AnalyzerBuilder.h"
+#include "AveragingModelFactory.h"
 #include "IO.h"
-#include "CavityConstantsReader.h"
 
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
-#include "simulation/AveragingModels.h"
-#include "simulation/DisorderGenerators.h"
-#include "simulation/terms/OnsiteDisorder.h"
-#include "simulation/terms/HubbardHop.h"
-#include "simulation/terms/CavityLongInteraction.h"
-#include "simulation/terms/HubbardOnsite.h"
-#include "simulation/terms/ListOnsite.h"
-#include "simulation/terms/LookupCavityZ2.h"
-#include "simulation/terms/LookupCavityYZ.h"
-#include "simulation/terms/LookupCavityY2.h"
-
-#include "analyzer/tasks/CDF.h"
-#include "analyzer/tasks/MeanInverseParticipationRatio.h"
-#include "analyzer/tasks/InverseParticipationRatio.h"
-#include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
+#include "simulation/AveragingModel.h"
+#include "simulation/DisorderGenerator.h"
 
 #include "evolution/ChebyshevEvolution.h"
 
@@ -34,197 +23,6 @@
 #include "utils/Utils.h"
 #include "utils/Assertions.h"
 
-/**
- * @brief Builds hamiltonian generator parsing all general parameters and hamiltonian terms from @ params
- */
-auto Frontend::buildHamiltonianGenerator(const Parameters &params, std::shared_ptr<FockBase> fockBase, RND &rnd) {
-    std::size_t numberOfSites = fockBase->getNumberOfSites();
-    auto generator = std::make_unique<HamiltonianGenerator>(fockBase, params.usePeriodicBC);
-
-    for (auto &term : params.hamiltonianTerms) {
-        std::string termName = term.first;
-        const auto &termParams = term.second;
-        if (termName == "hubbardHop") {
-            double J = termParams.getDouble("J");
-            Validate(J >= 0);
-            generator->addHoppingTerm(std::make_unique<HubbardHop>(J));
-        } else if (termName == "hubbardOnsite") {
-            double U = termParams.getDouble("U");
-            Validate(U >= 0);
-            generator->addDiagonalTerm(std::make_unique<HubbardOnsite>(U));
-        } else if (termName == "onsiteDisorder") {
-            double W = termParams.getDouble("W");
-            Validate(W >= 0);
-            auto disorderGenerator = std::make_unique<UniformGenerator>(-W, W);
-            generator->addDiagonalTerm(std::make_unique<OnsiteDisorder<UniformGenerator>>(std::move(disorderGenerator),
-                                                                                          numberOfSites, rnd));
-        } else if (termName == "listOnsite") {
-            auto stringValues = explode(termParams.getString("values"), ',');
-            Validate(stringValues.size() == numberOfSites);
-            std::vector<double> values(stringValues.size());
-            std::transform(stringValues.begin(), stringValues.end(), values.begin(),
-                           [](auto s){ return std::stod(s); });
-            generator->addDiagonalTerm(std::make_unique<ListOnsite>(values));
-        } else if (termName == "quasiperiodicDisorder") {
-            double W = termParams.getDouble("W");
-            double beta = termParams.getDouble("beta");
-            double phi0 = termParams.getDouble("phi0");
-            Validate(W >= 0);
-            Validate(beta > 0);
-            generator->addDiagonalTerm(std::make_unique<QuasiperiodicDisorder>(W, beta, phi0));
-        } else if (termName == "cavityLongInteractions") {
-            double U1 = termParams.getDouble("U1");
-            double beta = termParams.getDouble("beta");
-            double phi0 = termParams.getDouble("phi0");
-            Validate(U1 >= 0);
-            Validate(beta > 0);
-            generator->addDiagonalTerm(std::make_unique<CavityLongInteraction>(U1, beta, phi0));
-        } else if (termName == "lookupCavityZ2") {
-            double U1 = termParams.getDouble("U1");
-            Validate(U1 >= 0);
-            std::string cavityConstantsFilename = termParams.getString("ccfile");
-            std::ifstream cavityConstantsFile(cavityConstantsFilename);
-            if (!cavityConstantsFile)
-                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
-            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
-            generator->addDiagonalTerm(std::make_unique<LookupCavityZ2>(U1, cavityConstants));
-        } else if (termName == "lookupCavityYZ") {
-            double U1 = termParams.getDouble("U1");
-            Validate(U1 >= 0);
-            std::string cavityConstantsFilename = termParams.getString("ccfile");
-            std::ifstream cavityConstantsFile(cavityConstantsFilename);
-            if (!cavityConstantsFile)
-                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
-            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
-            generator->addHoppingTerm(std::make_unique<LookupCavityYZ>(U1, cavityConstants));
-        } else if (termName == "lookupCavityY2") {
-            double U1 = termParams.getDouble("U1");
-            Validate(U1 >= 0);
-            std::string cavityConstantsFilename = termParams.getString("ccfile");
-            std::ifstream cavityConstantsFile(cavityConstantsFilename);
-            if (!cavityConstantsFile)
-                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
-            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
-            generator->addDoubleHoppingTerm(std::make_unique<LookupCavityY2>(U1, cavityConstants));
-        } else if (termName == "lookupCavityZ2_YZ") {
-            double U1 = termParams.getDouble("U1");
-            Validate(U1 >= 0);
-            std::string cavityConstantsFilename = termParams.getString("ccfile");
-            std::ifstream cavityConstantsFile(cavityConstantsFilename);
-            if (!cavityConstantsFile)
-                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
-            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
-            generator->addDiagonalTerm(std::make_unique<LookupCavityZ2>(U1, cavityConstants));
-            generator->addHoppingTerm(std::make_unique<LookupCavityYZ>(U1, cavityConstants));
-        } else if (termName == "lookupCavityZ2_YZ_Y2") {
-            double U1 = termParams.getDouble("U1");
-            Validate(U1 >= 0);
-            std::string cavityConstantsFilename = termParams.getString("ccfile");
-            std::ifstream cavityConstantsFile(cavityConstantsFilename);
-            if (!cavityConstantsFile)
-                throw std::runtime_error("Cannot open " + cavityConstantsFilename + " to read cavity constants");
-            CavityConstants cavityConstants = CavityConstantsReader::load(cavityConstantsFile);
-            generator->addDiagonalTerm(std::make_unique<LookupCavityZ2>(U1, cavityConstants));
-            generator->addHoppingTerm(std::make_unique<LookupCavityYZ>(U1, cavityConstants));
-            generator->addDoubleHoppingTerm(std::make_unique<LookupCavityY2>(U1, cavityConstants));
-        } else {
-            throw ValidationException("Unknown hamiltonian term: " + termName);
-        }
-    }
-
-    return generator;
-}
-
-/**
- * @brief Takes a vector of @a tasks with parameters and parses them to AnalyzerTask -s
- */
-Analyzer Frontend::prepareAnalyzer(const std::vector<std::string> &tasks, const Parameters &params,
-                                    std::shared_ptr<FockBase> fockBase) {
-    Analyzer analyzer;
-    for (const auto &task : tasks) {
-        std::istringstream taskStream(task);
-        std::string taskName;
-        taskStream >> taskName;
-        if (taskName == "mgr") {
-            double mgrCenter, mgrMargin;
-            taskStream >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: mgr [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer.addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
-        } else if (taskName == "mipr") {
-            double mgrCenter, mgrMargin;
-            taskStream >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: mipr [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer.addTask(std::make_unique<MeanInverseParticipationRatio>(mgrCenter, mgrMargin));
-        } else if (taskName == "ipr") {
-            double mgrCenter, mgrMargin;
-            taskStream >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: ipr [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer.addTask(std::make_unique<InverseParticipationRatio>(mgrCenter, mgrMargin));
-        } else if (taskName == "cdf") {
-            std::size_t bins;
-            taskStream >> bins;
-            ValidateMsg(taskStream, "Wrong format, use: cdf [number of bins]");
-            Validate(bins >= 2);
-            analyzer.addTask(std::make_unique<CDF>(bins));
-        } else if (taskName == "evolution") {
-            if (params.N != params.K || params.K % 2 != 0)
-                throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
-
-            CorrelationsTimeEvolutionParameters evolutionParameters;
-            evolutionParameters.fockBase = fockBase;
-            evolutionParameters.numberOfSites = params.K;
-
-            std::string vectorsToEvolveStr;
-            double maxTime;
-            std::size_t numSteps;
-            taskStream >> maxTime >> numSteps >> evolutionParameters.marginSize;
-            evolutionParameters.timeSegmentation.push_back({maxTime, numSteps});
-            taskStream >> vectorsToEvolveStr;
-            ValidateMsg(taskStream, "Wrong format, use: evolution [max time] [number of steps] [margin size] "
-                                    "[vectors to evolve - unif/dw/both]\nunif - 1.1.1.1; dw - 2.0.2.0; both - both ;)");
-            Validate(evolutionParameters.timeSegmentation[0].maxTime > 0);
-            Validate(evolutionParameters.timeSegmentation[0].numSteps >= 2);
-            Validate(evolutionParameters.marginSize * 2 < params.K);
-
-            evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveStr);
-
-            analyzer.addTask(std::make_unique<EDCorrelationsTimeEvolution>(evolutionParameters));
-        } else {
-            throw ValidationException("Unknown analyzer task: " + taskName);
-        }
-    }
-    return analyzer;
-}
-
-template<template <typename> typename AveragingModel_t>
-void Frontend::perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
-                                   std::unique_ptr<RND> rnd, Analyzer &analyzer,
-                                   const SimulationParameters &simulationParameters)
-{
-    using TheSimulation = Simulation<HamiltonianGenerator, AveragingModel_t<UniformGenerator>>;
-    TheSimulation simulation(std::move(hamiltonianGenerator), std::move(rnd), simulationParameters);
-    simulation.perform(this->out, analyzer);
-}
-
-template<template <typename> typename AveragingModel_t>
-void Frontend::perform_chebyshev_evolution(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
-                                           std::unique_ptr<RND> rnd, const Parameters &params,
-                                           const CorrelationsTimeEvolutionParameters &evolutionParameters)
-{
-    using TheEvolution = ChebyshevEvolution<HamiltonianGenerator, AveragingModel_t<UniformGenerator>>;
-    TheEvolution evolution(std::move(hamiltonianGenerator), std::move(rnd), params.from, params.to,
-                           params.totalSimulations, evolutionParameters, params.getOutputFileSignatureWithRange());
-    evolution.perform(this->out);
-}
 
 void Frontend::simulate(int argc, char **argv) {
     // Parse options
@@ -284,16 +82,16 @@ void Frontend::simulate(int argc, char **argv) {
         if (!params.hasParam(param))
             die("Parameters to print: parameter " + param + " is unknown");
 
-    FockBaseGenerator baseGenerator;
-    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-
-    auto rnd = std::make_unique<RND>(params.from + params.seed);
-    auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, base, *rnd);
-
-    Analyzer analyzer = prepareAnalyzer(onTheFlyTasks, params, base);
-
     // OpenMP info
     std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+
+    // Generate Fock basis, prepare HamiltonianGenerator, Analyzer and AveragingModel
+    FockBaseGenerator baseGenerator;
+    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
+    Analyzer analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, base);
+    auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run simulations
     SimulationParameters simulationParams;
@@ -303,24 +101,9 @@ void Frontend::simulate(int argc, char **argv) {
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
     simulationParams.fileSignature = directory / params.getOutputFileSignature();
-    if (params.averagingModel == "none") {
-        perform_simulations<DummyAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
-                                                 simulationParams);
-    } else if (params.averagingModel == "uniformPhi0") {
-        perform_simulations<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
-                                                       simulationParams);
-    } else if (params.averagingModel == "randomPhi0") {
-        perform_simulations<RandomPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
-                                                      simulationParams);
-    } else if (params.averagingModel == "onsiteDisorder") {
-        perform_simulations<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
-                                                          simulationParams);
-    } else if (params.averagingModel == "cavityConstants") {
-        perform_simulations<CavityConstantsAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), analyzer,
-                                                           simulationParams);
-    } else {
-        die("Unknown averaging model: " + params.averagingModel);
-    }
+
+    Simulation simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationParams);
+    simulation.perform(this->out, analyzer);
 
     // Save results
     io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
@@ -392,7 +175,7 @@ void Frontend::analyze(int argc, char **argv) {
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
 
     // Load eigenenergies and analyze them
-    Analyzer analyzer = prepareAnalyzer(tasks, params, base);
+    Analyzer analyzer = AnalyzerBuilder{}.build(tasks, params, base);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())
@@ -474,14 +257,15 @@ void Frontend::chebyshev(int argc, char **argv) {
         die("You have to specify vectors to evolve using -v [unif/dw/both]");
     // Validation of vectors is done later
 
-    FockBaseGenerator baseGenerator;
-    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-
-    auto rnd = std::make_unique<RND>(params.from + params.seed);
-    auto hamiltonianGenerator = this->buildHamiltonianGenerator(params, base, *rnd);
-
     // OpenMP info
     std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+
+    // Prepare FockBasis, HamiltonianGenerator, Analyzer and AveragingModel
+    FockBaseGenerator baseGenerator;
+    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
+    auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run evolutions
     CorrelationsTimeEvolutionParameters evolutionParameters;
@@ -494,24 +278,11 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParameters.fockBase = base;
     evolutionParameters.marginSize = marginSize;
     evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveTag); // This one also does the validation
-    if (params.averagingModel == "none") {
-        perform_chebyshev_evolution<DummyAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params,
-                                                         evolutionParameters);
-    } else if (params.averagingModel == "uniformPhi0") {
-        perform_chebyshev_evolution<UniformPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params,
-                                                               evolutionParameters);
-    } else if (params.averagingModel == "randomPhi0") {
-        perform_chebyshev_evolution<RandomPhi0AveragingModel>(std::move(hamiltonianGenerator), std::move(rnd), params,
-                                                              evolutionParameters);
-    } else if (params.averagingModel == "onsiteDisorder") {
-        perform_chebyshev_evolution<OnsiteDisorderAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
-                                                                  params, evolutionParameters);
-    } else if (params.averagingModel == "cavityConstants") {
-        perform_chebyshev_evolution<CavityConstantsAveragingModel>(std::move(hamiltonianGenerator), std::move(rnd),
-                                                                   params, evolutionParameters);
-    } else {
-        die("Unknown averaging model: " + params.averagingModel);
-    }
+
+    ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                                 params.from, params.to, params.totalSimulations, evolutionParameters,
+                                 params.getOutputFileSignatureWithRange());
+    evolution.perform(this->out);
 }
 
 void Frontend::printGeneralHelp(const std::string &cmd) {

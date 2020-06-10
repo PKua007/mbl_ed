@@ -98,8 +98,8 @@ TEST_CASE("Simulation: 3 'random' hamiltonians") {
     params.saveEigenenergies = false;
     params.fileSignature = "";
     using TestSimulation = Simulation<MockHamiltonianGenerator, MockAveragingModel, MockAnalyzer>;
-    TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(), std::make_unique<RND>(),
-                              std::make_unique<DummyOstreamProvider>(), params);
+    TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(), std::make_unique<MockAveragingModel>(),
+                              std::make_unique<RND>(), std::make_unique<DummyOstreamProvider>(), params);
     MockAnalyzer mockAnalyzer;
     std::ostringstream dummyLogger;
 

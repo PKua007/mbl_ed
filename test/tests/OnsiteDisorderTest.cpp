@@ -8,9 +8,10 @@
 #include "simulation/HamiltonianGenerator.h"
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/RND.h"
+#include "simulation/DisorderGenerator.h"
 
 namespace {
-    class SequenceDisorderGenerator {
+    class SequenceDisorderGenerator : public DisorderGenerator {
     private:
         std::size_t index{};
         std::vector<double> sequence;
@@ -18,7 +19,7 @@ namespace {
     public:
         explicit SequenceDisorderGenerator(std::vector<double> sequence) : sequence(std::move(sequence)) { }
 
-        double operator()(RND &rnd) {
+        double generate(RND &rnd) override {
             static_cast<void>(rnd);
             return this->sequence.at(index++);
         }

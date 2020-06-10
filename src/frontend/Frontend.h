@@ -14,24 +14,11 @@
 #include "simulation/HamiltonianGenerator.h"
 
 /**
- * @brief Class responsible for communication between the user and simulation backend.
+ * @brief Class responsible for the communication between the user and the simulation backend.
  */
 class Frontend {
 private:
     std::ostream &out;
-
-    auto buildHamiltonianGenerator(const Parameters &params, std::shared_ptr<FockBase> fockBase, RND &rnd);
-    Analyzer prepareAnalyzer(const std::vector<std::string> &tasks, const Parameters &params,
-                             std::shared_ptr<FockBase> fockBase);
-
-    template<template <typename> typename AveragingModel_t>
-    void perform_simulations(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator, std::unique_ptr<RND>,
-                             Analyzer &analyzer, const SimulationParameters &simulationParameters);
-
-    template<template <typename> typename AveragingModel_t>
-    void perform_chebyshev_evolution(std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator,
-                                     std::unique_ptr<RND> rnd, const Parameters &params,
-                                     const CorrelationsTimeEvolutionParameters &evolutionParameters);
 
 public:
     explicit Frontend(std::ostream &out) : out{out} { }
