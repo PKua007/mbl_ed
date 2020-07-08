@@ -29,8 +29,10 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger)
         const auto &base = eigensystem.getFockBase();
         std::size_t index = *base.findIndex(*this->middleVector);
         relativeMiddleEnergy = normalizedEnergies[index];
-        Assert(relativeMiddleEnergy - this->relativeMargin/2 > 0 &&
-               relativeMiddleEnergy + this->relativeMargin/2 < 1);
+        if (relativeMiddleEnergy - this->relativeMargin/2 <= 0 || relativeMiddleEnergy + this->relativeMargin/2 >= 1) {
+            throw std::runtime_error("Margin " + std::to_string(this->relativeMargin) + " is to big around the given "
+                                     "vector of energy " + std::to_string(relativeMiddleEnergy));
+        }
     } else {
         relativeMiddleEnergy = this->relativeMiddleEnergy;
     }
