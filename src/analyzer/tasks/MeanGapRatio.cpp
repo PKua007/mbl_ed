@@ -12,12 +12,30 @@ MeanGapRatio::MeanGapRatio(double relativeMiddleEnergy, double relativeMargin)
     Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
 }
 
+MeanGapRatio::MeanGapRatio(const FockBase::Vector &middleVector, double relativeMargin)
+        : middleVector{middleVector}, relativeMargin{relativeMargin}
+{
+    Expects(relativeMargin > 0);
+}
+
 void MeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
     static_cast<void>(logger);
 
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
-    auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
-                                                                        this->relativeMargin);
+
+    double relativeMiddleEnergy{};
+    if (this->middleVector.has_value()) {
+        Assert(eigensystem.hasFockBase());
+        const auto &base = eigensystem.getFockBase();
+        std::size_t index = *base.findIndex(*this->middleVector);
+        relativeMiddleEnergy = normalizedEnergies[index];
+        Assert(relativeMiddleEnergy - this->relativeMargin/2 > 0 &&
+               relativeMiddleEnergy + this->relativeMargin/2 < 1);
+    } else {
+        relativeMiddleEnergy = this->relativeMiddleEnergy;
+    }
+
+    auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(relativeMiddleEnergy, this->relativeMargin);
     Assert(bandIndices.front() > 0);
     Assert(bandIndices.back() < normalizedEnergies.size() - 1);
 

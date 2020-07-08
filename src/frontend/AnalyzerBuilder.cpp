@@ -22,13 +22,33 @@ Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Par
         std::string taskName;
         taskStream >> taskName;
         if (taskName == "mgr") {
-            double mgrCenter, mgrMargin;
-            taskStream >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: mgr [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer.addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
+            std::string mgrCenterString;
+            double mgrMargin;
+            taskStream >> mgrCenterString >> mgrMargin;
+            ValidateMsg(taskStream, "Wrong format, use: mgr [epsilon center - number or 'unif' or 'dw']"
+                                    " [epsilon margin]");
+
+            std::optional<FockBase::Vector> middleVector;
+            if (mgrCenterString == "unif") {
+                ValidateMsg(params.K == params.N, "'unif' and 'dw' are only for a unity filling");
+                middleVector = FockBase::Vector(params.K, 1);
+            } else if (mgrCenterString == "dw") {
+                ValidateMsg(params.K == params.N, "'unif' and 'dw' are only for a unity filling");
+                ValidateMsg(params.K % 2 == 0, "'dw' is only available for even number of sites");
+                middleVector = FockBase::Vector(params.K);
+                for (std::size_t i{}; i < middleVector->size(); i += 2)
+                    (*middleVector)[i] = 2;
+            }
+
+            if (middleVector.has_value()) {
+                analyzer.addTask(std::make_unique<MeanGapRatio>(*middleVector, mgrMargin));
+            } else {
+                double mgrCenter = std::stod(mgrCenterString);
+                Validate(mgrCenter > 0 && mgrCenter < 1);
+                Validate(mgrMargin > 0 && mgrMargin <= 1);
+                Validate(mgrCenter - mgrMargin / 2 >= 0 && mgrCenter + mgrMargin / 2 <= 1);
+                analyzer.addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
+            }
         } else if (taskName == "mipr") {
             double mgrCenter, mgrMargin;
             taskStream >> mgrCenter >> mgrMargin;
