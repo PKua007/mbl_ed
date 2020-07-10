@@ -23,35 +23,15 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger)
 
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
 
-    double relativeMiddleEnergy{};
+    double relativeMiddleEnergy_{};
     if (this->middleVector.has_value()) {
-        Assert(eigensystem.hasFockBase());
-        Assert(eigensystem.hasEigenvectors());
-        const auto &base = eigensystem.getFockBase();
-        std::size_t index = *base.findIndex(*this->middleVector);
-        arma::vec fockVector(eigensystem.size(), arma::fill::zeros);
-        fockVector[index] = 1;
-
-        const arma::mat &eigvec = eigensystem.getEigenstates();
-        const arma::vec &eigval = eigensystem.getEigenenergies();
-        arma::vec diagonalVector = eigvec.t() * fockVector;
-        double middleEnergy{};
-        for (std::size_t i{}; i < diagonalVector.size(); i++)
-            middleEnergy += std::pow(diagonalVector[i], 2) * eigval[i];
-        double low = eigval.front();
-        double high = eigval.back();
-        relativeMiddleEnergy = (middleEnergy - low) / (high - low);
-
-        if (relativeMiddleEnergy - this->relativeMargin/2 <= 0 || relativeMiddleEnergy + this->relativeMargin/2 >= 1) {
-            throw std::runtime_error("Margin " + std::to_string(this->relativeMargin) + " is to big around the given "
-                                     "vector of energy " + std::to_string(relativeMiddleEnergy));
-        }
-        logger << "mgr calculated around: " << relativeMiddleEnergy << ". ";
+        relativeMiddleEnergy_ = calculateEnergyOfFockState(*this->middleVector, eigensystem);
+        logger << "mgr calculated around: " << relativeMiddleEnergy_ << ". ";
     } else {
-        relativeMiddleEnergy = this->relativeMiddleEnergy;
+        relativeMiddleEnergy_ = this->relativeMiddleEnergy;
     }
 
-    auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(relativeMiddleEnergy, this->relativeMargin);
+    auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(relativeMiddleEnergy_, this->relativeMargin);
     Assert(bandIndices.front() > 0);
     Assert(bandIndices.back() < normalizedEnergies.size() - 1);
 
@@ -60,6 +40,34 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger)
         double gap2 = normalizedEnergies[i + 1] - normalizedEnergies[i];
         this->gapRatios.push_back(gap1 < gap2 ? gap1/gap2 : gap2/gap1);
     }
+}
+
+double MeanGapRatio::calculateEnergyOfFockState(const FockBase::Vector &state, const Eigensystem &eigensystem) const {
+    Assert(eigensystem.hasFockBase());
+    Assert(eigensystem.hasEigenvectors());
+
+    const auto &basis = eigensystem.getFockBase();
+    std::size_t basisIndex = *basis.findIndex(state);
+    arma::vec fockVector(eigensystem.size(), arma::fill::zeros);
+    fockVector[basisIndex] = 1;
+
+    const arma::mat &eigvec = eigensystem.getEigenstates();
+    const arma::vec &eigval = eigensystem.getEigenenergies();
+    arma::vec diagonalVector = eigvec.t() * fockVector;
+
+    double energy{};
+    for (std::size_t i{}; i < diagonalVector.size(); i++)
+        energy += std::pow(diagonalVector[i], 2) * eigval[i];
+
+    double low = eigval.front();
+    double high = eigval.back();
+    double relativeEnergy = (energy - low) / (high - low);
+
+    if (relativeEnergy - relativeMargin / 2 <= 0 || relativeEnergy + relativeMargin / 2 >= 1) {
+        throw std::runtime_error("Margin " + std::to_string(this->relativeMargin) + " is to big around the given "
+                                 "vector of the energy " + std::to_string(relativeEnergy));
+    }
+    return relativeEnergy;
 }
 
 Quantity MeanGapRatio::calculateMean() const {

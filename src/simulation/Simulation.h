@@ -16,7 +16,6 @@
 #include <utility>
 
 #include "utils/Quantity.h"
-#include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/Analyzer.h"
 #include "Eigensystem.h"
 #include "HamiltonianGenerator.h"

@@ -14,7 +14,6 @@
 
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
-#include "simulation/AveragingModel.h"
 #include "simulation/DisorderGenerator.h"
 
 #include "evolution/ChebyshevEvolution.h"

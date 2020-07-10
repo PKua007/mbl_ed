@@ -7,8 +7,8 @@
 
 
 #include <vector>
-#include <simulation/Eigensystem.h>
 
+#include "simulation/Eigensystem.h"
 #include "utils/Quantity.h"
 #include "analyzer/InlineAnalyzerTask.h"
 
@@ -33,6 +33,7 @@ private:
     double relativeMargin{};
     std::vector<double> gapRatios{};
 
+    double calculateEnergyOfFockState(const FockBase::Vector &state, const Eigensystem &eigensystem) const;
     [[nodiscard]] Quantity calculateMean() const;
 
 public:
