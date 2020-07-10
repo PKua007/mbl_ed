@@ -26,13 +26,27 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger)
     double relativeMiddleEnergy{};
     if (this->middleVector.has_value()) {
         Assert(eigensystem.hasFockBase());
+        Assert(eigensystem.hasEigenvectors());
         const auto &base = eigensystem.getFockBase();
         std::size_t index = *base.findIndex(*this->middleVector);
-        relativeMiddleEnergy = normalizedEnergies[index];
+        arma::vec fockVector(eigensystem.size(), arma::fill::zeros);
+        fockVector[index] = 1;
+
+        const arma::mat &eigvec = eigensystem.getEigenstates();
+        const arma::vec &eigval = eigensystem.getEigenenergies();
+        arma::vec diagonalVector = eigvec.t() * fockVector;
+        double middleEnergy{};
+        for (std::size_t i{}; i < diagonalVector.size(); i++)
+            middleEnergy += std::pow(diagonalVector[i], 2) * eigval[i];
+        double low = eigval.front();
+        double high = eigval.back();
+        relativeMiddleEnergy = (middleEnergy - low) / (high - low);
+
         if (relativeMiddleEnergy - this->relativeMargin/2 <= 0 || relativeMiddleEnergy + this->relativeMargin/2 >= 1) {
             throw std::runtime_error("Margin " + std::to_string(this->relativeMargin) + " is to big around the given "
                                      "vector of energy " + std::to_string(relativeMiddleEnergy));
         }
+        logger << "mgr calculated around: " << relativeMiddleEnergy << ". ";
     } else {
         relativeMiddleEnergy = this->relativeMiddleEnergy;
     }

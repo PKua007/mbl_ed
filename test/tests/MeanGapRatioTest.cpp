@@ -26,11 +26,23 @@ TEST_CASE("MeanGapRatio: single energy set (number)") {
 
 TEST_CASE("MeanGapRatio: single energy set (around vector)") {
     auto base = std::shared_ptr<FockBase>(FockBaseGenerator{}.generate(7, 2));
-    MeanGapRatio ratioCalculator(FockBase::Vector{4, 3}, 0.4);
+    MeanGapRatio ratioCalculator(FockBase::Vector{5, 2}, 0.3);
     std::ostringstream logger;
 
-    // {4, 3} has index 3, so we are averagong for: 0.4, 0.5, 0.6
-    ratioCalculator.analyze(Eigensystem({0, 0.1, 0.4, 0.5, 0.6, 0.8, 0.9, 1.0}, base), logger);
+    // Here, we want our middle vector |52> to correspond to eigenenergy 0.5, around which we will calculate mgr,
+    // so eigenbasis permutes |52>, |43> and |34>
+    // Margin 0.3 means that 0.4, 0.5, 0.6 are taken into account
+    arma::vec eigval = {0, 0.1, 0.4, 0.5, 0.6, 0.8, 0.9, 1.0};
+    arma::mat eigvec = {{1, 0, 0, 0, 0, 0, 0, 0},
+                        {0, 1, 0, 0, 0, 0, 0, 0},
+                        {0, 0, 0, 1, 0, 0, 0, 0},
+                        {0, 0, 0, 0, 1, 0, 0, 0},
+                        {0, 0, 1, 0, 0, 0, 0, 0},
+                        {0, 0, 0, 0, 0, 1, 0, 0},
+                        {0, 0, 0, 0, 0, 0, 1, 0},
+                        {0, 0, 0, 0, 0, 0, 0, 1}};
+
+    ratioCalculator.analyze(Eigensystem(eigval, eigvec, base), std::cout);
 
     REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"0.6111", "0.2003"});
 }
