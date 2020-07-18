@@ -30,7 +30,6 @@ private:
         std::vector<CorrelationsTimeEntry> timeEntries{};
 
         [[nodiscard]] std::string getHeader() const;
-        [[nodiscard]] std::string getInitialVectorSignature() const;
     };
 
     std::shared_ptr<FockBase> fockBase;

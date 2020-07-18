@@ -11,8 +11,7 @@
 
 void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &logger) {
     for (auto &evolution : this->vectorEvolutions) {
-        logger << "[EDCorrelationsTimeEvolution::analyze] Evolving vector ";
-        logger << evolution.getInitialVectorSignature() << std::endl;
+        logger << "[CorrelationsTimeEvolution::addEvolution] Evolving vector " << evolution.initialVector << std::endl;
 
         auto initialIdx = fockBase->findIndex(evolution.initialVector);
         Assert(initialIdx.has_value());
@@ -78,18 +77,8 @@ std::size_t CorrelationsTimeEvolution::getNumberOfSites() const {
 
 std::string CorrelationsTimeEvolution::VectorEvolution::getHeader() const {
     Assert(!this->timeEntries.empty());
-    std::string initialVectorSignature = this->getInitialVectorSignature();
 
     std::ostringstream out;
-    out << initialVectorSignature << "_" << this->timeEntries.front().getHeader();
+    out << initialVector << "_" << this->timeEntries.front().getHeader();
     return out.str();
-}
-
-std::string CorrelationsTimeEvolution::VectorEvolution::getInitialVectorSignature() const {
-    std::ostringstream out;
-    std::copy(this->initialVector.begin(), this->initialVector.end(), std::ostream_iterator<int>(out, "."));
-    std::string outStr = out.str();
-    // Remove unwanted '.' at the end
-    outStr.pop_back();
-    return outStr;
 }

@@ -40,23 +40,17 @@ struct CorrelationsTimeEvolutionParameters {
      * <li> both - 1.1.1.1, 2.0.2.0
      * </ul>
      */
-    void setVectorsToEvolveFromTag(const std::string &tag) {
+    void setVectorsToEvolveFromTag(const std::vector<std::string> &tags) {
         Expects(this->numberOfSites > 0);
 
-        FockBase::Vector uniform(this->numberOfSites, 1);
-        FockBase::Vector densityWave(this->numberOfSites);
-        for (std::size_t i{}; i < densityWave.size(); i += 2)
-            densityWave[i] = 2;
-
-        if (tag == "unif") {
-            this->vectorsToEvolve = {uniform};
-        } else if (tag == "dw") {
-            this->vectorsToEvolve = {densityWave};
-        } else if (tag == "both") {
-            this->vectorsToEvolve = {uniform, densityWave};
-        } else {
-            throw std::runtime_error("vectors to evolve must be unif/dw/both"
-                                     "\nunif - 1.1.1.1; dw - 2.0.2.0; both - both ;)");
+        this->vectorsToEvolve.clear();
+        for (const auto &tag : tags) {
+            try {
+                this->vectorsToEvolve.emplace_back(this->numberOfSites, tag);
+            } catch (std::runtime_error &) {
+                // If tag failed, try occupation representation
+                this->vectorsToEvolve.emplace_back(tag);
+            }
         }
     }
 };
