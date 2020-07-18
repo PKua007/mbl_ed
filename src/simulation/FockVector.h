@@ -6,6 +6,7 @@
 #define MBL_ED_FOCKVECTOR_H
 
 #include <vector>
+#include <string>
 
 class FockVector {
 private:
@@ -18,6 +19,8 @@ public:
     FockVector() = default;
     explicit FockVector(std::size_t size, int init = 0) : data(size, init) { }
     FockVector(const std::initializer_list<int> &list) : data(list) { }
+    explicit FockVector(const std::string &occupationRepresentation);
+    FockVector(std::size_t sites, const std::string &tag);
 
     [[nodiscard]] bool empty() const { return data.empty(); }
     [[nodiscard]] std::size_t size() const { return data.size(); }
@@ -36,6 +39,8 @@ public:
 
     [[nodiscard]] friend bool operator==(const FockVector &fw1, const FockVector &fw2) { return fw1.data == fw2.data; }
     [[nodiscard]] friend bool operator!=(const FockVector &fw1, const FockVector &fw2) { return fw1.data == fw2.data; }
+
+    friend std::ostream &operator<<(std::ostream &out, const FockVector &fw);
 };
 
 #include <vector>
