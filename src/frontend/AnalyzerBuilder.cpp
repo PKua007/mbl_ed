@@ -3,6 +3,8 @@
 //
 
 #include <memory>
+#include <iterator>
+#include <algorithm>
 
 #include "AnalyzerBuilder.h"
 
@@ -79,19 +81,20 @@ Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Par
             evolutionParameters.fockBase = fockBase;
             evolutionParameters.numberOfSites = params.K;
 
-            std::string vectorsToEvolveStr;
             double maxTime;
             std::size_t numSteps;
             taskStream >> maxTime >> numSteps >> evolutionParameters.marginSize;
             evolutionParameters.timeSegmentation.push_back({maxTime, numSteps});
-            taskStream >> vectorsToEvolveStr;
             ValidateMsg(taskStream, "Wrong format, use: evolution [max time] [number of steps] [margin size] "
-                                    "[vectors to evolve - unif/dw/both]\nunif - 1.1.1.1; dw - 2.0.2.0; both - both ;)");
+                                    "[space-separated vectors to evolve - unif/dw/1.0.4.0]");
+            std::vector<std::string> tags;
+            std::copy(std::istream_iterator<std::string>(taskStream), std::istream_iterator<std::string>(),
+                      std::back_inserter(tags));
             Validate(evolutionParameters.timeSegmentation[0].maxTime > 0);
             Validate(evolutionParameters.timeSegmentation[0].numSteps >= 2);
             Validate(evolutionParameters.marginSize * 2 < params.K);
 
-            evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveStr);
+            evolutionParameters.setVectorsToEvolveFromTag(tags);
 
             analyzer.addTask(std::make_unique<EDCorrelationsTimeEvolution>(evolutionParameters));
         } else {

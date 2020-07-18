@@ -9,13 +9,15 @@
 #include <vector>
 #include <map>
 
+#include "FockVector.h"
+
 /**
  * @brief A class representing a base of product states of bosons/fermion trapped inside an optical lattice.
  * @details It uses hashing technique for a fast access to the elements.
  */
 class FockBase {
 public:
-    using Vector = std::vector<int>;
+    using Vector = FockVector;
     using iterator = std::vector<Vector>::iterator;
     using const_iterator = std::vector<Vector>::const_iterator;
 

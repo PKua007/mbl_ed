@@ -10,7 +10,7 @@ std::unique_ptr<FockBase> FockBaseGenerator::generate(int numberOfParticles, int
     auto base = std::make_unique<FockBase>();
 
     // An algorithm from https://arxiv.org/pdf/1102.4006.pdf
-    std::vector<int> current(numberOfSites, 0);
+    FockBase::Vector current(numberOfSites, 0);
     current[0] = numberOfParticles;
     base->add(current);
 

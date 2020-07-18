@@ -207,7 +207,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     std::vector<std::string> overridenParams;
     std::string timeSegmentation{};
     std::size_t marginSize{};
-    std::string vectorsToEvolveTag;
+    std::vector<std::string> vectorsToEvolveTags;
 
     options.add_options()
             ("h,help", "prints help for this mode")
@@ -224,7 +224,7 @@ void Frontend::chebyshev(int argc, char **argv) {
             ("m,margin", "margin size - one averaging of correlations is done for all sites, the second one for all "
                          "but a given margin from both sides", cxxopts::value<std::size_t>(marginSize))
             ("v,vectors", "vectors to evolve. Available options: unif/dw/both; unif - 1.1.1.1; dw - 2.0.2.0;"
-                          " both - both ;)", cxxopts::value<std::string>(vectorsToEvolveTag));
+                          " both - both ;)", cxxopts::value<std::vector<std::string>>(vectorsToEvolveTags));
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
@@ -253,7 +253,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     if (marginSize * 2 > params.K - 2)
         die("Margin is too big - there should be at least 2 sites left.");
     if (!parsedOptions.count("vectors"))
-        die("You have to specify vectors to evolve using -v [unif/dw/both]");
+        die("You have to specify space vectors to evolve using -v [unif/dw/1.0.4.0]");
     // Validation of vectors is done later
 
     // OpenMP info
@@ -276,7 +276,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParameters.numberOfSites = params.K;
     evolutionParameters.fockBase = base;
     evolutionParameters.marginSize = marginSize;
-    evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveTag); // This one also does the validation
+    evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveTags); // This one also does the validation
 
     ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                                  params.from, params.to, params.totalSimulations, evolutionParameters,

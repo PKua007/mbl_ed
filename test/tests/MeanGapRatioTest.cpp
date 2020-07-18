@@ -42,7 +42,7 @@ TEST_CASE("MeanGapRatio: single energy set (around vector)") {
                         {0, 0, 0, 0, 0, 0, 1, 0},
                         {0, 0, 0, 0, 0, 0, 0, 1}};
 
-    ratioCalculator.analyze(Eigensystem(eigval, eigvec, base), std::cout);
+    ratioCalculator.analyze(Eigensystem(eigval, eigvec, base), logger);
 
     REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"0.6111", "0.2003"});
 }
