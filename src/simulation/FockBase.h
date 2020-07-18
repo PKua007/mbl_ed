@@ -9,13 +9,44 @@
 #include <vector>
 #include <map>
 
+class FockVector {
+private:
+    std::vector<int> data;
+
+public:
+    using iterator = std::vector<int>::iterator;
+    using const_iterator = std::vector<int>::const_iterator;
+
+    FockVector() = default;
+    explicit FockVector(std::size_t size, int init = 0) : data(size, init) { }
+    FockVector(const std::initializer_list<int> &list) : data(list) { }
+
+    [[nodiscard]] bool empty() const { return data.empty(); }
+    [[nodiscard]] std::size_t size() const { return data.size(); }
+    [[nodiscard]] int &operator[](std::size_t idx) { return data[idx]; }
+    [[nodiscard]] int operator[](std::size_t idx) const { return data[idx]; }
+
+    [[nodiscard]] int front() const { return data.front(); }
+    [[nodiscard]] int back() const { return data.back(); }
+    [[nodiscard]] int &front() { return data.front(); }
+    [[nodiscard]] int &back() { return data.back(); }
+
+    [[nodiscard]] iterator begin() { return data.begin(); }
+    [[nodiscard]] iterator end() { return data.end(); }
+    [[nodiscard]] const_iterator begin() const { return data.begin(); }
+    [[nodiscard]] const_iterator end() const { return data.end(); }
+
+    [[nodiscard]] friend bool operator==(const FockVector &fw1, const FockVector &fw2) { return fw1.data == fw2.data; }
+    [[nodiscard]] friend bool operator!=(const FockVector &fw1, const FockVector &fw2) { return fw1.data == fw2.data; }
+};
+
 /**
  * @brief A class representing a base of product states of bosons/fermion trapped inside an optical lattice.
  * @details It uses hashing technique for a fast access to the elements.
  */
 class FockBase {
 public:
-    using Vector = std::vector<int>;
+    using Vector = FockVector;
     using iterator = std::vector<Vector>::iterator;
     using const_iterator = std::vector<Vector>::const_iterator;
 
