@@ -22,7 +22,7 @@ void DressedStatesFinder::analyze(const Eigensystem &eigensystem, std::ostream &
         const auto &vector = eigensystem.getEigenstate(index);
         for (std::size_t coeffIndex{}; coeffIndex < vector.size(); coeffIndex++) {
             double coeff = vector[coeffIndex];
-            if (coeff > this->coefficientThreshold) {
+            if (std::abs(coeff) > this->coefficientThreshold) {
                 std::ostringstream vectorStream;
                 vectorStream << base[coeffIndex]; // index
                 this->result.push_back({this->simulationIdx, vectorStream.str(), normalizedEnergies[index], coeff});

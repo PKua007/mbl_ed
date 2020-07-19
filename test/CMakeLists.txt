@@ -12,6 +12,6 @@ add_executable(tests TestMain.cpp tests/FockBaseGeneratorTest.cpp tests/FockBase
         mocks/DoubleHoppingTermMock.h tests/LookupCavityY2Test.cpp tests/CorrelationsTimeEvolutionTest.cpp
         tests/SymmetricMatrixTest.cpp tests/OccupationEvolutionTest.cpp  matchers/VectorApproxEqualMatcher.h
         tests/CorrelationsTimeEntryTest.cpp tests/QuasiperiodicDisorderTest.cpp tests/ListOnsiteTest.cpp
-        tests/EvolversTest.cpp tests/FockVectorTest.cpp)
+        tests/EvolversTest.cpp tests/FockVectorTest.cpp tests/DressedStatesFinderTest.cpp)
 target_link_libraries(tests PRIVATE mbl_ed_src Catch2::Catch2 trompeloeil)
 target_include_directories(tests PRIVATE ../test)
