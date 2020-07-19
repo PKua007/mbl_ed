@@ -17,22 +17,22 @@ void DressedStatesFinder::analyze(const Eigensystem &eigensystem, std::ostream &
     arma::mat normalizedEnergies = eigensystem.getNormalizedEigenenergies();
     auto indices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy, this->relativeMargin);
 
-    std::size_t statesFound{};
-    for (std::size_t index : indices) {
-        const auto &vector = eigensystem.getEigenstate(index);
+    std::size_t numOfStatesFound{};
+    for (std::size_t eigvecIdx : indices) {
+        const auto &vector = eigensystem.getEigenstate(eigvecIdx);
         for (std::size_t coeffIndex{}; coeffIndex < vector.size(); coeffIndex++) {
-            double coeff = vector[coeffIndex];
-            if (std::abs(coeff) > this->coefficientThreshold) {
+            double coeffValue = vector[coeffIndex];
+            if (std::abs(coeffValue) > this->coefficientThreshold) {
                 std::ostringstream vectorStream;
-                vectorStream << base[coeffIndex]; // index
-                this->result.push_back({this->simulationIdx, vectorStream.str(), normalizedEnergies[index], coeff});
-                statesFound++;
+                vectorStream << base[coeffIndex];
+                this->result.push_back({this->simulationIdx, vectorStream.str(), normalizedEnergies[eigvecIdx], coeffValue});
+                numOfStatesFound++;
                 break;
             }
         }
     }
 
-    logger << "Found " << statesFound << "/" << indices.size() << " dressed states. " << std::flush;
+    logger << "Found " << numOfStatesFound << "/" << indices.size() << " dressed states. " << std::flush;
     this->simulationIdx++;
 }
 
