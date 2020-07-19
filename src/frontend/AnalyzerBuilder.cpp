@@ -14,6 +14,7 @@
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/InverseParticipationRatio.h"
 #include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
+#include "analyzer/tasks/DressedStatesFinder.h"
 
 Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
                                 std::shared_ptr<FockBase> fockBase)
@@ -97,6 +98,16 @@ Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Par
             evolutionParameters.setVectorsToEvolveFromTag(tags);
 
             analyzer.addTask(std::make_unique<EDCorrelationsTimeEvolution>(evolutionParameters));
+        } else if (taskName == "dressed") {
+            double mgrCenter, mgrMargin, coeffThreshold;
+            taskStream >> mgrCenter >> mgrMargin >> coeffThreshold;
+            ValidateMsg(taskStream, "Wrong format, use: dressed [epsilon center] [epsilon margin] "
+                                    "[coefficient threshold > 1/sqrt(2)");
+            Validate(mgrCenter > 0 && mgrCenter < 1);
+            Validate(mgrMargin > 0 && mgrMargin <= 1);
+            Validate(mgrCenter - mgrMargin / 2 >= 0 && mgrCenter + mgrMargin / 2 <= 1);
+            Validate(coeffThreshold > M_SQRT1_2);
+            analyzer.addTask(std::make_unique<DressedStatesFinder>(mgrCenter, mgrMargin, coeffThreshold));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
         }
