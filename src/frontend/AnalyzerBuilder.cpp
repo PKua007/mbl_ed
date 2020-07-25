@@ -95,7 +95,7 @@ Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Par
             Validate(evolutionParameters.timeSegmentation[0].numSteps >= 2);
             Validate(evolutionParameters.marginSize * 2 < params.K);
 
-            evolutionParameters.setVectorsToEvolveFromTag(tags);
+            evolutionParameters.setVectorsToEvolveFromTags(tags);
 
             analyzer.addTask(std::make_unique<EDCorrelationsTimeEvolution>(evolutionParameters));
         } else if (taskName == "dressed") {

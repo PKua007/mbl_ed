@@ -32,24 +32,25 @@ struct CorrelationsTimeEvolutionParameters {
     std::vector<FockBase::Vector> vectorsToEvolve{};
 
     /**
-     * @brief Constructs CorrelationsTimeEvolutionParameters::vectorsToEvolve from a string @a tag.
-     * @details Supported tags (for 4 sites), giving appropriate vectors:
+     * @brief Constructs CorrelationsTimeEvolutionParameters::vectorsToEvolve from a string.
+     * @details It can be either a tag
      * <ul>
      * <li> unif - 1.1.1.1
      * <li> dw - 2.0.2.0
-     * <li> both - 1.1.1.1, 2.0.2.0
      * </ul>
+     * or occupation representation 2.3.0.0.1
      */
-    void setVectorsToEvolveFromTag(const std::vector<std::string> &tags) {
+    void setVectorsToEvolveFromTags(const std::vector<std::string> &strings) {
         Expects(this->numberOfSites > 0);
 
         this->vectorsToEvolve.clear();
-        for (const auto &tag : tags) {
+        for (const auto &string : strings) {
             try {
-                this->vectorsToEvolve.emplace_back(this->numberOfSites, tag);
-            } catch (std::runtime_error &) {
+                // Try a tag representation
+                this->vectorsToEvolve.emplace_back(this->numberOfSites, string);
+            } catch (FockVectorParseException &) {
                 // If tag failed, try occupation representation
-                this->vectorsToEvolve.emplace_back(tag);
+                this->vectorsToEvolve.emplace_back(string);
             }
         }
     }

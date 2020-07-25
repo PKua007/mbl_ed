@@ -38,13 +38,13 @@ FockVector::FockVector(std::size_t sites, const std::string &tag) {
         this->data.resize(sites, 1);
     } else if (tag == "dw") {
         if (sites % 2 != 0)
-            throw std::runtime_error("dw Fock vector available only for even number of sites");
+            throw FockVectorParseException("dw Fock vector available only for even number of sites");
 
         this->data.clear();
         this->data.resize(sites);
         for (std::size_t i{}; i < sites; i += 2)
             this->data[i] = 2;
     } else {
-        throw std::runtime_error("unknown tag: " + tag);
+        throw FockVectorParseException("unknown tag: " + tag);
     }
 }

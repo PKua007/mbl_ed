@@ -276,7 +276,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParameters.numberOfSites = params.K;
     evolutionParameters.fockBase = base;
     evolutionParameters.marginSize = marginSize;
-    evolutionParameters.setVectorsToEvolveFromTag(vectorsToEvolveTags); // This one also does the validation
+    evolutionParameters.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
 
     ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                                  params.from, params.to, params.totalSimulations, evolutionParameters,

@@ -8,6 +8,10 @@
 #include <vector>
 #include <string>
 
+struct FockVectorParseException : public std::runtime_error {
+    explicit FockVectorParseException(const std::string &what) : std::runtime_error(what) { }
+};
+
 class FockVector {
 private:
     std::vector<int> data;
@@ -42,8 +46,5 @@ public:
 
     friend std::ostream &operator<<(std::ostream &out, const FockVector &fw);
 };
-
-#include <vector>
-#include <map>
 
 #endif //MBL_ED_FOCKVECTOR_H
