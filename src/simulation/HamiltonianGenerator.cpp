@@ -145,16 +145,30 @@ void HamiltonianGenerator::addDoubleHoppingTerm(std::unique_ptr<DoubleHoppingTer
 }
 
 Eigensystem HamiltonianGenerator::calculateEigensystem(bool calculateEigenvectors) const {
-    arma::mat hamiltonian = arma::mat(this->generate());
+    if (this->hoppingTerms.empty() && this->doubleHoppingTerms.empty()) {
+        // For only diagonal terms there is no need to diagonalize
+        arma::vec energies(this->fockBase->size());
+        for (auto &diagonalTerm : this->diagonalTerms)
+            for (std::size_t i{}; i < this->fockBase->size(); i++)
+                energies[i] += diagonalTerm->calculate((*this->fockBase)[i], *this);
 
-    arma::vec armaEnergies;
-    arma::mat armaEigvec;
-
-    if (calculateEigenvectors) {
-        Assert(arma::eig_sym(armaEnergies, armaEigvec, hamiltonian));
-        return Eigensystem(armaEnergies, armaEigvec, this->getFockBase());
+        if (calculateEigenvectors)
+            return Eigensystem(energies, arma::eye(this->fockBase->size(), this->fockBase->size()), this->getFockBase());
+        else
+            return Eigensystem(energies, this->getFockBase());
     } else {
-        Assert(arma::eig_sym(armaEnergies, hamiltonian));
-        return Eigensystem(armaEnergies, this->getFockBase());
+        // If off-diagonal elements are non-empty, diagonalization is needed
+        arma::mat hamiltonian = arma::mat(this->generate());
+
+        arma::vec armaEnergies;
+        arma::mat armaEigvec;
+
+        if (calculateEigenvectors) {
+            Assert(arma::eig_sym(armaEnergies, armaEigvec, hamiltonian));
+            return Eigensystem(armaEnergies, armaEigvec, this->getFockBase());
+        } else {
+            Assert(arma::eig_sym(armaEnergies, hamiltonian));
+            return Eigensystem(armaEnergies, this->getFockBase());
+        }
     }
 }
