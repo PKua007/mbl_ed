@@ -143,3 +143,18 @@ void HamiltonianGenerator::addHoppingTerm(std::unique_ptr<HoppingTerm> term) {
 void HamiltonianGenerator::addDoubleHoppingTerm(std::unique_ptr<DoubleHoppingTerm> term) {
     this->doubleHoppingTerms.push_back(std::move(term));
 }
+
+Eigensystem HamiltonianGenerator::calculateEigensystem(bool calculateEigenvectors) const {
+    arma::mat hamiltonian = arma::mat(this->generate());
+
+    arma::vec armaEnergies;
+    arma::mat armaEigvec;
+
+    if (calculateEigenvectors) {
+        Assert(arma::eig_sym(armaEnergies, armaEigvec, hamiltonian));
+        return Eigensystem(armaEnergies, armaEigvec, this->getFockBase());
+    } else {
+        Assert(arma::eig_sym(armaEnergies, hamiltonian));
+        return Eigensystem(armaEnergies, this->getFockBase());
+    }
+}

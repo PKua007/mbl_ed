@@ -13,6 +13,7 @@
 #include "DiagonalTerm.h"
 #include "HoppingTerm.h"
 #include "DoubleHoppingTerm.h"
+#include "Eigensystem.h"
 
 /**
  * @brief Struct representing a hop between two sites.
@@ -61,6 +62,13 @@ public:
      * another base vector is obtained that way.
      */
     [[nodiscard]] arma::sp_mat generate() const;
+
+    /**
+     * @brief Generates hamiltonian and diagonalizes it. It is not dumb, if hamiltonian is diagonal it doesn't
+     * invoke diagonalization routines.
+     * @return Eigensystem with or without eigenvectors, depending on @a calculateEigenvectors flag.
+     */
+    [[nodiscard]] Eigensystem calculateEigensystem(bool calculateEigenvectors) const;
 
     /**
      * @brief Returns the distance between sites of given indices.

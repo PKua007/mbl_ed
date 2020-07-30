@@ -14,28 +14,36 @@ namespace {
     class MockHamiltonianGenerator {
     private:
         std::size_t simulationIndex{};
-        std::vector<arma::mat> matrices{};
+        std::vector<arma::vec> eigenvalues{};
+        std::vector<arma::mat> eigenvectors{};
 
         friend class MockAveragingModel;
 
     public:
         MockHamiltonianGenerator() {
-            // -1, 0, 9
-            matrices.push_back({{5, 2, 4},
-                                {2, 0, 2},
-                                {4, 2, 3}});
-            // -1, 1, 2
-            matrices.push_back({{0, 0, 1},
-                                {0, 2, 0},
-                                {1, 0, 0}});
-            // 1, 2, 3
-            matrices.push_back({{1, 0, 0},
-                                {0, 2, 0},
-                                {0, 0, 3}});
+            this->eigenvalues.push_back({-1, 0, 9});
+            this->eigenvectors.push_back({{1, 0, 0},
+                                          {0, 1, 0},
+                                          {0, 0, 1}});
+
+            this->eigenvalues.push_back({-1, 1, 2});
+            this->eigenvectors.push_back({{1, 0, 0},
+                                          {0, 0, 1},
+                                          {0, 1, 0}});
+
+            this->eigenvalues.push_back({1, 2, 3});
+            this->eigenvectors.push_back({{0, 1, 0},
+                                          {1, 0, 0},
+                                          {0, 0, 1}});
         }
 
-        [[nodiscard]] arma::mat generate() const {
-            return this->matrices.at(simulationIndex - 1);
+        [[nodiscard]] Eigensystem calculateEigensystem(bool calculateEigenvectors) const {
+            REQUIRE(calculateEigenvectors);
+
+            // Simulation index starts at 1 in our case. std::vector::at will throw if out of bounds, so it makes
+            // am additional check
+            return Eigensystem(this->eigenvalues.at(this->simulationIndex - 1),
+                               this->eigenvectors.at(this->simulationIndex - 1));
         }
 
         [[nodiscard]] std::shared_ptr<const FockBase> getFockBase() const {
@@ -70,12 +78,17 @@ namespace {
             REQUIRE(index >= 1);
             REQUIRE(index <= 3);
             const auto &eigenenergies = eigensystem.getEigenenergies();
-            if (index == 1)
+            const auto &eigenvectors = eigensystem.getEigenstates();
+            if (index == 1) {
                 REQUIRE_THAT(eigenenergies, IsApproxEqual(arma::vec{-1, 0, 9}, 1e-8));
-            else if (index == 2)
+                REQUIRE_THAT(eigenvectors, IsApproxEqual(arma::mat{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}, 1e-8));
+            } else if (index == 2) {
                 REQUIRE_THAT(eigenenergies, IsApproxEqual(arma::vec{-1, 1, 2}, 1e-8));
-            else if (index == 3)
+                REQUIRE_THAT(eigenvectors, IsApproxEqual(arma::mat{{1, 0, 0}, {0, 0, 1}, {0, 1, 0}}, 1e-8));
+            } else if (index == 3) {
                 REQUIRE_THAT(eigenenergies, IsApproxEqual(arma::vec{1, 2, 3}, 1e-8));
+                REQUIRE_THAT(eigenvectors, IsApproxEqual(arma::mat{{0, 1, 0}, {1, 0, 0}, {0, 0, 1}}, 1e-8));
+            }
             index++;
         }
     };
