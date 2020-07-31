@@ -15,6 +15,7 @@
 #include "analyzer/tasks/InverseParticipationRatio.h"
 #include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
 #include "analyzer/tasks/DressedStatesFinder.h"
+#include "analyzer/tasks/BulkMeanGapRatio.h"
 
 Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
                                 std::shared_ptr<FockBase> fockBase)
@@ -108,6 +109,12 @@ Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Par
             Validate(mgrCenter - mgrMargin / 2 >= 0 && mgrCenter + mgrMargin / 2 <= 1);
             Validate(coeffThreshold > M_SQRT1_2);
             analyzer.addTask(std::make_unique<DressedStatesFinder>(mgrCenter, mgrMargin, coeffThreshold));
+        } else if (taskName == "mgrs") {
+            std::size_t numBins;
+            taskStream >> numBins;
+            ValidateMsg(taskStream, "Wrong format, use: mgrs [number of bins]");
+            Validate(numBins > 0);
+            analyzer.addTask(std::make_unique<BulkMeanGapRatio>(numBins));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
         }

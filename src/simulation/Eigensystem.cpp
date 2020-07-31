@@ -129,9 +129,6 @@ std::vector<std::size_t> Eigensystem::getIndicesOfNormalizedEnergiesInBand(doubl
 
     auto fromIt = std::lower_bound(normalizedEnergies.begin(), normalizedEnergies.end(), relativeFrom);
     auto toIt = std::lower_bound(normalizedEnergies.begin(), normalizedEnergies.end(), relativeTo);
-    Assert(fromIt - normalizedEnergies.begin() >= 1);
-    Assert(normalizedEnergies.end() - toIt >= 1);
-    Assert(toIt - fromIt > 0);
 
     std::vector<std::size_t> indices(toIt - fromIt);
     std::iota(indices.begin(), indices.end(), fromIt - normalizedEnergies.begin());
