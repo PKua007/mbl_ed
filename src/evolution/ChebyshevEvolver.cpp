@@ -3,34 +3,71 @@
 //
 
 #include <complex>
+#include <chrono>
 
 #include "ChebyshevEvolver.h"
 #include "utils/Assertions.h"
 
 using namespace std::complex_literals;
 
+template<typename V, typename M>
+inline void csrMult(V &Ax, const V &x, const M &Adata, const std::vector<std::size_t> &Aindices, const std::vector<std::size_t> &Aindptr)
+{
+    for (std::size_t i = 0; i < Ax.size(); i++)
+    {
+        std::complex<double> Ax_i = 0.0;
+        for (std::size_t dataIdx = Aindptr[i]; dataIdx < Aindptr[i + 1]; dataIdx++)
+        {
+            Ax_i += Adata[dataIdx] * x[Aindices[dataIdx]];
+        }
+        Ax[i] = Ax_i;
+    }
+}
+
 /**
  * @brief Perform one Chebyshev step by this->dt using formulas from paper:
  * Many-body localization in presence of cavity mediated long-range interactions
  */
 arma::cx_vec ChebyshevEvolver::evolveState(const arma::cx_vec &state) {
+    std::chrono::time_point b1 = std::chrono::high_resolution_clock::now();
     arma::sp_mat hamiltonianRescaled = (this->hamiltonian - arma::speye(arma::size(this->hamiltonian)) * this->b) / this->a;
+    std::chrono::time_point e1 = std::chrono::high_resolution_clock::now();
 
-    arma::cx_mat prevPrevOrder = state;
-    arma::cx_mat prevOrder = hamiltonianRescaled * state;
-    arma::cx_mat currentOrder;
-    arma::cx_vec result(arma::size(state), arma::fill::zeros);
+    std::vector<double> Adata(hamiltonianRescaled.values, hamiltonianRescaled.values + hamiltonianRescaled.n_nonzero);
+    std::vector<std::size_t> Aindices(hamiltonianRescaled.row_indices, hamiltonianRescaled.row_indices + hamiltonianRescaled.n_nonzero);
+    std::vector<std::size_t> Aindptr(hamiltonianRescaled.col_ptrs, hamiltonianRescaled.col_ptrs + hamiltonianRescaled.n_rows + 1);
 
-    result += state * std::cyl_bessel_j(0, this->a * this->dt);
+    this->logger << "scale: " << std::chrono::duration_cast<std::chrono::microseconds>(e1 - b1).count() << std::endl;
+
+    arma::cx_vec prevPrevOrder = state;
+    arma::cx_vec prevOrder(arma::size(state));
+    csrMult(prevOrder, state, Adata, Aindices, Aindptr);
+    arma::cx_vec currentOrder(arma::size(state));
+    arma::cx_vec result(arma::size(state));
+    arma::cx_vec hamVec(arma::size(state));
+
+    result = state * std::cyl_bessel_j(0, this->a * this->dt);
     result += 2. * -1i * std::cyl_bessel_j(1, this->a * this->dt) * prevOrder;
 
+    std::chrono::time_point b2 = std::chrono::high_resolution_clock::now();
+    unsigned long mul{};
     for (std::size_t i = 2; i <= N; i++) {
-        currentOrder = 2 * hamiltonianRescaled * prevOrder - prevPrevOrder;
+        std::chrono::time_point b3 = std::chrono::high_resolution_clock::now();
+        //hamVec = hamiltonianRescaled * prevOrder;
+
+        csrMult(hamVec, prevOrder, Adata, Aindices, Aindptr);
+        std::chrono::time_point e3 = std::chrono::high_resolution_clock::now();
+
+        mul += std::chrono::duration_cast<std::chrono::microseconds>(e3 - b3).count();
+        currentOrder = 2* hamVec - prevPrevOrder;
         result += 2. * std::pow(-1i, i) * std::cyl_bessel_j(i, this->a * this->dt) * currentOrder;
         prevPrevOrder = prevOrder;
         prevOrder = currentOrder;
     }
     result *= std::exp(-1i * this->b * this->dt);
+    std::chrono::time_point e2 = std::chrono::high_resolution_clock::now();
+    this->logger << "mul: " << mul << std::endl;
+    this->logger << "all: " << std::chrono::duration_cast<std::chrono::microseconds>(e2 - b2).count() << std::endl;
 
     return result;
 }
