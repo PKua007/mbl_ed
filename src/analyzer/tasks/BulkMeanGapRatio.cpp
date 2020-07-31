@@ -23,7 +23,7 @@ void BulkMeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &log
             bandIndices.erase(bandIndices.begin());
         if (!bandIndices.empty() && bandIndices.back() == eigensystem.size() - 1)
             bandIndices.pop_back();
-        if (bandIndices.size() < 3)
+        if (bandIndices.empty())
             continue;
 
         for (auto i : bandIndices) {
