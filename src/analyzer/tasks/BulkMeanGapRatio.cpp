@@ -19,10 +19,12 @@ void BulkMeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &log
         double binMargin = binEnd - binBeg;
 
         auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(binMid, binMargin);
+        // Do not include ends of the spectrum - they do not have neighbours on both sides!
         if (!bandIndices.empty() && bandIndices.front() == 0)
             bandIndices.erase(bandIndices.begin());
         if (!bandIndices.empty() && bandIndices.back() == eigensystem.size() - 1)
             bandIndices.pop_back();
+
         if (bandIndices.empty())
             continue;
 
