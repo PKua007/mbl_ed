@@ -43,23 +43,6 @@ private:
     std::unique_ptr<FileOstreamProvider> ostreamProvider;
     SimulationParameters params;
 
-    Eigensystem performSingleSimulation(std::size_t simulationIndex) {
-        this->averagingModel->setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, simulationIndex,
-                                                    this->params.totalSimulations);
-        arma::mat hamiltonian = arma::mat(this->hamiltonianGenerator->generate());
-
-        arma::vec armaEnergies;
-        arma::mat armaEigvec;
-
-        if (this->params.calculateEigenvectors) {
-            Assert(arma::eig_sym(armaEnergies, armaEigvec, hamiltonian));
-            return Eigensystem(armaEnergies, armaEigvec, this->hamiltonianGenerator->getFockBase());
-        } else {
-            Assert(arma::eig_sym(armaEnergies, hamiltonian));
-            return Eigensystem(armaEnergies, this->hamiltonianGenerator->getFockBase());
-        }
-    }
-
     void doSaveEigenenergies(const Eigensystem &eigensystem, std::size_t index) const {
         std::ostringstream filenameStream;
         filenameStream << this->params.fileSignature << "_" << index << "_nrg.bin";
@@ -108,7 +91,9 @@ public:
             logger << "[Simulation::perform] Performing diagonalization " << i << "... " << std::flush;
             arma::wall_clock timer;
             timer.tic();
-            Eigensystem eigensystem = this->performSingleSimulation(i);
+            this->averagingModel->setupHamiltonianGenerator(*this->hamiltonianGenerator, *this->rnd, i,
+                                                            this->params.totalSimulations);
+            Eigensystem eigensystem = this->hamiltonianGenerator->calculateEigensystem(params.calculateEigenvectors);
             logger << "done (" << timer.toc() << " s). Analyzing... " << std::flush;
 
             timer.tic();

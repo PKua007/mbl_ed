@@ -114,6 +114,48 @@ TEST_CASE("HamiltonianGenerator: diagonal") {
     REQUIRE_THAT(result, IsApproxEqual(expected, 1e-8));
 }
 
+TEST_CASE("HamiltonianGenerator: diagonalization") {
+    SECTION("diagonal") {
+        // Simple {2, 1} on diagonal - it should only get the order {1, 2} right
+        auto diagonal = std::make_unique<DiagonalTermMock>();
+        ALLOW_CALL(*diagonal, calculate(FockBase::Vector{1, 0}, _))
+            .RETURN(2);
+        ALLOW_CALL(*diagonal, calculate(FockBase::Vector{0, 1}, _))
+            .RETURN(1);
+        FockBaseGenerator baseGenerator;
+        auto fockBase = baseGenerator.generate(1, 2);
+        HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);
+        hamiltonianGenerator.addDiagonalTerm(std::move(diagonal));
+
+        Eigensystem result = hamiltonianGenerator.calculateEigensystem(true);
+
+        REQUIRE_THAT(result.getEigenenergies(), IsApproxEqual(arma::vec{1, 2}, 1e-8));
+        REQUIRE_THAT(result.getEigenstates(), IsApproxEqual(arma::mat{{0, 1}, {1, 0}}, 1e-8));
+    }
+
+    SECTION("off-diagonal") {
+        // Simple zeros on diagonal and ones off diagonal
+        auto hopping = std::make_unique<HoppingTermMock>();
+        REQUIRE_CALL(*hopping, calculate(_, _))
+                .WITH(HopBetween(_1) == HopBetween(0, 1))
+                .RETURN(1)
+                .TIMES(AT_LEAST(1));
+        FockBaseGenerator baseGenerator;
+        auto fockBase = baseGenerator.generate(1, 2);
+        HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
+        hamiltonianGenerator.addHoppingTerm(std::move(hopping));
+
+        Eigensystem result = hamiltonianGenerator.calculateEigensystem(true);
+
+        REQUIRE_THAT(result.getEigenenergies(), IsApproxEqual(arma::vec{-1, 1}, 1e-8));
+        // Allow for +-eigenvectors
+        REQUIRE_THAT(result.getEigenstates().col(0), IsApproxEqual(arma::vec{-M_SQRT1_2, M_SQRT1_2}, 1e-8)
+                                                     || IsApproxEqual(arma::vec{M_SQRT1_2, -M_SQRT1_2}, 1e-8));
+        REQUIRE_THAT(result.getEigenstates().col(1), IsApproxEqual(arma::vec{M_SQRT1_2, M_SQRT1_2}, 1e-8)
+                                                     || IsApproxEqual(arma::vec{-M_SQRT1_2, -M_SQRT1_2}, 1e-8));
+    }
+}
+
 TEST_CASE("HamiltonianGenerator: PBC") {
     SECTION("Periodic BC - periodic hopping should be present") {
         auto hopping = std::make_unique<HoppingTermMock>();
