@@ -32,8 +32,11 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger)
     }
 
     auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(relativeMiddleEnergy_, this->relativeMargin);
-    Assert(bandIndices.front() > 0);
-    Assert(bandIndices.back() < normalizedEnergies.size() - 1);
+    if (!bandIndices.empty() && bandIndices.front() == 0)
+        bandIndices.erase(bandIndices.begin());
+    if (!bandIndices.empty() && bandIndices.back() == eigensystem.size() - 1)
+        bandIndices.pop_back();
+    Assert(!bandIndices.empty());
 
     for (auto i : bandIndices) {
         double gap1 = normalizedEnergies[i] - normalizedEnergies[i - 1];
