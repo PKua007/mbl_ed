@@ -84,9 +84,15 @@ void Frontend::simulate(int argc, char **argv) {
     // OpenMP info
     std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
-    // Generate Fock basis, prepare HamiltonianGenerator, Analyzer and AveragingModel
+    // Generate Fock basis
     FockBaseGenerator baseGenerator;
+    std::cout << "[Frontend::simulate] Preparing Fock basis... " << std::flush;
+    arma::wall_clock timer;
+    timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    std::cout << "done (" << timer.toc() << " s)." << std::endl;
+
+    // Prepare HamiltonianGenerator, Analyzer and AveragingModel
     auto rnd = std::make_unique<RND>(params.from + params.seed);
     auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
     Analyzer analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, base);
@@ -170,8 +176,13 @@ void Frontend::analyze(int argc, char **argv) {
         if (!params.hasParam(param))
             die("Parameters to print: parameter " + param + " is unknown");
 
+    // Generate Fock basis
     FockBaseGenerator baseGenerator;
+    std::cout << "[Frontend::analyze] Preparing Fock basis... " << std::flush;
+    arma::wall_clock timer;
+    timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    std::cout << "done (" << timer.toc() << " s)." << std::endl;
 
     // Load eigenenergies and analyze them
     Analyzer analyzer = AnalyzerBuilder{}.build(tasks, params, base);
@@ -257,11 +268,17 @@ void Frontend::chebyshev(int argc, char **argv) {
     // Validation of vectors is done later
 
     // OpenMP info
-    std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+    std::cout << "[Frontend::chebyshev] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
-    // Prepare FockBasis, HamiltonianGenerator, Analyzer and AveragingModel
+    // Prepare FockBasis
     FockBaseGenerator baseGenerator;
+    std::cout << "[Frontend::chebyshev] Preparing Fock basis... " << std::flush;
+    arma::wall_clock timer;
+    timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    std::cout << "done (" << timer.toc() << " s)." << std::endl;
+
+    // Prepare HamiltonianGenerator, Analyzer and AveragingModel
     auto rnd = std::make_unique<RND>(params.from + params.seed);
     auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
