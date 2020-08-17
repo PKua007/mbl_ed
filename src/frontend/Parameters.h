@@ -56,7 +56,17 @@ public:
     explicit Parameters(std::istream &input);
 
     /**
-     * @brief Prints the summary of parameters to the @a out stream.
+     * @brief Prints the summary of general parameters to the @a out stream.
+     */
+    void printGeneral(std::ostream &out) const;
+
+    /**
+     * @brief Prints the summary of hamiltonian terms to the @a out stream.
+     */
+    void printHamiltonianTerms(std::ostream &out) const;
+
+    /**
+     * @brief Prints the summary of both general parameters and hamiltonian terms to the @a out stream.
      */
     void print(std::ostream &out) const;
 

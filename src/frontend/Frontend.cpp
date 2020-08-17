@@ -350,18 +350,22 @@ void Frontend::quench(int argc, char **argv) {
     overridenAndQuenchEntries.insert(overridenAndQuenchEntries.end(), quenchParamsEntries.begin(),
                                      quenchParamsEntries.end());
     Parameters quenchParams = io.loadParameters(inputFilename, overridenAndQuenchEntries);
-    std::cout << "[Frontend::quench] Initial Hamiltonian:" << std::endl;
-    quenchParams.print(std::cout);
-    std::cout << std::endl;
 
     // Prepare (final) parameters
     Parameters params = io.loadParameters(inputFilename, overridenParamsEntries);
-    std::cout << "[Frontend::quench] Final Hamiltonian:" << std::endl;
-    params.print(std::cout);
-    std::cout << std::endl;
     for (const auto &param : paramsToPrint)
         if (!params.hasParam(param))
             die("Parameters to print: parameter " + param + " is unknown");
+
+    // Print info on prameters and initial and final Hamiltonians
+    params.printGeneral(std::cout);
+    std::cout << std::endl;
+    std::cout << "[Frontend::quench] Initial Hamiltonian:" << std::endl;
+    quenchParams.printHamiltonianTerms(std::cout);
+    std::cout << std::endl;
+    std::cout << "[Frontend::quench] Final Hamiltonian:" << std::endl;
+    params.printHamiltonianTerms(std::cout);
+    std::cout << std::endl;
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
