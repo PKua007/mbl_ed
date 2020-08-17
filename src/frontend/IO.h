@@ -20,10 +20,11 @@ private:
 
     void saveOutputToFile(const std::string &header, const std::string &fields, const std::string &outputFilename);
     [[nodiscard]] std::string stringifyRow(std::vector<std::string> row) const;
-    std::string prepareInlineResultHeaderRow(const Analyzer &analyzer,
-                                             const std::vector<std::string> &parametersToPrint);
-    std::string prepareInlineResultFieldsRow(const Parameters &parameters, const Analyzer &analyzer,
-                                             const std::vector<std::string> &parametersToPrint);
+    std::string prepareInlineResultHeaderRow(const std::vector<std::string> &parametersToPrint,
+                                             const std::vector<std::string> &additionalFields);
+    std::string prepareInlineResultFieldsRow(const Parameters &parameters,
+                                             const std::vector<std::string> &parametersToPrint,
+                                             const std::vector<std::string> &additionalFields);
 
 public:
     /**
@@ -47,8 +48,8 @@ public:
      * @details Format: two rows - header and field values. Last columns are fields from InlineAnalyzerTask -s from
      * @a analyzer, while first few are parameters from @a params specified by @a paramsToPrint
      */
-    void printInlineAnalyzerResults(const Parameters &params, const Analyzer &analyzer,
-                                    const std::vector<std::string> &paramsToPrint);
+    void printInlineResults(const Parameters &params, const std::vector<std::string> &paramsToPrint,
+            const std::vector<std::string> &additionalHeader, const std::vector<std::string> &additionalFields);
 
     /**
      * @brief Stores BulkAnalyzerTask result to files with prefix given by Parameters::getOutputFileSignature and
@@ -63,6 +64,10 @@ public:
     void storeAnalyzerResults(const Parameters &params, const Analyzer &analyzer,
                               const std::vector<std::string> &paramsToPrint,
                               std::optional<std::string> inlineResultFilename);
+
+    void storeInlineResults(const Parameters &parameters, const std::vector<std::string> &paramsToStore,
+                            const std::vector<std::string> &header, const std::vector<std::string> &fields,
+                            const std::string &outputFilename);
 };
 
 #endif //MBL_ED_IO_H

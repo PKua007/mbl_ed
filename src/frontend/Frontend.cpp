@@ -111,7 +111,7 @@ void Frontend::simulate(int argc, char **argv) {
     simulation.perform(this->out, analyzer);
 
     // Save results
-    io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
+    io.printInlineResults(params, paramsToPrint, analyzer.getInlineResultsHeader(), analyzer.getInlineResultsFields());
     if (outputFilename.empty())
         io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
     else
@@ -202,7 +202,7 @@ void Frontend::analyze(int argc, char **argv) {
     }
 
     // Save results
-    io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
+    io.printInlineResults(params, paramsToPrint, analyzer.getInlineResultsHeader(), analyzer.getInlineResultsFields());
     if (outputFilename.empty())
         io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
     else
@@ -308,13 +308,19 @@ void Frontend::quench(int argc, char **argv) {
                                      .width(80));
 
     std::string inputFilename;
+    std::string outputFilename;
     std::vector<std::string> overridenParamsEntries;
     std::vector<std::string> quenchParamsEntries;
+    std::vector<std::string> paramsToPrint{};
 
     options.add_options()
             ("h,help", "prints help for this mode")
             ("i,input", "file with parameters. See input.ini for parameters description",
              cxxopts::value<std::string>(inputFilename))
+            ("o,output", "when specified, quench results will be printed to this file",
+             cxxopts::value<std::string>(outputFilename))
+            ("p,print_parameter", "parameters to be included in inline results",
+             cxxopts::value<std::vector<std::string>>(paramsToPrint)->default_value("N,K"))
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
                             "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
                             "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
@@ -353,6 +359,9 @@ void Frontend::quench(int argc, char **argv) {
     std::cout << "[Frontend::quench] Final Hamiltonian:" << std::endl;
     params.print(std::cout);
     std::cout << std::endl;
+    for (const auto &param : paramsToPrint)
+        if (!params.hasParam(param))
+            die("Parameters to print: parameter " + param + " is unknown");
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
@@ -408,11 +417,20 @@ void Frontend::quench(int argc, char **argv) {
         std::cout << std::sqrt(varEpsilonQuench) << std::endl;
     }
 
+    // Calculate statistical data
     Quantity quenchEpsilon, quenchVariance;
     quenchEpsilon.calculateFromSamples(quenchEpsilons);
     quenchVariance.calculateFromSamples(quenchVariances);
-    std::cout << quenchEpsilon.value << " " << quenchEpsilon.error * std::sqrt(quenchEpsilons.size()) << " ";
-    std::cout << std::sqrt(quenchVariance.value) << std::endl;
+
+    std::vector<std::string> resultHeader = {"epsilon", "avgError", "quantumError"};
+    std::vector<std::string> resultFields = {std::to_string(quenchEpsilon.value),
+                                             std::to_string(quenchEpsilon.error * std::sqrt(quenchEpsilons.size())),
+                                             std::to_string(std::sqrt(quenchVariance.value))};
+
+    // Save results
+    io.printInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields);
+    if (!outputFilename.empty())
+        io.storeInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields, outputFilename);
 }
 
 void Frontend::printGeneralHelp(const std::string &cmd) {

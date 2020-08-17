@@ -42,14 +42,13 @@ std::string IO::stringifyRow(std::vector<std::string> row) const {
  * @brief Takes @a analyzer and prepares the whole header for inline results.
  * @param parametersToPrint parameters from Parameters to also include (the first columns)
  */
-std::string IO::prepareInlineResultHeaderRow(const Analyzer &analyzer,
-                                             const std::vector<std::string> &parametersToPrint)
+std::string IO::prepareInlineResultHeaderRow(const std::vector<std::string> &parametersToPrint,
+        const std::vector<std::string> &additionalFields)
 {
     std::vector<std::string> header;
     for (const auto &param : parametersToPrint)
         header.push_back(param);
-    auto analyzerHeader = analyzer.getInlineResultsHeader();
-    header.insert(header.end(), analyzerHeader.begin(), analyzerHeader.end());
+    header.insert(header.end(), additionalFields.begin(), additionalFields.end());
     return this->stringifyRow(header);
 }
 
@@ -57,23 +56,22 @@ std::string IO::prepareInlineResultHeaderRow(const Analyzer &analyzer,
  * @brief Takes @a analyzer and prepares the whole fields row for inline results.
  * @param parametersToPrint parameters from Parameters to also include (the first columns)
  */
-std::string IO::prepareInlineResultFieldsRow(const Parameters &parameters, const Analyzer &analyzer,
-                                             const std::vector<std::string> &parametersToPrint)
+std::string IO::prepareInlineResultFieldsRow(const Parameters &parameters,
+        const std::vector<std::string> &parametersToPrint, const std::vector<std::string> &additionalFields)
 {
     std::vector<std::string> fields;
     for (const auto &param : parametersToPrint)
         fields.push_back(parameters.getByName(param));
-    auto analyzerFields = analyzer.getInlineResultsFields();
-    fields.insert(fields.end(), analyzerFields.begin(), analyzerFields.end());
+    fields.insert(fields.end(), additionalFields.begin(), additionalFields.end());
     return this->stringifyRow(fields);
 }
 
 
-void IO::printInlineAnalyzerResults(const Parameters &params, const Analyzer &analyzer,
-                                    const std::vector<std::string> &paramsToPrint)
+void IO::printInlineResults(const Parameters &params, const std::vector<std::string> &paramsToPrint,
+        const std::vector<std::string> &additionalHeader, const std::vector<std::string> &additionalFields)
 {
-    std::string headerRow = this->prepareInlineResultHeaderRow(analyzer, paramsToPrint);
-    std::string fieldsRow = this->prepareInlineResultFieldsRow(params, analyzer, paramsToPrint);
+    std::string headerRow = this->prepareInlineResultHeaderRow(paramsToPrint, additionalHeader);
+    std::string fieldsRow = this->prepareInlineResultFieldsRow(params, paramsToPrint, additionalFields);
     this->logger << std::endl << headerRow << std::endl << fieldsRow << std::endl;
 }
 
@@ -82,9 +80,8 @@ void IO::storeAnalyzerResults(const Parameters &params, const Analyzer &analyzer
                               std::optional<std::string> inlineResultFilename)
 {
     if (inlineResultFilename.has_value()) {
-        std::string headerRow = this->prepareInlineResultHeaderRow(analyzer, paramsToPrint);
-        std::string fieldsRow = this->prepareInlineResultFieldsRow(params, analyzer, paramsToPrint);
-        this->saveOutputToFile(headerRow, fieldsRow, inlineResultFilename.value());
+        this->storeInlineResults(params, paramsToPrint, analyzer.getInlineResultsHeader(),
+                                 analyzer.getInlineResultsFields(), *inlineResultFilename);
     }
 
     this->logger << std::endl << "Storing bulk results... " << std::flush;
@@ -133,4 +130,12 @@ std::vector<std::string> IO::findEigenenergyFiles(const std::string &directory, 
     }
 
     return files;
+}
+
+void IO::storeInlineResults(const Parameters &parameters, const std::vector<std::string> &paramsToStore,
+                            const std::vector<std::string> &header, const std::vector<std::string> &fields,
+                            const std::string &outputFilename) {
+    std::string headerRow = this->prepareInlineResultHeaderRow(paramsToStore, header);
+    std::string fieldsRow = this->prepareInlineResultFieldsRow(parameters, paramsToStore, fields);
+    this->saveOutputToFile(headerRow, fieldsRow, outputFilename);
 }
