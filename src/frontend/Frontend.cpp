@@ -369,9 +369,13 @@ void Frontend::quench(int argc, char **argv) {
     auto finalHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *finalRnd);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
-    // Prepare and run simulations
+    // Prepare and run quenches
+    std::vector<double> quenchEpsilons;
+    std::vector<double> quenchVariances;
     for (std::size_t i = params.from; i < params.to; i++) {
         std::cout << "[Simulation::quench] Performing quench " << i << "... " << std::flush;
+        timer.tic();
+
         averagingModel->setupHamiltonianGenerator(*initialHamiltonianGenerator, *initialRnd, i, params.totalSimulations);
         averagingModel->setupHamiltonianGenerator(*finalHamiltonianGenerator, *finalRnd, i, params.totalSimulations);
         arma::sp_mat initialHamiltonian = initialHamiltonianGenerator->generate();
@@ -393,12 +397,22 @@ void Frontend::quench(int argc, char **argv) {
 
         double Equench = arma::as_scalar(initialGroundState.t() * finalHamiltonian * initialGroundState);
         double E2quench = arma::as_scalar(initialGroundState.t() * finalHamiltonian * finalHamiltonian * initialGroundState);
-        double dEquench = std::sqrt(E2quench - Equench * Equench);
+        double varEquench = E2quench - Equench * Equench;
         double epsilonQuench = (Equench - Emin) / (Emax - Emin);
-        double dEpsilonQuench = dEquench / (Emax - Emin);
+        double varEpsilonQuench = varEquench / std::pow((Emax - Emin), 2);
 
-        std::cout << "done: " << epsilonQuench << " " << dEpsilonQuench << std::endl;
+        quenchEpsilons.push_back(epsilonQuench);
+        quenchVariances.push_back(varEpsilonQuench);
+
+        std::cout << "done (" << timer.toc() << " s). epsilon: " << epsilonQuench << "; std dev: ";
+        std::cout << std::sqrt(varEpsilonQuench) << std::endl;
     }
+
+    Quantity quenchEpsilon, quenchVariance;
+    quenchEpsilon.calculateFromSamples(quenchEpsilons);
+    quenchVariance.calculateFromSamples(quenchVariances);
+    std::cout << quenchEpsilon.value << " " << quenchEpsilon.error * std::sqrt(quenchEpsilons.size()) << " ";
+    std::cout << std::sqrt(quenchVariance.value) << std::endl;
 }
 
 void Frontend::printGeneralHelp(const std::string &cmd) {
