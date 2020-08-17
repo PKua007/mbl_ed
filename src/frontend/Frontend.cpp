@@ -301,6 +301,106 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolution.perform(this->out);
 }
 
+void Frontend::quench(int argc, char **argv) {
+    // Parse options
+    cxxopts::Options options(argv[0],
+                             Fold("")
+                                     .width(80));
+
+    std::string inputFilename;
+    std::vector<std::string> overridenParamsEntries;
+    std::vector<std::string> quenchParamsEntries;
+
+    options.add_options()
+            ("h,help", "prints help for this mode")
+            ("i,input", "file with parameters. See input.ini for parameters description",
+             cxxopts::value<std::string>(inputFilename))
+            ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
+                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
+                            "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
+             cxxopts::value<std::vector<std::string>>(overridenParamsEntries))
+            ("q,quench_param", "overrides the param as in --set_param, applied after --set_param, but for starting"
+                               "Hamiltonian in quantum quench",
+             cxxopts::value<std::vector<std::string>>(quenchParamsEntries));
+
+    auto parsedOptions = options.parse(argc, argv);
+    if (parsedOptions.count("help")) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    // Validate parsed options
+    std::string cmd(argv[0]);
+    if (argc != 1)
+        die("Unexpected positional arguments. See " + cmd + " --help");
+    if (!parsedOptions.count("input"))
+        die("Input file must be specified with option -i [input file name]");
+    if (quenchParamsEntries.empty())
+        die("At least one parameter should be specified for quantum quench");
+
+    // Prepare quench (initial) parameters
+    IO io(std::cout);
+    std::vector<std::string> overridenAndQuenchEntries = overridenParamsEntries;
+    overridenAndQuenchEntries.insert(overridenAndQuenchEntries.end(), quenchParamsEntries.begin(),
+                                     quenchParamsEntries.end());
+    Parameters quenchParams = io.loadParameters(inputFilename, overridenAndQuenchEntries);
+    std::cout << "[Frontend::quench] Initial Hamiltonian:" << std::endl;
+    quenchParams.print(std::cout);
+    std::cout << std::endl;
+
+    // Prepare (final) parameters
+    Parameters params = io.loadParameters(inputFilename, overridenParamsEntries);
+    std::cout << "[Frontend::quench] Final Hamiltonian:" << std::endl;
+    params.print(std::cout);
+    std::cout << std::endl;
+
+    // Generate Fock basis
+    FockBaseGenerator baseGenerator;
+    std::cout << "[Frontend::simulate] Preparing Fock basis... " << std::flush;
+    arma::wall_clock timer;
+    timer.tic();
+    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    std::cout << "done (" << timer.toc() << " s)." << std::endl;
+
+    // Prepare initial and final HamiltonianGenerator
+    auto initialRnd = std::make_unique<RND>(params.from + params.seed);
+    auto finalRnd = std::make_unique<RND>(params.from + params.seed);
+    auto initialHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(quenchParams, base, *initialRnd);
+    auto finalHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *finalRnd);
+    auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
+
+    // Prepare and run simulations
+    for (std::size_t i = params.from; i < params.to; i++) {
+        std::cout << "[Simulation::quench] Performing quench " << i << "... " << std::flush;
+        averagingModel->setupHamiltonianGenerator(*initialHamiltonianGenerator, *initialRnd, i, params.totalSimulations);
+        averagingModel->setupHamiltonianGenerator(*finalHamiltonianGenerator, *finalRnd, i, params.totalSimulations);
+        arma::sp_mat initialHamiltonian = initialHamiltonianGenerator->generate();
+        arma::sp_mat finalHamiltonian = finalHamiltonianGenerator->generate();
+
+        std::size_t numEigvals = std::min<std::size_t>(6, initialHamiltonian.n_rows - 1);
+
+        arma::vec initialEigvals;
+        arma::mat initialEigvecs;
+        Assert(arma::eigs_sym(initialEigvals, initialEigvecs, initialHamiltonian, numEigvals, "sa"));
+        arma::vec initialGroundState = initialEigvecs.col(0);
+
+        arma::vec finalMinimalEigvals;
+        arma::vec finalMaximalEigvals;
+        Assert(arma::eigs_sym(finalMinimalEigvals, finalHamiltonian, numEigvals, "sa"));
+        Assert(arma::eigs_sym(finalMaximalEigvals, finalHamiltonian, numEigvals, "la"));
+        double Emin = finalMinimalEigvals.front();
+        double Emax = finalMaximalEigvals.back();
+
+        double Equench = arma::as_scalar(initialGroundState.t() * finalHamiltonian * initialGroundState);
+        double E2quench = arma::as_scalar(initialGroundState.t() * finalHamiltonian * finalHamiltonian * initialGroundState);
+        double dEquench = std::sqrt(E2quench - Equench * Equench);
+        double epsilonQuench = (Equench - Emin) / (Emax - Emin);
+        double dEpsilonQuench = dEquench / (Emax - Emin);
+
+        std::cout << "done: " << epsilonQuench << " " << dEpsilonQuench << std::endl;
+    }
+}
+
 void Frontend::printGeneralHelp(const std::string &cmd) {
     std::cout << Fold("Program performing exact diagonalization of Hubbard-like hamiltonians with analyzing "
                       "facilities. ").width(80) << std::endl;
