@@ -34,6 +34,8 @@ void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &log
             using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
             ExternalVector externalVector = std::get<ExternalVector>(evolution.initialVector);
             vectorName = externalVector.name;
+
+            externalVectorsCounter++;
         }
 
         logger << "[CorrelationsTimeEvolution::addEvolution] Evolving vector " << vectorName << std::endl;

@@ -32,7 +32,7 @@ public:
     /**
      * @brief Returns the ground state of initial Hamiltonian from last addQuench invocation.
      */
-    [[nodiscard]] arma::vec getLastQuenchedState() const { return lastQuenchedState; }
+    [[nodiscard]] const arma::vec &getLastQuenchedState() const { return lastQuenchedState; }
 
     /**
      * @brief Returns the normalized energy of ground state of initial Hamiltonian w.r.t. final Hamiltonian from last

@@ -11,6 +11,7 @@
 #include "CorrelationsTimeEvolutionParameters.h"
 #include "ChebyshevEvolver.h"
 #include "simulation/RND.h"
+#include "simulation/QuenchCalculator.h"
 
 /**
  * @brief A class performing a whole series of time evolutions using Chebyshev expansion technique.
@@ -30,6 +31,8 @@ private:
     std::size_t to{};
     std::size_t totalSimulations{};
     std::string fileSignature{};
+    std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator;
+    std::unique_ptr<RND> quenchRnd;
 
 public:
     /**
@@ -39,10 +42,13 @@ public:
                        std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
                        std::unique_ptr<FileOstreamProvider> ostreamProvider, std::size_t from, std::size_t to,
                        std::size_t totalSimulations, const CorrelationsTimeEvolutionParameters &parameters,
-                       std::string fileSignature)
+                       std::string fileSignature,
+                       std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator = nullptr,
+                       std::unique_ptr<RND> quenchRnd = nullptr)
             : hamiltonianGenerator{std::move(hamiltonianGenerator)}, averagingModel{std::move(averagingModel)},
               rnd{std::move(rnd)}, ostreamProvider{std::move(ostreamProvider)}, correlationsTimeEvolution(parameters),
-              from{from}, to{to}, totalSimulations{totalSimulations}, fileSignature{std::move(fileSignature)}
+              from{from}, to{to}, totalSimulations{totalSimulations}, fileSignature{std::move(fileSignature)},
+              quenchHamiltonianGenerator{std::move(quenchHamiltonianGenerator)}, quenchRnd{std::move(quenchRnd)}
     {
         Expects(this->totalSimulations > 0);
         Expects(this->from < this->to);
@@ -55,10 +61,12 @@ public:
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
                        std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd, std::size_t from,
                        std::size_t to, std::size_t totalSimulations,
-                       const CorrelationsTimeEvolutionParameters &parameters, const std::string &fileSignature)
+                       const CorrelationsTimeEvolutionParameters &parameters, const std::string &fileSignature,
+                       std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator = nullptr,
+                       std::unique_ptr<RND> quenchRnd = nullptr)
             : ChebyshevEvolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                                  std::make_unique<FileOstreamProvider>(), from, to, totalSimulations, parameters,
-                                 fileSignature)
+                                 fileSignature, std::move(quenchHamiltonianGenerator), std::move(quenchRnd))
     { }
 
     /**
@@ -67,9 +75,12 @@ public:
      * @details The name of the file is in the code, go check ;).
      */
     void perform(std::ostream &logger) {
+        QuenchCalculator quenchCalculator;
         for (std::size_t i = this->from; i < this->to; i++) {
             arma::wall_clock wholeTimer;
             arma::wall_clock timer;
+
+            std::vector<arma::cx_vec> additionalVectors;
 
             wholeTimer.tic();
             logger << "[ChebyshevEvolution::perform] Performing evolution " << i << "... " << std::endl;
@@ -77,20 +88,39 @@ public:
             timer.tic();
             this->averagingModel->setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, i, this->totalSimulations);
             arma::sp_mat hamiltonian = this->hamiltonianGenerator->generate();
+            if (quenchHamiltonianGenerator != nullptr) {
+                this->averagingModel->setupHamiltonianGenerator(*quenchHamiltonianGenerator, *quenchRnd, i, this->totalSimulations);
+                arma::sp_mat quenchHamiltonian = this->quenchHamiltonianGenerator->generate();
+                quenchCalculator.addQuench(quenchHamiltonian, hamiltonian);
+
+                const arma::vec &quench = quenchCalculator.getLastQuenchedState();
+                arma::cx_vec additionalVector(quench.size());
+                std::copy(quench.begin(), quench.end(), additionalVector.begin());
+                additionalVectors.push_back(additionalVector);
+
+                logger << "quenched state epsilon: " << quenchCalculator.getLastQuenchEpsilon() << "; quantum error: ";
+                logger << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << ". ";
+            }
             logger << "done (" << timer.toc() << " s)" << std::endl;
 
             logger << "[ChebyshevEvolution::perform] Preparing evolver... " << std::endl;
             timer.tic();
             ChebyshevEvolver evolver(hamiltonian, logger);
             logger << "[ChebyshevEvolution::perform] Preparing evolver done (" << timer.toc() << " s)." << std::endl;
-            this->correlationsTimeEvolution.addEvolution(evolver, logger);
+            this->correlationsTimeEvolution.addEvolution(evolver, logger, additionalVectors);
             logger << "[ChebyshevEvolution::perform] Whole evolution took " << wholeTimer.toc() << " s." << std::endl;
+        }
+
+        if (quenchHamiltonianGenerator != nullptr) {
+            logger << "[ChebyshevEvolution::perform] Mean quench data: epsilon: " << quenchCalculator.getMeanEpsilon();
+            logger << "; avg error: " << quenchCalculator.getEpsilonAveragingSampleError() << "; quantum error: ";
+            logger << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << std::endl;
         }
 
         std::string filename = this->fileSignature + "_evolution.txt";
         auto file = this->ostreamProvider->openFile(filename);
         this->correlationsTimeEvolution.storeResult(*file);
-        logger << "[ChebyshevEvolution::perform] Observables stores to " << filename << std::endl;
+        logger << "[ChebyshevEvolution::perform] Observables stored to " << filename << std::endl;
     }
 };
 
