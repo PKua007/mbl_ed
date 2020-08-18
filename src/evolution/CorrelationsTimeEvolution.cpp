@@ -11,12 +11,17 @@
 
 void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &logger) {
     for (auto &evolution : this->vectorEvolutions) {
-        logger << "[CorrelationsTimeEvolution::addEvolution] Evolving vector " << evolution.initialVector << std::endl;
+        FockBase::Vector initialVector = std::get<FockBase::Vector>(evolution.initialVector);
 
-        auto initialIdx = fockBase->findIndex(evolution.initialVector);
+        logger << "[CorrelationsTimeEvolution::addEvolution] Evolving vector " << initialVector << std::endl;
+
+        auto initialIdx = fockBase->findIndex(initialVector);
         Assert(initialIdx.has_value());
+        arma::cx_vec initialState(this->fockBase->size(), arma::fill::zeros);
+        initialState[*initialIdx] = 1;
+
         OccupationEvolution occupationEvolution(this->fockBase);
-        auto observablesEvolution = occupationEvolution.perform(this->timeSegmentation, *initialIdx, evolver, logger);
+        auto observablesEvolution = occupationEvolution.perform(this->timeSegmentation, initialState, evolver, logger);
 
         Assert(observablesEvolution.size() == evolution.timeEntries.size());
         for (std::size_t i{}; i < observablesEvolution.size(); i++) {
@@ -79,6 +84,11 @@ std::string CorrelationsTimeEvolution::VectorEvolution::getHeader() const {
     Assert(!this->timeEntries.empty());
 
     std::ostringstream out;
-    out << initialVector << "_" << this->timeEntries.front().getHeader();
+    if (std::holds_alternative<FockBase::Vector>(initialVector))
+        out << std::get<FockBase::Vector>(initialVector);
+    else
+        out << std::get<ExternalVector>(initialVector).name;
+
+    out << "_" << this->timeEntries.front().getHeader();
     return out.str();
 }

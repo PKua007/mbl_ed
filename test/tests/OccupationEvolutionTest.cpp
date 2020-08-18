@@ -33,9 +33,8 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
     arma::vec nnsT2 = arma::vec{0.3540367091367856, 0.2919265817264288, 0.2360244727578571, 0.11801223637892853};
 
     SECTION("single time segment - t = 0, 2") {
-        // Initial state - {0, 1, 0, 0}
         OccupationEvolution occupationEvolution(fockBase);
-        auto evolution = occupationEvolution.perform({{2, 1}}, 1, evolver, logger);
+        auto evolution = occupationEvolution.perform({{2, 1}}, {0, 1, 0, 0}, evolver, logger);
 
         REQUIRE(evolution.size() == 2);
         REQUIRE_THAT(evolution[0].numParticles, IsApproxEqual(nsT0, 1e-15));
@@ -45,9 +44,8 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
     }
 
     SECTION("2 time segments - t = 0, 0.5, 1, 2") {
-        // Initial state - {0, 1, 0, 0}
         OccupationEvolution occupationEvolution(fockBase);
-        auto evolution = occupationEvolution.perform({{1, 2}, {2, 1}}, 1, evolver, logger);
+        auto evolution = occupationEvolution.perform({{1, 2}, {2, 1}}, {0, 1, 0, 0}, evolver, logger);
 
         REQUIRE(evolution.size() == 4);
         REQUIRE_THAT(evolution[0].numParticles, IsApproxEqual(nsT0, 1e-15));
@@ -66,9 +64,8 @@ TEST_CASE("OccupationEvolution: 2 bosons 2 sites") {
     std::ostringstream logger;
 
 
-    // Initial vector - {1, 1}
     OccupationEvolution occupationEvolution(fockBase);
-    auto evolution = occupationEvolution.perform({{2, 1}}, 1, evolver, logger);
+    auto evolution = occupationEvolution.perform({{2, 1}}, {0, 1, 0}, evolver, logger);
 
 
     REQUIRE(evolution.size() == 2);

@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <vector>
+#include <variant>
 
 #include "simulation/FockBase.h"
 #include "utils/Assertions.h"
@@ -16,6 +17,10 @@
  * @brief Parameters of time evolution.
  */
 struct CorrelationsTimeEvolutionParameters {
+    struct ExternalVector {
+        std::string name;
+    };
+
     /**
      * @brief How the times are sampled.
      * @details Fox example, if it is {{maxTime = 1, numSteps = 2}, {maxTime = 3, numSteps = 1}}, the resulting times
@@ -29,7 +34,7 @@ struct CorrelationsTimeEvolutionParameters {
      */
     std::size_t marginSize{};
     std::shared_ptr<FockBase> fockBase{};
-    std::vector<FockBase::Vector> vectorsToEvolve{};
+    std::vector<std::variant<FockBase::Vector, ExternalVector>> vectorsToEvolve{};
 
     /**
      * @brief Constructs CorrelationsTimeEvolutionParameters::vectorsToEvolve from a string.
@@ -47,10 +52,10 @@ struct CorrelationsTimeEvolutionParameters {
         for (const auto &string : strings) {
             try {
                 // Try a tag representation
-                this->vectorsToEvolve.emplace_back(this->numberOfSites, string);
+                this->vectorsToEvolve.emplace_back(FockBase::Vector(this->numberOfSites, string));
             } catch (FockVectorParseException &) {
                 // If tag failed, try occupation representation
-                this->vectorsToEvolve.emplace_back(string);
+                this->vectorsToEvolve.emplace_back(FockBase::Vector(string));
             }
         }
     }

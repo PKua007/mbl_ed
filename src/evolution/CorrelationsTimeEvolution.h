@@ -6,6 +6,7 @@
 #define MBL_ED_CORRELATIONSTIMEEVOLUTION_H
 
 #include <memory>
+#include <variant>
 
 #include "SymmetricMatrix.h"
 #include "OccupationEvolution.h"
@@ -26,7 +27,9 @@ private:
      * @brief Evolution of observables for the specific initial Fock state.
      */
     struct VectorEvolution {
-        FockBase::Vector initialVector;
+        using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
+
+        std::variant<FockBase::Vector, ExternalVector> initialVector;
         std::vector<CorrelationsTimeEntry> timeEntries{};
 
         [[nodiscard]] std::string getHeader() const;
