@@ -9,8 +9,8 @@
 #include "utils/Utils.h"
 
 /**
- * @brief Saves inline results' @a header + @a fields to @a outputFilename. The header is printed only if file didn't
- * exist.
+ * @brief Saves inline results' @a header + @a fields to @a outputFilename. The header is printed only if the file
+ * didn't exist.
  */
 void IO::saveOutputToFile(const std::string &header, const std::string &fields, const std::string &outputFilename) {
     bool fileExists = std::ifstream(outputFilename).is_open();
@@ -40,13 +40,13 @@ std::string IO::stringifyRow(std::vector<std::string> row) const {
 
 /**
  * @brief Takes @a analyzer and prepares the whole header for inline results.
- * @param parametersToPrint parameters from Parameters to also include (the first columns)
+ * @param paramsToPrint parameters from Parameters to also include (the first columns)
  */
-std::string IO::prepareInlineResultHeaderRow(const std::vector<std::string> &parametersToPrint,
-        const std::vector<std::string> &additionalFields)
+std::string IO::prepareInlineResultHeaderRow(const std::vector<std::string> &paramsToPrint,
+                                             const std::vector<std::string> &additionalFields)
 {
     std::vector<std::string> header;
-    for (const auto &param : parametersToPrint)
+    for (const auto &param : paramsToPrint)
         header.push_back(param);
     header.insert(header.end(), additionalFields.begin(), additionalFields.end());
     return this->stringifyRow(header);
@@ -54,21 +54,22 @@ std::string IO::prepareInlineResultHeaderRow(const std::vector<std::string> &par
 
 /**
  * @brief Takes @a analyzer and prepares the whole fields row for inline results.
- * @param parametersToPrint parameters from Parameters to also include (the first columns)
+ * @param paramsToPrint parameters from Parameters to also include (the first columns)
  */
-std::string IO::prepareInlineResultFieldsRow(const Parameters &parameters,
-        const std::vector<std::string> &parametersToPrint, const std::vector<std::string> &additionalFields)
+std::string IO::prepareInlineResultFieldsRow(const Parameters &params, const std::vector<std::string> &paramsToPrint,
+                                             const std::vector<std::string> &additionalFields)
 {
     std::vector<std::string> fields;
-    for (const auto &param : parametersToPrint)
-        fields.push_back(parameters.getByName(param));
+    for (const auto &param : paramsToPrint)
+        fields.push_back(params.getByName(param));
     fields.insert(fields.end(), additionalFields.begin(), additionalFields.end());
     return this->stringifyRow(fields);
 }
 
 
 void IO::printInlineResults(const Parameters &params, const std::vector<std::string> &paramsToPrint,
-        const std::vector<std::string> &additionalHeader, const std::vector<std::string> &additionalFields)
+                            const std::vector<std::string> &additionalHeader,
+                            const std::vector<std::string> &additionalFields)
 {
     std::string headerRow = this->prepareInlineResultHeaderRow(paramsToPrint, additionalHeader);
     std::string fieldsRow = this->prepareInlineResultFieldsRow(params, paramsToPrint, additionalFields);
@@ -132,10 +133,11 @@ std::vector<std::string> IO::findEigenenergyFiles(const std::string &directory, 
     return files;
 }
 
-void IO::storeInlineResults(const Parameters &parameters, const std::vector<std::string> &paramsToStore,
-                            const std::vector<std::string> &header, const std::vector<std::string> &fields,
-                            const std::string &outputFilename) {
-    std::string headerRow = this->prepareInlineResultHeaderRow(paramsToStore, header);
-    std::string fieldsRow = this->prepareInlineResultFieldsRow(parameters, paramsToStore, fields);
+void IO::storeInlineResults(const Parameters &params, const std::vector<std::string> &paramsToStore,
+                            const std::vector<std::string> &additionalHeader,
+                            const std::vector<std::string> &additionalFields, const std::string &outputFilename)
+{
+    std::string headerRow = this->prepareInlineResultHeaderRow(paramsToStore, additionalHeader);
+    std::string fieldsRow = this->prepareInlineResultFieldsRow(params, paramsToStore, additionalFields);
     this->saveOutputToFile(headerRow, fieldsRow, outputFilename);
 }

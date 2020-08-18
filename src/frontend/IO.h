@@ -20,10 +20,10 @@ private:
 
     void saveOutputToFile(const std::string &header, const std::string &fields, const std::string &outputFilename);
     [[nodiscard]] std::string stringifyRow(std::vector<std::string> row) const;
-    std::string prepareInlineResultHeaderRow(const std::vector<std::string> &parametersToPrint,
+    std::string prepareInlineResultHeaderRow(const std::vector<std::string> &paramsToPrint,
                                              const std::vector<std::string> &additionalFields);
-    std::string prepareInlineResultFieldsRow(const Parameters &parameters,
-                                             const std::vector<std::string> &parametersToPrint,
+    std::string prepareInlineResultFieldsRow(const Parameters &params,
+                                             const std::vector<std::string> &paramsToPrint,
                                              const std::vector<std::string> &additionalFields);
 
 public:
@@ -44,12 +44,13 @@ public:
     std::vector<std::string> findEigenenergyFiles(const std::string &directory, const std::string &fileSignature);
 
     /**
-     * @brief Prints inline analyzer result to @a logger from the constructor.
-     * @details Format: two rows - header and field values. Last columns are fields from InlineAnalyzerTask -s from
-     * @a analyzer, while first few are parameters from @a params specified by @a paramsToPrint
+     * @brief Prints inline results to @a logger from the constructor.
+     * @details Format: two rows - header and field values. Last columns are fields from @a additionalHeader and
+     * @a additional Fields, while first few are parameters from @a params specified by @a paramsToPrint
      */
     void printInlineResults(const Parameters &params, const std::vector<std::string> &paramsToPrint,
-            const std::vector<std::string> &additionalHeader, const std::vector<std::string> &additionalFields);
+                            const std::vector<std::string> &additionalHeader,
+                            const std::vector<std::string> &additionalFields);
 
     /**
      * @brief Stores BulkAnalyzerTask result to files with prefix given by Parameters::getOutputFileSignature and
@@ -65,9 +66,15 @@ public:
                               const std::vector<std::string> &paramsToPrint,
                               std::optional<std::string> inlineResultFilename);
 
-    void storeInlineResults(const Parameters &parameters, const std::vector<std::string> &paramsToStore,
-                            const std::vector<std::string> &header, const std::vector<std::string> &fields,
-                            const std::string &outputFilename);
+    /**
+     * @brief Stores inline results to @a outputFilename file, namely a couple of fields with header.
+     * @details First fields are from @a parameters and they are specified by @a paramsToStore. The rest are specified
+     * by @a additionalFields. Header is generated in the first line only if a file didn't exist, where the fields names
+     * are given by names from @a params and and @a additionalHeader.
+     */
+    void storeInlineResults(const Parameters &params, const std::vector<std::string> &paramsToStore,
+                            const std::vector<std::string> &additionalHeader,
+                            const std::vector<std::string> &additionalFields, const std::string &outputFilename);
 };
 
 #endif //MBL_ED_IO_H

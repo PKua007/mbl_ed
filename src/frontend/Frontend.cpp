@@ -304,9 +304,10 @@ void Frontend::chebyshev(int argc, char **argv) {
 
 void Frontend::quench(int argc, char **argv) {
     // Parse options
-    cxxopts::Options options(argv[0],
-                             Fold("")
-                                     .width(80));
+    cxxopts::Options options(argv[0], Fold("Performs quantum quench by fining the ground state of initial "
+                                           "Hamiltonian and calculating its energy and quantum spread in final "
+                                           "Hamiltonian, where some parameters are different. The values are averaged "
+                                           "over multiple realisations.").width(80));
 
     std::string inputFilename;
     std::string outputFilename;
@@ -326,7 +327,7 @@ void Frontend::quench(int argc, char **argv) {
                             "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
                             "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
              cxxopts::value<std::vector<std::string>>(overridenParamsEntries))
-            ("q,quench_param", "overrides the param as in --set_param, applied after --set_param, but for starting"
+            ("q,quench_param", "overrides the param as in --set_param, applied after --set_param, but for the initial"
                                "Hamiltonian in quantum quench",
              cxxopts::value<std::vector<std::string>>(quenchParamsEntries));
 
@@ -347,10 +348,10 @@ void Frontend::quench(int argc, char **argv) {
 
     // Prepare quench (initial) parameters
     IO io(std::cout);
-    std::vector<std::string> overridenAndQuenchEntries = overridenParamsEntries;
-    overridenAndQuenchEntries.insert(overridenAndQuenchEntries.end(), quenchParamsEntries.begin(),
-                                     quenchParamsEntries.end());
-    Parameters quenchParams = io.loadParameters(inputFilename, overridenAndQuenchEntries);
+    std::vector<std::string> overridenAndQuenchParamEntries = overridenParamsEntries;
+    overridenAndQuenchParamEntries.insert(overridenAndQuenchParamEntries.end(), quenchParamsEntries.begin(),
+                                          quenchParamsEntries.end());
+    Parameters quenchParams = io.loadParameters(inputFilename, overridenAndQuenchParamEntries);
 
     // Prepare (final) parameters
     Parameters params = io.loadParameters(inputFilename, overridenParamsEntries);
@@ -377,6 +378,7 @@ void Frontend::quench(int argc, char **argv) {
     std::cout << "done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare initial and final HamiltonianGenerator
+    // We use two RNDs with identical seeds so that random stuff match in both hamiltonians
     auto initialRnd = std::make_unique<RND>(params.from + params.seed);
     auto finalRnd = std::make_unique<RND>(params.from + params.seed);
     auto initialHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(quenchParams, base, *initialRnd);
@@ -389,15 +391,16 @@ void Frontend::quench(int argc, char **argv) {
         std::cout << "[Simulation::quench] Performing quench " << i << "... " << std::flush;
         timer.tic();
 
-        averagingModel->setupHamiltonianGenerator(*initialHamiltonianGenerator, *initialRnd, i, params.totalSimulations);
-        averagingModel->setupHamiltonianGenerator(*finalHamiltonianGenerator, *finalRnd, i, params.totalSimulations);
+        std::size_t totalSimulations = params.totalSimulations;
+        averagingModel->setupHamiltonianGenerator(*initialHamiltonianGenerator, *initialRnd, i, totalSimulations);
+        averagingModel->setupHamiltonianGenerator(*finalHamiltonianGenerator, *finalRnd, i, totalSimulations);
         arma::sp_mat initialHamiltonian = initialHamiltonianGenerator->generate();
         arma::sp_mat finalHamiltonian = finalHamiltonianGenerator->generate();
 
         quenchCalculator.addQuench(initialHamiltonian, finalHamiltonian);
 
         std::cout << "done (" << timer.toc() << " s). epsilon: " << quenchCalculator.getLastQuenchEpsilon();
-        std::cout << "; std dev: " << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << std::endl;
+        std::cout << "; quantum error: " << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << std::endl;
     }
 
     // Save results
@@ -426,6 +429,9 @@ void Frontend::printGeneralHelp(const std::string &cmd) {
                  .width(80).margin(4) << std::endl;
     std::cout << "chebyshev" << std::endl;
     std::cout << Fold("Performs time evolution using Chebyshev expansion technique.")
+                 .width(80).margin(4) << std::endl;
+    std::cout << "quench" << std::endl;
+    std::cout << Fold("Performs quantum quench from some initial to final Hamiltonian and print energy info.")
                  .width(80).margin(4) << std::endl;
     std::cout << std::endl;
     std::cout << "Type " + cmd + " [mode] --help to get help on the specific mode." << std::endl;

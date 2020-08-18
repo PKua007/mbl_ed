@@ -10,45 +10,45 @@
 void QuenchCalculator::addQuench(const arma::sp_mat &initialHamiltonian, const arma::sp_mat &finalHamiltonian) {
     std::size_t numEigvals = std::min<std::size_t>(MIN_EIGVALS, initialHamiltonian.n_rows - 1);
 
-    arma::vec initialEigvals;
-    arma::mat initialEigvecs;
-    Assert(arma::eigs_sym(initialEigvals, initialEigvecs, initialHamiltonian, numEigvals, "sa"));
-    this->lastQuenchedState = initialEigvecs.col(0);
+    arma::vec initialMinEigvals;
+    arma::mat initialMinEigvecs;
+    Assert(arma::eigs_sym(initialMinEigvals, initialMinEigvecs, initialHamiltonian, numEigvals, "sa"));
+    this->lastQuenchedState = initialMinEigvecs.col(0);
 
-    arma::vec finalMinimalEigvals;
-    arma::vec finalMaximalEigvals;
-    Assert(arma::eigs_sym(finalMinimalEigvals, finalHamiltonian, numEigvals, "sa"));
-    Assert(arma::eigs_sym(finalMaximalEigvals, finalHamiltonian, numEigvals, "la"));
-    double Emin = finalMinimalEigvals.front();
-    double Emax = finalMaximalEigvals.back();
+    arma::vec finalMinEigvals;
+    arma::vec finalMaxEigvals;
+    Assert(arma::eigs_sym(finalMinEigvals, finalHamiltonian, numEigvals, "sa"));
+    Assert(arma::eigs_sym(finalMaxEigvals, finalHamiltonian, numEigvals, "la"));
+    double Emin = finalMinEigvals.front();
+    double Emax = finalMaxEigvals.back();
 
     arma::vec hamiltonianTimesQuenchedState = finalHamiltonian * this->lastQuenchedState;
-    double Equench = arma::as_scalar(this->lastQuenchedState.t() * hamiltonianTimesQuenchedState);
-    double E2quench = arma::as_scalar(this->lastQuenchedState.t() * finalHamiltonian * hamiltonianTimesQuenchedState);
-    double varEquench = E2quench - Equench * Equench;
-    double epsilonQuench = (Equench - Emin) / (Emax - Emin);
-    double varEpsilonQuench = varEquench / std::pow((Emax - Emin), 2);
+    double quenchE = arma::as_scalar(this->lastQuenchedState.t() * hamiltonianTimesQuenchedState);
+    double quenchE2 = arma::as_scalar(this->lastQuenchedState.t() * finalHamiltonian * hamiltonianTimesQuenchedState);
+    double quenchEVariance = quenchE2 - quenchE * quenchE;
+    double quenchEpsilon = (quenchE - Emin) / (Emax - Emin);
+    double quenchEpsilonVariance = quenchEVariance / std::pow((Emax - Emin), 2);
 
-    this->quenchEpsilons.push_back(epsilonQuench);
-    this->quenchEpsilonVariances.push_back(varEpsilonQuench);
+    this->quenchEpsilons.push_back(quenchEpsilon);
+    this->quenchEpsilonVariances.push_back(quenchEpsilonVariance);
 }
 
 double QuenchCalculator::getMeanEpsilon() const {
-    Quantity quenchEpsilon;
-    quenchEpsilon.calculateFromSamples(quenchEpsilons);
-    return quenchEpsilon.value;
+    Quantity meanEpsilon;
+    meanEpsilon.calculateFromSamples(this->quenchEpsilons);
+    return meanEpsilon.value;
 }
 
 double QuenchCalculator::getMeanEpsilonQuantumUncertainty() const {
-    Quantity quenchVariance;
-    quenchVariance.calculateFromSamples(this->quenchEpsilonVariances);
-    return std::sqrt(quenchVariance.value);
+    Quantity meanVariance;
+    meanVariance.calculateFromSamples(this->quenchEpsilonVariances);
+    return std::sqrt(meanVariance.value);
 }
 
 double QuenchCalculator::getEpsilonAveragingSampleError() const {
-    Quantity quenchEpsilon;
-    quenchEpsilon.calculateFromSamples(quenchEpsilons);
-    return quenchEpsilon.error * std::sqrt(quenchEpsilons.size());
+    Quantity meanEpsilon;
+    meanEpsilon.calculateFromSamples(this->quenchEpsilons);
+    return meanEpsilon.error * std::sqrt(this->quenchEpsilons.size());
 }
 
 double QuenchCalculator::getLastQuenchEpsilon() const {
