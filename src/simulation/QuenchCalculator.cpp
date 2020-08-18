@@ -42,7 +42,7 @@ double QuenchCalculator::getMeanEpsilon() const {
 double QuenchCalculator::getMeanEpsilonQuantumUncertainty() const {
     Quantity quenchVariance;
     quenchVariance.calculateFromSamples(this->quenchEpsilonVariances);
-    return quenchVariance.value;
+    return std::sqrt(quenchVariance.value);
 }
 
 double QuenchCalculator::getEpsilonAveragingSampleError() const {
