@@ -56,10 +56,10 @@ public:
      * @brief The constructor with mockable eigenenergy file creating using own FileOstreamProvider.
      */
     Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
-            std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
+               std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
                std::unique_ptr<FileOstreamProvider> ostreamProvider, SimulationParameters simulationParameters)
-            : hamiltonianGenerator{std::move(hamiltonianGenerator)}, averagingModel{std::move(averagingModel)}, rnd{std::move(rnd)},
-              ostreamProvider{std::move(ostreamProvider)}, params{std::move(simulationParameters)}
+            : hamiltonianGenerator{std::move(hamiltonianGenerator)}, averagingModel{std::move(averagingModel)},
+              rnd{std::move(rnd)}, ostreamProvider{std::move(ostreamProvider)}, params{std::move(simulationParameters)}
     {
         Expects(this->params.totalSimulations > 0);
         Expects(this->params.from < this->params.to);
@@ -70,10 +70,11 @@ public:
      * @brief The non-mockable constructor which will pass FileOstreamProvider which actually creates files to store
      * eigenenrgies.
      */
-    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator, std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
+    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+               std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
                const SimulationParameters &simulationParameters)
-            : Simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), std::make_unique<FileOstreamProvider>(),
-                         simulationParameters)
+            : Simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                         std::make_unique<FileOstreamProvider>(), simulationParameters)
     { }
 
     /**

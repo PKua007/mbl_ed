@@ -26,6 +26,7 @@ public:
     void simulate(int argc, char **argv);
     void analyze(int argc, char **argv);
     void chebyshev(int argc, char **argv);
+    void quench(int argc, char **argv);
     void printGeneralHelp(const std::string &cmd);
 };
 

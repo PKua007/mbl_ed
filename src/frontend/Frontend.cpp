@@ -15,6 +15,7 @@
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/DisorderGenerator.h"
+#include "simulation/QuenchCalculator.h"
 
 #include "evolution/ChebyshevEvolution.h"
 
@@ -111,7 +112,7 @@ void Frontend::simulate(int argc, char **argv) {
     simulation.perform(this->out, analyzer);
 
     // Save results
-    io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
+    io.printInlineResults(params, paramsToPrint, analyzer.getInlineResultsHeader(), analyzer.getInlineResultsFields());
     if (outputFilename.empty())
         io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
     else
@@ -202,7 +203,7 @@ void Frontend::analyze(int argc, char **argv) {
     }
 
     // Save results
-    io.printInlineAnalyzerResults(params, analyzer, paramsToPrint);
+    io.printInlineResults(params, paramsToPrint, analyzer.getInlineResultsHeader(), analyzer.getInlineResultsFields());
     if (outputFilename.empty())
         io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
     else
@@ -301,6 +302,118 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolution.perform(this->out);
 }
 
+void Frontend::quench(int argc, char **argv) {
+    // Parse options
+    cxxopts::Options options(argv[0], Fold("Performs quantum quench by fining the ground state of initial "
+                                           "Hamiltonian and calculating its energy and quantum spread in final "
+                                           "Hamiltonian, where some parameters are different. The values are averaged "
+                                           "over multiple realisations.").width(80));
+
+    std::string inputFilename;
+    std::string outputFilename;
+    std::vector<std::string> overridenParamsEntries;
+    std::vector<std::string> quenchParamsEntries;
+    std::vector<std::string> paramsToPrint{};
+
+    options.add_options()
+            ("h,help", "prints help for this mode")
+            ("i,input", "file with parameters. See input.ini for parameters description",
+             cxxopts::value<std::string>(inputFilename))
+            ("o,output", "when specified, quench results will be printed to this file",
+             cxxopts::value<std::string>(outputFilename))
+            ("p,print_parameter", "parameters to be included in inline results",
+             cxxopts::value<std::vector<std::string>>(paramsToPrint)->default_value("N,K"))
+            ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
+                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
+                            "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
+             cxxopts::value<std::vector<std::string>>(overridenParamsEntries))
+            ("q,quench_param", "overrides the param as in --set_param, applied after --set_param, but for the initial"
+                               "Hamiltonian in quantum quench",
+             cxxopts::value<std::vector<std::string>>(quenchParamsEntries));
+
+    auto parsedOptions = options.parse(argc, argv);
+    if (parsedOptions.count("help")) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    // Validate parsed options
+    std::string cmd(argv[0]);
+    if (argc != 1)
+        die("Unexpected positional arguments. See " + cmd + " --help");
+    if (!parsedOptions.count("input"))
+        die("Input file must be specified with option -i [input file name]");
+    if (quenchParamsEntries.empty())
+        die("At least one parameter should be specified for quantum quench");
+
+    // Prepare quench (initial) parameters
+    IO io(std::cout);
+    std::vector<std::string> overridenAndQuenchParamEntries = overridenParamsEntries;
+    overridenAndQuenchParamEntries.insert(overridenAndQuenchParamEntries.end(), quenchParamsEntries.begin(),
+                                          quenchParamsEntries.end());
+    Parameters quenchParams = io.loadParameters(inputFilename, overridenAndQuenchParamEntries);
+
+    // Prepare (final) parameters
+    Parameters params = io.loadParameters(inputFilename, overridenParamsEntries);
+    for (const auto &param : paramsToPrint)
+        if (!params.hasParam(param))
+            die("Parameters to print: parameter " + param + " is unknown");
+
+    // Print info on prameters and initial and final Hamiltonians
+    params.printGeneral(std::cout);
+    std::cout << std::endl;
+    std::cout << "[Frontend::quench] Initial Hamiltonian:" << std::endl;
+    quenchParams.printHamiltonianTerms(std::cout);
+    std::cout << std::endl;
+    std::cout << "[Frontend::quench] Final Hamiltonian:" << std::endl;
+    params.printHamiltonianTerms(std::cout);
+    std::cout << std::endl;
+
+    // Generate Fock basis
+    FockBaseGenerator baseGenerator;
+    std::cout << "[Frontend::simulate] Preparing Fock basis... " << std::flush;
+    arma::wall_clock timer;
+    timer.tic();
+    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    std::cout << "done (" << timer.toc() << " s)." << std::endl;
+
+    // Prepare initial and final HamiltonianGenerator
+    // We use two RNDs with identical seeds so that random stuff match in both hamiltonians
+    auto initialRnd = std::make_unique<RND>(params.from + params.seed);
+    auto finalRnd = std::make_unique<RND>(params.from + params.seed);
+    auto initialHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(quenchParams, base, *initialRnd);
+    auto finalHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *finalRnd);
+    auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
+
+    // Prepare and run quenches
+    QuenchCalculator quenchCalculator;
+    for (std::size_t i = params.from; i < params.to; i++) {
+        std::cout << "[Simulation::quench] Performing quench " << i << "... " << std::flush;
+        timer.tic();
+
+        std::size_t totalSimulations = params.totalSimulations;
+        averagingModel->setupHamiltonianGenerator(*initialHamiltonianGenerator, *initialRnd, i, totalSimulations);
+        averagingModel->setupHamiltonianGenerator(*finalHamiltonianGenerator, *finalRnd, i, totalSimulations);
+        arma::sp_mat initialHamiltonian = initialHamiltonianGenerator->generate();
+        arma::sp_mat finalHamiltonian = finalHamiltonianGenerator->generate();
+
+        quenchCalculator.addQuench(initialHamiltonian, finalHamiltonian);
+
+        std::cout << "done (" << timer.toc() << " s). epsilon: " << quenchCalculator.getLastQuenchEpsilon();
+        std::cout << "; quantum error: " << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << std::endl;
+    }
+
+    // Save results
+    std::vector<std::string> resultHeader = {"epsilon", "avgError", "quantumError"};
+    std::vector<std::string> resultFields = {std::to_string(quenchCalculator.getMeanEpsilon()),
+                                             std::to_string(quenchCalculator.getEpsilonAveragingSampleError()),
+                                             std::to_string(quenchCalculator.getMeanEpsilonQuantumUncertainty())};
+
+    io.printInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields);
+    if (!outputFilename.empty())
+        io.storeInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields, outputFilename);
+}
+
 void Frontend::printGeneralHelp(const std::string &cmd) {
     std::cout << Fold("Program performing exact diagonalization of Hubbard-like hamiltonians with analyzing "
                       "facilities. ").width(80) << std::endl;
@@ -316,6 +429,9 @@ void Frontend::printGeneralHelp(const std::string &cmd) {
                  .width(80).margin(4) << std::endl;
     std::cout << "chebyshev" << std::endl;
     std::cout << Fold("Performs time evolution using Chebyshev expansion technique.")
+                 .width(80).margin(4) << std::endl;
+    std::cout << "quench" << std::endl;
+    std::cout << Fold("Performs quantum quench from some initial to final Hamiltonian and print energy info.")
                  .width(80).margin(4) << std::endl;
     std::cout << std::endl;
     std::cout << "Type " + cmd + " [mode] --help to get help on the specific mode." << std::endl;

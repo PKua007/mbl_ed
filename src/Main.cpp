@@ -30,6 +30,8 @@ int main(int argc, char **argv) {
         frontend.analyze(argc, argv);
     } else if (mode == "chebyshev") {
         frontend.chebyshev(argc, argv);
+    } else if (mode == "quench") {
+        frontend.quench(argc, argv);
     } else {
         die("Unknown mode " + mode);
     }

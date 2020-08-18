@@ -71,7 +71,7 @@ void Parameters::autocompleteAndValidate() {
     Validate(K > 0);
 }
 
-void Parameters::print(std::ostream &out) const {
+void Parameters::printGeneral(std::ostream &out) const {
     out << "[Parameters::print] General parameters:" << std::endl;
     out << "N                     : " << this->N << std::endl;
     out << "K                     : " << this->K << std::endl;
@@ -83,13 +83,20 @@ void Parameters::print(std::ostream &out) const {
     out << "to                    : " << this->to << std::endl;
     out << "totalSimulations      : " << this->totalSimulations << std::endl;
     out << "seed                  : " << this->seed << std::endl;
+}
 
-    out << std::endl;
+void Parameters::printHamiltonianTerms(std::ostream &out) const {
     out << "[Parameters::print] Hamiltonian terms:" << std::endl;
     for (const auto &term : this->hamiltonianTerms) {
-        out << "-- " << term.first << ":" << std::endl;
+        out << "-- " << term.first << std::endl;
         out << term.second;
     }
+}
+
+void Parameters::print(std::ostream &out) const {
+    this->printGeneral(out);
+    out << std::endl;
+    this->printHamiltonianTerms(out);
 }
 
 std::string Parameters::getByName(const std::string &name) const {
