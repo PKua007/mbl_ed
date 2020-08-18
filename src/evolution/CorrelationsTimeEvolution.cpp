@@ -9,16 +9,34 @@
 #include "utils/Assertions.h"
 #include "Evolver.h"
 
-void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &logger) {
+void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &logger,
+                                             const std::vector<arma::cx_vec> &externalVectors)
+{
+    std::size_t externalVectorsCounter{};
     for (auto &evolution : this->vectorEvolutions) {
-        FockBase::Vector initialVector = std::get<FockBase::Vector>(evolution.initialVector);
+        std::string vectorName;
+        arma::cx_vec initialState;
 
-        logger << "[CorrelationsTimeEvolution::addEvolution] Evolving vector " << initialVector << std::endl;
+        if (std::holds_alternative<FockBase::Vector>(evolution.initialVector)) {
+            FockBase::Vector initialVector = std::get<FockBase::Vector>(evolution.initialVector);
+            auto initialIdx = fockBase->findIndex(initialVector);
+            Assert(initialIdx.has_value());
+            initialState = arma::cx_vec(this->fockBase->size(), arma::fill::zeros);
+            initialState[*initialIdx] = 1;
 
-        auto initialIdx = fockBase->findIndex(initialVector);
-        Assert(initialIdx.has_value());
-        arma::cx_vec initialState(this->fockBase->size(), arma::fill::zeros);
-        initialState[*initialIdx] = 1;
+            std::ostringstream vectorNameStream;
+            vectorNameStream << initialVector;
+            vectorName = vectorNameStream.str();
+        } else {
+            Assert(externalVectorsCounter < externalVectors.size());
+            initialState = externalVectors[externalVectorsCounter];
+
+            using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
+            ExternalVector externalVector = std::get<ExternalVector>(evolution.initialVector);
+            vectorName = externalVector.name;
+        }
+
+        logger << "[CorrelationsTimeEvolution::addEvolution] Evolving vector " << vectorName << std::endl;
 
         OccupationEvolution occupationEvolution(this->fockBase);
         auto observablesEvolution = occupationEvolution.perform(this->timeSegmentation, initialState, evolver, logger);
@@ -30,6 +48,8 @@ void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &log
             timeEntry.addObservables(observables);
         }
     }
+
+    Assert(externalVectorsCounter == externalVectors.size());
 }
 
 void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {

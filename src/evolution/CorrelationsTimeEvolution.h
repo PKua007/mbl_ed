@@ -55,7 +55,7 @@ public:
      * @brief Adds another evolution to the analyzis.
      * @details The actual evolution is done by the given @a evolver. New data are averaged will the old ones.
      */
-    void addEvolution(Evolver &evolver, std::ostream &logger);
+    void addEvolution(Evolver &evolver, std::ostream &logger, const std::vector<arma::cx_vec> &externalVectors = {});
 
     /**
      * @brief Stores the result to @a out in the form of a table with a header.
