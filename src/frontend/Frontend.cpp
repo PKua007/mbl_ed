@@ -15,6 +15,7 @@
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/DisorderGenerator.h"
+#include "simulation/QuenchCalculator.h"
 
 #include "evolution/ChebyshevEvolution.h"
 
@@ -383,8 +384,7 @@ void Frontend::quench(int argc, char **argv) {
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run quenches
-    std::vector<double> quenchEpsilons;
-    std::vector<double> quenchVariances;
+    QuenchCalculator quenchCalculator;
     for (std::size_t i = params.from; i < params.to; i++) {
         std::cout << "[Simulation::quench] Performing quench " << i << "... " << std::flush;
         timer.tic();
@@ -394,44 +394,18 @@ void Frontend::quench(int argc, char **argv) {
         arma::sp_mat initialHamiltonian = initialHamiltonianGenerator->generate();
         arma::sp_mat finalHamiltonian = finalHamiltonianGenerator->generate();
 
-        std::size_t numEigvals = std::min<std::size_t>(6, initialHamiltonian.n_rows - 1);
+        quenchCalculator.addQuench(initialHamiltonian, finalHamiltonian);
 
-        arma::vec initialEigvals;
-        arma::mat initialEigvecs;
-        Assert(arma::eigs_sym(initialEigvals, initialEigvecs, initialHamiltonian, numEigvals, "sa"));
-        arma::vec initialGroundState = initialEigvecs.col(0);
-
-        arma::vec finalMinimalEigvals;
-        arma::vec finalMaximalEigvals;
-        Assert(arma::eigs_sym(finalMinimalEigvals, finalHamiltonian, numEigvals, "sa"));
-        Assert(arma::eigs_sym(finalMaximalEigvals, finalHamiltonian, numEigvals, "la"));
-        double Emin = finalMinimalEigvals.front();
-        double Emax = finalMaximalEigvals.back();
-
-        double Equench = arma::as_scalar(initialGroundState.t() * finalHamiltonian * initialGroundState);
-        double E2quench = arma::as_scalar(initialGroundState.t() * finalHamiltonian * finalHamiltonian * initialGroundState);
-        double varEquench = E2quench - Equench * Equench;
-        double epsilonQuench = (Equench - Emin) / (Emax - Emin);
-        double varEpsilonQuench = varEquench / std::pow((Emax - Emin), 2);
-
-        quenchEpsilons.push_back(epsilonQuench);
-        quenchVariances.push_back(varEpsilonQuench);
-
-        std::cout << "done (" << timer.toc() << " s). epsilon: " << epsilonQuench << "; std dev: ";
-        std::cout << std::sqrt(varEpsilonQuench) << std::endl;
+        std::cout << "done (" << timer.toc() << " s). epsilon: " << quenchCalculator.getLastQuenchEpsilon();
+        std::cout << "; std dev: " << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << std::endl;
     }
 
-    // Calculate statistical data
-    Quantity quenchEpsilon, quenchVariance;
-    quenchEpsilon.calculateFromSamples(quenchEpsilons);
-    quenchVariance.calculateFromSamples(quenchVariances);
-
-    std::vector<std::string> resultHeader = {"epsilon", "avgError", "quantumError"};
-    std::vector<std::string> resultFields = {std::to_string(quenchEpsilon.value),
-                                             std::to_string(quenchEpsilon.error * std::sqrt(quenchEpsilons.size())),
-                                             std::to_string(std::sqrt(quenchVariance.value))};
-
     // Save results
+    std::vector<std::string> resultHeader = {"epsilon", "avgError", "quantumError"};
+    std::vector<std::string> resultFields = {std::to_string(quenchCalculator.getMeanEpsilon()),
+                                             std::to_string(quenchCalculator.getEpsilonAveragingSampleError()),
+                                             std::to_string(quenchCalculator.getMeanEpsilonQuantumUncertainty())};
+
     io.printInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields);
     if (!outputFilename.empty())
         io.storeInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields, outputFilename);
