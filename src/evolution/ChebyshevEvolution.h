@@ -27,12 +27,45 @@ private:
     std::unique_ptr<RND> rnd;
     std::unique_ptr<FileOstreamProvider> ostreamProvider;
     CorrelationsTimeEvolution correlationsTimeEvolution;
+    CorrelationsTimeEvolutionParameters correlationsTimeEvolutionParameters;
+
+    std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator;
+    std::unique_ptr<RND> quenchRnd;
+
     std::size_t from{};
     std::size_t to{};
     std::size_t totalSimulations{};
+
     std::string fileSignature{};
-    std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator;
-    std::unique_ptr<RND> quenchRnd;
+
+
+    auto prepareHamiltonianAndAdditionalVectors(QuenchCalculator &quenchCalculator, std::size_t simulationIndex,
+                                                std::ostream &logger) const
+    {
+        std::vector<arma::cx_vec> additionalVectors;
+
+        this->averagingModel->setupHamiltonianGenerator(*this->hamiltonianGenerator, *this->rnd, simulationIndex,
+                                                        this->totalSimulations);
+        arma::sp_mat hamiltonian = this->hamiltonianGenerator->generate();
+
+        if (this->quenchHamiltonianGenerator != nullptr) {
+            this->averagingModel->setupHamiltonianGenerator(*this->quenchHamiltonianGenerator, *this->quenchRnd,
+                                                            simulationIndex, this->totalSimulations);
+            arma::sp_mat initialHamiltonian = this->quenchHamiltonianGenerator->generate();
+
+            quenchCalculator.addQuench(initialHamiltonian, hamiltonian);
+
+            // Yup, Armadillo wouldn't let you initialize arma::cx_vec by arma::vec easily, we have to do this nonsense
+            const arma::vec &quenchedStateDouble = quenchCalculator.getLastQuenchedState();
+            arma::cx_vec quenchedState(quenchedStateDouble.size());
+            std::copy(quenchedStateDouble.begin(), quenchedStateDouble.end(), quenchedState.begin());
+            additionalVectors.push_back(quenchedState);
+
+            logger << "quenched state epsilon: " << quenchCalculator.getLastQuenchEpsilon() << "; quantum error: ";
+            logger << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << ". ";
+        }
+        return std::make_pair(hamiltonian, additionalVectors);
+    }
 
 public:
     /**
@@ -42,13 +75,12 @@ public:
                        std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
                        std::unique_ptr<FileOstreamProvider> ostreamProvider, std::size_t from, std::size_t to,
                        std::size_t totalSimulations, const CorrelationsTimeEvolutionParameters &parameters,
-                       std::string fileSignature,
-                       std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator = nullptr,
-                       std::unique_ptr<RND> quenchRnd = nullptr)
+                       std::string fileSignature)
             : hamiltonianGenerator{std::move(hamiltonianGenerator)}, averagingModel{std::move(averagingModel)},
               rnd{std::move(rnd)}, ostreamProvider{std::move(ostreamProvider)}, correlationsTimeEvolution(parameters),
-              from{from}, to{to}, totalSimulations{totalSimulations}, fileSignature{std::move(fileSignature)},
-              quenchHamiltonianGenerator{std::move(quenchHamiltonianGenerator)}, quenchRnd{std::move(quenchRnd)}
+              correlationsTimeEvolutionParameters{parameters}, from{from}, to{to}, totalSimulations{totalSimulations},
+              fileSignature{std::move(fileSignature)}
+
     {
         Expects(this->totalSimulations > 0);
         Expects(this->from < this->to);
@@ -61,13 +93,23 @@ public:
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
                        std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd, std::size_t from,
                        std::size_t to, std::size_t totalSimulations,
-                       const CorrelationsTimeEvolutionParameters &parameters, const std::string &fileSignature,
-                       std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator = nullptr,
-                       std::unique_ptr<RND> quenchRnd = nullptr)
+                       const CorrelationsTimeEvolutionParameters &parameters, const std::string &fileSignature)
             : ChebyshevEvolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                                  std::make_unique<FileOstreamProvider>(), from, to, totalSimulations, parameters,
-                                 fileSignature, std::move(quenchHamiltonianGenerator), std::move(quenchRnd))
+                                 fileSignature)
     { }
+
+    /**
+     * @brief Installs hamiltonian generator and random number generator which will be used to perform quenches.
+     * @details If it is used, one slot for CorrelationTimeEvolutionParameters::ExternalVector should be present
+     * in @a parameters passed in the constructor.
+     */
+    void addQuenchHamiltonianGenerator(std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator,
+                                       std::unique_ptr<RND> quenchRnd)
+    {
+        this->quenchHamiltonianGenerator = std::move(quenchHamiltonianGenerator);
+        this->quenchRnd = std::move(quenchRnd);
+    }
 
     /**
      * @brief Performs the simuations. The results (see CorrelationsTimeEvolution) are stored afterwards using
@@ -75,32 +117,23 @@ public:
      * @details The name of the file is in the code, go check ;).
      */
     void perform(std::ostream &logger) {
+        if (this->quenchHamiltonianGenerator == nullptr) {
+            Assert(this->correlationsTimeEvolutionParameters.countExternalVectors() == 0);
+        } else {
+            Assert(this->correlationsTimeEvolutionParameters.countExternalVectors() == 1);
+        }
+
         QuenchCalculator quenchCalculator;
         for (std::size_t i = this->from; i < this->to; i++) {
             arma::wall_clock wholeTimer;
             arma::wall_clock timer;
 
-            std::vector<arma::cx_vec> additionalVectors;
-
             wholeTimer.tic();
             logger << "[ChebyshevEvolution::perform] Performing evolution " << i << "... " << std::endl;
             logger << "[ChebyshevEvolution::perform] Preparing hamiltonian... " << std::flush;
             timer.tic();
-            this->averagingModel->setupHamiltonianGenerator(*hamiltonianGenerator, *rnd, i, this->totalSimulations);
-            arma::sp_mat hamiltonian = this->hamiltonianGenerator->generate();
-            if (quenchHamiltonianGenerator != nullptr) {
-                this->averagingModel->setupHamiltonianGenerator(*quenchHamiltonianGenerator, *quenchRnd, i, this->totalSimulations);
-                arma::sp_mat quenchHamiltonian = this->quenchHamiltonianGenerator->generate();
-                quenchCalculator.addQuench(quenchHamiltonian, hamiltonian);
-
-                const arma::vec &quench = quenchCalculator.getLastQuenchedState();
-                arma::cx_vec additionalVector(quench.size());
-                std::copy(quench.begin(), quench.end(), additionalVector.begin());
-                additionalVectors.push_back(additionalVector);
-
-                logger << "quenched state epsilon: " << quenchCalculator.getLastQuenchEpsilon() << "; quantum error: ";
-                logger << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << ". ";
-            }
+            auto [hamiltonian, additionalVectors]
+                = this->prepareHamiltonianAndAdditionalVectors(quenchCalculator, i, logger);
             logger << "done (" << timer.toc() << " s)" << std::endl;
 
             logger << "[ChebyshevEvolution::perform] Preparing evolver... " << std::endl;
@@ -111,7 +144,7 @@ public:
             logger << "[ChebyshevEvolution::perform] Whole evolution took " << wholeTimer.toc() << " s." << std::endl;
         }
 
-        if (quenchHamiltonianGenerator != nullptr) {
+        if (this->quenchHamiltonianGenerator != nullptr) {
             logger << "[ChebyshevEvolution::perform] Mean quench data: epsilon: " << quenchCalculator.getMeanEpsilon();
             logger << "; avg error: " << quenchCalculator.getEpsilonAveragingSampleError() << "; quantum error: ";
             logger << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << std::endl;

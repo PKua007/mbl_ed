@@ -238,9 +238,9 @@ void Frontend::chebyshev(int argc, char **argv) {
                          "but a given margin from both sides", cxxopts::value<std::size_t>(marginSize))
             ("v,vectors", "vectors to evolve. Available options: unif/dw/2.3.0.0.1. You can specify more than one",
              cxxopts::value<std::vector<std::string>>(vectorsToEvolveTags))
-            ("q,quench_param", "if specified, evolution will be performed for quenched vector (maybe together with "
-                                "some specified by --vectors). This option overrides the param as in --set_param, "
-                                "applied after --set_param, but for the initial Hamiltonian in quantum quench",
+            ("q,quench_param", "if specified, evolution will be performed for quenched vector (together with "
+                                "those specified by --vectors). This option overrides the param as in --set_param, "
+                                "applied after --set_param, but for the separate initial Hamiltonian in quantum quench",
              cxxopts::value<std::vector<std::string>>(quenchParamsEntries));
 
     auto parsedOptions = options.parse(argc, argv);
@@ -319,12 +319,12 @@ void Frontend::chebyshev(int argc, char **argv) {
         using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
         evolutionParameters.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
 
-        auto quenchRnd = std::make_unique<RND>(params.from + params.seed);
-        auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
         ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                                      params.from, params.to, params.totalSimulations, evolutionParameters,
-                                     params.getOutputFileSignatureWithRange(),
-                                     std::move(quenchHamiltonianGenerator), std::move(quenchRnd));
+                                     params.getOutputFileSignatureWithRange());
+        auto quenchRnd = std::make_unique<RND>(params.from + params.seed);
+        auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
+        evolution.addQuenchHamiltonianGenerator(std::move(quenchHamiltonianGenerator), std::move(quenchRnd));
 
         evolution.perform(this->out);
     } else {

@@ -14,31 +14,22 @@ void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &log
 {
     std::size_t externalVectorsCounter{};
     for (auto &evolution : this->vectorEvolutions) {
-        std::string vectorName;
         arma::cx_vec initialState;
 
         if (std::holds_alternative<FockBase::Vector>(evolution.initialVector)) {
-            FockBase::Vector initialVector = std::get<FockBase::Vector>(evolution.initialVector);
-            auto initialIdx = fockBase->findIndex(initialVector);
+            FockBase::Vector initialFockVector = std::get<FockBase::Vector>(evolution.initialVector);
+            auto initialIdx = fockBase->findIndex(initialFockVector);
             Assert(initialIdx.has_value());
             initialState = arma::cx_vec(this->fockBase->size(), arma::fill::zeros);
             initialState[*initialIdx] = 1;
-
-            std::ostringstream vectorNameStream;
-            vectorNameStream << initialVector;
-            vectorName = vectorNameStream.str();
-        } else {
+        } else {    // holds alternative ExternalVector
             Assert(externalVectorsCounter < externalVectors.size());
             initialState = externalVectors[externalVectorsCounter];
-
-            using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
-            ExternalVector externalVector = std::get<ExternalVector>(evolution.initialVector);
-            vectorName = externalVector.name;
-
             externalVectorsCounter++;
         }
 
-        logger << "[CorrelationsTimeEvolution::addEvolution] Evolving vector " << vectorName << std::endl;
+        logger << "[CorrelationsTimeEvolution::addEvolution] Evolving vector " << evolution.getInitialVectorName();
+        logger << std::endl;
 
         OccupationEvolution occupationEvolution(this->fockBase);
         auto observablesEvolution = occupationEvolution.perform(this->timeSegmentation, initialState, evolver, logger);
@@ -113,4 +104,15 @@ std::string CorrelationsTimeEvolution::VectorEvolution::getHeader() const {
 
     out << "_" << this->timeEntries.front().getHeader();
     return out.str();
+}
+
+std::string CorrelationsTimeEvolution::VectorEvolution::getInitialVectorName() const {
+    if (std::holds_alternative<FockBase::Vector>(this->initialVector)) {
+        std::ostringstream nameStream;
+        nameStream << std::get<FockBase::Vector>(this->initialVector);
+        return nameStream.str();
+    } else {    // holds alternative ExternalVector
+        ExternalVector externalVector = std::get<ExternalVector>(this->initialVector);
+        return externalVector.name;
+    }
 }
