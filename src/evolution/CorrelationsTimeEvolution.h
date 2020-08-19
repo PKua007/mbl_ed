@@ -6,6 +6,7 @@
 #define MBL_ED_CORRELATIONSTIMEEVOLUTION_H
 
 #include <memory>
+#include <variant>
 
 #include "SymmetricMatrix.h"
 #include "OccupationEvolution.h"
@@ -26,10 +27,13 @@ private:
      * @brief Evolution of observables for the specific initial Fock state.
      */
     struct VectorEvolution {
-        FockBase::Vector initialVector;
+        using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
+
+        std::variant<FockBase::Vector, ExternalVector> initialVector;
         std::vector<CorrelationsTimeEntry> timeEntries{};
 
         [[nodiscard]] std::string getHeader() const;
+        [[nodiscard]] std::string getInitialVectorName() const;
     };
 
     std::shared_ptr<FockBase> fockBase;
@@ -51,8 +55,11 @@ public:
     /**
      * @brief Adds another evolution to the analyzis.
      * @details The actual evolution is done by the given @a evolver. New data are averaged will the old ones.
+     * If field @a initialVectors from @a parameters from the constructor contained some
+     * CorrelationsTimeEvolutionParameters::ExternalVector alternatives, the actual arma::cx_vec vectors should be
+     * passed through @a externalVectors. The rest are FockBase::Vectors product vectors and are prepared on the go
      */
-    void addEvolution(Evolver &evolver, std::ostream &logger);
+    void addEvolution(Evolver &evolver, std::ostream &logger, const std::vector<arma::cx_vec> &externalVectors = {});
 
     /**
      * @brief Stores the result to @a out in the form of a table with a header.

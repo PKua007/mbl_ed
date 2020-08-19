@@ -5,14 +5,13 @@
 #include "OccupationEvolution.h"
 
 std::vector<OccupationEvolution::Occupations>
-OccupationEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSegmentation, std::size_t initialFockStateIdx,
-                             Evolver &evolver, std::ostream &logger)
+OccupationEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSegmentation,
+                             const arma::cx_vec &initialState, Evolver &evolver, std::ostream &logger)
 {
     this->timeStep = 0;
     this->time = 0;
 
-    arma::cx_vec evolvedState(this->fockBase->size(), arma::fill::zeros);
-    evolvedState[initialFockStateIdx] = 1;
+    arma::cx_vec evolvedState = initialState;
 
     std::vector<Occupations> occupationEvolution;
     double lastMaxTime{};

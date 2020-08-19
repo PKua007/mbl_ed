@@ -69,7 +69,7 @@ public:
      * time steps.
      */
     [[nodiscard]] std::vector<Occupations> perform(const std::vector<EvolutionTimeSegment> &timeSegmentation,
-                                                   std::size_t initialFockStateIdx, Evolver &evolver,
+                                                   const arma::cx_vec &initialState, Evolver &evolver,
                                                    std::ostream &logger);
 };
 

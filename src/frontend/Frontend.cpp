@@ -216,7 +216,8 @@ void Frontend::chebyshev(int argc, char **argv) {
                              Fold("Performs evolution using Chebyshev expansion technique.").width(80));
 
     std::string inputFilename;
-    std::vector<std::string> overridenParams;
+    std::vector<std::string> overridenParamsEntries;
+    std::vector<std::string> quenchParamsEntries;
     std::string timeSegmentation{};
     std::size_t marginSize{};
     std::vector<std::string> vectorsToEvolveTags;
@@ -228,15 +229,19 @@ void Frontend::chebyshev(int argc, char **argv) {
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
                             "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input "
                             "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
-             cxxopts::value<std::vector<std::string>>(overridenParams))
+             cxxopts::value<std::vector<std::string>>(overridenParamsEntries))
             ("t,time_segmentation", "describes the time span and how it should be divided, in format: [time 1] [number "
                                     "of steps 1] [time 2] [number of steps 2] ... . For example, '1 2 5 4' divides 0-1 "
                                     "in 2 and 1-5 in 4, giving times: 0, 0.5, 1, 2, 3, 4, 5",
              cxxopts::value<std::string>(timeSegmentation))
             ("m,margin", "margin size - one averaging of correlations is done for all sites, the second one for all "
                          "but a given margin from both sides", cxxopts::value<std::size_t>(marginSize))
-            ("v,vectors", "vectors to evolve. Available options: unif/dw/both; unif - 1.1.1.1; dw - 2.0.2.0;"
-                          " both - both ;)", cxxopts::value<std::vector<std::string>>(vectorsToEvolveTags));
+            ("v,vectors", "vectors to evolve. Available options: unif/dw/2.3.0.0.1. You can specify more than one",
+             cxxopts::value<std::vector<std::string>>(vectorsToEvolveTags))
+            ("q,quench_param", "if specified, evolution will be performed for quenched vector (together with "
+                                "those specified by --vectors). This option overrides the param as in --set_param, "
+                                "applied after --set_param, but for the separate initial Hamiltonian in quantum quench",
+             cxxopts::value<std::vector<std::string>>(quenchParamsEntries));
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
@@ -253,7 +258,7 @@ void Frontend::chebyshev(int argc, char **argv) {
 
     // Prepare parameters
     IO io(std::cout);
-    Parameters params = io.loadParameters(inputFilename, overridenParams);
+    Parameters params = io.loadParameters(inputFilename, overridenParamsEntries);
     params.print(std::cout);
     std::cout << std::endl;
 
@@ -264,9 +269,23 @@ void Frontend::chebyshev(int argc, char **argv) {
         die("You have to specify margin size using -m [margin size]");
     if (marginSize * 2 > params.K - 2)
         die("Margin is too big - there should be at least 2 sites left.");
-    if (!parsedOptions.count("vectors"))
-        die("You have to specify space vectors to evolve using -v [unif/dw/1.0.4.0]");
+    if (!parsedOptions.count("vectors") && !parsedOptions.count("quench_param"))
+        die("You have to specify space vectors to evolve using -v [unif/dw/1.0.4.0] or/and via quench -q");
     // Validation of vectors is done later
+
+    // Prepare quench parameters, if desired
+    std::optional<Parameters> quenchParams;
+    if (parsedOptions.count("quench_param")) {
+        std::vector<std::string> overridenAndQuenchParamEntries = overridenParamsEntries;
+        overridenAndQuenchParamEntries.insert(overridenAndQuenchParamEntries.end(), quenchParamsEntries.begin(),
+                                              quenchParamsEntries.end());
+        quenchParams = io.loadParameters(inputFilename, overridenAndQuenchParamEntries);
+
+        std::cout << "[Frontend::chebyshev] Together with vectors specified by -v, evolution will be performed ";
+        std::cout << "for a state quenched from initial Hamiltonian:" << std::endl;
+        quenchParams->printHamiltonianTerms(std::cout);
+        std::cout << std::endl;
+    }
 
     // OpenMP info
     std::cout << "[Frontend::chebyshev] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
@@ -296,10 +315,25 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParameters.marginSize = marginSize;
     evolutionParameters.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
 
-    ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-                                 params.from, params.to, params.totalSimulations, evolutionParameters,
-                                 params.getOutputFileSignatureWithRange());
-    evolution.perform(this->out);
+    if (quenchParams.has_value()) {
+        using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
+        evolutionParameters.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
+
+        ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                                     params.from, params.to, params.totalSimulations, evolutionParameters,
+                                     params.getOutputFileSignatureWithRange());
+        auto quenchRnd = std::make_unique<RND>(params.from + params.seed);
+        auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
+        evolution.addQuenchHamiltonianGenerator(std::move(quenchHamiltonianGenerator), std::move(quenchRnd));
+
+        evolution.perform(this->out);
+    } else {
+        ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                                     params.from, params.to, params.totalSimulations, evolutionParameters,
+                                     params.getOutputFileSignatureWithRange());
+
+        evolution.perform(this->out);
+    }
 }
 
 void Frontend::quench(int argc, char **argv) {
