@@ -315,25 +315,35 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParameters.marginSize = marginSize;
     evolutionParameters.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
 
+    ChebyshevEvolutionParameters chebyshevEvolutionParameters;
+    chebyshevEvolutionParameters.from = params.from;
+    chebyshevEvolutionParameters.to = params.to;
+    chebyshevEvolutionParameters.totalSimulations = params.totalSimulations;
+    chebyshevEvolutionParameters.timeEvolutionParameters = evolutionParameters;
+
+    std::unique_ptr<ChebyshevEvolution<>> evolution;
     if (quenchParams.has_value()) {
         using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
-        evolutionParameters.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
+        chebyshevEvolutionParameters.timeEvolutionParameters.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
 
-        ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-                                     params.from, params.to, params.totalSimulations, evolutionParameters,
-                                     params.getOutputFileSignatureWithRange());
         auto quenchRnd = std::make_unique<RND>(params.from + params.seed);
         auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
-        evolution.addQuenchHamiltonianGenerator(std::move(quenchHamiltonianGenerator), std::move(quenchRnd));
-
-        evolution.perform(this->out);
+        evolution = std::make_unique<ChebyshevEvolution<>>(
+            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), chebyshevEvolutionParameters,
+            std::move(quenchHamiltonianGenerator), std::move(quenchRnd)
+        );
     } else {
-        ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-                                     params.from, params.to, params.totalSimulations, evolutionParameters,
-                                     params.getOutputFileSignatureWithRange());
-
-        evolution.perform(this->out);
+        evolution = std::make_unique<ChebyshevEvolution<>>(
+            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), chebyshevEvolutionParameters
+        );
     }
+
+    evolution->perform(std::cout);
+
+    std::string resultsFilename = params.getOutputFileSignatureWithRange() + "_evolution.txt";
+    std::ofstream resultsFile(resultsFilename);
+    evolution->storeResults(resultsFile);
+    std::cout << "[Frontend::chebyshev] Observables stored to " << resultsFilename << std::endl;
 }
 
 void Frontend::quench(int argc, char **argv) {

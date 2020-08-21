@@ -25,7 +25,7 @@ add_library(mbl_ed_src STATIC utils/Assertions.h simulation/FockBaseGenerator.cp
         simulation/averaging_models/RandomPhi0AveragingModel.cpp
         simulation/averaging_models/UniformPhi0AveragingModel.cpp
         simulation/disorder_generators/UniformGenerator.h simulation/FockVector.cpp
-        analyzer/tasks/DressedStatesFinder.cpp analyzer/tasks/BulkMeanGapRatio.cpp simulation/QuenchCalculator.cpp)
+        analyzer/tasks/DressedStatesFinder.cpp analyzer/tasks/BulkMeanGapRatio.cpp simulation/QuenchCalculator.cpp evolution/ChebyshevEvolutionParameters.h)
 
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)

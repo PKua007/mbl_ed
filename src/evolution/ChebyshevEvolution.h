@@ -8,49 +8,47 @@
 #include <utility>
 
 #include "CorrelationsTimeEvolution.h"
-#include "CorrelationsTimeEvolutionParameters.h"
+#include "ChebyshevEvolutionParameters.h"
 #include "ChebyshevEvolver.h"
+#include "simulation/HamiltonianGenerator.h"
+#include "simulation/AveragingModel.h"
 #include "simulation/RND.h"
 #include "simulation/QuenchCalculator.h"
 
 /**
  * @brief A class performing a whole series of time evolutions using Chebyshev expansion technique.
  * @details See CorrelationsTimeEvolution and its "slave" classes to see what is calculated. The hamiltonian generator
- * is prepared for each simulation according to a specific averaging model. The template parameters default to standard
- * classes and exist solely for mocking purposes. See the default classes description for details of what they do.
+ * is prepared for each simulation according to a specific averaging model and, if desired, the quench stated is
+ * prepared for evolution (see constructor). The template parameters default to standard classes and exist solely for
+ * mocking purposes. See the default classes description for details of what they do.
  */
-template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel>
+template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel,
+         typename CorrelationsTimeEvolution_t = CorrelationsTimeEvolution,
+         typename QuenchCalculator_t = QuenchCalculator, typename ChebyshevEvolver_t = ChebyshevEvolver>
 class ChebyshevEvolution {
 private:
     std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;
     std::unique_ptr<AveragingModel_t> averagingModel;
     std::unique_ptr<RND> rnd;
-    std::unique_ptr<FileOstreamProvider> ostreamProvider;
-    CorrelationsTimeEvolution correlationsTimeEvolution;
-    CorrelationsTimeEvolutionParameters correlationsTimeEvolutionParameters;
+    CorrelationsTimeEvolution_t correlationsTimeEvolution;
+    ChebyshevEvolutionParameters parameters;
 
     std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator;
     std::unique_ptr<RND> quenchRnd;
 
-    std::size_t from{};
-    std::size_t to{};
-    std::size_t totalSimulations{};
 
-    std::string fileSignature{};
-
-
-    auto prepareHamiltonianAndAdditionalVectors(QuenchCalculator &quenchCalculator, std::size_t simulationIndex,
-                                                std::ostream &logger) const
+    auto prepareHamiltonianAndPossiblyQuenchVector(QuenchCalculator_t &quenchCalculator, std::size_t simulationIndex,
+                                                   std::ostream &logger) const
     {
         std::vector<arma::cx_vec> additionalVectors;
 
         this->averagingModel->setupHamiltonianGenerator(*this->hamiltonianGenerator, *this->rnd, simulationIndex,
-                                                        this->totalSimulations);
+                                                        this->parameters.totalSimulations);
         arma::sp_mat hamiltonian = this->hamiltonianGenerator->generate();
 
         if (this->quenchHamiltonianGenerator != nullptr) {
             this->averagingModel->setupHamiltonianGenerator(*this->quenchHamiltonianGenerator, *this->quenchRnd,
-                                                            simulationIndex, this->totalSimulations);
+                                                            simulationIndex, this->parameters.totalSimulations);
             arma::sp_mat initialHamiltonian = this->quenchHamiltonianGenerator->generate();
 
             quenchCalculator.addQuench(initialHamiltonian, hamiltonian);
@@ -69,47 +67,41 @@ private:
 
 public:
     /**
-     * @brief Constructor with FileOstreamProvider injection for mocking.
+     * @brief Constructor, where HamiltonianGenerator and RND for quench should be passed, or set to nullptr if
+     * quench should not be done.
+     * @details If quench is to be done, @a parameters.initialVectors has to have exatcly one external vector slot
+     * provided, 0 otherwise.
      */
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
                        std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
-                       std::unique_ptr<FileOstreamProvider> ostreamProvider, std::size_t from, std::size_t to,
-                       std::size_t totalSimulations, const CorrelationsTimeEvolutionParameters &parameters,
-                       std::string fileSignature)
+                       const ChebyshevEvolutionParameters &parameters,
+                       std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator,
+                       std::unique_ptr<RND> quenchRnd)
             : hamiltonianGenerator{std::move(hamiltonianGenerator)}, averagingModel{std::move(averagingModel)},
-              rnd{std::move(rnd)}, ostreamProvider{std::move(ostreamProvider)}, correlationsTimeEvolution(parameters),
-              correlationsTimeEvolutionParameters{parameters}, from{from}, to{to}, totalSimulations{totalSimulations},
-              fileSignature{std::move(fileSignature)}
-
+              rnd{std::move(rnd)}, correlationsTimeEvolution(parameters.timeEvolutionParameters),
+              parameters{parameters}, quenchHamiltonianGenerator{std::move(quenchHamiltonianGenerator)},
+              quenchRnd{std::move(quenchRnd)}
     {
-        Expects(this->totalSimulations > 0);
-        Expects(this->from < this->to);
-        Expects(this->to <= this->totalSimulations);
+        Expects(this->parameters.totalSimulations > 0);
+        Expects(this->parameters.from < this->parameters.to);
+        Expects(this->parameters.to <= this->parameters.totalSimulations);
+
+        if (this->quenchHamiltonianGenerator == nullptr) {
+            Expects(this->parameters.timeEvolutionParameters.countExternalVectors() == 0);
+        } else {
+            Expects(this->parameters.timeEvolutionParameters.countExternalVectors() == 1);
+        }
     }
 
     /**
-     * @brief Constructor with default FileOstreamProvider behaviour. The rest of parameters are self-explanatory.
+     * @brief Constructor with no quench.
      */
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
-                       std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd, std::size_t from,
-                       std::size_t to, std::size_t totalSimulations,
-                       const CorrelationsTimeEvolutionParameters &parameters, const std::string &fileSignature)
+                       std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
+                       const ChebyshevEvolutionParameters &parameters)
             : ChebyshevEvolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-                                 std::make_unique<FileOstreamProvider>(), from, to, totalSimulations, parameters,
-                                 fileSignature)
+                                 parameters, nullptr, nullptr)
     { }
-
-    /**
-     * @brief Installs hamiltonian generator and random number generator which will be used to perform quenches.
-     * @details If it is used, one slot for CorrelationTimeEvolutionParameters::ExternalVector should be present
-     * in @a parameters passed in the constructor.
-     */
-    void addQuenchHamiltonianGenerator(std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator,
-                                       std::unique_ptr<RND> quenchRnd)
-    {
-        this->quenchHamiltonianGenerator = std::move(quenchHamiltonianGenerator);
-        this->quenchRnd = std::move(quenchRnd);
-    }
 
     /**
      * @brief Performs the simuations. The results (see CorrelationsTimeEvolution) are stored afterwards using
@@ -117,14 +109,8 @@ public:
      * @details The name of the file is in the code, go check ;).
      */
     void perform(std::ostream &logger) {
-        if (this->quenchHamiltonianGenerator == nullptr) {
-            Assert(this->correlationsTimeEvolutionParameters.countExternalVectors() == 0);
-        } else {
-            Assert(this->correlationsTimeEvolutionParameters.countExternalVectors() == 1);
-        }
-
-        QuenchCalculator quenchCalculator;
-        for (std::size_t i = this->from; i < this->to; i++) {
+        QuenchCalculator_t quenchCalculator;
+        for (std::size_t i = this->parameters.from; i < this->parameters.to; i++) {
             arma::wall_clock wholeTimer;
             arma::wall_clock timer;
 
@@ -133,12 +119,12 @@ public:
             logger << "[ChebyshevEvolution::perform] Preparing hamiltonian... " << std::flush;
             timer.tic();
             auto [hamiltonian, additionalVectors]
-                = this->prepareHamiltonianAndAdditionalVectors(quenchCalculator, i, logger);
+                = this->prepareHamiltonianAndPossiblyQuenchVector(quenchCalculator, i, logger);
             logger << "done (" << timer.toc() << " s)" << std::endl;
 
             logger << "[ChebyshevEvolution::perform] Preparing evolver... " << std::endl;
             timer.tic();
-            ChebyshevEvolver evolver(hamiltonian, logger);
+            ChebyshevEvolver_t evolver(hamiltonian, logger);
             logger << "[ChebyshevEvolution::perform] Preparing evolver done (" << timer.toc() << " s)." << std::endl;
             this->correlationsTimeEvolution.addEvolution(evolver, logger, additionalVectors);
             logger << "[ChebyshevEvolution::perform] Whole evolution took " << wholeTimer.toc() << " s." << std::endl;
@@ -149,11 +135,10 @@ public:
             logger << "; avg error: " << quenchCalculator.getEpsilonAveragingSampleError() << "; quantum error: ";
             logger << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << std::endl;
         }
+    }
 
-        std::string filename = this->fileSignature + "_evolution.txt";
-        auto file = this->ostreamProvider->openFile(filename);
-        this->correlationsTimeEvolution.storeResult(*file);
-        logger << "[ChebyshevEvolution::perform] Observables stored to " << filename << std::endl;
+    void storeResults(std::ostream &out) const {
+        this->correlationsTimeEvolution.storeResult(out);
     }
 };
 
