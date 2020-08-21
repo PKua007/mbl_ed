@@ -20,7 +20,6 @@ double CavityLongInteraction::calculate(const FockBase::Vector &vector, const Ha
 }
 
 CavityLongInteraction::CavityLongInteraction(double U1, double beta, double phi0) : U1{U1}, beta{beta}, phi0{phi0} {
-    Expects(U1 >= 0);
     Expects(beta >= 0);
 }
 
