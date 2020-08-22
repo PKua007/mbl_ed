@@ -70,14 +70,6 @@ struct CorrelationsTimeEvolutionParameters {
             }
         }
     }
-
-    [[nodiscard]] std::size_t countExternalVectors() const {
-        std::size_t externalVectorCounter{};
-        for (const auto &initialVector : this->vectorsToEvolve)
-            if (std::holds_alternative<ExternalVector>(initialVector))
-                externalVectorCounter++;
-        return externalVectorCounter;
-    }
 };
 
 #endif //MBL_ED_CORRELATIONSTIMEEVOLUTIONPARAMETERS_H

@@ -64,3 +64,9 @@ double QuenchCalculator::getLastQuenchEpsilonQuantumUncertainty() const {
     else
         return std::sqrt(this->quenchEpsilonVariances.back());
 }
+
+void QuenchCalculator::clear() {
+    this->quenchEpsilons.clear();
+    this->quenchEpsilonVariances.clear();
+    this->lastQuenchedState.clear();
+}

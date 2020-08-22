@@ -79,6 +79,15 @@ public:
      * </pre>
      */
     void storeResult(std::ostream &out) const;
+
+    [[nodiscard]] std::size_t countExternalVectors() const {
+        std::size_t externalVectorCounter{};
+        using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
+        for (const auto &vectorEvolution : this->vectorEvolutions)
+            if (std::holds_alternative<ExternalVector>(vectorEvolution.initialVector))
+                externalVectorCounter++;
+        return externalVectorCounter;
+    }
 };
 
 

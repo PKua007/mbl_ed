@@ -15,9 +15,10 @@
 #include "simulation/Simulation.h"
 #include "simulation/FockBaseGenerator.h"
 #include "simulation/DisorderGenerator.h"
-#include "simulation/QuenchCalculator.h"
 
+#include "evolution/QuenchCalculator.h"
 #include "evolution/ChebyshevEvolution.h"
+#include "evolution/CorrelationsTimeEvolution.h"
 
 #include "utils/Fold.h"
 #include "utils/Utils.h"
@@ -315,26 +316,27 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParameters.marginSize = marginSize;
     evolutionParameters.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
 
-    ChebyshevEvolutionParameters chebyshevEvolutionParameters;
-    chebyshevEvolutionParameters.from = params.from;
-    chebyshevEvolutionParameters.to = params.to;
-    chebyshevEvolutionParameters.totalSimulations = params.totalSimulations;
-    chebyshevEvolutionParameters.timeEvolutionParameters = evolutionParameters;
+    SimulationsSpan simulationsSpan;
+    simulationsSpan.from = params.from;
+    simulationsSpan.to = params.to;
+    simulationsSpan.totalSimulations = params.totalSimulations;
 
     std::unique_ptr<ChebyshevEvolution<>> evolution;
     if (quenchParams.has_value()) {
         using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
-        chebyshevEvolutionParameters.timeEvolutionParameters.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
+        evolutionParameters.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
 
         auto quenchRnd = std::make_unique<RND>(params.from + params.seed);
         auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
         evolution = std::make_unique<ChebyshevEvolution<>>(
-            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), chebyshevEvolutionParameters,
+            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationsSpan,
+            std::make_unique<CorrelationsTimeEvolution>(evolutionParameters), std::make_unique<QuenchCalculator>(),
             std::move(quenchHamiltonianGenerator), std::move(quenchRnd)
         );
     } else {
         evolution = std::make_unique<ChebyshevEvolution<>>(
-            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), chebyshevEvolutionParameters
+            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationsSpan,
+            std::make_unique<CorrelationsTimeEvolution>(evolutionParameters)
         );
     }
 

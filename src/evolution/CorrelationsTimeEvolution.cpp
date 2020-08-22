@@ -12,6 +12,7 @@
 void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &logger,
                                              const std::vector<arma::cx_vec> &externalVectors)
 {
+    logger << externalVectors.size() << std::endl;
     std::size_t externalVectorsCounter{};
     for (auto &evolution : this->vectorEvolutions) {
         arma::cx_vec initialState;

@@ -62,6 +62,8 @@ public:
      * deviation of the distribution of quench energies.
      */
     [[nodiscard]] double getEpsilonAveragingSampleError() const;
+
+    void clear();
 };
 
 
