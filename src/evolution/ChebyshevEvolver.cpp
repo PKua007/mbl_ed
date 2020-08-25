@@ -29,15 +29,10 @@ inline void csrMult(V &Ax, const V &x, const M &Adata, const std::vector<std::si
  * Many-body localization in presence of cavity mediated long-range interactions
  */
 arma::cx_vec ChebyshevEvolver::evolveState(const arma::cx_vec &state) {
-    std::chrono::time_point b1 = std::chrono::high_resolution_clock::now();
     arma::sp_mat hamiltonianRescaled = (this->hamiltonian - arma::speye(arma::size(this->hamiltonian)) * this->b) / this->a;
-    std::chrono::time_point e1 = std::chrono::high_resolution_clock::now();
-
     std::vector<double> Adata(hamiltonianRescaled.values, hamiltonianRescaled.values + hamiltonianRescaled.n_nonzero);
     std::vector<std::size_t> Aindices(hamiltonianRescaled.row_indices, hamiltonianRescaled.row_indices + hamiltonianRescaled.n_nonzero);
     std::vector<std::size_t> Aindptr(hamiltonianRescaled.col_ptrs, hamiltonianRescaled.col_ptrs + hamiltonianRescaled.n_rows + 1);
-
-    this->logger << "scale: " << std::chrono::duration_cast<std::chrono::microseconds>(e1 - b1).count() << std::endl;
 
     arma::cx_vec prevPrevOrder = state;
     arma::cx_vec prevOrder(arma::size(state));
@@ -49,25 +44,14 @@ arma::cx_vec ChebyshevEvolver::evolveState(const arma::cx_vec &state) {
     result = state * std::cyl_bessel_j(0, this->a * this->dt);
     result += 2. * -1i * std::cyl_bessel_j(1, this->a * this->dt) * prevOrder;
 
-    std::chrono::time_point b2 = std::chrono::high_resolution_clock::now();
-    unsigned long mul{};
     for (std::size_t i = 2; i <= N; i++) {
-        std::chrono::time_point b3 = std::chrono::high_resolution_clock::now();
-        //hamVec = hamiltonianRescaled * prevOrder;
-
         csrMult(hamVec, prevOrder, Adata, Aindices, Aindptr);
-        std::chrono::time_point e3 = std::chrono::high_resolution_clock::now();
-
-        mul += std::chrono::duration_cast<std::chrono::microseconds>(e3 - b3).count();
         currentOrder = 2* hamVec - prevPrevOrder;
         result += 2. * std::pow(-1i, i) * std::cyl_bessel_j(i, this->a * this->dt) * currentOrder;
         prevPrevOrder = prevOrder;
         prevOrder = currentOrder;
     }
     result *= std::exp(-1i * this->b * this->dt);
-    std::chrono::time_point e2 = std::chrono::high_resolution_clock::now();
-    this->logger << "mul: " << mul << std::endl;
-    this->logger << "all: " << std::chrono::duration_cast<std::chrono::microseconds>(e2 - b2).count() << std::endl;
 
     return result;
 }
