@@ -7,21 +7,20 @@
 
 #include "ChebyshevEvolver.h"
 #include "utils/Assertions.h"
+#include "utils/OMPMacros.h"
 
 using namespace std::complex_literals;
 
 template<typename V, typename M>
-inline void csrMult(V &Ax, const V &x, const M &Adata, const std::vector<std::size_t> &Aindices, const std::vector<std::size_t> &Aindptr)
+inline std::complex<double> csrMultElem(const V &x, const M &Adata, const std::vector<std::size_t> &Aindices, const std::vector<std::size_t> &Aindptr,
+        std::size_t i)
 {
-    for (std::size_t i = 0; i < Ax.size(); i++)
+    std::complex<double> Ax_i = 0.0;
+    for (std::size_t dataIdx = Aindptr[i]; dataIdx < Aindptr[i + 1]; dataIdx++)
     {
-        std::complex<double> Ax_i = 0.0;
-        for (std::size_t dataIdx = Aindptr[i]; dataIdx < Aindptr[i + 1]; dataIdx++)
-        {
-            Ax_i += Adata[dataIdx] * x[Aindices[dataIdx]];
-        }
-        Ax[i] = Ax_i;
+        Ax_i += Adata[dataIdx] * x[Aindices[dataIdx]];
     }
+    return Ax_i;
 }
 
 /**
@@ -34,26 +33,31 @@ arma::cx_vec ChebyshevEvolver::evolveState(const arma::cx_vec &state) {
     std::vector<std::size_t> Aindices(hamiltonianRescaled.row_indices, hamiltonianRescaled.row_indices + hamiltonianRescaled.n_nonzero);
     std::vector<std::size_t> Aindptr(hamiltonianRescaled.col_ptrs, hamiltonianRescaled.col_ptrs + hamiltonianRescaled.n_rows + 1);
 
-    arma::cx_vec prevPrevOrder = state;
-    arma::cx_vec prevOrder(arma::size(state));
-    csrMult(prevOrder, state, Adata, Aindices, Aindptr);
-    arma::cx_vec currentOrder(arma::size(state));
-    arma::cx_vec result(arma::size(state));
+    arma::cx_vec bNext(arma::size(state), arma::fill::zeros);
+    arma::cx_vec bNextNext(arma::size(state), arma::fill::zeros);
+    arma::cx_vec B(arma::size(state));
     arma::cx_vec hamVec(arma::size(state));
 
-    result = state * std::cyl_bessel_j(0, this->a * this->dt);
-    result += 2. * -1i * std::cyl_bessel_j(1, this->a * this->dt) * prevOrder;
+    for (std::size_t i = this->N; i > 0; i--) {
+        std::complex<double> coeff = 2. * std::pow(-1i, i) * std::cyl_bessel_j(i, this->a * this->dt);
 
-    for (std::size_t i = 2; i <= N; i++) {
-        csrMult(hamVec, prevOrder, Adata, Aindices, Aindptr);
-        currentOrder = 2* hamVec - prevPrevOrder;
-        result += 2. * std::pow(-1i, i) * std::cyl_bessel_j(i, this->a * this->dt) * currentOrder;
-        prevPrevOrder = prevOrder;
-        prevOrder = currentOrder;
+        _OMP_PARALLEL_FOR
+        for (std::size_t j = 0; j < hamVec.size(); j++)
+        {
+            B[j] = coeff * state[j] + 2. * csrMultElem(bNext, Adata, Aindices, Aindptr, j) - bNextNext[j];
+        }
+        bNextNext = bNext;
+        bNext = B;
     }
-    result *= std::exp(-1i * this->b * this->dt);
 
-    return result;
+    std::complex<double> coeff = std::cyl_bessel_j(0, this->a * this->dt);
+
+    _OMP_PARALLEL_FOR
+    for (std::size_t i = 0; i < hamVec.size(); i++) {
+        B[i] = coeff * state[i] + csrMultElem(bNext, Adata, Aindices, Aindptr, i) - bNextNext[i];
+        B[i] *= std::exp(-1i * this->b * this->dt);
+    }
+    return B;
 }
 
 void ChebyshevEvolver::prepareFor(const arma::cx_vec &initialState, double maxTime, std::size_t maxSteps_) {
@@ -85,6 +89,7 @@ void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
     this->N = 1;
     do {
         this->N *= 2;
+        Assert(this->N <= 2048);
         this->logger << "[ChebyshevEvolver::prepareFor] Trying " << this->N << "... " << std::flush;
         evolvedState = this->evolveState(initialState);
         normLeakage = std::abs(initialNorm - arma::norm(evolvedState));
@@ -117,7 +122,7 @@ void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
  */
 void ChebyshevEvolver::findSpectrumRange() {
     std::size_t numEigvals = std::min<std::size_t>(MIN_EIGVAL, this->hamiltonian.n_rows - 1);
-    
+
     arma::vec minEigval, maxEigval;
     this->logger << "[ChebyshevEvolver::findSpectrumRange] Calculating Emin... " << std::flush;
     arma::wall_clock timer;
