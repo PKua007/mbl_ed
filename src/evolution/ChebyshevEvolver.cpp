@@ -11,52 +11,70 @@
 
 using namespace std::complex_literals;
 
-template<typename V, typename M>
-inline std::complex<double> csrMultElem(const V &x, const M &Adata, const std::vector<std::size_t> &Aindices, const std::vector<std::size_t> &Aindptr,
-        std::size_t i)
-{
-    std::complex<double> Ax_i = 0.0;
-    for (std::size_t dataIdx = Aindptr[i]; dataIdx < Aindptr[i + 1]; dataIdx++)
+namespace {
+    /**
+     * @brief returns (matrix * vec)[elementIdx] using CSR matrix * dense vector multiplication scheme
+     */
+    inline std::complex<double> csrMatTimesCxVecElem(const arma::cx_vec &vec, const std::vector<double> &matrixData,
+                                                     const std::vector<std::size_t> &matrixColIdx,
+                                                     const std::vector<std::size_t> &matrixRowPtr,
+                                                     std::size_t elementIdx)
     {
-        Ax_i += Adata[dataIdx] * x[Aindices[dataIdx]];
+        std::complex<double> Ax_i = 0.0;
+        for (std::size_t dataIdx = matrixRowPtr[elementIdx]; dataIdx < matrixRowPtr[elementIdx + 1]; dataIdx++)
+            Ax_i += matrixData[dataIdx] * vec[matrixColIdx[dataIdx]];
+        return Ax_i;
     }
-    return Ax_i;
 }
 
 /**
- * @brief Perform one Chebyshev step by this->dt using formulas from paper:
- * Many-body localization in presence of cavity mediated long-range interactions
+ * @brief Perform one Chebyshev step by this->dt.
+ * @details It uses custom sparse matrix - dense vector multiplication, since this from Armadillo is lame.
  */
 arma::cx_vec ChebyshevEvolver::evolveState(const arma::cx_vec &state) {
-    arma::sp_mat hamiltonianRescaled = (this->hamiltonian - arma::speye(arma::size(this->hamiltonian)) * this->b) / this->a;
-    std::vector<double> Adata(hamiltonianRescaled.values, hamiltonianRescaled.values + hamiltonianRescaled.n_nonzero);
-    std::vector<std::size_t> Aindices(hamiltonianRescaled.row_indices, hamiltonianRescaled.row_indices + hamiltonianRescaled.n_nonzero);
-    std::vector<std::size_t> Aindptr(hamiltonianRescaled.col_ptrs, hamiltonianRescaled.col_ptrs + hamiltonianRescaled.n_rows + 1);
+    // Rescales so that hamiltonian's eigenvalues lie in [-1, 1] range
+    arma::sp_mat hamiltonianRescaled = (this->hamiltonian - arma::speye(arma::size(this->hamiltonian)) * this->b)
+                                       / this->a;
 
+    // We just steal sparse matrix data from Armadillo's matrix. Note, that it uses CSC format and we interpret it as
+    // CSR, but it's ok since the matrix is Hermitean
+    // details: https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_row_(CSR,_CRS_or_Yale_format)
+    std::vector<double> hamData(hamiltonianRescaled.values, hamiltonianRescaled.values + hamiltonianRescaled.n_nonzero);
+    std::vector<std::size_t> hamColIdx(hamiltonianRescaled.row_indices,
+                                      hamiltonianRescaled.row_indices + hamiltonianRescaled.n_nonzero);
+    std::vector<std::size_t> hamRowPtr(hamiltonianRescaled.col_ptrs,
+                                     hamiltonianRescaled.col_ptrs + hamiltonianRescaled.n_rows + 1);
+
+    // Now we perform Chebyshev expansion summation as stated in paper:
+    // Many-body localization in presence of cavity mediated long-range interactions
+    // using Clenshaw algorithm from:
+    // https://en.wikipedia.org/wiki/Clenshaw_algorithm
+    // All vague variable names follow from this Wikipedia link.
+    // In this case a_0 = J_0(this->a t), a_k = 2(-i)^k J_k(this->a t)
     arma::cx_vec bNext(arma::size(state), arma::fill::zeros);
     arma::cx_vec bNextNext(arma::size(state), arma::fill::zeros);
-    arma::cx_vec B(arma::size(state));
-    arma::cx_vec hamVec(arma::size(state));
+    arma::cx_vec B(arma::size(state));  // Capital b not to collide with this->b
 
+    // Iteratively reach bNext = b_1, bNext = b_2
     for (std::size_t i = this->N; i > 0; i--) {
         std::complex<double> coeff = 2. * std::pow(-1i, i) * std::cyl_bessel_j(i, this->a * this->dt);
 
         _OMP_PARALLEL_FOR
-        for (std::size_t j = 0; j < hamVec.size(); j++)
-        {
-            B[j] = coeff * state[j] + 2. * csrMultElem(bNext, Adata, Aindices, Aindptr, j) - bNextNext[j];
-        }
+        for (std::size_t j = 0; j < state.size(); j++)
+            B[j] = coeff * state[j] + 2. * csrMatTimesCxVecElem(bNext, hamData, hamColIdx, hamRowPtr, j) - bNextNext[j];
         bNextNext = bNext;
         bNext = B;
     }
 
+    // Now, compute p_n and store it in B
     std::complex<double> coeff = std::cyl_bessel_j(0, this->a * this->dt);
 
     _OMP_PARALLEL_FOR
-    for (std::size_t i = 0; i < hamVec.size(); i++) {
-        B[i] = coeff * state[i] + csrMultElem(bNext, Adata, Aindices, Aindptr, i) - bNextNext[i];
+    for (std::size_t i = 0; i < state.size(); i++) {
+        B[i] = coeff * state[i] + csrMatTimesCxVecElem(bNext, hamData, hamColIdx, hamRowPtr, i) - bNextNext[i];
         B[i] *= std::exp(-1i * this->b * this->dt);
     }
+
     return B;
 }
 
@@ -134,8 +152,6 @@ void ChebyshevEvolver::findSpectrumRange() {
     this->logger << "done (" << timer.toc() << " s). " << std::endl;
     double Emin = minEigval.front();
     double Emax = maxEigval.back();
-//    double Emin = -31.80130421278989;
-//    double Emax = 306.9052833537735;
     this->a = (Emax - Emin) / 2;
     this->b = (Emax + Emin) / 2;
 }
