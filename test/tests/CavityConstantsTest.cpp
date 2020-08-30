@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "simulation/CavityConstants.h"
+#include "core/CavityConstants.h"
 
 TEST_CASE("CavityConstants: basic") {
     CavityConstants cavityConstants;

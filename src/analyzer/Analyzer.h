@@ -9,7 +9,7 @@
 #include <vector>
 #include <memory>
 
-#include "simulation/Eigensystem.h"
+#include "core/Eigensystem.h"
 #include "AnalyzerTask.h"
 #include "utils/FileUtils.h"
 

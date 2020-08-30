@@ -4,9 +4,9 @@
 
 #include <catch2/catch.hpp>
 
-#include "simulation/terms/HubbardOnsite.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/FockBaseGenerator.h"
+#include "core/terms/HubbardOnsite.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/FockBaseGenerator.h"
 
 TEST_CASE("HubbardOnsite") {
     HamiltonianGenerator generator(FockBaseGenerator{}.generate(4, 2), false);

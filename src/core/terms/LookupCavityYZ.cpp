@@ -5,7 +5,7 @@
 #include <numeric>
 
 #include "LookupCavityYZ.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "core/HamiltonianGenerator.h"
 
 void LookupCavityYZ::changeRealisation(std::size_t index) {
     Expects(index < this->cavityConstants.size());

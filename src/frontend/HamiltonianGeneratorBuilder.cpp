@@ -8,17 +8,17 @@
 #include "utils/Utils.h"
 #include "CavityConstantsReader.h"
 
-#include "simulation/terms/OnsiteDisorder.h"
-#include "simulation/terms/HubbardHop.h"
-#include "simulation/terms/CavityLongInteraction.h"
-#include "simulation/terms/QuasiperiodicDisorder.h"
-#include "simulation/terms/HubbardOnsite.h"
-#include "simulation/terms/ListOnsite.h"
-#include "simulation/terms/LookupCavityZ2.h"
-#include "simulation/terms/LookupCavityYZ.h"
-#include "simulation/terms/LookupCavityY2.h"
+#include "core/terms/OnsiteDisorder.h"
+#include "core/terms/HubbardHop.h"
+#include "core/terms/CavityLongInteraction.h"
+#include "core/terms/QuasiperiodicDisorder.h"
+#include "core/terms/HubbardOnsite.h"
+#include "core/terms/ListOnsite.h"
+#include "core/terms/LookupCavityZ2.h"
+#include "core/terms/LookupCavityYZ.h"
+#include "core/terms/LookupCavityY2.h"
 
-#include "simulation/disorder_generators/UniformGenerator.h"
+#include "core/disorder_generators/UniformGenerator.h"
 
 std::unique_ptr<HamiltonianGenerator>
 HamiltonianGeneratorBuilder::build(const Parameters &params, std::shared_ptr<FockBase> fockBase, RND &rnd)

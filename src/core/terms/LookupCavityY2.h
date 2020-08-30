@@ -7,8 +7,8 @@
 
 #include <utility>
 
-#include "simulation/CavityConstants.h"
-#include "simulation/DoubleHoppingTerm.h"
+#include "core/CavityConstants.h"
+#include "core/DoubleHoppingTerm.h"
 #include "utils/Assertions.h"
 
 /**

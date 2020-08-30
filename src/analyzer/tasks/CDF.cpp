@@ -6,7 +6,7 @@
 #include <numeric>
 #include <functional>
 
-#include "simulation/Eigensystem.h"
+#include "core/Eigensystem.h"
 #include "utils/Assertions.h"
 #include "CDF.h"
 

@@ -3,9 +3,9 @@
 //
 
 #include "OnsiteDisorderAveragingModel.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/RND.h"
-#include "simulation/terms/OnsiteDisorder.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/RND.h"
+#include "core/terms/OnsiteDisorder.h"
 
 void OnsiteDisorderAveragingModel::setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
                                                              unsigned long simulationIndex,

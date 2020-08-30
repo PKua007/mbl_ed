@@ -7,10 +7,10 @@
 
 #include <catch2/catch.hpp>
 
-#include "simulation/FockBaseGenerator.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/terms/HubbardHop.h"
-#include "simulation/terms/HubbardOnsite.h"
+#include "core/FockBaseGenerator.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/terms/HubbardHop.h"
+#include "core/terms/HubbardOnsite.h"
 
 #include "evolution/EDEvolver.h"
 #include "evolution/ChebyshevEvolver.h"

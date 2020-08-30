@@ -6,7 +6,7 @@
 
 #include "matchers/ArmaApproxEqualMatcher.h"
 
-#include "evolution/QuenchCalculator.h"
+#include "core/QuenchCalculator.h"
 
 TEST_CASE("QuenchCalculator") {
     arma::sp_mat finalHamiltonian(2, 2);

@@ -4,9 +4,9 @@
 
 #include <catch2/catch.hpp>
 
-#include "simulation/terms/CavityLongInteraction.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/FockBaseGenerator.h"
+#include "core/terms/CavityLongInteraction.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/FockBaseGenerator.h"
 
 TEST_CASE("CavityLongInteraction: +-1 interactions") {
     HamiltonianGenerator generator(FockBaseGenerator{}.generate(3, 3), false);

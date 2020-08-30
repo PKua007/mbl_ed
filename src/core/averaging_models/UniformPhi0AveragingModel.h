@@ -6,9 +6,9 @@
 #define MBL_ED_UNIFORMPHI0AVERAGINGMODEL_H
 
 
-#include "simulation/AveragingModel.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/RND.h"
+#include "core/AveragingModel.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/RND.h"
 
 /**
  * @brief Averaging model, used in Simulation, which distributes evenly phi0 values across simulations based on

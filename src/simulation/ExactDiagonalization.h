@@ -2,8 +2,8 @@
 // Created by pkua on 08.11.2019.
 //
 
-#ifndef MBL_ED_SIMULATION_H
-#define MBL_ED_SIMULATION_H
+#ifndef MBL_ED_EXACTDIAGONALIZATION_H
+#define MBL_ED_EXACTDIAGONALIZATION_H
 
 
 #include <iosfwd>
@@ -17,11 +17,11 @@
 
 #include "utils/Quantity.h"
 #include "analyzer/Analyzer.h"
-#include "Eigensystem.h"
-#include "HamiltonianGenerator.h"
-#include "SimulationParameters.h"
-#include "RND.h"
-#include "AveragingModel.h"
+#include "core/Eigensystem.h"
+#include "core/HamiltonianGenerator.h"
+#include "ExactDiagonalizationParameters.h"
+#include "core/RND.h"
+#include "core/AveragingModel.h"
 
 /**
  * @brief A class performing a series of diagonalizations and optionaly some analyzer tasks.
@@ -35,13 +35,13 @@
  */
 template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel,
          typename Analyzer_t = Analyzer>
-class Simulation {
+class ExactDiagonalization {
 private:
     std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;
     std::unique_ptr<AveragingModel_t> averagingModel;
     std::unique_ptr<RND> rnd;
     std::unique_ptr<FileOstreamProvider> ostreamProvider;
-    SimulationParameters params;
+    ExactDiagonalizationParameters params;
 
     void doSaveEigenenergies(const Eigensystem &eigensystem, std::size_t index) const {
         std::ostringstream filenameStream;
@@ -55,26 +55,26 @@ public:
     /**
      * @brief The constructor with mockable eigenenergy file creating using own FileOstreamProvider.
      */
-    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
-               std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
-               std::unique_ptr<FileOstreamProvider> ostreamProvider, SimulationParameters simulationParameters)
+    ExactDiagonalization(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+                         std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
+                         std::unique_ptr<FileOstreamProvider> ostreamProvider, ExactDiagonalizationParameters simulationParameters)
             : hamiltonianGenerator{std::move(hamiltonianGenerator)}, averagingModel{std::move(averagingModel)},
               rnd{std::move(rnd)}, ostreamProvider{std::move(ostreamProvider)}, params{std::move(simulationParameters)}
     {
-        Expects(this->params.totalSimulations > 0);
-        Expects(this->params.from < this->params.to);
-        Expects(this->params.to <= this->params.totalSimulations);
+        Expects(this->params.simulationsSpan.total > 0);
+        Expects(this->params.simulationsSpan.from < this->params.simulationsSpan.to);
+        Expects(this->params.simulationsSpan.to <= this->params.simulationsSpan.total);
     }
 
     /**
      * @brief The non-mockable constructor which will pass FileOstreamProvider which actually creates files to store
      * eigenenrgies.
      */
-    Simulation(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
-               std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
-               const SimulationParameters &simulationParameters)
-            : Simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-                         std::make_unique<FileOstreamProvider>(), simulationParameters)
+    ExactDiagonalization(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
+                         std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
+                         const ExactDiagonalizationParameters &simulationParameters)
+            : ExactDiagonalization(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                                   std::make_unique<FileOstreamProvider>(), simulationParameters)
     { }
 
     /**
@@ -88,12 +88,12 @@ public:
      * @param analyzer @a Analyzer_t object to user for on-the-fly analyzer tasks
      */
     void perform(std::ostream &logger, Analyzer_t &analyzer) {
-        for (std::size_t i = this->params.from; i < this->params.to; i++) {
+        for (std::size_t i = this->params.simulationsSpan.from; i < this->params.simulationsSpan.to; i++) {
             logger << "[Simulation::perform] Performing diagonalization " << i << "... " << std::flush;
             arma::wall_clock timer;
             timer.tic();
             this->averagingModel->setupHamiltonianGenerator(*this->hamiltonianGenerator, *this->rnd, i,
-                                                            this->params.totalSimulations);
+                                                            this->params.simulationsSpan.total);
             Eigensystem eigensystem = this->hamiltonianGenerator->calculateEigensystem(params.calculateEigenvectors);
             logger << "done (" << timer.toc() << " s). Analyzing... " << std::flush;
 
@@ -107,4 +107,4 @@ public:
 };
 
 
-#endif //MBL_ED_SIMULATION_H
+#endif //MBL_ED_EXACTDIAGONALIZATION_H

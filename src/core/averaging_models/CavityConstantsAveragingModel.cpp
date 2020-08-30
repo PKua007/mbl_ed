@@ -3,12 +3,12 @@
 //
 
 #include "CavityConstantsAveragingModel.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/RND.h"
-#include "simulation/terms/LookupCavityZ2.h"
-#include "simulation/terms/OnsiteDisorder.h"
-#include "simulation/terms/LookupCavityYZ.h"
-#include "simulation/terms/LookupCavityY2.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/RND.h"
+#include "core/terms/LookupCavityZ2.h"
+#include "core/terms/OnsiteDisorder.h"
+#include "core/terms/LookupCavityYZ.h"
+#include "core/terms/LookupCavityY2.h"
 
 void CavityConstantsAveragingModel::setupHamiltonianGenerator(HamiltonianGenerator &hamiltonianGenerator, RND &rnd,
                                                               unsigned long simulationIndex,

@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "simulation/DiagonalTerm.h"
+#include "core/DiagonalTerm.h"
 
 /**
  * @brief The class representing constant potential in each site from a list provided upfront.

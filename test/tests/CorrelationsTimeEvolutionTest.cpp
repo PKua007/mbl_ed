@@ -11,9 +11,9 @@
 
 #include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
 #include "evolution/EDEvolver.h"
-#include "simulation/FockBaseGenerator.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/terms/HubbardHop.h"
+#include "core/FockBaseGenerator.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/terms/HubbardHop.h"
 
 /*TEST_CASE("EDCorrelationsTimeEvolution: benchmark") {
     auto base = FockBaseGenerator{}.generate(6, 6);

@@ -5,7 +5,7 @@
 #include <catch2/catch.hpp>
 #include <sstream>
 
-#include "simulation/FockVector.h"
+#include "core/FockVector.h"
 
 TEST_CASE("FockVector: string representation") {
     SECTION("ok") {

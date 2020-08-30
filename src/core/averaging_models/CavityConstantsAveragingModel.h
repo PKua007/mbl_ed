@@ -5,9 +5,9 @@
 #ifndef MBL_ED_CAVITYCONSTANTSAVERAGINGMODEL_H
 #define MBL_ED_CAVITYCONSTANTSAVERAGINGMODEL_H
 
-#include "simulation/AveragingModel.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/RND.h"
+#include "core/AveragingModel.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/RND.h"
 
 /**
  * @brief Averaging model, used in Simulation which picks subsequent realisations from CavityConstants.

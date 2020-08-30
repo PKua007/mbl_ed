@@ -4,11 +4,11 @@
 
 #include <catch2/catch.hpp>
 
-#include "simulation/terms/OnsiteDisorder.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/FockBaseGenerator.h"
-#include "simulation/RND.h"
-#include "simulation/DisorderGenerator.h"
+#include "core/terms/OnsiteDisorder.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/FockBaseGenerator.h"
+#include "core/RND.h"
+#include "core/DisorderGenerator.h"
 
 namespace {
     class SequenceDisorderGenerator : public DisorderGenerator {

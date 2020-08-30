@@ -7,7 +7,7 @@
 
 
 #include "utils/Assertions.h"
-#include "simulation/HoppingTerm.h"
+#include "core/HoppingTerm.h"
 
 /**
  * @brief A standard one-site hop from Hubbard Hamiltonian.

@@ -6,9 +6,9 @@
 #define MBL_ED_RANDOMPHI0AVERAGINGMODEL_H
 
 
-#include "simulation/AveragingModel.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/RND.h"
+#include "core/AveragingModel.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/RND.h"
 
 /**
  * @brief Averaging model, used in Simulation, which picks random phi0 values.

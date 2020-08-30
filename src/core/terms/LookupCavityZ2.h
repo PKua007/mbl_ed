@@ -8,8 +8,8 @@
 
 #include <utility>
 
-#include "simulation/CavityConstants.h"
-#include "simulation/DiagonalTerm.h"
+#include "core/CavityConstants.h"
+#include "core/DiagonalTerm.h"
 #include "utils/Assertions.h"
 
 /**

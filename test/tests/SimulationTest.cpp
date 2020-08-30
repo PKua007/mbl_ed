@@ -7,8 +7,8 @@
 
 #include "matchers/ArmaApproxEqualMatcher.h"
 
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/Simulation.h"
+#include "core/HamiltonianGenerator.h"
+#include "simulation/ExactDiagonalization.h"
 
 namespace {
     class MockHamiltonianGenerator {
@@ -103,14 +103,14 @@ namespace {
 }
 
 TEST_CASE("Simulation: 3 'random' hamiltonians") {
-    SimulationParameters params;
-    params.from = 1;
-    params.to = 4;
-    params.totalSimulations = 5;
+    ExactDiagonalizationParameters params;
+    params.simulationsSpan.from = 1;
+    params.simulationsSpan.to = 4;
+    params.simulationsSpan.total = 5;
     params.calculateEigenvectors = true;
     params.saveEigenenergies = false;
     params.fileSignature = "";
-    using TestSimulation = Simulation<MockHamiltonianGenerator, MockAveragingModel, MockAnalyzer>;
+    using TestSimulation = ExactDiagonalization<MockHamiltonianGenerator, MockAveragingModel, MockAnalyzer>;
     TestSimulation simulation(std::make_unique<MockHamiltonianGenerator>(), std::make_unique<MockAveragingModel>(),
                               std::make_unique<RND>(), std::make_unique<DummyOstreamProvider>(), params);
     MockAnalyzer mockAnalyzer;

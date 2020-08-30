@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 
-#include "simulation/Eigensystem.h"
+#include "core/Eigensystem.h"
 
 /**
  * @brief An analyzis task, which will be performed on each Eigensystem given to Analyzer.

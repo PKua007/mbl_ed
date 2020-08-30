@@ -4,9 +4,9 @@
 
 #include <catch2/catch.hpp>
 
-#include "simulation/terms/ListOnsite.h"
-#include "simulation/FockBaseGenerator.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "core/terms/ListOnsite.h"
+#include "core/FockBaseGenerator.h"
+#include "core/HamiltonianGenerator.h"
 
 TEST_CASE("ListOnsite") {
     HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 3), false);

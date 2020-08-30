@@ -10,9 +10,9 @@
 #include <algorithm>
 
 #include "utils/Assertions.h"
-#include "simulation/DiagonalTerm.h"
-#include "simulation/RND.h"
-#include "simulation/DisorderGenerator.h"
+#include "core/DiagonalTerm.h"
+#include "core/RND.h"
+#include "core/DisorderGenerator.h"
 
 /**
  * @brief The class representing random potential in each site.

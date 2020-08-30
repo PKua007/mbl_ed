@@ -10,8 +10,8 @@
 
 #include "matchers/ArmaApproxEqualMatcher.h"
 
-#include "simulation/FockBaseGenerator.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "core/FockBaseGenerator.h"
+#include "core/HamiltonianGenerator.h"
 #include "utils/Assertions.h"
 
 using namespace trompeloeil;

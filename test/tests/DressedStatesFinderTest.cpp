@@ -5,7 +5,7 @@
 #include <catch2/catch.hpp>
 
 #include "analyzer/tasks/DressedStatesFinder.h"
-#include "simulation/FockBaseGenerator.h"
+#include "core/FockBaseGenerator.h"
 
 TEST_CASE("DressedStatesFinder: single diagonalization") {
     FockBaseGenerator generator;

@@ -5,7 +5,7 @@
 #include <numeric>
 
 #include "LookupCavityZ2.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "core/HamiltonianGenerator.h"
 
 double LookupCavityZ2::calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) {
     Expects(!generator.usingPBC());

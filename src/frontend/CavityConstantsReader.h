@@ -7,7 +7,7 @@
 
 #include <istream>
 
-#include "simulation/CavityConstants.h"
+#include "core/CavityConstants.h"
 
 /**
  * @brief A class, which reads CavityConstants from a dat file in the format shown below.

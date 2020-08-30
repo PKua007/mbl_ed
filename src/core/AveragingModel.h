@@ -6,14 +6,14 @@
 #define MBL_ED_AVERAGINGMODEL_H
 
 #include <cmath>
-#include <simulation/terms/QuasiperiodicDisorder.h>
 
-#include "simulation/terms/LookupCavityZ2.h"
-#include "simulation/terms/LookupCavityYZ.h"
-#include "simulation/terms/LookupCavityY2.h"
-#include "simulation/terms/CavityLongInteraction.h"
-#include "simulation/terms/QuasiperiodicDisorder.h"
-#include "simulation/terms/OnsiteDisorder.h"
+#include "core/terms/QuasiperiodicDisorder.h"
+#include "core/terms/LookupCavityZ2.h"
+#include "core/terms/LookupCavityYZ.h"
+#include "core/terms/LookupCavityY2.h"
+#include "core/terms/CavityLongInteraction.h"
+#include "core/terms/QuasiperiodicDisorder.h"
+#include "core/terms/OnsiteDisorder.h"
 
 #include "utils/Assertions.h"
 #include "HamiltonianGenerator.h"

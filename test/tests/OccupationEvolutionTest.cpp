@@ -10,7 +10,7 @@
 
 #include "evolution/OccupationEvolution.h"
 #include "evolution/EDEvolver.h"
-#include "simulation/FockBaseGenerator.h"
+#include "core/FockBaseGenerator.h"
 
 TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
     auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 4));

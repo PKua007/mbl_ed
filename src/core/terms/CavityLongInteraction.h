@@ -7,7 +7,7 @@
 
 
 #include "utils/Assertions.h"
-#include "simulation/DiagonalTerm.h"
+#include "core/DiagonalTerm.h"
 
 /**
  * @brief A cavity-mediated long range interactions.

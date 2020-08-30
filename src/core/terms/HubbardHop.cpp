@@ -3,7 +3,7 @@
 //
 
 #include "HubbardHop.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "core/HamiltonianGenerator.h"
 
 double HubbardHop::calculate(const HopData &hopData, const HamiltonianGenerator &generator)
 {

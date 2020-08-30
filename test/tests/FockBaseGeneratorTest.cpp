@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "simulation/FockBaseGenerator.h"
+#include "core/FockBaseGenerator.h"
 
 TEST_CASE("FockBaseGenerator: 3 bosons in 3 sites") {
     FockBaseGenerator generator;

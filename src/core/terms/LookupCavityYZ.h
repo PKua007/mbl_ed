@@ -8,9 +8,9 @@
 
 #include <utility>
 
-#include "simulation/CavityConstants.h"
-#include "simulation/HoppingTerm.h"
-#include "simulation/FockBase.h"
+#include "core/CavityConstants.h"
+#include "core/HoppingTerm.h"
+#include "core/FockBase.h"
 #include "utils/Assertions.h"
 
 /**

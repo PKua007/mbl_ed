@@ -3,7 +3,7 @@
 //
 
 #include "LookupCavityY2.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "core/HamiltonianGenerator.h"
 
 double LookupCavityY2::calculate(const HopData &firstHopData, const HopData &secondHopData,
                                  const HamiltonianGenerator &generator) {

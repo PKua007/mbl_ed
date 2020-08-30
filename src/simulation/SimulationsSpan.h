@@ -8,9 +8,21 @@
 #include <cstddef>
 
 struct SimulationsSpan {
+    /**
+     * @brief The starting index (inclusive) of the simulation (from 0).
+     */
     std::size_t from{};
+
+    /**
+     * @brief The final index (exclusive) of the simulation.
+     */
     std::size_t to{};
-    std::size_t totalSimulations{};
+
+    /**
+     * @brief The total number of simulations. SimulationParameters::to and SimulationParameters::from parameters
+     * describe the actual range of simulations to be performed in this run, while total number refers to all runs.
+     */
+    std::size_t total{};
 };
 
 

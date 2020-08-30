@@ -5,7 +5,7 @@
 #include <catch2/catch.hpp>
 #include <catch2/trompeloeil.hpp>
 
-#include "evolution/ChebyshevEvolution.h"
+#include "simulation/ChebyshevEvolution.h"
 
 using namespace trompeloeil;
 
@@ -67,7 +67,7 @@ TEST_CASE("ChebyshevEvolutionTest") {
         SimulationsSpan simulationsSpan;
         simulationsSpan.from = 2;
         simulationsSpan.to = 4;
-        simulationsSpan.totalSimulations = 5;
+        simulationsSpan.total = 5;
 
         arma::sp_mat hamiltonian2(1, 1), hamiltonian3(1, 1);
         hamiltonian2(0, 0) = 1;
@@ -114,7 +114,7 @@ TEST_CASE("ChebyshevEvolutionTest") {
         SimulationsSpan simulationsSpan;
         simulationsSpan.from = 0;
         simulationsSpan.to = 1;
-        simulationsSpan.totalSimulations = 1;
+        simulationsSpan.total = 1;
 
         arma::sp_mat hamiltonian(1, 1), quenchHamiltonian(1, 1);
         hamiltonian(0, 0) = 1;

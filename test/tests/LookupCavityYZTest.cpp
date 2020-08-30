@@ -6,9 +6,9 @@
 
 #include "matchers/ArmaApproxEqualMatcher.h"
 
-#include "simulation/FockBaseGenerator.h"
-#include "simulation/terms/LookupCavityYZ.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "core/FockBaseGenerator.h"
+#include "core/terms/LookupCavityYZ.h"
+#include "core/HamiltonianGenerator.h"
 
 TEST_CASE("LookupCavityYZ: correct") {
     HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 2), false);

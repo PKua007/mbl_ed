@@ -6,7 +6,7 @@
 #include <numeric>
 
 #include "CavityLongInteraction.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "core/HamiltonianGenerator.h"
 
 double CavityLongInteraction::calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) {
     Expects(!generator.usingPBC());

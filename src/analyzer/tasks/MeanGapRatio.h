@@ -8,7 +8,7 @@
 
 #include <vector>
 
-#include "simulation/Eigensystem.h"
+#include "core/Eigensystem.h"
 #include "utils/Quantity.h"
 #include "analyzer/InlineAnalyzerTask.h"
 

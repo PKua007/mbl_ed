@@ -6,7 +6,7 @@
 #define MBL_ED_QUASIPERIODICDISORDER_H
 
 
-#include "simulation/DiagonalTerm.h"
+#include "core/DiagonalTerm.h"
 
 /**
  * @brief The class representing quasiperiodic potential in each site.

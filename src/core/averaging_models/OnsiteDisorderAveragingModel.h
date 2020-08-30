@@ -5,9 +5,9 @@
 #ifndef MBL_ED_ONSITEDISORDERAVERAGINGMODEL_H
 #define MBL_ED_ONSITEDISORDERAVERAGINGMODEL_H
 
-#include "simulation/AveragingModel.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/RND.h"
+#include "core/AveragingModel.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/RND.h"
 
 /**
  * @brief Averaging model, used in Simulation, which samples new onsite disorder terms for each simulation.

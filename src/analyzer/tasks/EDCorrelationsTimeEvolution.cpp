@@ -5,7 +5,7 @@
 #include "EDCorrelationsTimeEvolution.h"
 
 #include "evolution/EDEvolver.h"
-#include "simulation/Eigensystem.h"
+#include "core/Eigensystem.h"
 #include "utils/Assertions.h"
 
 void EDCorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem, std::ostream &logger) {

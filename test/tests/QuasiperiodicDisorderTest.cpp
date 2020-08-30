@@ -4,9 +4,9 @@
 
 #include <catch2/catch.hpp>
 
-#include "simulation/terms/QuasiperiodicDisorder.h"
-#include "simulation/FockBaseGenerator.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "core/terms/QuasiperiodicDisorder.h"
+#include "core/FockBaseGenerator.h"
+#include "core/HamiltonianGenerator.h"
 
 TEST_CASE("QuasiperiodicDisorder") {
     HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 3), false);

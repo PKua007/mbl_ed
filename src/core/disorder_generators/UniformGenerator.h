@@ -6,7 +6,7 @@
 #define MBL_ED_UNIFORMGENERATOR_H
 
 
-#include "simulation/DisorderGenerator.h"
+#include "core/DisorderGenerator.h"
 
 /**
  * @brief DisorderGenerator which just samples uniform number from [@a min, @a max).

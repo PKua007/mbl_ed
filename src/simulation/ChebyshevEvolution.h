@@ -7,13 +7,13 @@
 
 #include <utility>
 
-#include "CorrelationsTimeEvolution.h"
+#include "evolution/CorrelationsTimeEvolution.h"
 #include "simulation/SimulationsSpan.h"
-#include "ChebyshevEvolver.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/AveragingModel.h"
-#include "simulation/RND.h"
-#include "QuenchCalculator.h"
+#include "evolution/ChebyshevEvolver.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/AveragingModel.h"
+#include "core/RND.h"
+#include "core/QuenchCalculator.h"
 
 /**
  * @brief A class performing a whole series of time evolutions using Chebyshev expansion technique.
@@ -43,12 +43,12 @@ private:
         std::vector<arma::cx_vec> additionalVectors;
 
         this->averagingModel->setupHamiltonianGenerator(*this->hamiltonianGenerator, *this->rnd, simulationIndex,
-                                                        this->simulationsSpan.totalSimulations);
+                                                        this->simulationsSpan.total);
         arma::sp_mat hamiltonian = this->hamiltonianGenerator->generate();
 
         if (this->quenchCalculator != nullptr) {
             this->averagingModel->setupHamiltonianGenerator(*this->quenchHamiltonianGenerator, *this->quenchRnd,
-                                                            simulationIndex, this->simulationsSpan.totalSimulations);
+                                                            simulationIndex, this->simulationsSpan.total);
             arma::sp_mat initialHamiltonian = this->quenchHamiltonianGenerator->generate();
 
             this->quenchCalculator->addQuench(initialHamiltonian, hamiltonian);
@@ -84,9 +84,9 @@ public:
               simulationsSpan{simulationsSpan}, quenchCalculator{std::move(quenchCalculator)},
               quenchHamiltonianGenerator{std::move(quenchHamiltonianGenerator)}, quenchRnd{std::move(quenchRnd)}
     {
-        Expects(this->simulationsSpan.totalSimulations > 0);
+        Expects(this->simulationsSpan.total > 0);
         Expects(this->simulationsSpan.from < this->simulationsSpan.to);
-        Expects(this->simulationsSpan.to <= this->simulationsSpan.totalSimulations);
+        Expects(this->simulationsSpan.to <= this->simulationsSpan.total);
 
         if (this->quenchCalculator == nullptr) {
             Expects(this->correlationsTimeEvolution->countExternalVectors() == 0);

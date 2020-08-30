@@ -7,7 +7,7 @@
 
 
 #include "utils/Assertions.h"
-#include "simulation/DiagonalTerm.h"
+#include "core/DiagonalTerm.h"
 
 /**
  * @brief A stantard onsite energy term from Hubbard hamiltonian.

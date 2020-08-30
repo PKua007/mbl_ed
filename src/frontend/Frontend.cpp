@@ -12,12 +12,12 @@
 #include "AveragingModelFactory.h"
 #include "IO.h"
 
-#include "simulation/Simulation.h"
-#include "simulation/FockBaseGenerator.h"
-#include "simulation/DisorderGenerator.h"
+#include "simulation/ExactDiagonalization.h"
+#include "core/FockBaseGenerator.h"
+#include "core/DisorderGenerator.h"
 
-#include "evolution/QuenchCalculator.h"
-#include "evolution/ChebyshevEvolution.h"
+#include "core/QuenchCalculator.h"
+#include "simulation/ChebyshevEvolution.h"
 #include "evolution/CorrelationsTimeEvolution.h"
 
 #include "utils/Fold.h"
@@ -25,7 +25,7 @@
 #include "utils/Assertions.h"
 
 
-void Frontend::simulate(int argc, char **argv) {
+void Frontend::ed(int argc, char **argv) {
     // Parse options
     cxxopts::Options options(argv[0],
                              Fold("Exact diagonalization mode. Performs one or more simulations depending on the "
@@ -84,11 +84,11 @@ void Frontend::simulate(int argc, char **argv) {
             die("Parameters to print: parameter " + param + " is unknown");
 
     // OpenMP info
-    std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+    std::cout << "[Frontend::ed] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    std::cout << "[Frontend::simulate] Preparing Fock basis... " << std::flush;
+    std::cout << "[Frontend::ed] Preparing Fock basis... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
@@ -101,15 +101,15 @@ void Frontend::simulate(int argc, char **argv) {
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run simulations
-    SimulationParameters simulationParams;
-    simulationParams.from = params.from;
-    simulationParams.to = params.to;
-    simulationParams.totalSimulations = params.totalSimulations;
+    ExactDiagonalizationParameters simulationParams;
+    simulationParams.simulationsSpan.from = params.from;
+    simulationParams.simulationsSpan.to = params.to;
+    simulationParams.simulationsSpan.total = params.totalSimulations;
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
     simulationParams.fileSignature = directory / params.getOutputFileSignature();
 
-    Simulation simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationParams);
+    ExactDiagonalization simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationParams);
     simulation.perform(this->out, analyzer);
 
     // Save results
@@ -319,7 +319,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     SimulationsSpan simulationsSpan;
     simulationsSpan.from = params.from;
     simulationsSpan.to = params.to;
-    simulationsSpan.totalSimulations = params.totalSimulations;
+    simulationsSpan.total = params.totalSimulations;
 
     std::unique_ptr<ChebyshevEvolution<>> evolution;
     if (quenchParams.has_value()) {
@@ -417,7 +417,7 @@ void Frontend::quench(int argc, char **argv) {
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    std::cout << "[Frontend::simulate] Preparing Fock basis... " << std::flush;
+    std::cout << "[Frontend::ed] Preparing Fock basis... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
@@ -467,7 +467,7 @@ void Frontend::printGeneralHelp(const std::string &cmd) {
     std::cout << "Usage: " << cmd << " [mode] (mode dependent parameters). " << std::endl;
     std::cout << std::endl;
     std::cout << "Available modes:" << std::endl;
-    std::cout << "simulate" << std::endl;
+    std::cout << "ed" << std::endl;
     std::cout << Fold("Performs the diagonalizations according to the parameters passed. Some analyzer tasks can "
                       "be performed on the fly.").width(80).margin(4) << std::endl;
     std::cout << "analyze" << std::endl;

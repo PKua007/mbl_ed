@@ -5,9 +5,9 @@
 #ifndef MBL_ED_DUMMYAVERAGINGMODEL_H
 #define MBL_ED_DUMMYAVERAGINGMODEL_H
 
-#include "simulation/AveragingModel.h"
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/RND.h"
+#include "core/AveragingModel.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/RND.h"
 
 /**
  * @brief Averaging model, which does nothing.

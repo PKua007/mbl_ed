@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "simulation/FockBaseGenerator.h"
+#include "core/FockBaseGenerator.h"
 #include "analyzer/tasks/MeanGapRatio.h"
 
 TEST_CASE("GapRadioCalculator: names") {

@@ -4,9 +4,9 @@
 
 #include <catch2/catch.hpp>
 
-#include "simulation/FockBaseGenerator.h"
-#include "simulation/terms/LookupCavityY2.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "core/FockBaseGenerator.h"
+#include "core/terms/LookupCavityY2.h"
+#include "core/HamiltonianGenerator.h"
 
 TEST_CASE("LookupCavityY2: correct") {
     HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 3), false);

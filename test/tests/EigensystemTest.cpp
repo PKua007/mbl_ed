@@ -6,7 +6,7 @@
 
 #include "matchers/ArmaApproxEqualMatcher.h"
 
-#include "simulation/Eigensystem.h"
+#include "core/Eigensystem.h"
 
 TEST_CASE("Eigensystem: empty") {
     Eigensystem eigensystem;
