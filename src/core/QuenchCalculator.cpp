@@ -70,3 +70,36 @@ void QuenchCalculator::clear() {
     this->quenchEpsilonVariances.clear();
     this->lastQuenchedState.clear();
 }
+
+void QuenchCalculator::storeState(std::ostream &binaryOut) const {
+    std::size_t size = this->quenchEpsilons.size();
+    binaryOut.write(reinterpret_cast<const char*>(&size), sizeof(size));
+    binaryOut.write(reinterpret_cast<const char*>(this->quenchEpsilons.data()), sizeof(double) * size);
+    binaryOut.write(reinterpret_cast<const char*>(this->quenchEpsilonVariances.data()), sizeof(double) * size);
+    this->lastQuenchedState.save(binaryOut, arma::arma_binary);
+    Assert(binaryOut);
+}
+
+void QuenchCalculator::joinRestoredState(std::istream &binaryIn) {
+    std::size_t size{};
+    std::vector<double> epsilonsRestored;
+    std::vector<double> epsilonVariancesRestored;
+
+    binaryIn.read(reinterpret_cast<char*>(&size), sizeof(size));
+    Assert(binaryIn);
+    epsilonsRestored.resize(size);
+    epsilonVariancesRestored.resize(size);
+
+    binaryIn.read(reinterpret_cast<char*>(epsilonsRestored.data()), sizeof(double) * size);
+    Assert(binaryIn);
+    this->quenchEpsilons.reserve(this->quenchEpsilons.size() + size);
+    this->quenchEpsilons.insert(this->quenchEpsilons.end(), epsilonsRestored.begin(), epsilonsRestored.end());
+
+    binaryIn.read(reinterpret_cast<char*>(epsilonVariancesRestored.data()), sizeof(double) * size);
+    Assert(binaryIn);
+    this->quenchEpsilonVariances.reserve(this->quenchEpsilonVariances.size() + size);
+    this->quenchEpsilonVariances.insert(this->quenchEpsilonVariances.end(), epsilonVariancesRestored.begin(),
+                                        epsilonVariancesRestored.end());
+
+    this->lastQuenchedState.load(binaryIn, arma::arma_binary);
+}

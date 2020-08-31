@@ -14,6 +14,7 @@
 #include "core/AveragingModel.h"
 #include "core/RND.h"
 #include "core/QuenchCalculator.h"
+#include "Restorable.h"
 
 /**
  * @brief A class performing a series of quenches and gathering information about them.
@@ -23,7 +24,7 @@
  */
 template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel,
          typename QuenchCalculator_t = QuenchCalculator>
-class QuenchDataSimulation {
+class QuenchDataSimulation : public Restorable {
 private:
     std::unique_ptr<HamiltonianGenerator_t> initialHamiltonianGenerator;
     std::unique_ptr<RND> initialRnd;
@@ -91,6 +92,18 @@ public:
         return {std::to_string(this->quenchCalculator->getMeanEpsilon()),
                 std::to_string(this->quenchCalculator->getEpsilonAveragingSampleError()),
                 std::to_string(this->quenchCalculator->getMeanEpsilonQuantumUncertainty())};
+    }
+
+    void storeState(std::ostream &binaryOut) const override {
+        this->quenchCalculator->storeState(binaryOut);
+    }
+
+    void joinRestoredState(std::istream &binaryIn) override {
+        this->quenchCalculator->joinRestoredState(binaryIn);
+    }
+
+    void clear() override {
+        this->quenchCalculator->clear();
     }
 };
 

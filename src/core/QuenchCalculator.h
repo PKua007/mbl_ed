@@ -8,13 +8,15 @@
 #include <vector>
 #include <armadillo>
 
+#include "simulation/Restorable.h"
+
 /**
  * @brief A class performing quantum quenches from initial to final Hamiltonian.
  * @details A quench is when a ground state of initial Hamiltonian is considered w.r.t. final HamiltonianAfter.
  * The class calculates its normalized energy and quantum spread. The class can accept multiple quenches, from which
  * it calculates mean energy, its sample spread and mean quantum uncertainty.
  */
-class QuenchCalculator {
+class QuenchCalculator : public Restorable {
 private:
     static constexpr std::size_t MIN_EIGVALS = 6;
 
@@ -63,7 +65,9 @@ public:
      */
     [[nodiscard]] double getEpsilonAveragingSampleError() const;
 
-    void clear();
+    void clear() override;
+    void storeState(std::ostream &binaryOut) const override;
+    void joinRestoredState(std::istream &binaryIn) override;
 };
 
 
