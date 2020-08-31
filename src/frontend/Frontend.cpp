@@ -420,7 +420,7 @@ void Frontend::quench(int argc, char **argv) {
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    std::cout << "[Frontend::ed] Preparing Fock basis... " << std::flush;
+    std::cout << "[Frontend::quench] Preparing Fock basis... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
@@ -437,7 +437,7 @@ void Frontend::quench(int argc, char **argv) {
     simulationsSpan.from = params.from;
     simulationsSpan.to = params.to;
     simulationsSpan.total = params.totalSimulations;
-    RestorableSimulationExecutor simulationExecutor(simulationsSpan);
+    RestorableSimulationExecutor simulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange());
 
     // Prepare and run quenches
     auto quenchCalculator = std::make_unique<QuenchCalculator>();

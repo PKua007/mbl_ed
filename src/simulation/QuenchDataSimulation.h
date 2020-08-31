@@ -71,29 +71,26 @@ public:
      * and spread for the final hamiltonian. Averages are calculates according to AveragingModel passed in the
      * constructor.
      */
-    void performSimulations(const SimulationsSpan &simulationsSpan, std::ostream &logger) override {
-        Expects(simulationsSpan.total > 0);
-        Expects(simulationsSpan.from < simulationsSpan.to);
-        Expects(simulationsSpan.to <= simulationsSpan.total);
+    void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, std::ostream &logger) override {
+        Expects(totalSimulations > 0);
+        Expects(simulationIndex < totalSimulations);
 
-        for (std::size_t i = simulationsSpan.from; i < simulationsSpan.to; i++) {
-            arma::wall_clock timer;
-            logger << "[QuenchDataSimulator::perform] Performing quench " << i << "... " << std::flush;
-            timer.tic();
+        arma::wall_clock timer;
+        logger << "[QuenchDataSimulator::perform] Performing quench " << simulationIndex << "... " << std::flush;
+        timer.tic();
 
-            this->averagingModel->setupHamiltonianGenerator(*this->initialHamiltonianGenerator, *this->initialRnd, i,
-                                                            simulationsSpan.total);
-            this->averagingModel->setupHamiltonianGenerator(*this->finalHamiltonianGenerator, *this->finalRnd, i,
-                                                            simulationsSpan.total);
-            arma::sp_mat initialHamiltonian = this->initialHamiltonianGenerator->generate();
-            arma::sp_mat finalHamiltonian = this->finalHamiltonianGenerator->generate();
+        this->averagingModel->setupHamiltonianGenerator(*this->initialHamiltonianGenerator, *this->initialRnd,
+                                                        simulationIndex, totalSimulations);
+        this->averagingModel->setupHamiltonianGenerator(*this->finalHamiltonianGenerator, *this->finalRnd,
+                                                        simulationIndex, totalSimulations);
+        arma::sp_mat initialHamiltonian = this->initialHamiltonianGenerator->generate();
+        arma::sp_mat finalHamiltonian = this->finalHamiltonianGenerator->generate();
 
-            this->quenchCalculator->addQuench(initialHamiltonian, finalHamiltonian);
+        this->quenchCalculator->addQuench(initialHamiltonian, finalHamiltonian);
 
-            logger << "done (" << timer.toc() << " s). epsilon: " << this->quenchCalculator->getLastQuenchEpsilon();
-            logger << "; quantum error: " << this->quenchCalculator->getLastQuenchEpsilonQuantumUncertainty();
-            logger << std::endl;
-        }
+        logger << "done (" << timer.toc() << " s). epsilon: " << this->quenchCalculator->getLastQuenchEpsilon();
+        logger << "; quantum error: " << this->quenchCalculator->getLastQuenchEpsilonQuantumUncertainty();
+        logger << std::endl;
     }
 
     void storeState(std::ostream &binaryOut) const override {
@@ -106,6 +103,10 @@ public:
 
     void clear() override {
         this->quenchCalculator->clear();
+    }
+
+    [[nodiscard]] std::string getTagName() const override {
+        return "quench";
     }
 };
 
