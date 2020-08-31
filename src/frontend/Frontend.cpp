@@ -20,6 +20,8 @@
 #include "simulation/ChebyshevEvolution.h"
 #include "evolution/CorrelationsTimeEvolution.h"
 
+#include "simulation/QuenchDataSimulation.h"
+
 #include "utils/Fold.h"
 #include "utils/Utils.h"
 #include "utils/Assertions.h"
@@ -430,31 +432,21 @@ void Frontend::quench(int argc, char **argv) {
     auto initialHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(quenchParams, base, *initialRnd);
     auto finalHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *finalRnd);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
+    SimulationsSpan simulationsSpan;
+    simulationsSpan.from = params.from;
+    simulationsSpan.to = params.to;
+    simulationsSpan.total = params.totalSimulations;
 
     // Prepare and run quenches
-    QuenchCalculator quenchCalculator;
-    for (std::size_t i = params.from; i < params.to; i++) {
-        std::cout << "[Simulation::quench] Performing quench " << i << "... " << std::flush;
-        timer.tic();
-
-        std::size_t totalSimulations = params.totalSimulations;
-        averagingModel->setupHamiltonianGenerator(*initialHamiltonianGenerator, *initialRnd, i, totalSimulations);
-        averagingModel->setupHamiltonianGenerator(*finalHamiltonianGenerator, *finalRnd, i, totalSimulations);
-        arma::sp_mat initialHamiltonian = initialHamiltonianGenerator->generate();
-        arma::sp_mat finalHamiltonian = finalHamiltonianGenerator->generate();
-
-        quenchCalculator.addQuench(initialHamiltonian, finalHamiltonian);
-
-        std::cout << "done (" << timer.toc() << " s). epsilon: " << quenchCalculator.getLastQuenchEpsilon();
-        std::cout << "; quantum error: " << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << std::endl;
-    }
+    auto quenchCalculator = std::make_unique<QuenchCalculator>();
+    QuenchDataSimulation simulation(std::move(initialHamiltonianGenerator), std::move(initialRnd),
+                                    std::move(finalHamiltonianGenerator), std::move(finalRnd),
+                                    std::move(averagingModel), std::move(quenchCalculator), simulationsSpan);
+    simulation.perform(std::cout);
 
     // Save results
-    std::vector<std::string> resultHeader = {"epsilon", "avgError", "quantumError"};
-    std::vector<std::string> resultFields = {std::to_string(quenchCalculator.getMeanEpsilon()),
-                                             std::to_string(quenchCalculator.getEpsilonAveragingSampleError()),
-                                             std::to_string(quenchCalculator.getMeanEpsilonQuantumUncertainty())};
-
+    std::vector<std::string> resultHeader = simulation.getResultsHeader();
+    std::vector<std::string> resultFields = simulation.getResultsFields();
     io.printInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields);
     if (!outputFilename.empty())
         io.storeInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields, outputFilename);

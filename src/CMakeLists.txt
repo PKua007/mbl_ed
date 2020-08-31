@@ -26,7 +26,7 @@ add_library(mbl_ed_src STATIC utils/Assertions.h core/FockBaseGenerator.cpp core
         core/averaging_models/UniformPhi0AveragingModel.cpp
         core/disorder_generators/UniformGenerator.h core/FockVector.cpp
         analyzer/tasks/DressedStatesFinder.cpp analyzer/tasks/BulkMeanGapRatio.cpp core/QuenchCalculator.cpp
-        simulation/SimulationsSpan.h utils/OMPMacros.h)
+        simulation/SimulationsSpan.h utils/OMPMacros.h simulation/QuenchDataSimulation.h)
 
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)
