@@ -29,6 +29,8 @@ public:
      * @brief Returns random number from [0, 1) interval. Can be mocked by overriding getDouble().
      */
     double operator()() { return this->getDouble(); }
+
+    void seed(unsigned long seed) { this->randomGenerator.seed(seed); }
 };
 
 

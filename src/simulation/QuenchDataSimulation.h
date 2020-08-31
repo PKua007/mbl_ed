@@ -14,7 +14,7 @@
 #include "core/AveragingModel.h"
 #include "core/RND.h"
 #include "core/QuenchCalculator.h"
-#include "Restorable.h"
+#include "RestorableSimulation.h"
 
 /**
  * @brief A class performing a series of quenches and gathering information about them.
@@ -24,7 +24,7 @@
  */
 template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel,
          typename QuenchCalculator_t = QuenchCalculator>
-class QuenchDataSimulation : public Restorable {
+class QuenchDataSimulation : public RestorableSimulation {
 private:
     std::unique_ptr<HamiltonianGenerator_t> initialHamiltonianGenerator;
     std::unique_ptr<RND> initialRnd;
@@ -33,7 +33,6 @@ private:
 
     std::unique_ptr<AveragingModel_t> averagingModel;
     std::unique_ptr<QuenchCalculator_t> quenchCalculator;
-    SimulationsSpan simulationsSpan;
 
 public:
     /**
@@ -45,44 +44,11 @@ public:
                          std::unique_ptr<RND> initialRnd,
                          std::unique_ptr<HamiltonianGenerator_t> finalHamiltonianGenerator,
                          std::unique_ptr<RND> finalRnd, std::unique_ptr<AveragingModel_t> averagingModel,
-                         std::unique_ptr<QuenchCalculator_t> quenchCalculator, const SimulationsSpan &simulationsSpan)
+                         std::unique_ptr<QuenchCalculator_t> quenchCalculator)
             : initialHamiltonianGenerator{std::move(initialHamiltonianGenerator)}, initialRnd{std::move(initialRnd)},
               finalHamiltonianGenerator{std::move(finalHamiltonianGenerator)}, finalRnd{std::move(finalRnd)},
-              averagingModel{std::move(averagingModel)}, quenchCalculator{std::move(quenchCalculator)},
-              simulationsSpan{simulationsSpan}
-    {
-        Expects(this->simulationsSpan.total > 0);
-        Expects(this->simulationsSpan.from < this->simulationsSpan.to);
-        Expects(this->simulationsSpan.to <= this->simulationsSpan.total);
-    }
-
-    /**
-     * @brief Performs the quenches for simulation ranges given by SimulaitonsSpan from the constructor.
-     * @details Quench is performed by finding the ground state of the initial hamiltonian and calculating its energy
-     * and spread for the final hamiltonian. Averages are calculates according to AveragingModel passed in the
-     * constructor.
-     */
-    void perform(std::ostream &logger) {
-        this->quenchCalculator->clear();
-        for (std::size_t i = this->simulationsSpan.from; i < this->simulationsSpan.to; i++) {
-            arma::wall_clock timer;
-            logger << "[QuenchDataSimulator::perform] Performing quench " << i << "... " << std::flush;
-            timer.tic();
-
-            this->averagingModel->setupHamiltonianGenerator(*this->initialHamiltonianGenerator, *this->initialRnd, i,
-                                                            this->simulationsSpan.total);
-            this->averagingModel->setupHamiltonianGenerator(*this->finalHamiltonianGenerator, *this->finalRnd, i,
-                                                            this->simulationsSpan.total);
-            arma::sp_mat initialHamiltonian = this->initialHamiltonianGenerator->generate();
-            arma::sp_mat finalHamiltonian = this->finalHamiltonianGenerator->generate();
-
-            this->quenchCalculator->addQuench(initialHamiltonian, finalHamiltonian);
-
-            logger << "done (" << timer.toc() << " s). epsilon: " << this->quenchCalculator->getLastQuenchEpsilon();
-            logger << "; quantum error: " << this->quenchCalculator->getLastQuenchEpsilonQuantumUncertainty();
-            logger << std::endl;
-        }
-    }
+              averagingModel{std::move(averagingModel)}, quenchCalculator{std::move(quenchCalculator)}
+    { }
 
     [[nodiscard]] std::vector<std::string> getResultsHeader() const {
         return {"epsilon", "avgError", "quantumError"};
@@ -92,6 +58,42 @@ public:
         return {std::to_string(this->quenchCalculator->getMeanEpsilon()),
                 std::to_string(this->quenchCalculator->getEpsilonAveragingSampleError()),
                 std::to_string(this->quenchCalculator->getMeanEpsilonQuantumUncertainty())};
+    }
+
+    void seedRandomGenerators(unsigned long seed) override {
+        this->initialRnd->seed(seed);
+        this->finalRnd->seed(seed);
+    }
+
+    /**
+     * @brief Performs the quenches for simulation ranges given by @a simulationSpan.
+     * @details Quench is performed by finding the ground state of the initial hamiltonian and calculating its energy
+     * and spread for the final hamiltonian. Averages are calculates according to AveragingModel passed in the
+     * constructor.
+     */
+    void performSimulations(const SimulationsSpan &simulationsSpan, std::ostream &logger) override {
+        Expects(simulationsSpan.total > 0);
+        Expects(simulationsSpan.from < simulationsSpan.to);
+        Expects(simulationsSpan.to <= simulationsSpan.total);
+
+        for (std::size_t i = simulationsSpan.from; i < simulationsSpan.to; i++) {
+            arma::wall_clock timer;
+            logger << "[QuenchDataSimulator::perform] Performing quench " << i << "... " << std::flush;
+            timer.tic();
+
+            this->averagingModel->setupHamiltonianGenerator(*this->initialHamiltonianGenerator, *this->initialRnd, i,
+                                                            simulationsSpan.total);
+            this->averagingModel->setupHamiltonianGenerator(*this->finalHamiltonianGenerator, *this->finalRnd, i,
+                                                            simulationsSpan.total);
+            arma::sp_mat initialHamiltonian = this->initialHamiltonianGenerator->generate();
+            arma::sp_mat finalHamiltonian = this->finalHamiltonianGenerator->generate();
+
+            this->quenchCalculator->addQuench(initialHamiltonian, finalHamiltonian);
+
+            logger << "done (" << timer.toc() << " s). epsilon: " << this->quenchCalculator->getLastQuenchEpsilon();
+            logger << "; quantum error: " << this->quenchCalculator->getLastQuenchEpsilonQuantumUncertainty();
+            logger << std::endl;
+        }
     }
 
     void storeState(std::ostream &binaryOut) const override {

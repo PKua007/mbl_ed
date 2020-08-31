@@ -20,6 +20,7 @@
 #include "simulation/ChebyshevEvolution.h"
 #include "evolution/CorrelationsTimeEvolution.h"
 
+#include "simulation/RestorableSimulationExecutor.h"
 #include "simulation/QuenchDataSimulation.h"
 
 #include "utils/Fold.h"
@@ -426,23 +427,24 @@ void Frontend::quench(int argc, char **argv) {
     std::cout << "done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare initial and final HamiltonianGenerator
-    // We use two RNDs with identical seeds so that random stuff match in both hamiltonians
-    auto initialRnd = std::make_unique<RND>(params.from + params.seed);
-    auto finalRnd = std::make_unique<RND>(params.from + params.seed);
+    auto initialRnd = std::make_unique<RND>();
+    auto finalRnd = std::make_unique<RND>();
     auto initialHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(quenchParams, base, *initialRnd);
     auto finalHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *finalRnd);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
+
     SimulationsSpan simulationsSpan;
     simulationsSpan.from = params.from;
     simulationsSpan.to = params.to;
     simulationsSpan.total = params.totalSimulations;
+    RestorableSimulationExecutor simulationExecutor(simulationsSpan);
 
     // Prepare and run quenches
     auto quenchCalculator = std::make_unique<QuenchCalculator>();
     QuenchDataSimulation simulation(std::move(initialHamiltonianGenerator), std::move(initialRnd),
                                     std::move(finalHamiltonianGenerator), std::move(finalRnd),
-                                    std::move(averagingModel), std::move(quenchCalculator), simulationsSpan);
-    simulation.perform(std::cout);
+                                    std::move(averagingModel), std::move(quenchCalculator));
+    simulationExecutor.performSimulations(simulation, params.seed, std::cout);
 
     // Save results
     std::vector<std::string> resultHeader = simulation.getResultsHeader();
