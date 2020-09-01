@@ -437,7 +437,8 @@ void Frontend::quench(int argc, char **argv) {
     simulationsSpan.from = params.from;
     simulationsSpan.to = params.to;
     simulationsSpan.total = params.totalSimulations;
-    RestorableSimulationExecutor simulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange());
+    RestorableSimulationExecutor simulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
+                                                    params.splitWorkload);
 
     // Prepare and run quenches
     auto quenchCalculator = std::make_unique<QuenchCalculator>();
@@ -447,11 +448,13 @@ void Frontend::quench(int argc, char **argv) {
     simulationExecutor.performSimulations(simulation, params.seed, std::cout);
 
     // Save results
-    std::vector<std::string> resultHeader = simulation.getResultsHeader();
-    std::vector<std::string> resultFields = simulation.getResultsFields();
-    io.printInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields);
-    if (!outputFilename.empty())
-        io.storeInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields, outputFilename);
+    if (simulationExecutor.shouldSave()) {
+        std::vector<std::string> resultHeader = simulation.getResultsHeader();
+        std::vector<std::string> resultFields = simulation.getResultsFields();
+        io.printInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields);
+        if (!outputFilename.empty())
+            io.storeInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields, outputFilename);
+    }
 }
 
 void Frontend::printGeneralHelp(const std::string &cmd) {

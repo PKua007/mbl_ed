@@ -39,6 +39,8 @@ Parameters::Parameters(std::istream &input) {
             this->totalSimulations = generalConfig.getUnsignedLong("totalSimulations");
         else if (key == "seed")
             this->seed = generalConfig.getUnsignedLong("seed");
+        else if (key == "splitWorkload")
+            this->splitWorkload = generalConfig.getBoolean("splitWorkload");
         else
             throw ParametersParseException("Unknown parameter " + key);
     }
@@ -83,6 +85,7 @@ void Parameters::printGeneral(std::ostream &out) const {
     out << "to                    : " << this->to << std::endl;
     out << "totalSimulations      : " << this->totalSimulations << std::endl;
     out << "seed                  : " << this->seed << std::endl;
+    out << "splitWorkload         : " << (this->splitWorkload ? "true" : "false") << std::endl;
 }
 
 void Parameters::printHamiltonianTerms(std::ostream &out) const {
@@ -121,6 +124,8 @@ std::string Parameters::getByName(const std::string &name) const {
         return std::to_string(this->totalSimulations);
     else if (name == "seed")
         return std::to_string(this->seed);
+    else if (name == "splitWorkload")
+        return std::to_string(this->splitWorkload);
 
     // Hamiltonian term parameters
     for (auto &term : this->hamiltonianTerms) {
