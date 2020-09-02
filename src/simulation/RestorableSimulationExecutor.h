@@ -6,6 +6,7 @@
 #define MBL_ED_RESTORABLESIMULATIONEXECUTOR_H
 
 #include <memory>
+#include <filesystem>
 
 #include "RestorableSimulation.h"
 
@@ -15,14 +16,15 @@ private:
     std::string fileSignature;
     bool workloadSplit{};
     bool shouldSave_{};
+    std::filesystem::path workingDirectory;
 
     void storeSimulations(const RestorableSimulation &simulation, std::ostream &binaryOut,
                           std::size_t simulationIndex, bool finished) const;
-    std::pair<bool, std::size_t> restoreSimulations(RestorableSimulation &simulation, std::istream &binaryIn) const;
+    std::pair<bool, std::size_t> joinRestoredSimulations(RestorableSimulation &simulation, std::istream &binaryIn) const;
 
 public:
-    explicit RestorableSimulationExecutor(const SimulationsSpan &simulationsSpan,
-                                          std::string fileSignature, bool workloadSplit);
+    explicit RestorableSimulationExecutor(const SimulationsSpan &simulationsSpan, std::string fileSignature,
+                                          bool workloadSplit, std::filesystem::path workingDirectory = "./");
 
     void performSimulations(RestorableSimulation &simulation, unsigned long seed, std::ostream &logger);
     [[nodiscard]] bool shouldSave() const { return this->shouldSave_; }
