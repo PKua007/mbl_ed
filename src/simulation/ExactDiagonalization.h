@@ -47,7 +47,7 @@ private:
         std::ostringstream filenameStream;
         filenameStream << this->params.fileSignature << "_" << index << "_nrg.bin";
         std::string filename = filenameStream.str();
-        auto out = this->ostreamProvider->openFile(filename);
+        auto out = this->ostreamProvider->openOutputFile(filename);
         eigensystem.store(*out);
     }
 

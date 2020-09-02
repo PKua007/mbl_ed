@@ -79,9 +79,9 @@ TEST_CASE("Analyzer: store") {
     auto out2ptr = new OstringStreamMock("task2 result");
 
     auto ostreamProvider = std::make_unique<FileOstreamProviderMock>();
-    REQUIRE_CALL(*ostreamProvider, openFile("sim_task1.txt"))
+    REQUIRE_CALL(*ostreamProvider, openOutputFile("sim_task1.txt", false))
             .LR_RETURN(std::unique_ptr<std::ostream>(out1ptr));
-    REQUIRE_CALL(*ostreamProvider, openFile("sim_task2.txt"))
+    REQUIRE_CALL(*ostreamProvider, openOutputFile("sim_task2.txt", false))
             .LR_RETURN(std::unique_ptr<std::ostream>(out2ptr));
 
     trompeloeil::sequence seq;

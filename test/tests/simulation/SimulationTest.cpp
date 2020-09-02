@@ -95,7 +95,7 @@ namespace {
 
     struct DummyOstreamProvider : public FileOstreamProvider {
     public:
-        [[nodiscard]] std::unique_ptr<std::ostream> openFile(const std::string &filename) const override {
+        [[nodiscard]] std::unique_ptr<std::ostream> openOutputFile(const std::string &filename, bool) const override {
             FAIL("tried to open file: " + filename);
             return nullptr;
         }

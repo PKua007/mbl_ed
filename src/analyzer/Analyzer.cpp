@@ -23,7 +23,7 @@ void Analyzer::storeBulkResults(const std::string &fileSignature) const {
             auto &bulkTask = dynamic_cast<const BulkAnalyzerTask&>(*task);
             this->ostreamProvider->setFileDescription(task->getName());
             std::string name = fileSignature + "_" + task->getName() + ".txt";
-            auto fileOut = this->ostreamProvider->openFile(name);
+            auto fileOut = this->ostreamProvider->openOutputFile(name);
             bulkTask.storeResult(*fileOut);
         } catch (std::bad_cast &e) { }
     }
