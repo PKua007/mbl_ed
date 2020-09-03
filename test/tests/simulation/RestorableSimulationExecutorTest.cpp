@@ -85,7 +85,7 @@ TEST_CASE("RestorableSimulationExecutor") {
         executor.performSimulations(restorableSimulation, 1234, logger);
 
         CHECK(restorableSimulation.simulations == Simulations{{1, 4, 1235}, {2, 4, 1235}, {3, 4, 1235}});
-        CHECK(executor.shouldSave());
+        CHECK(executor.shouldSaveSimulation());
         CHECK(std::filesystem::is_empty(testDir));
     }
 
@@ -96,11 +96,11 @@ TEST_CASE("RestorableSimulationExecutor") {
 
         CHECK_THROWS_WITH(executor.performSimulations(restorableSimulation1, 1234, logger), "interruption");
         CHECK(restorableSimulation1.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234}});
-        CHECK_FALSE(executor.shouldSave());
+        CHECK_FALSE(executor.shouldSaveSimulation());
 
         executor.performSimulations(restorableSimulation2, 1234, logger);
         CHECK(restorableSimulation2.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234}, {2, 3, 1234 + 2}});
-        CHECK(executor.shouldSave());
+        CHECK(executor.shouldSaveSimulation());
         CHECK(std::filesystem::is_empty(testDir));
     }
 
@@ -112,7 +112,7 @@ TEST_CASE("RestorableSimulationExecutor") {
             executor1.performSimulations(restorableSimulation1, 1234, logger);
 
             CHECK(restorableSimulation1.simulations == Simulations{{2, 3, 1234 + 2}});
-            CHECK_FALSE(executor1.shouldSave());
+            CHECK_FALSE(executor1.shouldSaveSimulation());
 
             SECTION("second part [0, 1] - finished") {
                 MockRestorableSimulation restorableSimulation2;
@@ -121,7 +121,7 @@ TEST_CASE("RestorableSimulationExecutor") {
                 executor2.performSimulations(restorableSimulation2, 1234, logger);
 
                 CHECK(restorableSimulation2.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234}, {2, 3, 1234 + 2}});
-                CHECK(executor2.shouldSave());
+                CHECK(executor2.shouldSaveSimulation());
                 CHECK(std::filesystem::is_empty(testDir));
             }
         }
@@ -133,7 +133,7 @@ TEST_CASE("RestorableSimulationExecutor") {
             CHECK_THROWS_WITH(executor1.performSimulations(restorableSimulation1, 1234, logger), "interruption");
 
             CHECK(restorableSimulation1.simulations == Simulations{{0, 3, 1234}});
-            CHECK_FALSE(executor1.shouldSave());
+            CHECK_FALSE(executor1.shouldSaveSimulation());
 
 
             MockRestorableSimulation restorableSimulation2;
@@ -142,7 +142,7 @@ TEST_CASE("RestorableSimulationExecutor") {
             executor2.performSimulations(restorableSimulation2, 1234, logger);
 
             CHECK(restorableSimulation2.simulations.empty());
-            CHECK_FALSE(executor2.shouldSave());
+            CHECK_FALSE(executor2.shouldSaveSimulation());
 
             SECTION("redoing [0, 1] - finishing") {
                 MockRestorableSimulation restorableSimulation3;
@@ -151,7 +151,7 @@ TEST_CASE("RestorableSimulationExecutor") {
                 executor3.performSimulations(restorableSimulation3, 1234, logger);
 
                 CHECK(restorableSimulation3.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234 + 1}, {2, 3, 1234+2}});
-                CHECK(executor3.shouldSave());
+                CHECK(executor3.shouldSaveSimulation());
                 CHECK(std::filesystem::is_empty(testDir));
             }
         }
@@ -163,7 +163,7 @@ TEST_CASE("RestorableSimulationExecutor") {
             executor1.performSimulations(restorableSimulation1, 1234, logger);
 
             CHECK(restorableSimulation1.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234}});
-            CHECK_FALSE(executor1.shouldSave());
+            CHECK_FALSE(executor1.shouldSaveSimulation());
 
 
             MockRestorableSimulation restorableSimulation2;
@@ -172,7 +172,7 @@ TEST_CASE("RestorableSimulationExecutor") {
             executor2.performSimulations(restorableSimulation2, 1234, logger);
 
             CHECK(restorableSimulation2.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234}, {2, 3, 1234}});
-            CHECK_FALSE(executor2.shouldSave());
+            CHECK_FALSE(executor2.shouldSaveSimulation());
         }
     }
 

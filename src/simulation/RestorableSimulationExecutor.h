@@ -12,22 +12,52 @@
 
 class RestorableSimulationExecutor {
 private:
+    struct SimulationStatus {
+        bool finished{};
+        std::size_t nextSimulationIndex{};
+    };
+
+    struct StateFileData {
+        std::size_t from{};
+        std::size_t to{};
+        std::filesystem::path path;
+
+        friend bool operator<(const StateFileData &lhs, const StateFileData &rhs) {
+            return lhs.from < rhs.from;
+        }
+    };
+
     SimulationsSpan simulationsSpan;
     std::string fileSignature;
-    bool workloadSplit{};
-    bool shouldSave_{};
+    bool splitWorkload{};
+    bool shouldSaveSimulation_{};
     std::filesystem::path workingDirectory;
 
     void storeSimulations(const RestorableSimulation &simulation, std::ostream &binaryOut,
-                          std::size_t simulationIndex, bool finished) const;
-    std::pair<bool, std::size_t> joinRestoredSimulations(RestorableSimulation &simulation, std::istream &binaryIn) const;
+                          const SimulationStatus &simulationStatus) const;
+    void superviseSimulationsSplit(RestorableSimulation &simulation, const std::string &stateFilename,
+                                   std::ostream &logger);
+
+    void doPerformSimulations(RestorableSimulation &simulation, const SimulationsSpan &actualSpan,
+                              const std::string &stateFilename, std::ostream &logger) const;
+
+    SimulationStatus tryRestoringSimulation(RestorableSimulation &simulation, const std::string &stateFilename,
+                                            std::ostream &logger) const;
+
+    bool joinAllRestoredSimulations(RestorableSimulation &simulation,
+                                    const std::vector<StateFileData> &stateFileDatas) const;
+
+    [[nodiscard]] std::string prepareStateFilenamePattern(const std::string &stateFilename) const;
+    [[nodiscard]] std::vector<StateFileData> discoverStateFiles(const std::string &stateFilename) const;
+    [[nodiscard]] bool areAllStateFilesPresent(const std::vector<StateFileData> &stateFileDatas) const;
+    SimulationStatus joinRestoredSimulations(RestorableSimulation &simulation, std::istream &binaryIn) const;
 
 public:
     explicit RestorableSimulationExecutor(const SimulationsSpan &simulationsSpan, std::string fileSignature,
-                                          bool workloadSplit, std::filesystem::path workingDirectory = "./");
+                                          bool splitWorkload, std::filesystem::path workingDirectory = "./");
 
     void performSimulations(RestorableSimulation &simulation, unsigned long seed, std::ostream &logger);
-    [[nodiscard]] bool shouldSave() const { return this->shouldSave_; }
+    [[nodiscard]] bool shouldSaveSimulation() const { return this->shouldSaveSimulation_; }
 };
 
 

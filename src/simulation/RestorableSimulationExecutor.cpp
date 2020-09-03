@@ -6,18 +6,15 @@
 #include <ostream>
 #include <fstream>
 #include <regex>
-#include <numeric>
-
-#include <ZipIterator.hpp>
 
 #include "RestorableSimulationExecutor.h"
 #include "utils/Assertions.h"
 #include "utils/Utils.h"
 
 RestorableSimulationExecutor::RestorableSimulationExecutor(const SimulationsSpan &simulationsSpan,
-                                                           std::string fileSignature, bool workloadSplit,
+                                                           std::string fileSignature, bool splitWorkload,
                                                            std::filesystem::path workingDirectory)
-        : simulationsSpan{simulationsSpan}, fileSignature{std::move(fileSignature)}, workloadSplit{workloadSplit},
+        : simulationsSpan{simulationsSpan}, fileSignature{std::move(fileSignature)}, splitWorkload{splitWorkload},
           workingDirectory{std::move(workingDirectory)}
 {
     Expects(simulationsSpan.total > 0);
@@ -28,144 +25,180 @@ RestorableSimulationExecutor::RestorableSimulationExecutor(const SimulationsSpan
 void RestorableSimulationExecutor::performSimulations(RestorableSimulation &simulation, unsigned long seed,
                                                       std::ostream &logger)
 {
-    std::string filename = this->fileSignature + "_state_" + simulation.getTagName() + ".dat";
-    std::ifstream restoreFile(this->workingDirectory / filename, std::ios::in | std::ios::binary);
-    SimulationsSpan actualSpan;
-
     simulation.clear();
+    this->shouldSaveSimulation_ = false;
 
-    if (restoreFile.is_open()) {
-        auto [finished, simulationIndex] = this->joinRestoredSimulations(simulation, restoreFile);
-        if (finished) {
-            logger << "That simulation already done. Aborting" << std::endl;
-            this->shouldSave_ = false;
-            return;
-        }
-
-        Assert(simulationIndex >= this->simulationsSpan.from);
-        Assert(simulationIndex <= this->simulationsSpan.to - 2);
-        logger << "[RestorableSimulationExecutor::performSimulations] State file found, restored simulations [";
-        logger << this->simulationsSpan.from << ", " << simulationIndex << "], performing [";
-        logger << (simulationIndex + 1) << ", " << this->simulationsSpan.to << ") out of ";
-        logger << this->simulationsSpan.total << std::endl;
-        actualSpan = this->simulationsSpan;
-        actualSpan.from = simulationIndex + 1;
-    } else {
-        logger << "[RestorableSimulationExecutor::performSimulations] No state file found, starting simulations from ";
-        logger << "scratch, [" << this->simulationsSpan.from << ", " << this->simulationsSpan.to << ") out of ";
-        logger << this->simulationsSpan.total << std::endl;
-        actualSpan = this->simulationsSpan;
+    std::string stateFilename = this->fileSignature + "_state_" + simulation.getTagName() + ".bin";
+    SimulationStatus simulationStatus = this->tryRestoringSimulation(simulation, stateFilename, logger);
+    if (simulationStatus.finished) {
+        logger << "[RestorableSimulationExecutor::performSimulations] That simulation is already done. Aborting";
+        logger << std::endl;
+        return;
     }
 
+    SimulationsSpan actualSpan;
+    actualSpan = this->simulationsSpan;
+    actualSpan.from = simulationStatus.nextSimulationIndex;
     simulation.seedRandomGenerators(seed + actualSpan.from);
+    this->doPerformSimulations(simulation, actualSpan, stateFilename, logger);
 
-    for (std::size_t i = actualSpan.from; i < actualSpan.to; i++) {
-        simulation.performSimulation(i, actualSpan.total, logger);
-        std::ofstream storeFile(this->workingDirectory / filename, std::ios::out | std::ios::binary);
-        bool finished = (i == actualSpan.to - 1);
-        this->storeSimulations(simulation, storeFile, i, finished);
-    }
-
-    if (!this->workloadSplit) {
-        logger << "Workload not split, finishing" << std::endl;
-        this->shouldSave_ = true;
-        std::filesystem::remove(this->workingDirectory / filename);
+    if (!this->splitWorkload) {
+        this->shouldSaveSimulation_ = true;
+        std::filesystem::remove(this->workingDirectory / stateFilename);
     } else {
-        logger << "Workload split, will search for files" << std::endl;
-        this->shouldSave_ = false;
-
-        std::regex specialChars(R"([-[\]{}()*+?.,\^$|#\s])");
-        std::string pattern = std::regex_replace(filename, specialChars, R"(\$&)");
-        pattern = std::regex_replace(pattern, std::regex(R"(_from\\\.([0-9]+))"), R"(_from\.([0-9]+))");
-        pattern = std::regex_replace(pattern, std::regex(R"(_to\\\.([0-9]+))"), R"(_to\.([0-9]+))");
-        pattern = "^" + pattern + "$";
-        std::regex matcher(pattern);
-
-        std::vector<std::filesystem::path> files;
-        std::vector<std::size_t> froms;
-        std::vector<std::size_t> tos;
-
-        for (const auto &entry : std::filesystem::directory_iterator(this->workingDirectory)) {
-            const std::filesystem::path &filePath = entry.path();
-            std::smatch matches;
-            std::string name = filePath.filename();
-            if (std::regex_search(name, matches, matcher)) {
-                files.push_back(filePath);
-                Assert(matches.size() == 3);
-                std::size_t from = std::stoul(matches[1].str());
-                std::size_t to = std::stoul(matches[2].str());
-                Assert(to > from);
-                froms.push_back(from);
-                tos.push_back(to);
-            }
-        }
-
-        if (!froms.empty()) {
-            logger << "Found " << froms.size() << "files" << std::endl;
-
-            auto zipped = Zip(froms, tos, files);
-            std::sort(zipped.begin(), zipped.end());
-
-            bool correct = true;
-            if (froms.front() != 0)
-                correct = false;
-            if (tos.back() != this->simulationsSpan.total)
-                correct = false;
-            for (std::size_t i = 0; i < froms.size() - 1; i++)
-                if (tos[i] != froms[i + 1])
-                    correct = false;
-
-            if (correct) {
-                logger << "All files are there. Checking if all finished" << std::endl;
-
-                simulation.clear();
-
-                bool allFinished = true;
-                for (const auto &path : files) {
-                    std::ifstream file(path, std::ios::in | std::ios::binary);
-                    Assert(file);
-                    auto [finished, size] = this->joinRestoredSimulations(simulation, file);
-                    if (!finished) {
-                        allFinished = false;
-                        break;
-                    }
-                }
-
-                logger << "Finished? " << allFinished << std::endl;
-
-                this->shouldSave_ = allFinished;
-
-                if (allFinished) {
-                    logger << "Removing state files" << std::endl;
-                    for (const auto &file : files)
-                        std::filesystem::remove(file);
-                } else {
-                    simulation.clear();
-                }
-            }
-        } else {
-            logger << "Found " << froms.size() << "no files" << std::endl;
-        }
+        this->superviseSimulationsSplit(simulation, stateFilename, logger);
     }
 }
 
-void RestorableSimulationExecutor::storeSimulations(const RestorableSimulation &simulation, std::ostream &binaryOut,
-                                                    std::size_t simulationIndex, bool finished) const
+RestorableSimulationExecutor::SimulationStatus
+RestorableSimulationExecutor::tryRestoringSimulation(RestorableSimulation &simulation, const std::string &stateFilename,
+                                                     std::ostream &logger) const
 {
-    binaryOut.write(reinterpret_cast<const char*>(&finished), sizeof(finished));
-    binaryOut.write(reinterpret_cast<const char*>(&simulationIndex), sizeof(simulationIndex));
+    SimulationStatus simulationStatus;
+    std::ifstream stateFile(this->workingDirectory / stateFilename, std::ios::in | std::ios::binary);
+    if (stateFile.is_open()) {
+        simulationStatus = joinRestoredSimulations(simulation, stateFile);
+        Assert(simulationStatus.nextSimulationIndex > this->simulationsSpan.from);
+        Assert(simulationStatus.nextSimulationIndex <= this->simulationsSpan.to);
+
+        logger << "[RestorableSimulationExecutor::tryRestoringSimulation] State file found, restored simulations [";
+        logger << this->simulationsSpan.from << ", " << (simulationStatus.nextSimulationIndex - 1);
+        logger << "], performing [" << simulationStatus.nextSimulationIndex << ", " << simulationsSpan.to;
+        logger << ") out of " << simulationsSpan.total << std::endl;
+    } else {
+        logger << "[RestorableSimulationExecutor::tryRestoringSimulation] No state file found, starting simulations from ";
+        logger << "scratch, [" << this->simulationsSpan.from << ", " << this->simulationsSpan.to << ") out of ";
+        logger << this->simulationsSpan.total << std::endl;
+
+        simulationStatus.finished = false;
+        simulationStatus.nextSimulationIndex = this->simulationsSpan.from;
+    }
+    stateFile.close();
+
+    return simulationStatus;
+}
+
+void RestorableSimulationExecutor::doPerformSimulations(RestorableSimulation &simulation,
+                                                        const SimulationsSpan &actualSpan,
+                                                        const std::string &stateFilename, std::ostream &logger) const
+{
+    for (std::size_t i = actualSpan.from; i < actualSpan.to; i++) {
+        simulation.performSimulation(i, actualSpan.total, logger);
+        std::ofstream storeFile(workingDirectory / stateFilename, std::ios::out | std::ios::binary);
+        SimulationStatus simulationStatus;
+        simulationStatus.finished = (i == actualSpan.to - 1);
+        simulationStatus.nextSimulationIndex = i + 1;
+        storeSimulations(simulation, storeFile, simulationStatus);
+    }
+}
+
+void RestorableSimulationExecutor::superviseSimulationsSplit(RestorableSimulation &simulation,
+                                                             const std::string &stateFilename, std::ostream &logger)
+{
+    this->shouldSaveSimulation_ = false;
+
+    logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] Workload split, searching for state files... ";
+    logger << std::flush;
+    std::vector<StateFileData> stateFileDatas = this->discoverStateFiles(stateFilename);
+    std::sort(stateFileDatas.begin(), stateFileDatas.end());
+    logger << "found " << stateFileDatas.size() << " files." << std::endl;
+    if (stateFileDatas.empty())
+        return;
+
+    if (!this->areAllStateFilesPresent(stateFileDatas)) {
+        logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] Some state files are still missing. ";
+        logger << "Waiting for other tasks to finish." << std::endl;
+        return;
+    }
+    logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] All files are there. ";
+    logger << "Checking if all are finished." << std::endl;
+
+    bool allSimulationsFinished = this->joinAllRestoredSimulations(simulation, stateFileDatas);
+    this->shouldSaveSimulation_ = allSimulationsFinished;
+    if (allSimulationsFinished) {
+        logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] All simulations are finished. ";
+        logger << "Removing state files." << std::endl;
+        for (const auto &stateFileData : stateFileDatas)
+            std::filesystem::remove(stateFileData.path);
+    } else {
+        logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] Some simulations must have been ";
+        logger << "interrupted. Rerun the whole batch." << std::endl;
+    }
+}
+
+bool RestorableSimulationExecutor::joinAllRestoredSimulations(RestorableSimulation &simulation,
+                                                              const std::vector<StateFileData> &stateFileDatas) const {
+    simulation.clear();
+    for (const auto &stateFileData : stateFileDatas) {
+        std::ifstream file(stateFileData.path, std::ios::in | std::ios::binary);
+        Assert(file);
+        auto [finished, size] = joinRestoredSimulations(simulation, file);
+        if (!finished) {
+            simulation.clear();
+            return false;
+
+        }
+    }
+    return true;
+}
+
+bool RestorableSimulationExecutor
+    ::areAllStateFilesPresent(const std::vector<RestorableSimulationExecutor::StateFileData> &stateFileDatas) const
+{
+    if (stateFileDatas.front().from != 0)
+        return false;
+    if (stateFileDatas.back().to != this->simulationsSpan.total)
+        return false;
+    for (std::size_t i = 0; i < stateFileDatas.size() - 1; i++)
+        if (stateFileDatas[i].to != stateFileDatas[i + 1].from)
+            return false;
+    return true;
+}
+
+std::vector<RestorableSimulationExecutor::StateFileData>
+RestorableSimulationExecutor::discoverStateFiles(const std::string &stateFilename) const
+{
+    std::regex matcher(prepareStateFilenamePattern(stateFilename));
+
+    std::vector<StateFileData> stateFileDatas;
+    for (const auto &entry : std::filesystem::directory_iterator(workingDirectory)) {
+        const std::filesystem::path &filePath = entry.path();
+        std::smatch matches;
+        std::string name = filePath.filename();
+        if (std::regex_search(name, matches, matcher)) {
+            Assert(matches.size() == 3);
+            std::size_t from = std::stoul(matches[1].str());
+            std::size_t to = std::stoul(matches[2].str());
+            Assert(to > from);
+            stateFileDatas.emplace_back(StateFileData{from, to, filePath});
+        }
+    }
+    return stateFileDatas;
+}
+
+std::string RestorableSimulationExecutor::prepareStateFilenamePattern(const std::string &stateFilename) const {
+    std::regex specialChars(R"([-[\]{}()*+?.,\^$|#\s])");
+    std::string pattern = std::regex_replace(stateFilename, specialChars, R"(\$&)");
+    pattern = std::regex_replace(pattern, std::regex(R"(_from\\\.([0-9]+))"), R"(_from\.([0-9]+))");
+    pattern = std::regex_replace(pattern, std::regex(R"(_to\\\.([0-9]+))"), R"(_to\.([0-9]+))");
+    pattern = "^" + pattern + "$";
+    return pattern;
+}
+
+void RestorableSimulationExecutor::storeSimulations(const RestorableSimulation &simulation, std::ostream &binaryOut,
+                                                    const SimulationStatus &status) const
+{
+    binaryOut.write(reinterpret_cast<const char*>(&status), sizeof(status));
     Assert(binaryOut);
     simulation.storeState(binaryOut);
 }
 
-std::pair<bool, std::size_t> RestorableSimulationExecutor::joinRestoredSimulations(RestorableSimulation &simulation,
-                                                                                   std::istream &binaryIn) const
+RestorableSimulationExecutor::SimulationStatus
+RestorableSimulationExecutor::joinRestoredSimulations(RestorableSimulation &simulation, std::istream &binaryIn) const
 {
-    bool finished{};
-    std::size_t simulationIndex{};
-    binaryIn.read(reinterpret_cast<char*>(&finished), sizeof(finished));
-    binaryIn.read(reinterpret_cast<char*>(&simulationIndex), sizeof(simulationIndex));
+    SimulationStatus simulationStatus{};
+    binaryIn.read(reinterpret_cast<char*>(&simulationStatus), sizeof(simulationStatus));
     Assert(binaryIn);
     simulation.joinRestoredState(binaryIn);
-    return std::make_pair(finished, simulationIndex);
+    return simulationStatus;
 }

@@ -448,7 +448,7 @@ void Frontend::quench(int argc, char **argv) {
     simulationExecutor.performSimulations(simulation, params.seed, std::cout);
 
     // Save results
-    if (simulationExecutor.shouldSave()) {
+    if (simulationExecutor.shouldSaveSimulation()) {
         std::vector<std::string> resultHeader = simulation.getResultsHeader();
         std::vector<std::string> resultFields = simulation.getResultsFields();
         io.printInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields);
