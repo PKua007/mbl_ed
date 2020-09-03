@@ -13,6 +13,7 @@
 #include "CorrelationsTimeEntry.h"
 #include "Evolver.h"
 #include "CorrelationsTimeEvolutionParameters.h"
+#include "simulation/Restorable.h"
 
 /**
  * @brief The class supervising the whole process of performing the evolution and calculating the observables for
@@ -21,12 +22,12 @@
  * averaged. The evolution is perform for one or more initial states. For details on observables measured check
  * CorrelationsTimeEntry.
  */
-class CorrelationsTimeEvolution {
+class CorrelationsTimeEvolution : public Restorable {
 private:
     /**
      * @brief Evolution of observables for the specific initial Fock state.
      */
-    struct VectorEvolution {
+    struct VectorEvolution : public Restorable {
         using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
 
         std::variant<FockBase::Vector, ExternalVector> initialVector;
@@ -34,6 +35,9 @@ private:
 
         [[nodiscard]] std::string getHeader() const;
         [[nodiscard]] std::string getInitialVectorName() const;
+        void storeState(std::ostream &binaryOut) const override;
+        void joinRestoredState(std::istream &binaryIn) override;
+        void clear() override;
     };
 
     std::shared_ptr<FockBase> fockBase;
@@ -88,6 +92,10 @@ public:
                 externalVectorCounter++;
         return externalVectorCounter;
     }
+
+    void storeState(std::ostream &binaryOut) const override;
+    void joinRestoredState(std::istream &binaryIn) override;
+    void clear() override;
 };
 
 

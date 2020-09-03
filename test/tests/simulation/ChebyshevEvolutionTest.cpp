@@ -28,14 +28,17 @@ namespace {
         { }
     };
 
-    class CorrelationsTimeEvolutionMock {
+class CorrelationsTimeEvolutionMock : public trompeloeil::mock_interface<Restorable> {
     public:
         MAKE_MOCK3(addEvolution, void(ChebyshevEvolverMock &, std::ostream &, const std::vector<arma::cx_vec> &));
         MAKE_CONST_MOCK1(storeResult, void(std::ostream &));
         MAKE_CONST_MOCK0(countExternalVectors, std::size_t());
+        IMPLEMENT_MOCK0(clear);
+        IMPLEMENT_CONST_MOCK1(storeState);
+        IMPLEMENT_MOCK1(joinRestoredState);
     };
 
-    class QuenchCalculatorMock {
+    class QuenchCalculatorMock : public trompeloeil::mock_interface<Restorable> {
     public:
         MAKE_MOCK2(addQuench, void(const arma::sp_mat &, const arma::sp_mat &));
         MAKE_MOCK0(getLastQuenchedState, const arma::vec &());
@@ -44,7 +47,9 @@ namespace {
         MAKE_CONST_MOCK0(getMeanEpsilon, double());
         MAKE_CONST_MOCK0(getMeanEpsilonQuantumUncertainty, double());
         MAKE_CONST_MOCK0(getEpsilonAveragingSampleError, double());
-        MAKE_CONST_MOCK0(clear, void());
+        IMPLEMENT_MOCK0(clear);
+        IMPLEMENT_CONST_MOCK1(storeState);
+        IMPLEMENT_MOCK1(joinRestoredState);
     };
 
     bool spMatApproxEqual(const arma::sp_mat &mat1, const arma::sp_mat &mat2) {
@@ -64,14 +69,8 @@ namespace {
 
 TEST_CASE("ChebyshevEvolutionTest") {
     SECTION("without quench - simulations 2, 3 from 5 total") {
-        SimulationsSpan simulationsSpan;
-        simulationsSpan.from = 2;
-        simulationsSpan.to = 4;
-        simulationsSpan.total = 5;
-
-        arma::sp_mat hamiltonian2(1, 1), hamiltonian3(1, 1);
+        arma::sp_mat hamiltonian2(1, 1);
         hamiltonian2(0, 0) = 1;
-        hamiltonian3(0, 0) = 2;
 
         auto rnd = std::make_unique<RND>();
         auto rndPtr = rnd.get();
@@ -92,30 +91,16 @@ TEST_CASE("ChebyshevEvolutionTest") {
         REQUIRE_CALL(*correlationsTimeEvolution, addEvolution(_, _, _))
                 .WITH(spMatApproxEqual(_1.hamiltonian, hamiltonian2) && _3.empty())
                 .IN_SEQUENCE(simulationSequence);
-        REQUIRE_CALL(*averagingModel, setupHamiltonianGenerator(_, _, 3ul, 5ul))
-                .WITH(&_1 == hamiltonianGeneratorPtr && &_2 == rndPtr)
-                .IN_SEQUENCE(simulationSequence);
-        REQUIRE_CALL(*hamiltonianGenerator, generate())
-                .RETURN(hamiltonian3)
-                .IN_SEQUENCE(simulationSequence);
-        REQUIRE_CALL(*correlationsTimeEvolution, addEvolution(_, _, _))
-                .WITH(spMatApproxEqual(_1.hamiltonian, hamiltonian3) && _3.empty())
-                .IN_SEQUENCE(simulationSequence);
 
         std::ostringstream logger;
         TestChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-                                         simulationsSpan, std::move(correlationsTimeEvolution));
+                                         std::move(correlationsTimeEvolution));
 
 
-        evolution.perform(logger);
+        evolution.performSimulation(2, 5, logger);
     }
 
     SECTION("with quench - one simulation") {
-        SimulationsSpan simulationsSpan;
-        simulationsSpan.from = 0;
-        simulationsSpan.to = 1;
-        simulationsSpan.total = 1;
-
         arma::sp_mat hamiltonian(1, 1), quenchHamiltonian(1, 1);
         hamiltonian(0, 0) = 1;
         quenchHamiltonian(0, 0) = 2;
@@ -141,8 +126,6 @@ TEST_CASE("ChebyshevEvolutionTest") {
         ALLOW_CALL(*correlationsTimeEvolution, countExternalVectors()).RETURN(1);
 
         sequence simulationSequence;
-        REQUIRE_CALL(*quenchCalculator, clear())
-                .IN_SEQUENCE(simulationSequence);
         REQUIRE_CALL(*averagingModel, setupHamiltonianGenerator(_, _, 0ul, 1ul))
                 .WITH(&_1 == hamiltonianGeneratorPtr && &_2 == rndPtr)
                 .IN_SEQUENCE(simulationSequence);
@@ -168,11 +151,10 @@ TEST_CASE("ChebyshevEvolutionTest") {
 
         std::ostringstream logger;
         TestChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-                                         simulationsSpan, std::move(correlationsTimeEvolution),
-                                         std::move(quenchCalculator), std::move(quenchHamiltonianGenerator),
-                                         std::move(quenchRnd));
+                                         std::move(correlationsTimeEvolution), std::move(quenchCalculator),
+                                         std::move(quenchHamiltonianGenerator), std::move(quenchRnd));
 
 
-        evolution.perform(logger);
+        evolution.performSimulation(0, 1, logger);
     }
 }

@@ -158,7 +158,7 @@ RestorableSimulationExecutor::StateFilesCoverage RestorableSimulationExecutor
     for (std::size_t i = 0; i < stateFileDatas.size() - 1; i++)
         if (stateFileDatas[i].to != stateFileDatas[i + 1].from)
             return StateFilesCoverage::INCOMPLETE;
-        
+
     return StateFilesCoverage::COMPLETE;
 }
 

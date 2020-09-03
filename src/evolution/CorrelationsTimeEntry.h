@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "OccupationEvolution.h"
+#include "simulation/Restorable.h"
 
 /**
  * @brief Class collecting OccupationEvolution::Occupations for subsequent eigensystems and calculating disorder
@@ -23,7 +24,7 @@
  *     <li>onsite occupaitons (see CorrelationsTimeEntry::OnsiteOccupations in the code)
  * </ul>
  */
-class CorrelationsTimeEntry {
+class CorrelationsTimeEntry : public Restorable {
 private:
     /**
      * @brief Site-averaged correlations for all sites apart from @a marginSize sites on the border.
@@ -33,7 +34,7 @@ private:
      * calculated from OccupationEvolution::Occupations observables and can be added multiple times - they are then
      * averaged.
      */
-    class Correlations {
+    class Correlations : public Restorable {
     private:
         std::size_t d{};
         std::size_t marginSize{};
@@ -47,13 +48,17 @@ private:
         void addObservables(const OccupationEvolution::Occupations &occupations);
         [[nodiscard]] std::string getHeader() const;
         [[nodiscard]] std::string toString() const;
+
+        void storeState(std::ostream &binaryOut) const override;
+        void joinRestoredState(std::istream &binaryIn) override;
+        void clear() override;
     };
 
     /**
      * @brief Onsite fluctuations for a site @a i defined as rho(i) = <n_i^2> - <n_i>^2. The values are calculated from
      * OccupationEvolution::Occupations observables and can be added multiple times - they are then averaged.
      */
-    class OnsiteFluctuations {
+    class OnsiteFluctuations : public Restorable {
     private:
         std::size_t i{};
         double rho_i{};
@@ -66,13 +71,17 @@ private:
         void addObservables(const OccupationEvolution::Occupations &occupations);
         [[nodiscard]] std::string getHeader() const;
         [[nodiscard]] std::string toString() const;
+
+        void storeState(std::ostream &binaryOut) const override;
+        void joinRestoredState(std::istream &binaryIn) override;
+        void clear() override;
     };
 
     /**
      * @brief Onsite mean occupations for a site @a i defined as <n_i>. The values are calculated from
      * OccupationEvolution::Occupations observables and can be added multiple times - they are then averaged.
      */
-    class OnsiteOccupations {
+    class OnsiteOccupations : public Restorable {
     private:
         std::size_t i{};
         double n_i{};
@@ -85,6 +94,10 @@ private:
         void addObservables(const OccupationEvolution::Occupations &occupations);
         [[nodiscard]] std::string getHeader() const;
         [[nodiscard]] std::string toString() const;
+
+        void storeState(std::ostream &binaryOut) const override;
+        void joinRestoredState(std::istream &binaryIn) override;
+        void clear() override;
     };
 
     double t{};
@@ -121,6 +134,10 @@ public:
      * fluctuations.
      */
     [[nodiscard]] std::string toString() const;
+
+    void storeState(std::ostream &binaryOut) const override;
+    void joinRestoredState(std::istream &binaryIn) override;
+    void clear() override;
 };
 
 

@@ -94,6 +94,28 @@ std::size_t CorrelationsTimeEvolution::getNumberOfSites() const {
     return this->numberOfSites;
 }
 
+void CorrelationsTimeEvolution::storeState(std::ostream &binaryOut) const {
+    std::size_t vectorEvolutionsSize = this->vectorEvolutions.size();
+    binaryOut.write(reinterpret_cast<const char*>(&vectorEvolutionsSize), sizeof(vectorEvolutionsSize));
+    Assert(binaryOut.good());
+    for (const auto &vectorEvolution : this->vectorEvolutions)
+        vectorEvolution.storeState(binaryOut);
+}
+
+void CorrelationsTimeEvolution::joinRestoredState(std::istream &binaryIn) {
+    std::size_t vectorEvolutionsSizeRestored{};
+    binaryIn.read(reinterpret_cast<char*>(&vectorEvolutionsSizeRestored), sizeof(vectorEvolutionsSizeRestored));
+    Assert(binaryIn.good());
+    Assert(vectorEvolutionsSizeRestored == this->vectorEvolutions.size());
+    for (auto &vectorEvolution : this->vectorEvolutions)
+        vectorEvolution.joinRestoredState(binaryIn);
+}
+
+void CorrelationsTimeEvolution::clear() {
+    for (auto &vectorEvolution : this->vectorEvolutions)
+        vectorEvolution.clear();
+}
+
 std::string CorrelationsTimeEvolution::VectorEvolution::getHeader() const {
     Assert(!this->timeEntries.empty());
 
@@ -116,4 +138,26 @@ std::string CorrelationsTimeEvolution::VectorEvolution::getInitialVectorName() c
         ExternalVector externalVector = std::get<ExternalVector>(this->initialVector);
         return externalVector.name;
     }
+}
+
+void CorrelationsTimeEvolution::VectorEvolution::storeState(std::ostream &binaryOut) const {
+    std::size_t timeEntriesSize = this->timeEntries.size();
+    binaryOut.write(reinterpret_cast<const char*>(&timeEntriesSize), sizeof(timeEntriesSize));
+    Assert(binaryOut.good());
+    for (const auto &timeEntry : this->timeEntries)
+        timeEntry.storeState(binaryOut);
+}
+
+void CorrelationsTimeEvolution::VectorEvolution::joinRestoredState(std::istream &binaryIn) {
+    std::size_t timeEntriesSizeRestored{};
+    binaryIn.read(reinterpret_cast<char*>(&timeEntriesSizeRestored), sizeof(timeEntriesSizeRestored));
+    Assert(binaryIn.good());
+    Assert(timeEntriesSizeRestored == this->timeEntries.size());
+    for (auto &timeEntry : this->timeEntries)
+        timeEntry.joinRestoredState(binaryIn);
+}
+
+void CorrelationsTimeEvolution::VectorEvolution::clear() {
+    for (auto &timeEntry : this->timeEntries)
+        timeEntry.clear();
 }

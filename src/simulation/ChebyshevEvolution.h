@@ -14,6 +14,7 @@
 #include "core/AveragingModel.h"
 #include "core/RND.h"
 #include "core/QuenchCalculator.h"
+#include "simulation/RestorableSimulation.h"
 
 /**
  * @brief A class performing a whole series of time evolutions using Chebyshev expansion technique.
@@ -25,30 +26,32 @@
 template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel,
          typename CorrelationsTimeEvolution_t = CorrelationsTimeEvolution,
          typename QuenchCalculator_t = QuenchCalculator, typename ChebyshevEvolver_t = ChebyshevEvolver>
-class ChebyshevEvolution {
+class ChebyshevEvolution : public RestorableSimulation {
 private:
     std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;
     std::unique_ptr<AveragingModel_t> averagingModel;
     std::unique_ptr<RND> rnd;
-    std::unique_ptr<CorrelationsTimeEvolution_t> correlationsTimeEvolution;
 
-    SimulationsSpan simulationsSpan;
+private:
+    std::unique_ptr<CorrelationsTimeEvolution_t> correlationsTimeEvolution;
 
     std::unique_ptr<QuenchCalculator_t> quenchCalculator;
     std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator;
     std::unique_ptr<RND> quenchRnd;
 
 
-    auto prepareHamiltonianAndPossiblyQuenchVector(std::size_t simulationIndex, std::ostream &logger) const {
+    auto prepareHamiltonianAndPossiblyQuenchVector(std::size_t simulationIndex, std::size_t totalSimulations,
+                                                   std::ostream &logger) const
+    {
         std::vector<arma::cx_vec> additionalVectors;
 
         this->averagingModel->setupHamiltonianGenerator(*this->hamiltonianGenerator, *this->rnd, simulationIndex,
-                                                        this->simulationsSpan.total);
+                                                        totalSimulations);
         arma::sp_mat hamiltonian = this->hamiltonianGenerator->generate();
 
         if (this->quenchCalculator != nullptr) {
             this->averagingModel->setupHamiltonianGenerator(*this->quenchHamiltonianGenerator, *this->quenchRnd,
-                                                            simulationIndex, this->simulationsSpan.total);
+                                                            simulationIndex, totalSimulations);
             arma::sp_mat initialHamiltonian = this->quenchHamiltonianGenerator->generate();
 
             this->quenchCalculator->addQuench(initialHamiltonian, hamiltonian);
@@ -74,20 +77,15 @@ public:
      */
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
                        std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
-                       const SimulationsSpan &simulationsSpan,
                        std::unique_ptr<CorrelationsTimeEvolution_t> correlationsTimeEvolution,
                        std::unique_ptr<QuenchCalculator_t> quenchCalculator,
                        std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator,
                        std::unique_ptr<RND> quenchRnd)
             : hamiltonianGenerator{std::move(hamiltonianGenerator)}, averagingModel{std::move(averagingModel)},
               rnd{std::move(rnd)}, correlationsTimeEvolution{std::move(correlationsTimeEvolution)},
-              simulationsSpan{simulationsSpan}, quenchCalculator{std::move(quenchCalculator)},
+              quenchCalculator{std::move(quenchCalculator)},
               quenchHamiltonianGenerator{std::move(quenchHamiltonianGenerator)}, quenchRnd{std::move(quenchRnd)}
     {
-        Expects(this->simulationsSpan.total > 0);
-        Expects(this->simulationsSpan.from < this->simulationsSpan.to);
-        Expects(this->simulationsSpan.to <= this->simulationsSpan.total);
-
         if (this->quenchCalculator == nullptr) {
             Expects(this->correlationsTimeEvolution->countExternalVectors() == 0);
         } else {
@@ -102,40 +100,12 @@ public:
      */
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
                        std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
-                       const SimulationsSpan &parameters,
                        std::unique_ptr<CorrelationsTimeEvolution_t> correlationsTimeEvolution)
             : ChebyshevEvolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-                                 parameters, std::move(correlationsTimeEvolution), nullptr, nullptr, nullptr)
+                                 std::move(correlationsTimeEvolution), nullptr, nullptr, nullptr)
     { }
 
-    /**
-     * @brief Performs the simuations. The results (see CorrelationsTimeEvolution) are stored afterwards using
-     * FileOstreamProvider from the constructor.
-     * @details The name of the file is in the code, go check ;).
-     */
-    void perform(std::ostream &logger) {
-        if (this->quenchCalculator != nullptr)
-            this->quenchCalculator->clear();
-
-        for (std::size_t i = this->simulationsSpan.from; i < this->simulationsSpan.to; i++) {
-            arma::wall_clock wholeTimer;
-            arma::wall_clock timer;
-
-            wholeTimer.tic();
-            logger << "[ChebyshevEvolution::perform] Performing evolution " << i << "... " << std::endl;
-            logger << "[ChebyshevEvolution::perform] Preparing hamiltonian... " << std::flush;
-            timer.tic();
-            auto [hamiltonian, additionalVectors] = this->prepareHamiltonianAndPossiblyQuenchVector(i, logger);
-            logger << "done (" << timer.toc() << " s)" << std::endl;
-
-            logger << "[ChebyshevEvolution::perform] Preparing evolver... " << std::endl;
-            timer.tic();
-            ChebyshevEvolver_t evolver(hamiltonian, logger);
-            logger << "[ChebyshevEvolution::perform] Preparing evolver done (" << timer.toc() << " s)." << std::endl;
-            this->correlationsTimeEvolution->addEvolution(evolver, logger, additionalVectors);
-            logger << "[ChebyshevEvolution::perform] Whole evolution took " << wholeTimer.toc() << " s." << std::endl;
-        }
-
+    void printQuenchInfo(std::ostream &logger) {
         if (this->quenchCalculator != nullptr) {
             logger << "[ChebyshevEvolution::perform] Mean quench data: epsilon: ";
             logger << this->quenchCalculator->getMeanEpsilon() << "; avg error: ";
@@ -146,6 +116,64 @@ public:
 
     void storeResults(std::ostream &out) const {
         this->correlationsTimeEvolution->storeResult(out);
+    }
+
+    void storeState(std::ostream &binaryOut) const override {
+        bool doesDoQuench = (this->quenchCalculator != nullptr);
+        binaryOut.write(reinterpret_cast<const char*>(&doesDoQuench), sizeof(doesDoQuench));
+        Assert(binaryOut.good());
+        if (doesDoQuench)
+            this->quenchCalculator->storeState(binaryOut);
+        this->correlationsTimeEvolution->storeState(binaryOut);
+    }
+
+    void joinRestoredState(std::istream &binaryIn) override {
+        bool doesDoQuench = (this->quenchCalculator != nullptr);
+        bool doesDoQuenchRestored{};
+        binaryIn.read(reinterpret_cast<char*>(&doesDoQuenchRestored), sizeof(doesDoQuenchRestored));
+        Assert(binaryIn.good());
+        Assert(doesDoQuench == doesDoQuenchRestored);
+        if (doesDoQuench)
+            this->quenchCalculator->joinRestoredState(binaryIn);
+        this->correlationsTimeEvolution->joinRestoredState(binaryIn);
+    }
+
+    void clear() override {
+        this->correlationsTimeEvolution->clear();
+        if (this->quenchCalculator != nullptr)
+            this->quenchCalculator->clear();
+    }
+
+    void seedRandomGenerators(unsigned long seed) override {
+        this->rnd->seed(seed);
+        if (this->quenchRnd != nullptr)
+            this->quenchRnd->seed(seed);
+    }
+
+    void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, std::ostream &logger) override {
+        static_cast<void>(totalSimulations);
+
+        arma::wall_clock wholeTimer;
+        arma::wall_clock timer;
+
+        wholeTimer.tic();
+        logger << "[ChebyshevEvolution::perform] Performing evolution " << simulationIndex << "... " << std::endl;
+        logger << "[ChebyshevEvolution::perform] Preparing hamiltonian... " << std::flush;
+        timer.tic();
+        auto [hamiltonian, additionalVectors]
+            = this->prepareHamiltonianAndPossiblyQuenchVector(simulationIndex, totalSimulations, logger);
+        logger << "done (" << timer.toc() << " s)" << std::endl;
+
+        logger << "[ChebyshevEvolution::perform] Preparing evolver... " << std::endl;
+        timer.tic();
+        ChebyshevEvolver_t evolver(hamiltonian, logger);
+        logger << "[ChebyshevEvolution::perform] Preparing evolver done (" << timer.toc() << " s)." << std::endl;
+        this->correlationsTimeEvolution->addEvolution(evolver, logger, additionalVectors);
+        logger << "[ChebyshevEvolution::perform] Whole evolution took " << wholeTimer.toc() << " s." << std::endl;
+    }
+
+    [[nodiscard]] std::string getTagName() const override {
+        return "chebyshev";
     }
 };
 

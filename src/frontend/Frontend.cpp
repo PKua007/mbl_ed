@@ -303,7 +303,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     std::cout << "done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
-    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto rnd = std::make_unique<RND>();
     auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
@@ -323,32 +323,37 @@ void Frontend::chebyshev(int argc, char **argv) {
     simulationsSpan.from = params.from;
     simulationsSpan.to = params.to;
     simulationsSpan.total = params.totalSimulations;
+    RestorableSimulationExecutor simulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
+                                                    params.splitWorkload);
 
     std::unique_ptr<ChebyshevEvolution<>> evolution;
     if (quenchParams.has_value()) {
         using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
         evolutionParameters.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
 
-        auto quenchRnd = std::make_unique<RND>(params.from + params.seed);
+        auto quenchRnd = std::make_unique<RND>();
         auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
         evolution = std::make_unique<ChebyshevEvolution<>>(
-            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationsSpan,
+            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
             std::make_unique<CorrelationsTimeEvolution>(evolutionParameters), std::make_unique<QuenchCalculator>(),
             std::move(quenchHamiltonianGenerator), std::move(quenchRnd)
         );
     } else {
         evolution = std::make_unique<ChebyshevEvolution<>>(
-            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationsSpan,
+            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
             std::make_unique<CorrelationsTimeEvolution>(evolutionParameters)
         );
     }
 
-    evolution->perform(std::cout);
+    simulationExecutor.performSimulations(*evolution, params.seed, std::cout);
+    evolution->printQuenchInfo(std::cout);
 
-    std::string resultsFilename = params.getOutputFileSignatureWithRange() + "_evolution.txt";
-    std::ofstream resultsFile(resultsFilename);
-    evolution->storeResults(resultsFile);
-    std::cout << "[Frontend::chebyshev] Observables stored to " << resultsFilename << std::endl;
+    if (simulationExecutor.shouldSaveSimulation()) {
+        std::string resultsFilename = params.getOutputFileSignatureWithRange() + "_evolution.txt";
+        std::ofstream resultsFile(resultsFilename);
+        evolution->storeResults(resultsFile);
+        std::cout << "[Frontend::chebyshev] Observables stored to " << resultsFilename << std::endl;
+    }
 }
 
 void Frontend::quench(int argc, char **argv) {
