@@ -30,11 +30,6 @@ void RestorableSimulationExecutor::performSimulations(RestorableSimulation &simu
 
     std::string stateFilename = this->fileSignature + "_state_" + simulation.getTagName() + ".bin";
     SimulationStatus simulationStatus = this->tryRestoringSimulation(simulation, stateFilename, logger);
-    if (simulationStatus.finished) {
-        logger << "[RestorableSimulationExecutor::performSimulations] That simulation is already done. Aborting";
-        logger << std::endl;
-        return;
-    }
 
     SimulationsSpan actualSpan;
     actualSpan = this->simulationsSpan;
@@ -105,12 +100,19 @@ void RestorableSimulationExecutor::superviseSimulationsSplit(RestorableSimulatio
     if (stateFileDatas.empty())
         return;
 
-    if (!this->areAllStateFilesPresent(stateFileDatas)) {
-        logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] Some state files are still missing. ";
-        logger << "Waiting for other tasks to finish." << std::endl;
-        return;
+    switch (this->checkStateFilesCoverage(stateFileDatas)) {
+        case INCOMPLETE:
+            logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] Some state files are missing. ";
+            logger << "Waiting for other tasks to finish." << std::endl;
+            return;
+        case BROKEN:
+            logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] State files have broken ranges. ";
+            logger << "Fix before reruning simulations." << std::endl;
+            return;
+        case COMPLETE:
+            break;
     }
-    logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] All files are there. ";
+    logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] No state files are missing. ";
     logger << "Checking if all are finished." << std::endl;
 
     bool allSimulationsFinished = this->joinAllRestoredSimulations(simulation, stateFileDatas);
@@ -142,17 +144,22 @@ bool RestorableSimulationExecutor::joinAllRestoredSimulations(RestorableSimulati
     return true;
 }
 
-bool RestorableSimulationExecutor
-    ::areAllStateFilesPresent(const std::vector<RestorableSimulationExecutor::StateFileData> &stateFileDatas) const
+RestorableSimulationExecutor::StateFilesCoverage RestorableSimulationExecutor
+    ::checkStateFilesCoverage(const std::vector<RestorableSimulationExecutor::StateFileData> &stateFileDatas) const
 {
+    for (std::size_t i = 0; i < stateFileDatas.size() - 1; i++)
+        if (stateFileDatas[i].to > stateFileDatas[i + 1].from)
+            return StateFilesCoverage::BROKEN;
+
     if (stateFileDatas.front().from != 0)
-        return false;
+        return StateFilesCoverage::INCOMPLETE;
     if (stateFileDatas.back().to != this->simulationsSpan.total)
-        return false;
+        return StateFilesCoverage::INCOMPLETE;
     for (std::size_t i = 0; i < stateFileDatas.size() - 1; i++)
         if (stateFileDatas[i].to != stateFileDatas[i + 1].from)
-            return false;
-    return true;
+            return StateFilesCoverage::INCOMPLETE;
+        
+    return StateFilesCoverage::COMPLETE;
 }
 
 std::vector<RestorableSimulationExecutor::StateFileData>

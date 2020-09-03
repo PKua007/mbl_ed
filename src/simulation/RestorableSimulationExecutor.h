@@ -23,8 +23,14 @@ private:
         std::filesystem::path path;
 
         friend bool operator<(const StateFileData &lhs, const StateFileData &rhs) {
-            return lhs.from < rhs.from;
+            return std::tie(lhs.from, lhs.to) < std::tie(rhs.from, rhs.to);
         }
+    };
+
+    enum StateFilesCoverage {
+        COMPLETE,
+        INCOMPLETE,
+        BROKEN
     };
 
     SimulationsSpan simulationsSpan;
@@ -41,15 +47,15 @@ private:
     void doPerformSimulations(RestorableSimulation &simulation, const SimulationsSpan &actualSpan,
                               const std::string &stateFilename, std::ostream &logger) const;
 
-    SimulationStatus tryRestoringSimulation(RestorableSimulation &simulation, const std::string &stateFilename,
-                                            std::ostream &logger) const;
+    [[nodiscard]] SimulationStatus tryRestoringSimulation(RestorableSimulation &simulation,
+                                                          const std::string &stateFilename, std::ostream &logger) const;
 
-    bool joinAllRestoredSimulations(RestorableSimulation &simulation,
-                                    const std::vector<StateFileData> &stateFileDatas) const;
+    [[nodiscard]] bool joinAllRestoredSimulations(RestorableSimulation &simulation,
+                                                  const std::vector<StateFileData> &stateFileDatas) const;
 
     [[nodiscard]] std::string prepareStateFilenamePattern(const std::string &stateFilename) const;
     [[nodiscard]] std::vector<StateFileData> discoverStateFiles(const std::string &stateFilename) const;
-    [[nodiscard]] bool areAllStateFilesPresent(const std::vector<StateFileData> &stateFileDatas) const;
+    [[nodiscard]] StateFilesCoverage checkStateFilesCoverage(const std::vector<StateFileData> &stateFileDatas) const;
     SimulationStatus joinRestoredSimulations(RestorableSimulation &simulation, std::istream &binaryIn) const;
 
 public:

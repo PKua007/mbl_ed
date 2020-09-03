@@ -81,11 +81,13 @@ TEST_CASE("RestorableSimulationExecutor") {
     SECTION("normal simulation [1, 3] out of 4") {
         MockRestorableSimulation restorableSimulation;
         RestorableSimulationExecutor executor({1, 4, 4}, "N.8_K.8_from.1_to.4_term.value", false, testDir);
+        logger.clear();
 
         executor.performSimulations(restorableSimulation, 1234, logger);
 
         CHECK(restorableSimulation.simulations == Simulations{{1, 4, 1235}, {2, 4, 1235}, {3, 4, 1235}});
         CHECK(executor.shouldSaveSimulation());
+        CHECK_THAT(logger.str(), Catch::Contains("No state file found"));
         CHECK(std::filesystem::is_empty(testDir));
     }
 
@@ -95,12 +97,18 @@ TEST_CASE("RestorableSimulationExecutor") {
         RestorableSimulationExecutor executor({0, 3, 3}, "N.8_K.8_from.0_to.3_term.value", false, testDir);
 
         CHECK_THROWS_WITH(executor.performSimulations(restorableSimulation1, 1234, logger), "interruption");
+
         CHECK(restorableSimulation1.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234}});
         CHECK_FALSE(executor.shouldSaveSimulation());
 
+
+        logger.clear();
+
         executor.performSimulations(restorableSimulation2, 1234, logger);
+
         CHECK(restorableSimulation2.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234}, {2, 3, 1234 + 2}});
         CHECK(executor.shouldSaveSimulation());
+        CHECK_THAT(logger.str(), Catch::Contains("State file found"));
         CHECK(std::filesystem::is_empty(testDir));
     }
 
@@ -108,20 +116,25 @@ TEST_CASE("RestorableSimulationExecutor") {
         SECTION("first part [2] - not finished yet") {
             MockRestorableSimulation restorableSimulation1;
             RestorableSimulationExecutor executor1({2, 3, 3}, "N.8_K.8_from.2_to.3_term.value", true, testDir);
+            logger.clear();
 
             executor1.performSimulations(restorableSimulation1, 1234, logger);
 
             CHECK(restorableSimulation1.simulations == Simulations{{2, 3, 1234 + 2}});
             CHECK_FALSE(executor1.shouldSaveSimulation());
+            CHECK_THAT(logger.str(), Catch::Contains("Some state files are missing"));
 
             SECTION("second part [0, 1] - finished") {
                 MockRestorableSimulation restorableSimulation2;
                 RestorableSimulationExecutor executor2({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, testDir);
+                logger.clear();
 
                 executor2.performSimulations(restorableSimulation2, 1234, logger);
 
                 CHECK(restorableSimulation2.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234}, {2, 3, 1234 + 2}});
                 CHECK(executor2.shouldSaveSimulation());
+                CHECK_THAT(logger.str(), Catch::Contains("No state files are missing"));
+                CHECK_THAT(logger.str(), Catch::Contains("All simulations are finished"));
                 CHECK(std::filesystem::is_empty(testDir));
             }
         }
@@ -129,6 +142,7 @@ TEST_CASE("RestorableSimulationExecutor") {
         SECTION("[0] (interrupted) + [2] - all files, but first not ready, so unfinished") {
             MockRestorableSimulation restorableSimulation1(1);
             RestorableSimulationExecutor executor1({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, testDir);
+            logger.clear();
 
             CHECK_THROWS_WITH(executor1.performSimulations(restorableSimulation1, 1234, logger), "interruption");
 
@@ -138,20 +152,26 @@ TEST_CASE("RestorableSimulationExecutor") {
 
             MockRestorableSimulation restorableSimulation2;
             RestorableSimulationExecutor executor2({2, 3, 3}, "N.8_K.8_from.2_to.3_term.value", true, testDir);
+            logger.clear();
 
             executor2.performSimulations(restorableSimulation2, 1234, logger);
 
             CHECK(restorableSimulation2.simulations.empty());
             CHECK_FALSE(executor2.shouldSaveSimulation());
+            CHECK_THAT(logger.str(), Catch::Contains("No state files are missing"));
+            CHECK_THAT(logger.str(), Catch::Contains("Some simulations must have been interrupted"));
 
             SECTION("redoing [0, 1] - finishing") {
                 MockRestorableSimulation restorableSimulation3;
                 RestorableSimulationExecutor executor3({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, testDir);
+                logger.clear();
 
                 executor3.performSimulations(restorableSimulation3, 1234, logger);
 
                 CHECK(restorableSimulation3.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234 + 1}, {2, 3, 1234+2}});
                 CHECK(executor3.shouldSaveSimulation());
+                CHECK_THAT(logger.str(), Catch::Contains("No state files are missing"));
+                CHECK_THAT(logger.str(), Catch::Contains("All simulations are finished"));
                 CHECK(std::filesystem::is_empty(testDir));
             }
         }
@@ -159,20 +179,24 @@ TEST_CASE("RestorableSimulationExecutor") {
         SECTION("[0, 1] + [0, 2] - not finished, because messed up ranges") {
             MockRestorableSimulation restorableSimulation1;
             RestorableSimulationExecutor executor1({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, testDir);
+            logger.clear();
 
             executor1.performSimulations(restorableSimulation1, 1234, logger);
 
             CHECK(restorableSimulation1.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234}});
             CHECK_FALSE(executor1.shouldSaveSimulation());
+            CHECK_THAT(logger.str(), Catch::Contains("Some state files are missing"));
 
 
             MockRestorableSimulation restorableSimulation2;
             RestorableSimulationExecutor executor2({0, 3, 3}, "N.8_K.8_from.0_to.3_term.value", true, testDir);
+            logger.clear();
 
             executor2.performSimulations(restorableSimulation2, 1234, logger);
 
             CHECK(restorableSimulation2.simulations == Simulations{{0, 3, 1234}, {1, 3, 1234}, {2, 3, 1234}});
             CHECK_FALSE(executor2.shouldSaveSimulation());
+            CHECK_THAT(logger.str(), Catch::Contains("State files have broken ranges"));
         }
     }
 
