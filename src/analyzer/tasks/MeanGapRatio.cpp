@@ -100,7 +100,7 @@ std::vector<std::string> MeanGapRatio::getResultFields() const {
 void MeanGapRatio::storeState(std::ostream &binaryOut) const {
     std::size_t gapRatiosSize = this->gapRatios.size();
     binaryOut.write(reinterpret_cast<const char*>(&gapRatiosSize), sizeof(gapRatiosSize));
-    binaryOut.write(reinterpret_cast<const char*>(this->gapRatios.data()), sizeof(this->gapRatios[0]));
+    binaryOut.write(reinterpret_cast<const char*>(this->gapRatios.data()), sizeof(this->gapRatios[0]) * gapRatiosSize);
     Assert(binaryOut.good());
 }
 
@@ -112,7 +112,7 @@ void MeanGapRatio::joinRestoredState(std::istream &binaryIn) {
     binaryIn.read(reinterpret_cast<char*>(entriesRestored.data()), sizeof(entriesRestored[0]) * gapRatiosSizeRestored);
     Assert(binaryIn.good());
     this->gapRatios.reserve(this->gapRatios.size() + gapRatiosSizeRestored);
-    this->gapRatios.insert(this->gapRatios.begin(), entriesRestored.begin(), entriesRestored.end());
+    this->gapRatios.insert(this->gapRatios.end(), entriesRestored.begin(), entriesRestored.end());
 }
 
 void MeanGapRatio::clear() {

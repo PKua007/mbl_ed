@@ -7,6 +7,12 @@
 #include "analyzer/tasks/DressedStatesFinder.h"
 #include "core/FockBaseGenerator.h"
 
+#include "core/FockBaseGenerator.h"
+#include "core/terms/HubbardHop.h"
+#include "core/terms/HubbardOnsite.h"
+#include "core/terms/QuasiperiodicDisorder.h"
+#include "core/averaging_models/UniformPhi0AveragingModel.h"
+
 TEST_CASE("DressedStatesFinder: single diagonalization") {
     FockBaseGenerator generator;
     auto base = generator.generate(4, 2);
@@ -52,4 +58,54 @@ TEST_CASE("DressedStatesFinder: 2 diagonalizations") {
     std::ostringstream out;
     finder.storeResult(out);
     REQUIRE(out.str() == "0 1.1 0.5 1\n1 2.0 0.6 -1\n");
+}
+
+TEST_CASE("DressedStatesFinder: storing, restoring and cleaning") {
+    auto fockBase = std::shared_ptr(FockBaseGenerator().generate(4, 4));
+    HamiltonianGenerator hamiltonianGenerator(fockBase, false);
+    hamiltonianGenerator.addHoppingTerm(std::make_unique<HubbardHop>(1));
+    hamiltonianGenerator.addDiagonalTerm(std::make_unique<HubbardOnsite>(1));
+    hamiltonianGenerator.addDiagonalTerm(std::make_unique<QuasiperiodicDisorder>(10, 0.3, 0));
+    UniformPhi0AveragingModel averagingModel{};
+    RND rnd{};
+    averagingModel.setupHamiltonianGenerator(hamiltonianGenerator, rnd, 1, 5);
+    Eigensystem eigensystem1 = hamiltonianGenerator.calculateEigensystem(true);
+    averagingModel.setupHamiltonianGenerator(hamiltonianGenerator, rnd, 2, 5);
+    Eigensystem eigensystem2 = hamiltonianGenerator.calculateEigensystem(true);
+    DressedStatesFinder dressedStatesFinder(0.5, 0.3, 0.9);
+    std::ostringstream logger;
+
+    SECTION("clearing") {
+        dressedStatesFinder.analyze(eigensystem1, logger);
+        std::ostringstream result1;
+        dressedStatesFinder.storeResult(result1);
+
+        dressedStatesFinder.analyze(eigensystem2, logger);
+        dressedStatesFinder.clear();
+        dressedStatesFinder.analyze(eigensystem1, logger);
+        std::ostringstream result2;
+        dressedStatesFinder.storeResult(result2);
+
+        REQUIRE(result1.str() == result2.str());
+    }
+
+    SECTION("storing and joining restored") {
+        dressedStatesFinder.analyze(eigensystem1, logger);
+        dressedStatesFinder.analyze(eigensystem2, logger);
+        std::ostringstream normalResult;
+        dressedStatesFinder.storeResult(normalResult);
+
+        dressedStatesFinder.clear();
+        dressedStatesFinder.analyze(eigensystem2, logger);
+        std::stringstream simulation2;
+        dressedStatesFinder.storeState(simulation2);
+
+        dressedStatesFinder.clear();
+        dressedStatesFinder.analyze(eigensystem1, logger);
+        dressedStatesFinder.joinRestoredState(simulation2);
+        std::ostringstream restoredResult;
+        dressedStatesFinder.storeResult(restoredResult);
+
+        REQUIRE(normalResult.str() == restoredResult.str());
+    }
 }

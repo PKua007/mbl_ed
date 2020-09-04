@@ -76,7 +76,7 @@ void DressedStatesFinder::Entry::restoreState(std::istream &binaryIn) {
 }
 
 void DressedStatesFinder::storeState(std::ostream &binaryOut) const {
-    binaryOut.write(reinterpret_cast<const char*>(this->simulationIdx), sizeof(this->simulationIdx));
+    binaryOut.write(reinterpret_cast<const char*>(&this->simulationIdx), sizeof(this->simulationIdx));
     std::size_t resultSize = this->result.size();
     binaryOut.write(reinterpret_cast<const char*>(&resultSize), sizeof(resultSize));
     Assert(binaryOut.good());
@@ -86,18 +86,21 @@ void DressedStatesFinder::storeState(std::ostream &binaryOut) const {
 
 void DressedStatesFinder::joinRestoredState(std::istream &binaryIn) {
     std::size_t numOfSimulationsRestored{};
-    binaryIn.read(reinterpret_cast<char*>(numOfSimulationsRestored), sizeof(numOfSimulationsRestored));
+    binaryIn.read(reinterpret_cast<char*>(&numOfSimulationsRestored), sizeof(numOfSimulationsRestored));
     Assert(binaryIn.good());
-    this->simulationIdx += numOfSimulationsRestored;
 
     std::size_t resultSizeRestored{};
     binaryIn.read(reinterpret_cast<char*>(&resultSizeRestored), sizeof(resultSizeRestored));
     Assert(binaryIn.good());
     std::vector<Entry> entriesRestored(resultSizeRestored);
-    for (auto &entry : entriesRestored)
+    for (auto &entry : entriesRestored) {
         entry.restoreState(binaryIn);
+        entry.simulationIdx += this->simulationIdx;
+    }
     this->result.reserve(this->result.size() + resultSizeRestored);
     this->result.insert(this->result.end(), entriesRestored.begin(), entriesRestored.end());
+
+    this->simulationIdx += numOfSimulationsRestored;
 }
 
 void DressedStatesFinder::clear() {

@@ -49,24 +49,24 @@ void BulkMeanGapRatio::storeResult(std::ostream &out) const {
 
 void BulkMeanGapRatio::storeState(std::ostream &binaryOut) const {
     std::size_t numBins = this->gapRatios.size();
-    Assert(numBins > 0);
-    std::size_t numEntries = this->gapRatios.front().size();
     binaryOut.write(reinterpret_cast<const char*>(&numBins), sizeof(numBins));
-    binaryOut.write(reinterpret_cast<const char*>(&numEntries), sizeof(numEntries));
     Assert(binaryOut.good());
-    for (const auto &binValues : this->gapRatios)
-        binaryOut.write(reinterpret_cast<const char*>(binValues.data()), sizeof(binValues[0]) * numEntries);
+    for (const auto &binEntries : this->gapRatios) {
+        std::size_t numEntries = binEntries.size();
+        binaryOut.write(reinterpret_cast<const char*>(&numEntries), sizeof(numEntries));
+        binaryOut.write(reinterpret_cast<const char*>(binEntries.data()), sizeof(binEntries[0]) * numEntries);
+    }
     Assert(binaryOut.good());
 }
 
 void BulkMeanGapRatio::joinRestoredState(std::istream &binaryIn) {
     std::size_t numBinsRestored{};
-    std::size_t numEntriesRestored{};
     binaryIn.read(reinterpret_cast<char*>(&numBinsRestored), sizeof(numBinsRestored));
-    binaryIn.read(reinterpret_cast<char*>(&numEntriesRestored), sizeof(numEntriesRestored));
     Assert(binaryIn.good());
     Assert(numBinsRestored == this->gapRatios.size());
     for (std::size_t i{}; i < this->gapRatios.size(); i++) {
+        std::size_t numEntriesRestored{};
+        binaryIn.read(reinterpret_cast<char*>(&numEntriesRestored), sizeof(numEntriesRestored));
         std::vector<double> entriesRestored(numEntriesRestored);
         binaryIn.read(reinterpret_cast<char*>(entriesRestored.data()), sizeof(entriesRestored[0])*numEntriesRestored);
         Assert(binaryIn.good());

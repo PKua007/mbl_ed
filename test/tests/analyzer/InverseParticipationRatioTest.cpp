@@ -6,6 +6,12 @@
 
 #include "analyzer/tasks/InverseParticipationRatio.h"
 
+#include "core/FockBaseGenerator.h"
+#include "core/terms/HubbardHop.h"
+#include "core/terms/HubbardOnsite.h"
+#include "core/terms/QuasiperiodicDisorder.h"
+#include "core/averaging_models/UniformPhi0AveragingModel.h"
+
 TEST_CASE("InverseParticipationRatio: names") {
     InverseParticipationRatio ratioCalculator(0.5, 0.1);
 
@@ -67,4 +73,55 @@ TEST_CASE("InverseParticipationRatio: requires eigenvectors") {
     std::ostringstream logger;
     REQUIRE_THROWS_WITH(InverseParticipationRatio(0.5, 0.1).analyze(Eigensystem({0, 1, 2, 3}), logger),
                         Catch::Contains("hasEigenvectors"));
+}
+
+TEST_CASE("InverseParticipationRatio: storing, restoring and cleaning") {
+    auto fockBase = std::shared_ptr(FockBaseGenerator().generate(4, 4));
+    HamiltonianGenerator hamiltonianGenerator(fockBase, false);
+    hamiltonianGenerator.addHoppingTerm(std::make_unique<HubbardHop>(1));
+    hamiltonianGenerator.addDiagonalTerm(std::make_unique<HubbardOnsite>(1));
+    hamiltonianGenerator.addDiagonalTerm(std::make_unique<QuasiperiodicDisorder>(1, 0.3, 0));
+    UniformPhi0AveragingModel averagingModel{};
+    RND rnd{};
+    averagingModel.setupHamiltonianGenerator(hamiltonianGenerator, rnd, 1, 5);
+    Eigensystem eigensystem1 = hamiltonianGenerator.calculateEigensystem(true);
+    averagingModel.setupHamiltonianGenerator(hamiltonianGenerator, rnd, 2, 5);
+    Eigensystem eigensystem2 = hamiltonianGenerator.calculateEigensystem(true);
+    InverseParticipationRatio inverseParticipationRatio(0.5, 0.05);
+    std::ostringstream logger;
+
+    SECTION("clearing") {
+        inverseParticipationRatio.analyze(eigensystem1, logger);
+        std::ostringstream result1;
+        inverseParticipationRatio.storeResult(result1);
+
+        inverseParticipationRatio.analyze(eigensystem2, logger);
+        inverseParticipationRatio.clear();
+        inverseParticipationRatio.analyze(eigensystem1, logger);
+        std::ostringstream result2;
+        inverseParticipationRatio.storeResult(result2);
+
+        REQUIRE(result1.str() == result2.str());
+        std::cout << logger.str() << std::endl;
+    }
+
+    SECTION("storing and joining restored") {
+        inverseParticipationRatio.analyze(eigensystem1, logger);
+        inverseParticipationRatio.analyze(eigensystem2, logger);
+        std::ostringstream normalResult;
+        inverseParticipationRatio.storeResult(normalResult);
+
+        inverseParticipationRatio.clear();
+        inverseParticipationRatio.analyze(eigensystem2, logger);
+        std::stringstream simulation2;
+        inverseParticipationRatio.storeState(simulation2);
+
+        inverseParticipationRatio.clear();
+        inverseParticipationRatio.analyze(eigensystem1, logger);
+        inverseParticipationRatio.joinRestoredState(simulation2);
+        std::ostringstream restoredResult;
+        inverseParticipationRatio.storeResult(restoredResult);
+
+        REQUIRE(normalResult.str() == restoredResult.str());
+    }
 }

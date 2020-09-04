@@ -40,3 +40,44 @@ TEST_CASE("BulkMeanGapRatio: 2 sets") {
     bmgr.storeResult(out);
     REQUIRE(out.str() == "0 0.7500 0.2500\n0.5 0.7500 0.2500\n");
 }
+
+TEST_CASE("BulkMeanGapRatio: storing, restoring and cleaning") {
+    BulkMeanGapRatio bulkMeanGapRatio(3);
+    Eigensystem eigensystem0({0, 0.1, 0.15, 0.16, 0.2, 0.25, 0.40, 0.47, 0.58, 0.71, 0.76, 0.8, 0.94, 1.0});
+    Eigensystem eigensystem1({0, 0.05, 0.25, 0.27, 0.28, 0.32, 0.45, 0.58, 0.59, 0.6, 0.75, 0.85, 0.91, 1.0});
+    std::ostringstream logger;
+
+    SECTION("clearing") {
+        bulkMeanGapRatio.analyze(eigensystem0, logger);
+        std::ostringstream result1;
+        bulkMeanGapRatio.storeResult(result1);
+
+        bulkMeanGapRatio.analyze(eigensystem1, logger);
+        bulkMeanGapRatio.clear();
+        bulkMeanGapRatio.analyze(eigensystem0, logger);
+        std::ostringstream result2;
+        bulkMeanGapRatio.storeResult(result2);
+
+        REQUIRE(result1.str() == result2.str());
+    }
+
+    SECTION("storing and joining restored") {
+        bulkMeanGapRatio.analyze(eigensystem0, logger);
+        bulkMeanGapRatio.analyze(eigensystem1, logger);
+        std::ostringstream normalResult;
+        bulkMeanGapRatio.storeResult(normalResult);
+
+        bulkMeanGapRatio.clear();
+        bulkMeanGapRatio.analyze(eigensystem1, logger);
+        std::stringstream simulation1;
+        bulkMeanGapRatio.storeState(simulation1);
+
+        bulkMeanGapRatio.clear();
+        bulkMeanGapRatio.analyze(eigensystem0, logger);
+        bulkMeanGapRatio.joinRestoredState(simulation1);
+        std::ostringstream restoredResult;
+        bulkMeanGapRatio.storeResult(restoredResult);
+
+        REQUIRE(normalResult.str() == restoredResult.str());
+    }
+}
