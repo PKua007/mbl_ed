@@ -1,7 +1,7 @@
 project(mbl_ed_test)
 
 add_executable(tests TestMain.cpp tests/core/FockBaseGeneratorTest.cpp tests/core/FockBaseTest.cpp
-        tests/core/HamiltonianGeneratorTest.cpp tests/analyzer/MeanGapRatioTest.cpp tests/simulation/SimulationTest.cpp
+        tests/core/HamiltonianGeneratorTest.cpp tests/analyzer/MeanGapRatioTest.cpp tests/simulation/ExactDiagonalizationTest.cpp
         matchers/ArmaApproxEqualMatcher.h tests/analyzer/AnalzerTest.cpp mocks/AnalyzerTaskMock.h  mocks/FileUtilsMock.h
         mocks/OstringStreamMock.h mocks/InlineAnalyzerTaskMock.h mocks/BulkAnalyzerTaskMock.h tests/analyzer/CDFTest.cpp
         tests/utils/FoldTest.cpp tests/core/EigensystemTest.cpp tests/analyzer/MeanInverseParticipationRatioTest.cpp

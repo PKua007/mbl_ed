@@ -9,11 +9,12 @@
 #include <string>
 
 #include "core/Eigensystem.h"
+#include "simulation/Restorable.h"
 
 /**
  * @brief An analyzis task, which will be performed on each Eigensystem given to Analyzer.
  */
-class AnalyzerTask {
+class AnalyzerTask : public Restorable {
 public:
     virtual ~AnalyzerTask() = default;
 

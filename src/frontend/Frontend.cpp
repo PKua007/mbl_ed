@@ -98,29 +98,37 @@ void Frontend::ed(int argc, char **argv) {
     std::cout << "done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
-    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto rnd = std::make_unique<RND>();
     auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
-    Analyzer analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, base);
+    auto analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, base);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run simulations
     ExactDiagonalizationParameters simulationParams;
-    simulationParams.simulationsSpan.from = params.from;
-    simulationParams.simulationsSpan.to = params.to;
-    simulationParams.simulationsSpan.total = params.totalSimulations;
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
     simulationParams.fileSignature = directory / params.getOutputFileSignature();
+    ExactDiagonalization simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                                    simulationParams, std::move(analyzer));
 
-    ExactDiagonalization simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationParams);
-    simulation.perform(this->out, analyzer);
+    SimulationsSpan simulationsSpan;
+    simulationsSpan.from = params.from;
+    simulationsSpan.to = params.to;
+    simulationsSpan.total = params.totalSimulations;
+    RestorableSimulationExecutor restorableSimulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
+                                                              params.splitWorkload);
+    restorableSimulationExecutor.performSimulations(simulation, params.seed, std::cout);
 
     // Save results
-    io.printInlineResults(params, paramsToPrint, analyzer.getInlineResultsHeader(), analyzer.getInlineResultsFields());
-    if (outputFilename.empty())
-        io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
-    else
-        io.storeAnalyzerResults(params, analyzer, paramsToPrint, outputFilename);
+    if (restorableSimulationExecutor.shouldSaveSimulation()) {
+        const Analyzer &analyzerRef = simulation.getAnalyzer();
+        io.printInlineResults(params, paramsToPrint, analyzerRef.getInlineResultsHeader(),
+                              analyzerRef.getInlineResultsFields());
+        if (outputFilename.empty())
+            io.storeAnalyzerResults(params, analyzerRef, paramsToPrint, std::nullopt);
+        else
+            io.storeAnalyzerResults(params, analyzerRef, paramsToPrint, outputFilename);
+    }
 }
 
 void Frontend::analyze(int argc, char **argv) {
@@ -190,7 +198,7 @@ void Frontend::analyze(int argc, char **argv) {
     std::cout << "done (" << timer.toc() << " s)." << std::endl;
 
     // Load eigenenergies and analyze them
-    Analyzer analyzer = AnalyzerBuilder{}.build(tasks, params, base);
+    auto analyzer = AnalyzerBuilder{}.build(tasks, params, base);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())
@@ -203,15 +211,15 @@ void Frontend::analyze(int argc, char **argv) {
 
         Eigensystem eigensystem;
         eigensystem.restore(energiesFile, base);
-        analyzer.analyze(eigensystem, std::cout);
+        analyzer->analyze(eigensystem, std::cout);
     }
 
     // Save results
-    io.printInlineResults(params, paramsToPrint, analyzer.getInlineResultsHeader(), analyzer.getInlineResultsFields());
+    io.printInlineResults(params, paramsToPrint, analyzer->getInlineResultsHeader(), analyzer->getInlineResultsFields());
     if (outputFilename.empty())
-        io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
+        io.storeAnalyzerResults(params, *analyzer, paramsToPrint, std::nullopt);
     else
-        io.storeAnalyzerResults(params, analyzer, paramsToPrint, outputFilename);
+        io.storeAnalyzerResults(params, *analyzer, paramsToPrint, outputFilename);
 }
 
 void Frontend::chebyshev(int argc, char **argv) {

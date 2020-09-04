@@ -12,11 +12,6 @@
  */
 struct ExactDiagonalizationParameters {
     /**
-     * @brief See SimulationsSpan description.
-     */
-    SimulationsSpan simulationsSpan;
-
-    /**
      * @brief If true, the diagonalization will produce both eigenvalues and eigenvectors.
      */
     bool calculateEigenvectors{};

@@ -23,6 +23,9 @@ private:
         double energy{};
         double coefficient{};
 
+        void storeState(std::ostream &binaryOut) const;
+        void restoreState(std::istream &binaryIn);
+
         friend std::ostream &operator<<(std::ostream &out, const Entry &entry);
     };
 
@@ -52,6 +55,10 @@ public:
      * @details See Entry 's operator<< to know what is printed in each row.
      */
     void storeResult(std::ostream &out) const override;
+
+    void storeState(std::ostream &binaryOut) const override;
+    void joinRestoredState(std::istream &binaryIn) override;
+    void clear() override;
 };
 
 

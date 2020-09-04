@@ -15,6 +15,9 @@ public:
     IMPLEMENT_CONST_MOCK1(storeResult);
     IMPLEMENT_MOCK2(analyze);
     IMPLEMENT_CONST_MOCK0(getName);
+    IMPLEMENT_CONST_MOCK1(storeState);
+    IMPLEMENT_MOCK1(joinRestoredState);
+    IMPLEMENT_MOCK0(clear);
 };
 
 

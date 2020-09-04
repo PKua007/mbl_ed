@@ -96,3 +96,25 @@ std::vector<std::string> MeanGapRatio::getResultFields() const {
     resultStream >> quantityValue >> quantityError;
     return {quantityValue, quantityError};
 }
+
+void MeanGapRatio::storeState(std::ostream &binaryOut) const {
+    std::size_t gapRatiosSize = this->gapRatios.size();
+    binaryOut.write(reinterpret_cast<const char*>(&gapRatiosSize), sizeof(gapRatiosSize));
+    binaryOut.write(reinterpret_cast<const char*>(this->gapRatios.data()), sizeof(this->gapRatios[0]));
+    Assert(binaryOut.good());
+}
+
+void MeanGapRatio::joinRestoredState(std::istream &binaryIn) {
+    std::size_t gapRatiosSizeRestored{};
+    binaryIn.read(reinterpret_cast<char*>(&gapRatiosSizeRestored), sizeof(gapRatiosSizeRestored));
+    Assert(binaryIn.good());
+    std::vector<double> entriesRestored(gapRatiosSizeRestored);
+    binaryIn.read(reinterpret_cast<char*>(entriesRestored.data()), sizeof(entriesRestored[0]) * gapRatiosSizeRestored);
+    Assert(binaryIn.good());
+    this->gapRatios.reserve(this->gapRatios.size() + gapRatiosSizeRestored);
+    this->gapRatios.insert(this->gapRatios.begin(), entriesRestored.begin(), entriesRestored.end());
+}
+
+void MeanGapRatio::clear() {
+    this->gapRatios.clear();
+}

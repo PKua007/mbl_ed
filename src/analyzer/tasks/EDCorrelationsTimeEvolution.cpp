@@ -24,3 +24,15 @@ void EDCorrelationsTimeEvolution::storeResult(std::ostream &out) const {
 EDCorrelationsTimeEvolution::EDCorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters)
         : correlationsTimeEvolution(parameters)
 { }
+
+void EDCorrelationsTimeEvolution::storeState(std::ostream &binaryOut) const {
+    this->correlationsTimeEvolution.storeState(binaryOut);
+}
+
+void EDCorrelationsTimeEvolution::joinRestoredState(std::istream &binaryIn) {
+    this->correlationsTimeEvolution.joinRestoredState(binaryIn);
+}
+
+void EDCorrelationsTimeEvolution::clear() {
+    this->correlationsTimeEvolution.clear();
+}

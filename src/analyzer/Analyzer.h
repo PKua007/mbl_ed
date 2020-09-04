@@ -12,13 +12,14 @@
 #include "core/Eigensystem.h"
 #include "AnalyzerTask.h"
 #include "utils/FileUtils.h"
+#include "simulation/Restorable.h"
 
 /**
  * @brief A class which will perform all specified AnalyzerTasks on each Eigensystem passed to be analyzed.
  *
  * The class accepts two types: InlineAnalyzerTask and BulkAnalyzerTask. See each of them for the description.
  */
-class Analyzer {
+class Analyzer : public Restorable {
 private:
     std::unique_ptr<FileOstreamProvider> ostreamProvider;
     std::vector<std::unique_ptr<AnalyzerTask>> tasks;
@@ -66,6 +67,10 @@ public:
      * @param fileSignature
      */
     void storeBulkResults(const std::string &fileSignature) const;
+
+    void storeState(std::ostream &binaryOut) const override;
+    void joinRestoredState(std::istream &binaryIn) override;
+    void clear() override;
 };
 
 

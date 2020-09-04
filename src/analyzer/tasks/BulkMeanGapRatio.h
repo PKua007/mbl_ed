@@ -28,6 +28,10 @@ public:
      * @brief Each line in out is the entry for subsequent bins with format: bin lower value, mgr, mgr error
      */
     void storeResult(std::ostream &out) const override;
+
+    void storeState(std::ostream &binaryOut) const override;
+    void joinRestoredState(std::istream &binaryIn) override;
+    void clear() override;
 };
 
 

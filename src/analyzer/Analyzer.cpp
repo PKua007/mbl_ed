@@ -5,8 +5,10 @@
 #include <functional>
 
 #include "Analyzer.h"
+
 #include "InlineAnalyzerTask.h"
 #include "BulkAnalyzerTask.h"
+#include "utils/Assertions.h"
 
 void Analyzer::addTask(std::unique_ptr<AnalyzerTask> task) {
     this->tasks.push_back(std::move(task));
@@ -51,4 +53,26 @@ std::vector<std::string> Analyzer::getInlineResultsFields() const {
         } catch (std::bad_cast &e) { }
     }
     return results;
+}
+
+void Analyzer::storeState(std::ostream &binaryOut) const {
+    std::size_t tasksSize = this->tasks.size();
+    binaryOut.write(reinterpret_cast<const char*>(&tasksSize), sizeof(tasksSize));
+    Assert(binaryOut.good());
+    for (const auto &task : this->tasks)
+        task->storeState(binaryOut);
+}
+
+void Analyzer::joinRestoredState(std::istream &binaryIn) {
+    std::size_t tasksSizeRestored{};
+    binaryIn.read(reinterpret_cast<char*>(&tasksSizeRestored), sizeof(tasksSizeRestored));
+    Assert(binaryIn.good());
+    Assert(this->tasks.size() == tasksSizeRestored);
+    for (auto &task : this->tasks)
+        task->joinRestoredState(binaryIn);
+}
+
+void Analyzer::clear() {
+    for (auto &task : this->tasks)
+        task->clear();
 }

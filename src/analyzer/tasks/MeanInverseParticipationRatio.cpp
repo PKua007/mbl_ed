@@ -52,3 +52,25 @@ std::vector<std::string> MeanInverseParticipationRatio::getResultFields() const 
     resultStream >> quantityValue >> quantityError;
     return {quantityValue, quantityError};
 }
+
+void MeanInverseParticipationRatio::storeState(std::ostream &binaryOut) const {
+    std::size_t ratiosSize = this->ratios.size();
+    binaryOut.write(reinterpret_cast<const char*>(&ratiosSize), sizeof(ratiosSize));
+    binaryOut.write(reinterpret_cast<const char*>(this->ratios.data()), sizeof(this->ratios[0]));
+    Assert(binaryOut.good());
+}
+
+void MeanInverseParticipationRatio::joinRestoredState(std::istream &binaryIn) {
+    std::size_t ratiosSizeRestored{};
+    binaryIn.read(reinterpret_cast<char*>(&ratiosSizeRestored), sizeof(ratiosSizeRestored));
+    Assert(binaryIn.good());
+    std::vector<double> entriesRestored(ratiosSizeRestored);
+    binaryIn.read(reinterpret_cast<char*>(entriesRestored.data()), sizeof(entriesRestored[0]) * ratiosSizeRestored);
+    Assert(binaryIn.good());
+    this->ratios.reserve(this->ratios.size() + ratiosSizeRestored);
+    this->ratios.insert(this->ratios.begin(), entriesRestored.begin(), entriesRestored.end());
+}
+
+void MeanInverseParticipationRatio::clear() {
+
+}
