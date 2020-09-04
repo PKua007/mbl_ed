@@ -2,10 +2,18 @@
 // Created by Piotr Kubala on 21/08/2020.
 //
 
+#include <sstream>
+
 #include <catch2/catch.hpp>
 #include <catch2/trompeloeil.hpp>
 
 #include "simulation/ChebyshevEvolution.h"
+
+#include "core/FockBaseGenerator.h"
+#include "core/terms/HubbardHop.h"
+#include "core/terms/HubbardOnsite.h"
+#include "core/terms/QuasiperiodicDisorder.h"
+#include "core/averaging_models/UniformPhi0AveragingModel.h"
 
 using namespace trompeloeil;
 
@@ -67,7 +75,7 @@ class CorrelationsTimeEvolutionMock : public trompeloeil::mock_interface<Restora
                                                       ChebyshevEvolverMock>;
 }
 
-TEST_CASE("ChebyshevEvolutionTest") {
+TEST_CASE("ChebyshevEvolution: evolutions") {
     SECTION("without quench - simulations 2, 3 from 5 total") {
         arma::sp_mat hamiltonian2(1, 1);
         hamiltonian2(0, 0) = 1;
@@ -156,5 +164,60 @@ TEST_CASE("ChebyshevEvolutionTest") {
 
 
         evolution.performSimulation(0, 1, logger);
+    }
+}
+
+TEST_CASE("ChebyshevEvolution: clearing, storing and restoring") {
+    // Actually we are doing integration test in the whole hierarchy of storing/restoring down CorrelationsTimeEvolution
+    auto fockBase = std::shared_ptr(FockBaseGenerator().generate(4, 4));
+    auto hamiltonianGenerator = std::make_unique<HamiltonianGenerator>(fockBase, false);
+    hamiltonianGenerator->addHoppingTerm(std::make_unique<HubbardHop>(1));
+    hamiltonianGenerator->addDiagonalTerm(std::make_unique<HubbardOnsite>(1));
+    hamiltonianGenerator->addDiagonalTerm(std::make_unique<QuasiperiodicDisorder>(1, 0.3, 0));
+    auto averagingModel = std::make_unique<UniformPhi0AveragingModel>();
+    auto rnd = std::make_unique<RND>();
+    CorrelationsTimeEvolutionParameters parameters;
+    parameters.timeSegmentation = {{1, 1}};
+    parameters.marginSize = 1;
+    parameters.fockBase = fockBase;
+    parameters.numberOfSites = 4;
+    parameters.setVectorsToEvolveFromTags({"unif"});
+    auto correlationsTimeEvolution = std::make_unique<CorrelationsTimeEvolution>(parameters);
+    std::ostringstream logger;
+    ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                                 std::move(correlationsTimeEvolution));
+
+    SECTION("clearing") {
+        evolution.performSimulation(0, 2, logger);
+        std::ostringstream result1;
+        evolution.storeResults(result1);
+
+        evolution.performSimulation(1, 2, logger);
+        evolution.clear();
+        evolution.performSimulation(0, 2, logger);
+        std::ostringstream result2;
+        evolution.storeResults(result2);
+
+        REQUIRE(result1.str() == result2.str());
+    }
+
+    SECTION("storing and joining restored") {
+        evolution.performSimulation(0, 2, logger);
+        evolution.performSimulation(1, 2, logger);
+        std::ostringstream normalResult;
+        evolution.storeResults(normalResult);
+
+        evolution.clear();
+        evolution.performSimulation(1, 2, logger);
+        std::stringstream simulation1;
+        evolution.storeState(simulation1);
+
+        evolution.clear();
+        evolution.performSimulation(0, 2, logger);
+        evolution.joinRestoredState(simulation1);
+        std::ostringstream restoredResult;
+        evolution.storeResults(restoredResult);
+
+        REQUIRE(normalResult.str() == restoredResult.str());
     }
 }
