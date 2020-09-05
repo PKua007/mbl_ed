@@ -17,7 +17,7 @@
 #include "simulation/RestorableSimulation.h"
 
 /**
- * @brief A class performing a whole series of time evolutions using Chebyshev expansion technique.
+ * @brief A class performing time evolutions using Chebyshev expansion technique.
  * @details See CorrelationsTimeEvolution and its "slave" classes to see what is calculated. The hamiltonian generator
  * is prepared for each simulation according to a specific averaging model and, if desired, the quench stated is
  * prepared for evolution (see constructor). The template parameters default to standard classes and exist solely for
@@ -72,7 +72,7 @@ public:
     /**
      * @brief Constructor, where HamiltonianGenerator and RND for quench should be passed, or set to nullptr if
      * quench should not be done.
-     * @details If quench is to be done, @a parameters.initialVectors has to have exatcly one external vector slot
+     * @details If quench is to be done, @a parameters.initialVectors has to have exactly one external vector slot
      * provided, 0 otherwise.
      */
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,

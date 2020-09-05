@@ -165,7 +165,7 @@ RestorableSimulationExecutor::StateFilesCoverage RestorableSimulationExecutor
 std::vector<RestorableSimulationExecutor::StateFileData>
 RestorableSimulationExecutor::discoverStateFiles(const std::string &stateFilename) const
 {
-    std::regex matcher(prepareStateFilenamePattern(stateFilename));
+    std::regex matcher(this->prepareStateFilenamePattern(stateFilename));
 
     std::vector<StateFileData> stateFileDatas;
     for (const auto &entry : std::filesystem::directory_iterator(workingDirectory)) {
@@ -183,6 +183,13 @@ RestorableSimulationExecutor::discoverStateFiles(const std::string &stateFilenam
     return stateFileDatas;
 }
 
+/**
+ * @brief Given a @a stateFilename for any range, returns a regex pattern which captured @a from and @a to values.
+ * @details Example:
+ *    N.6_K.6_from.5_to.7_term.value
+ * will be translated to
+ *    N\.6_K\.6_from\.([0-9]+)_to\.([0-9]+)_term\.value
+ */
 std::string RestorableSimulationExecutor::prepareStateFilenamePattern(const std::string &stateFilename) const {
     std::regex specialChars(R"([-[\]{}()*+?.,\^$|#\s])");
     std::string pattern = std::regex_replace(stateFilename, specialChars, R"(\$&)");

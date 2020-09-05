@@ -25,7 +25,7 @@
 #include "simulation/RestorableSimulation.h"
 
 /**
- * @brief A class performing a series of diagonalizations and optionaly some analyzer tasks.
+ * @brief A class performing diagonalizations and optionaly some analyzer tasks.
  * @details Each simulation consists of: generating new hamiltonian according to @a AveragingModel_t,
  * diagonalisation, optionally saving eigenvalues and optionally doing some AnalyzerTask -s. Also, note, that the
  * template parameters default to standard classes and exist solely for testing purposes. See the default classes'
@@ -90,13 +90,12 @@ public:
     }
 
     /**
-     * @brief Perform as many simulations as specified in SimulationParameters from teh constructor.
+     * @brief Perform simulation @a simulationIndex out of @a totalSimulations.
      * @details
-     * <p> Before each simulation new hamiltonian is prepared according to @a AveragingModel_t. Then the
+     * <p> Before the simulation new hamiltonian is prepared according to @a AveragingModel_t. Then the
      * diagonalization is performed. After that, optionally, eigenenergies are stored and some on-the-fly
      * AnalyzerTask -s are performed.
-     * <p> Eigenenergy files will be named `[SimulationParameters::fileSignature]_[simulation index]_ngr.txt`.
-     * @param logger the output stream to log some info on the progress
+     * <p> Eigenenergy files will be named `[Parameter::fileSignature]_[simulation index]_ngr.txt`.
      */
     void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, std::ostream &logger) override {
         logger << "[Simulation::perform] Performing diagonalization " << simulationIndex << "... " << std::flush;

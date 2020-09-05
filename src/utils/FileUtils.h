@@ -17,6 +17,9 @@ public:
     explicit FileException(const std::string &what) : std::runtime_error(what) { }
 };
 
+/**
+ * @brief Base class for FileOstreamProvider and FileIstreamProvider.
+ */
 class FileStreamProvider {
 private:
     std::string fileDescription = "";
@@ -30,25 +33,22 @@ public:
 
     /**
      * @brief Sets new file description.
-     * @param fileDescription new file description
+     * @param fileDescription_ new file description
      */
     void setFileDescription(const std::string &fileDescription_) { this->fileDescription = fileDescription_; }
 };
 
 /**
  * @brief A class, which provides std::ostream from a file with given name.
- *
- * Virtual openOutputFile function enables to mock this class.
+ * @details Virtual openOutputFile function enables to mock this class.
  */
 class FileOstreamProvider : virtual public FileStreamProvider {
 public:
     virtual ~FileOstreamProvider() = default;
 
     /**
-     * @brief Opens file with name @a filename to read.
-     *
-     * If it fails it throws FileException with appropriate message constructed with getFileDescription.
-     *
+     * @brief Opens file with name @a filename to read (in binary, if `binary == true`).
+     * @details If it fails it throws FileException with appropriate message constructed with getFileDescription.
      * @return std::ostream from the file
      */
     [[nodiscard]] virtual std::unique_ptr<std::ostream> openOutputFile(const std::string &filename, bool binary) const {
@@ -62,6 +62,9 @@ public:
         return file;
     }
 
+    /**
+     * @brief The same as openOutputFile(const std::string&, bool), with with `binary == false`.
+     */
     [[nodiscard]] std::unique_ptr<std::ostream> openOutputFile(const std::string &filename) const {
         return this->openOutputFile(filename, false);
     }
@@ -69,18 +72,15 @@ public:
 
 /**
  * @brief A class, which provides std::istream from a file with given name.
- *
- * Virtual openOutputFile function enables to mock this class.
+ * @details Virtual openOutputFile function enables to mock this class.
  */
 class FileIstreamProvider : virtual public FileStreamProvider {
 public:
     virtual ~FileIstreamProvider() = default;
 
     /**
-     * @brief Opens file with name @a filename to write.
-     *
-     * If it fails it throws FileException with appropriate message constructed with getFileDescription.
-     *
+     * @brief Opens file with name @a filename to write (in binary, if `binary == true`).
+     * @details If it fails it throws FileException with appropriate message constructed with getFileDescription.
      * @return std::istream from the file
      */
     [[nodiscard]] virtual std::unique_ptr<std::istream> openInputFile(const std::string &filename, bool binary) const {
@@ -94,13 +94,23 @@ public:
         return file;
     }
 
+    /**
+     * @brief The same as openInputFile(const std::string&, bool), with with `binary == false`.
+     */
     [[nodiscard]] std::unique_ptr<std::istream> openInputFile(const std::string &filename) const {
         return this->openInputFile(filename, false);
     }
 };
 
+/**
+ * @brief Combines FileIstreamProvider, FileOstreamProvider and adds listing files in directory and removing files.
+ * @details Virtual methods enable mocking.
+ */
 class FilesystemManipulator : public FileIstreamProvider, public FileOstreamProvider {
 public:
+    /**
+     * @brief Returns list of std::filesystem::paths of all non-directory fiels in a given directory.
+     */
     [[nodiscard]] virtual std::vector<std::filesystem::path> listFilesInDirectory(const std::string &directory) const {
         std::vector<std::filesystem::path> files;
         for (const auto &entry : std::filesystem::directory_iterator(directory)) {
@@ -110,6 +120,9 @@ public:
         return files;
     }
 
+    /**
+     * @brief Deletes a file of a given name.
+     */
     virtual void deleteFile(const std::string &filename) const {
         std::filesystem::remove(filename);
     }

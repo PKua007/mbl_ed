@@ -17,7 +17,7 @@
 #include "RestorableSimulation.h"
 
 /**
- * @brief A class performing a series of quenches and gathering information about them.
+ * @brief A class performing quenches and gathering information about them.
  * @details Namely, it calculates average energy of quench, sample error (sqrt of variance of energy distribution)
  * and average quantum energy error. The end results are available via getResultsFields().
  * Template parameters are only for testing purposes.
@@ -66,10 +66,9 @@ public:
     }
 
     /**
-     * @brief Performs the quenches for simulation ranges given by @a simulationSpan.
+     * @brief Performs the quench for the simulation of index @a simulationIndex of out @a totalSimulations
      * @details Quench is performed by finding the ground state of the initial hamiltonian and calculating its energy
-     * and spread for the final hamiltonian. Averages are calculates according to AveragingModel passed in the
-     * constructor.
+     * and spread for the final hamiltonian. Hamiltonian is prepared using AveragingModel passed in the constructor.
      */
     void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, std::ostream &logger) override {
         Expects(totalSimulations > 0);

@@ -48,7 +48,7 @@ public:
     /**
      * @brief Constructs the class, which will compute mean gap ratio olny for normalized eigenerergies around a
      * specific vector.
-     * @param vector vector around which we should compute mgr
+     * @param middleVector vector around which we should compute mgr
      * @param relativeMargin relativeMargin the width of the band (in the [0, 1] regime)
      */
     MeanGapRatio(const FockBase::Vector &middleVector, double relativeMargin);

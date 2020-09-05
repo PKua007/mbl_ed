@@ -13,8 +13,14 @@
 #include "utils/Assertions.h"
 #include "Restorable.h"
 
+/**
+ * @brief A set of helper function for storing/restoring selected types of data for Restorable classes.
+ */
 class RestorableHelper {
 public:
+    /**
+     * @brief Restorable::storeState for vector data.
+     */
     template<typename T>
     static void storeStateForVector(const std::vector<T> &vector, std::ostream &binaryOut) {
         std::size_t vectorSize = vector.size();
@@ -23,6 +29,10 @@ public:
         Assert(binaryOut.good());
     }
 
+    /**
+     * @brief Restorable::joinRestoredState for vector data.
+     * @details Restored vector is concatenated with @a vector.
+     */
     template<typename T>
     static void joinRestoredStateForVector(std::vector<T> &vector, std::istream &binaryIn) {
         std::size_t vectorSizeRestored{};
@@ -37,6 +47,9 @@ public:
         vector.insert(vector.end(), vectorRestored.begin(), vectorRestored.end());
     }
 
+    /**
+     * @brief Restorable::storeState for vector data with static size containing other Restorables.
+     */
     template<typename T>
     static void storeStateForStaticRestorableVector(const std::vector<T> &vector, std::ostream &binaryOut) {
         static_assert(std::is_base_of_v<Restorable, T>);
@@ -48,6 +61,9 @@ public:
             entry.storeState(binaryOut);
     }
 
+    /**
+     * @brief Restorable::joinRestoredState for vector data with static size containing other Restorables.
+     */
     template<typename T>
     static void joinRestoredStateForStaticRestorableVector(std::vector<T> &vector, std::istream &binaryIn) {
         static_assert(std::is_base_of_v<Restorable, T>);
@@ -61,6 +77,10 @@ public:
             entry.joinRestoredState(binaryIn);
     }
 
+    /**
+     * @brief Restorable::storeState for a histogram, so a vector of static size containg bins (vectors) with dynamic
+     * size.
+     */
     template<typename T>
     static void storeStateForHistogram(const std::vector<std::vector<T>> &histogram, std::ostream &binaryOut) {
         std::size_t numBins = histogram.size();
@@ -75,6 +95,11 @@ public:
         }
     }
 
+    /**
+     * @brief Restorable::joinRestoredState for a histogram, so a vector of static size containg bins (vectors) with
+     * dynamic size.
+     * @details Loaded histogram is asserted to have the same number of bins and @a histogram and both are concatenated.
+     */
     template<typename T>
     static void joinRestoredStateForHistogram(std::vector<std::vector<T>> &histogram, std::istream &binaryIn) {
         std::size_t numBinsRestored{};
