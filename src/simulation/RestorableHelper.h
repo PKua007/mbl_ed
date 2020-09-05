@@ -8,8 +8,10 @@
 #include <vector>
 #include <ostream>
 #include <istream>
+#include <type_traits>
 
 #include "utils/Assertions.h"
+#include "Restorable.h"
 
 class RestorableHelper {
 public:
@@ -33,6 +35,30 @@ public:
 
         vector.reserve(vector.size() + vectorSizeRestored);
         vector.insert(vector.end(), vectorRestored.begin(), vectorRestored.end());
+    }
+
+    template<typename T>
+    static void storeStateForStaticRestorableVector(const std::vector<T> &vector, std::ostream &binaryOut) {
+        static_assert(std::is_base_of_v<Restorable, T>);
+
+        std::size_t vectorSize = vector.size();
+        binaryOut.write(reinterpret_cast<const char*>(&vectorSize), sizeof(vectorSize));
+        Assert(binaryOut.good());
+        for (const auto &entry : vector)
+            entry.storeState(binaryOut);
+    }
+
+    template<typename T>
+    static void joinRestoredStateForStaticRestorableVector(std::vector<T> &vector, std::istream &binaryIn) {
+        static_assert(std::is_base_of_v<Restorable, T>);
+
+        std::size_t vectorSizeRestored{};
+        binaryIn.read(reinterpret_cast<char*>(&vectorSizeRestored), sizeof(vectorSizeRestored));
+        Assert(binaryIn.good());
+        Assert(vectorSizeRestored == vector.size());
+
+        for (auto &entry : vector)
+            entry.joinRestoredState(binaryIn);
     }
 
     template<typename T>

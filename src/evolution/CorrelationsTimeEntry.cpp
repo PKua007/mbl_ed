@@ -4,6 +4,8 @@
 
 #include "CorrelationsTimeEntry.h"
 
+#include "simulation/RestorableHelper.h"
+
 #include <iterator>
 
 /**
@@ -253,29 +255,10 @@ void CorrelationsTimeEntry::storeState(std::ostream &binaryOut) const {
     binaryOut.write(reinterpret_cast<const char*>(&this->t), sizeof(this->t));
     Assert(binaryOut.good());
 
-    std::size_t correlationsSize = this->correlations.size();
-    binaryOut.write(reinterpret_cast<const char*>(&correlationsSize), sizeof(correlationsSize));
-    Assert(binaryOut.good());
-    for (const auto &correlation : this->correlations)
-        correlation.storeState(binaryOut);
-
-    std::size_t borderlessCorrelationsSize = this->borderlessCorrelations.size();
-    binaryOut.write(reinterpret_cast<const char*>(&borderlessCorrelationsSize), sizeof(borderlessCorrelationsSize));
-    Assert(binaryOut.good());
-    for (const auto &borderlessCorrelation : this->borderlessCorrelations)
-        borderlessCorrelation.storeState(binaryOut);
-
-    std::size_t onsiteFluctuationsSize = this->onsiteFluctuations.size();
-    binaryOut.write(reinterpret_cast<const char*>(&onsiteFluctuationsSize), sizeof(onsiteFluctuationsSize));
-    Assert(binaryOut.good());
-    for (const auto &onsiteFluctuation : this->onsiteFluctuations)
-        onsiteFluctuation.storeState(binaryOut);
-
-    std::size_t onsiteOccupationsSize = this->onsiteOccupations.size();
-    binaryOut.write(reinterpret_cast<const char*>(&onsiteOccupationsSize), sizeof(onsiteOccupationsSize));
-    Assert(binaryOut.good());
-    for (const auto &onsiteOccupation : this->onsiteOccupations)
-        onsiteOccupation.storeState(binaryOut);
+    RestorableHelper::storeStateForStaticRestorableVector(this->correlations, binaryOut);
+    RestorableHelper::storeStateForStaticRestorableVector(this->borderlessCorrelations, binaryOut);
+    RestorableHelper::storeStateForStaticRestorableVector(this->onsiteFluctuations, binaryOut);
+    RestorableHelper::storeStateForStaticRestorableVector(this->onsiteOccupations, binaryOut);
 }
 
 void CorrelationsTimeEntry::joinRestoredState(std::istream &binaryIn) {
@@ -284,34 +267,10 @@ void CorrelationsTimeEntry::joinRestoredState(std::istream &binaryIn) {
     Assert(binaryIn.good());
     Assert(tRestored == this->t);
 
-    std::size_t correlationsSizeRestored{};
-    binaryIn.read(reinterpret_cast<char*>(&correlationsSizeRestored), sizeof(correlationsSizeRestored));
-    Assert(binaryIn.good());
-    Assert(correlationsSizeRestored == this->correlations.size());
-    for (auto &correlation : this->correlations)
-        correlation.joinRestoredState(binaryIn);
-
-    std::size_t borderlessCorrelationsSizeRestored{};
-    binaryIn.read(reinterpret_cast<char*>(&borderlessCorrelationsSizeRestored),
-                  sizeof(borderlessCorrelationsSizeRestored));
-    Assert(binaryIn.good());
-    Assert(borderlessCorrelationsSizeRestored == this->borderlessCorrelations.size());
-    for (auto &borderlessCorrelation : this->borderlessCorrelations)
-        borderlessCorrelation.joinRestoredState(binaryIn);
-
-    std::size_t onsiteFluctuationsSizeRestored{};
-    binaryIn.read(reinterpret_cast<char*>(&onsiteFluctuationsSizeRestored), sizeof(onsiteFluctuationsSizeRestored));
-    Assert(binaryIn.good());
-    Assert(onsiteFluctuationsSizeRestored == this->onsiteFluctuations.size());
-    for (auto &onsiteFluctuation : this->onsiteFluctuations)
-        onsiteFluctuation.joinRestoredState(binaryIn);
-
-    std::size_t onsiteOccupationsSizeRestored{};
-    binaryIn.read(reinterpret_cast<char*>(&onsiteOccupationsSizeRestored), sizeof(onsiteOccupationsSizeRestored));
-    Assert(binaryIn.good());
-    Assert(onsiteOccupationsSizeRestored == this->onsiteOccupations.size());
-    for (auto &onsiteOccupation : this->onsiteOccupations)
-        onsiteOccupation.joinRestoredState(binaryIn);
+    RestorableHelper::joinRestoredStateForStaticRestorableVector(this->correlations, binaryIn);
+    RestorableHelper::joinRestoredStateForStaticRestorableVector(this->borderlessCorrelations, binaryIn);
+    RestorableHelper::joinRestoredStateForStaticRestorableVector(this->onsiteFluctuations, binaryIn);
+    RestorableHelper::joinRestoredStateForStaticRestorableVector(this->onsiteOccupations, binaryIn);
 }
 
 void CorrelationsTimeEntry::clear() {

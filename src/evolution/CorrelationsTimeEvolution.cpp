@@ -8,6 +8,7 @@
 #include "CorrelationsTimeEvolution.h"
 #include "utils/Assertions.h"
 #include "Evolver.h"
+#include "simulation/RestorableHelper.h"
 
 void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &logger,
                                              const std::vector<arma::cx_vec> &externalVectors)
@@ -95,20 +96,11 @@ std::size_t CorrelationsTimeEvolution::getNumberOfSites() const {
 }
 
 void CorrelationsTimeEvolution::storeState(std::ostream &binaryOut) const {
-    std::size_t vectorEvolutionsSize = this->vectorEvolutions.size();
-    binaryOut.write(reinterpret_cast<const char*>(&vectorEvolutionsSize), sizeof(vectorEvolutionsSize));
-    Assert(binaryOut.good());
-    for (const auto &vectorEvolution : this->vectorEvolutions)
-        vectorEvolution.storeState(binaryOut);
+    RestorableHelper::storeStateForStaticRestorableVector(this->vectorEvolutions, binaryOut);
 }
 
 void CorrelationsTimeEvolution::joinRestoredState(std::istream &binaryIn) {
-    std::size_t vectorEvolutionsSizeRestored{};
-    binaryIn.read(reinterpret_cast<char*>(&vectorEvolutionsSizeRestored), sizeof(vectorEvolutionsSizeRestored));
-    Assert(binaryIn.good());
-    Assert(vectorEvolutionsSizeRestored == this->vectorEvolutions.size());
-    for (auto &vectorEvolution : this->vectorEvolutions)
-        vectorEvolution.joinRestoredState(binaryIn);
+    RestorableHelper::joinRestoredStateForStaticRestorableVector(this->vectorEvolutions, binaryIn);
 }
 
 void CorrelationsTimeEvolution::clear() {
@@ -141,20 +133,11 @@ std::string CorrelationsTimeEvolution::VectorEvolution::getInitialVectorName() c
 }
 
 void CorrelationsTimeEvolution::VectorEvolution::storeState(std::ostream &binaryOut) const {
-    std::size_t timeEntriesSize = this->timeEntries.size();
-    binaryOut.write(reinterpret_cast<const char*>(&timeEntriesSize), sizeof(timeEntriesSize));
-    Assert(binaryOut.good());
-    for (const auto &timeEntry : this->timeEntries)
-        timeEntry.storeState(binaryOut);
+    RestorableHelper::storeStateForStaticRestorableVector(this->timeEntries, binaryOut);
 }
 
 void CorrelationsTimeEvolution::VectorEvolution::joinRestoredState(std::istream &binaryIn) {
-    std::size_t timeEntriesSizeRestored{};
-    binaryIn.read(reinterpret_cast<char*>(&timeEntriesSizeRestored), sizeof(timeEntriesSizeRestored));
-    Assert(binaryIn.good());
-    Assert(timeEntriesSizeRestored == this->timeEntries.size());
-    for (auto &timeEntry : this->timeEntries)
-        timeEntry.joinRestoredState(binaryIn);
+    RestorableHelper::joinRestoredStateForStaticRestorableVector(this->timeEntries, binaryIn);
 }
 
 void CorrelationsTimeEvolution::VectorEvolution::clear() {
