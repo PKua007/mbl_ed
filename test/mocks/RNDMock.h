@@ -7,7 +7,7 @@
 
 #include <catch2/trompeloeil.hpp>
 
-#include "simulation/RND.h"
+#include "core/RND.h"
 
 class RNDMock : public RND {
 public:

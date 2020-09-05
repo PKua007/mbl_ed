@@ -24,8 +24,8 @@ int main(int argc, char **argv) {
     Frontend frontend(std::cout);
     if (mode == "-h" || mode == "--help") {
         frontend.printGeneralHelp(cmd);
-    } else if (mode == "simulate") {
-        frontend.simulate(argc, argv);
+    } else if (mode == "ed") {
+        frontend.ed(argc, argv);
     } else if (mode == "analyze") {
         frontend.analyze(argc, argv);
     } else if (mode == "chebyshev") {

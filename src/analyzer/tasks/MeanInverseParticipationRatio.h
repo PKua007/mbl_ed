@@ -42,6 +42,10 @@ public:
     [[nodiscard]] std::string getName() const override;
     [[nodiscard]] std::vector<std::string> getResultHeader() const override;
     [[nodiscard]] std::vector<std::string> getResultFields() const override;
+
+    void storeState(std::ostream &binaryOut) const override;
+    void joinRestoredState(std::istream &binaryIn) override;
+    void clear() override;
 };
 
 

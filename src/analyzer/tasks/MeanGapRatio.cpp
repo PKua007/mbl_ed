@@ -3,7 +3,9 @@
 //
 
 #include "MeanGapRatio.h"
+
 #include "utils/Quantity.h"
+#include "simulation/RestorableHelper.h"
 
 MeanGapRatio::MeanGapRatio(double relativeMiddleEnergy, double relativeMargin)
         : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
@@ -95,4 +97,16 @@ std::vector<std::string> MeanGapRatio::getResultFields() const {
     std::string quantityValue, quantityError;
     resultStream >> quantityValue >> quantityError;
     return {quantityValue, quantityError};
+}
+
+void MeanGapRatio::storeState(std::ostream &binaryOut) const {
+    RestorableHelper::storeStateForVector(this->gapRatios, binaryOut);
+}
+
+void MeanGapRatio::joinRestoredState(std::istream &binaryIn) {
+    RestorableHelper::joinRestoredStateForVector(this->gapRatios, binaryIn);
+}
+
+void MeanGapRatio::clear() {
+    this->gapRatios.clear();
 }

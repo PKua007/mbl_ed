@@ -33,6 +33,10 @@ public:
     void analyze(const Eigensystem &eigensystem, std::ostream &logger) override;
     [[nodiscard]] std::string getName() const override;
     void storeResult(std::ostream &out) const override;
+
+    void storeState(std::ostream &binaryOut) const override;
+    void joinRestoredState(std::istream &binaryIn) override;
+    void clear() override;
 };
 
 

@@ -10,7 +10,7 @@
 
 /**
  * @brief Evolver usign Chebyshev expansion technique from paper:
- * <emph>Many-body localization in presence of cavity mediated long-range interactions</emph>
+ * <em>Many-body localization in presence of cavity mediated long-range interactions</em>
  */
 class ChebyshevEvolver : public Evolver {
 private:

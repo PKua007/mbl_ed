@@ -4,6 +4,7 @@
 
 #include "BulkMeanGapRatio.h"
 
+#include "simulation/RestorableHelper.h"
 #include "utils/Quantity.h"
 
 void BulkMeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
@@ -45,4 +46,17 @@ void BulkMeanGapRatio::storeResult(std::ostream &out) const {
         binValue.separator = Quantity::Separator::SPACE;
         out << binBeg << " " << binValue << std::endl;
     }
+}
+
+void BulkMeanGapRatio::storeState(std::ostream &binaryOut) const {
+    RestorableHelper::storeStateForHistogram(this->gapRatios, binaryOut);
+}
+
+void BulkMeanGapRatio::joinRestoredState(std::istream &binaryIn) {
+    RestorableHelper::joinRestoredStateForHistogram(this->gapRatios, binaryIn);
+}
+
+void BulkMeanGapRatio::clear() {
+    for (auto &binValues : this->gapRatios)
+        binValues.clear();
 }

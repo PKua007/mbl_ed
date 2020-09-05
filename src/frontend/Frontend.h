@@ -9,9 +9,9 @@
 #include "evolution/CorrelationsTimeEvolutionParameters.h"
 #include "analyzer/Analyzer.h"
 #include "Parameters.h"
-#include "simulation/SimulationParameters.h"
-#include "simulation/RND.h"
-#include "simulation/HamiltonianGenerator.h"
+#include "simulation/ExactDiagonalizationParameters.h"
+#include "core/RND.h"
+#include "core/HamiltonianGenerator.h"
 
 /**
  * @brief Class responsible for the communication between the user and the simulation backend.
@@ -23,7 +23,7 @@ private:
 public:
     explicit Frontend(std::ostream &out) : out{out} { }
 
-    void simulate(int argc, char **argv);
+    void ed(int argc, char **argv);
     void analyze(int argc, char **argv);
     void chebyshev(int argc, char **argv);
     void quench(int argc, char **argv);

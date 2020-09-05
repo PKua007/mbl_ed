@@ -8,7 +8,7 @@
 
 #include <vector>
 
-#include "simulation/Eigensystem.h"
+#include "core/Eigensystem.h"
 #include "utils/Quantity.h"
 #include "analyzer/InlineAnalyzerTask.h"
 
@@ -48,7 +48,7 @@ public:
     /**
      * @brief Constructs the class, which will compute mean gap ratio olny for normalized eigenerergies around a
      * specific vector.
-     * @param vector vector around which we should compute mgr
+     * @param middleVector vector around which we should compute mgr
      * @param relativeMargin relativeMargin the width of the band (in the [0, 1] regime)
      */
     MeanGapRatio(const FockBase::Vector &middleVector, double relativeMargin);
@@ -64,6 +64,10 @@ public:
     [[nodiscard]] std::string getName() const override;
     [[nodiscard]] std::vector<std::string> getResultHeader() const override;
     [[nodiscard]] std::vector<std::string> getResultFields() const override;
+
+    void storeState(std::ostream &binaryOut) const override;
+    void joinRestoredState(std::istream &binaryIn) override;
+    void clear() override;
 };
 
 

@@ -4,6 +4,8 @@
 
 #include "CorrelationsTimeEntry.h"
 
+#include "simulation/RestorableHelper.h"
+
 #include <iterator>
 
 /**
@@ -42,6 +44,27 @@ void CorrelationsTimeEntry::Correlations::addObservables(const OccupationEvoluti
     return out.str();
 }
 
+void CorrelationsTimeEntry::Correlations::storeState(std::ostream &binaryOut) const {
+    binaryOut.write(reinterpret_cast<const char*>(&this->numberOfMeanEntries), sizeof(this->numberOfMeanEntries));
+    binaryOut.write(reinterpret_cast<const char*>(&this->G_d), sizeof(this->G_d));
+    Assert(binaryOut.good());
+}
+
+void CorrelationsTimeEntry::Correlations::joinRestoredState(std::istream &binaryIn) {
+    std::size_t numberOfMeanEntriesRestored{};
+    double G_dRestored{};
+    binaryIn.read(reinterpret_cast<char*>(&numberOfMeanEntriesRestored), sizeof(numberOfMeanEntriesRestored));
+    binaryIn.read(reinterpret_cast<char*>(&G_dRestored), sizeof(G_dRestored));
+    Assert(binaryIn.good());
+    this->numberOfMeanEntries += numberOfMeanEntriesRestored;
+    this->G_d += G_dRestored;
+}
+
+void CorrelationsTimeEntry::Correlations::clear() {
+    this->G_d = 0;
+    this->numberOfMeanEntries = 0;
+}
+
 /**
  * @brief The method calculates the site-averaged onsite fluctuations from given @a occupations and adds the result to
  * rho_i. This sum is used in toString() to calculate the average.
@@ -64,6 +87,27 @@ std::string CorrelationsTimeEntry::OnsiteFluctuations::toString() const {
     return out.str();
 }
 
+void CorrelationsTimeEntry::OnsiteFluctuations::storeState(std::ostream &binaryOut) const {
+    binaryOut.write(reinterpret_cast<const char*>(&this->numberOfMeanEntries), sizeof(this->numberOfMeanEntries));
+    binaryOut.write(reinterpret_cast<const char*>(&this->rho_i), sizeof(this->rho_i));
+    Assert(binaryOut.good());
+}
+
+void CorrelationsTimeEntry::OnsiteFluctuations::joinRestoredState(std::istream &binaryIn) {
+    std::size_t numberOfMeanEntriesRestored{};
+    double rho_iRestored{};
+    binaryIn.read(reinterpret_cast<char*>(&numberOfMeanEntriesRestored), sizeof(numberOfMeanEntriesRestored));
+    binaryIn.read(reinterpret_cast<char*>(&rho_iRestored), sizeof(rho_iRestored));
+    Assert(binaryIn.good());
+    this->numberOfMeanEntries += numberOfMeanEntriesRestored;
+    this->rho_i += rho_iRestored;
+}
+
+void CorrelationsTimeEntry::OnsiteFluctuations::clear() {
+    this->rho_i = 0;
+    this->numberOfMeanEntries = 0;
+}
+
 /**
  * @brief The method calculates the mean onsite occupaitons from given @a occupations and adds the result to n_i. This
  * sum is used in toString() to calculate the average.
@@ -83,6 +127,27 @@ std::string CorrelationsTimeEntry::OnsiteOccupations::toString() const {
     std::ostringstream out;
     out << (this->n_i / this->numberOfMeanEntries);
     return out.str();
+}
+
+void CorrelationsTimeEntry::OnsiteOccupations::storeState(std::ostream &binaryOut) const {
+    binaryOut.write(reinterpret_cast<const char*>(&this->numberOfMeanEntries), sizeof(this->numberOfMeanEntries));
+    binaryOut.write(reinterpret_cast<const char*>(&this->n_i), sizeof(this->n_i));
+    Assert(binaryOut.good());
+}
+
+void CorrelationsTimeEntry::OnsiteOccupations::joinRestoredState(std::istream &binaryIn) {
+    std::size_t numberOfMeanEntriesRestored{};
+    double n_iRestored{};
+    binaryIn.read(reinterpret_cast<char*>(&numberOfMeanEntriesRestored), sizeof(numberOfMeanEntriesRestored));
+    binaryIn.read(reinterpret_cast<char*>(&n_iRestored), sizeof(n_iRestored));
+    Assert(binaryIn.good());
+    this->numberOfMeanEntries += numberOfMeanEntriesRestored;
+    this->n_i += n_iRestored;
+}
+
+void CorrelationsTimeEntry::OnsiteOccupations::clear() {
+    this->n_i = 0;
+    this->numberOfMeanEntries = 0;
 }
 
 void CorrelationsTimeEntry::addObservables(const OccupationEvolution::Occupations &occupations) {
@@ -184,4 +249,37 @@ void CorrelationsTimeEntry::populateOnsiteOccupations(std::vector<OnsiteOccupati
 
 std::size_t CorrelationsTimeEntry::getNumberOfSites() const {
     return this->numberOfSites;
+}
+
+void CorrelationsTimeEntry::storeState(std::ostream &binaryOut) const {
+    binaryOut.write(reinterpret_cast<const char*>(&this->t), sizeof(this->t));
+    Assert(binaryOut.good());
+
+    RestorableHelper::storeStateForStaticRestorableVector(this->correlations, binaryOut);
+    RestorableHelper::storeStateForStaticRestorableVector(this->borderlessCorrelations, binaryOut);
+    RestorableHelper::storeStateForStaticRestorableVector(this->onsiteFluctuations, binaryOut);
+    RestorableHelper::storeStateForStaticRestorableVector(this->onsiteOccupations, binaryOut);
+}
+
+void CorrelationsTimeEntry::joinRestoredState(std::istream &binaryIn) {
+    double tRestored{};
+    binaryIn.read(reinterpret_cast<char*>(&tRestored), sizeof(tRestored));
+    Assert(binaryIn.good());
+    Assert(tRestored == this->t);
+
+    RestorableHelper::joinRestoredStateForStaticRestorableVector(this->correlations, binaryIn);
+    RestorableHelper::joinRestoredStateForStaticRestorableVector(this->borderlessCorrelations, binaryIn);
+    RestorableHelper::joinRestoredStateForStaticRestorableVector(this->onsiteFluctuations, binaryIn);
+    RestorableHelper::joinRestoredStateForStaticRestorableVector(this->onsiteOccupations, binaryIn);
+}
+
+void CorrelationsTimeEntry::clear() {
+    for (auto &correlation : this->correlations)
+        correlation.clear();
+    for (auto &borderlessCorrelation : this->borderlessCorrelations)
+        borderlessCorrelation.clear();
+    for (auto &onsiteFluctuation : this->onsiteFluctuations)
+        onsiteFluctuation.clear();
+    for (auto &onsiteOccupation : this->onsiteOccupations)
+        onsiteOccupation.clear();
 }

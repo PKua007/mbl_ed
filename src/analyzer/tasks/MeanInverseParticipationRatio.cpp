@@ -3,7 +3,9 @@
 //
 
 #include "MeanInverseParticipationRatio.h"
+
 #include "utils/Quantity.h"
+#include "simulation/RestorableHelper.h"
 
 MeanInverseParticipationRatio::MeanInverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin)
         : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
@@ -51,4 +53,16 @@ std::vector<std::string> MeanInverseParticipationRatio::getResultFields() const 
     std::string quantityValue, quantityError;
     resultStream >> quantityValue >> quantityError;
     return {quantityValue, quantityError};
+}
+
+void MeanInverseParticipationRatio::storeState(std::ostream &binaryOut) const {
+    RestorableHelper::storeStateForVector(this->ratios, binaryOut);
+}
+
+void MeanInverseParticipationRatio::joinRestoredState(std::istream &binaryIn) {
+    RestorableHelper::joinRestoredStateForVector(this->ratios, binaryIn);
+}
+
+void MeanInverseParticipationRatio::clear() {
+    this->ratios.clear();
 }

@@ -7,7 +7,7 @@
 
 #include <catch2/trompeloeil.hpp>
 
-#include "simulation/DoubleHoppingTerm.h"
+#include "core/DoubleHoppingTerm.h"
 
 class DoubleHoppingTermMock : public trompeloeil::mock_interface<DoubleHoppingTerm> {
     IMPLEMENT_MOCK3(calculate);

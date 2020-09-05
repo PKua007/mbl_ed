@@ -1,32 +1,33 @@
 project(mbl_ed_app)
 
-add_library(mbl_ed_src STATIC utils/Assertions.h simulation/FockBaseGenerator.cpp simulation/FockBase.cpp
-        simulation/HamiltonianGenerator.cpp analyzer/tasks/MeanGapRatio.cpp
-        utils/Quantity.cpp simulation/Simulation.h utils/Config.cpp utils/Utils.cpp frontend/Parameters.cpp
+add_library(mbl_ed_src STATIC utils/Assertions.h core/FockBaseGenerator.cpp core/FockBase.cpp
+        core/HamiltonianGenerator.cpp analyzer/tasks/MeanGapRatio.cpp
+        utils/Quantity.cpp simulation/ExactDiagonalization.h utils/Config.cpp utils/Utils.cpp frontend/Parameters.cpp
         analyzer/AnalyzerTask.h analyzer/Analyzer.cpp utils/FileUtils.h analyzer/InlineAnalyzerTask.h
         analyzer/BulkAnalyzerTask.h analyzer/tasks/CDF.cpp utils/Fold.cpp
-        frontend/IO.cpp frontend/Frontend.cpp simulation/Eigensystem.cpp
-        analyzer/tasks/MeanInverseParticipationRatio.cpp simulation/SimulationParameters.h
+        frontend/IO.cpp frontend/Frontend.cpp core/Eigensystem.cpp
+        analyzer/tasks/MeanInverseParticipationRatio.cpp simulation/ExactDiagonalizationParameters.h
         analyzer/tasks/InverseParticipationRatio.cpp analyzer/tasks/InverseParticipationRatio.h
-        simulation/AveragingModel.h simulation/DisorderGenerator.h simulation/RND.h simulation/DiagonalTerm.h
-        simulation/HoppingTerm.h simulation/terms/HubbardHop.cpp simulation/terms/HubbardOnsite.cpp
-        simulation/terms/OnsiteDisorder.h simulation/terms/CavityLongInteraction.cpp simulation/CavityConstants.cpp
-        frontend/CavityConstantsReader.cpp simulation/terms/LookupCavityZ2.cpp simulation/terms/LookupCavityYZ.cpp
-        simulation/DoubleHoppingTerm.h simulation/terms/LookupCavityY2.cpp
+        core/AveragingModel.h core/DisorderGenerator.h core/RND.h core/DiagonalTerm.h
+        core/HoppingTerm.h core/terms/HubbardHop.cpp core/terms/HubbardOnsite.cpp
+        core/terms/OnsiteDisorder.h core/terms/CavityLongInteraction.cpp core/CavityConstants.cpp
+        frontend/CavityConstantsReader.cpp core/terms/LookupCavityZ2.cpp core/terms/LookupCavityYZ.cpp
+        core/DoubleHoppingTerm.h core/terms/LookupCavityY2.cpp
         analyzer/tasks/EDCorrelationsTimeEvolution.cpp evolution/OccupationEvolution.cpp evolution/SymmetricMatrix.h
-        evolution/CorrelationsTimeEntry.cpp simulation/terms/QuasiperiodicDisorder.cpp
-        simulation/terms/QuasiperiodicDisorder.h simulation/terms/ListOnsite.cpp evolution/Evolver.h
+        evolution/CorrelationsTimeEntry.cpp core/terms/QuasiperiodicDisorder.cpp
+        core/terms/QuasiperiodicDisorder.h core/terms/ListOnsite.cpp evolution/Evolver.h
         evolution/EDEvolver.cpp evolution/ChebyshevEvolver.cpp evolution/CorrelationsTimeEvolution.cpp
-        evolution/ChebyshevEvolution.h evolution/CorrelationsTimeEvolutionParameters.h
+        simulation/ChebyshevEvolution.h evolution/CorrelationsTimeEvolutionParameters.h
         evolution/EvolutionTimeSegment.h frontend/HamiltonianGeneratorBuilder.cpp frontend/AnalyzerBuilder.cpp
-        simulation/terms/OnsiteDisorder.cpp frontend/AveragingModelFactory.cpp
-        simulation/averaging_models/DummyAveragingModel.h simulation/averaging_models/CavityConstantsAveragingModel.cpp
-        simulation/averaging_models/OnsiteDisorderAveragingModel.cpp
-        simulation/averaging_models/RandomPhi0AveragingModel.cpp
-        simulation/averaging_models/UniformPhi0AveragingModel.cpp
-        simulation/disorder_generators/UniformGenerator.h simulation/FockVector.cpp
-        analyzer/tasks/DressedStatesFinder.cpp analyzer/tasks/BulkMeanGapRatio.cpp evolution/QuenchCalculator.cpp
-        simulation/SimulationsSpan.h utils/OMPMacros.h)
+        core/terms/OnsiteDisorder.cpp frontend/AveragingModelFactory.cpp
+        core/averaging_models/DummyAveragingModel.h core/averaging_models/CavityConstantsAveragingModel.cpp
+        core/averaging_models/OnsiteDisorderAveragingModel.cpp
+        core/averaging_models/RandomPhi0AveragingModel.cpp
+        core/averaging_models/UniformPhi0AveragingModel.cpp
+        core/disorder_generators/UniformGenerator.h core/FockVector.cpp
+        analyzer/tasks/DressedStatesFinder.cpp analyzer/tasks/BulkMeanGapRatio.cpp core/QuenchCalculator.cpp
+        simulation/SimulationsSpan.h utils/OMPMacros.h simulation/QuenchDataSimulation.h simulation/Restorable.h
+        simulation/RestorableSimulation.h simulation/RestorableSimulationExecutor.cpp simulation/RestorableHelper.h)
 
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)

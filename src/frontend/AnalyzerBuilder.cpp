@@ -17,10 +17,10 @@
 #include "analyzer/tasks/DressedStatesFinder.h"
 #include "analyzer/tasks/BulkMeanGapRatio.h"
 
-Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
-                                std::shared_ptr<FockBase> fockBase)
+std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
+                                                 std::shared_ptr<FockBase> fockBase)
 {
-    Analyzer analyzer;
+    auto analyzer = std::make_unique<Analyzer>();
     for (const auto &task : tasks) {
         std::istringstream taskStream(task);
         std::string taskName;
@@ -45,13 +45,13 @@ Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Par
             }
 
             if (middleVector.has_value()) {
-                analyzer.addTask(std::make_unique<MeanGapRatio>(*middleVector, mgrMargin));
+                analyzer->addTask(std::make_unique<MeanGapRatio>(*middleVector, mgrMargin));
             } else {
                 double mgrCenter = std::stod(mgrCenterString);
                 Validate(mgrCenter > 0 && mgrCenter < 1);
                 Validate(mgrMargin > 0 && mgrMargin <= 1);
                 Validate(mgrCenter - mgrMargin / 2 >= 0 && mgrCenter + mgrMargin / 2 <= 1);
-                analyzer.addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
+                analyzer->addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
             }
         } else if (taskName == "mipr") {
             double mgrCenter, mgrMargin;
@@ -60,7 +60,7 @@ Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Par
             Validate(mgrCenter > 0 && mgrCenter < 1);
             Validate(mgrMargin > 0 && mgrMargin <= 1);
             Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer.addTask(std::make_unique<MeanInverseParticipationRatio>(mgrCenter, mgrMargin));
+            analyzer->addTask(std::make_unique<MeanInverseParticipationRatio>(mgrCenter, mgrMargin));
         } else if (taskName == "ipr") {
             double mgrCenter, mgrMargin;
             taskStream >> mgrCenter >> mgrMargin;
@@ -68,13 +68,13 @@ Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Par
             Validate(mgrCenter > 0 && mgrCenter < 1);
             Validate(mgrMargin > 0 && mgrMargin <= 1);
             Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer.addTask(std::make_unique<InverseParticipationRatio>(mgrCenter, mgrMargin));
+            analyzer->addTask(std::make_unique<InverseParticipationRatio>(mgrCenter, mgrMargin));
         } else if (taskName == "cdf") {
             std::size_t bins;
             taskStream >> bins;
             ValidateMsg(taskStream, "Wrong format, use: cdf [number of bins]");
             Validate(bins >= 2);
-            analyzer.addTask(std::make_unique<CDF>(bins));
+            analyzer->addTask(std::make_unique<CDF>(bins));
         } else if (taskName == "evolution") {
             if (params.N != params.K || params.K % 2 != 0)
                 throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
@@ -98,7 +98,7 @@ Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Par
 
             evolutionParameters.setVectorsToEvolveFromTags(tags);
 
-            analyzer.addTask(std::make_unique<EDCorrelationsTimeEvolution>(evolutionParameters));
+            analyzer->addTask(std::make_unique<EDCorrelationsTimeEvolution>(evolutionParameters));
         } else if (taskName == "dressed") {
             double mgrCenter, mgrMargin, coeffThreshold;
             taskStream >> mgrCenter >> mgrMargin >> coeffThreshold;
@@ -108,13 +108,13 @@ Analyzer AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Par
             Validate(mgrMargin > 0 && mgrMargin <= 1);
             Validate(mgrCenter - mgrMargin / 2 >= 0 && mgrCenter + mgrMargin / 2 <= 1);
             Validate(coeffThreshold > M_SQRT1_2);
-            analyzer.addTask(std::make_unique<DressedStatesFinder>(mgrCenter, mgrMargin, coeffThreshold));
+            analyzer->addTask(std::make_unique<DressedStatesFinder>(mgrCenter, mgrMargin, coeffThreshold));
         } else if (taskName == "mgrs") {
             std::size_t numBins;
             taskStream >> numBins;
             ValidateMsg(taskStream, "Wrong format, use: mgrs [number of bins]");
             Validate(numBins > 0);
-            analyzer.addTask(std::make_unique<BulkMeanGapRatio>(numBins));
+            analyzer->addTask(std::make_unique<BulkMeanGapRatio>(numBins));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
         }

@@ -6,9 +6,10 @@
 #include <numeric>
 #include <functional>
 
-#include "simulation/Eigensystem.h"
+#include "core/Eigensystem.h"
 #include "utils/Assertions.h"
 #include "CDF.h"
+#include "simulation/RestorableHelper.h"
 
 void CDF::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
     static_cast<void>(logger);
@@ -46,4 +47,17 @@ void CDF::storeResult(std::ostream &out) const {
 
 CDF::CDF(std::size_t bins) : cdfTable(bins) {
     Expects(bins >= 2);
+}
+
+void CDF::storeState(std::ostream &binaryOut) const {
+    RestorableHelper::storeStateForHistogram(this->cdfTable, binaryOut);
+}
+
+void CDF::joinRestoredState(std::istream &binaryIn) {
+    RestorableHelper::joinRestoredStateForHistogram(this->cdfTable, binaryIn);
+}
+
+void CDF::clear() {
+    for (auto &binEntries : this->cdfTable)
+        binEntries.clear();
 }

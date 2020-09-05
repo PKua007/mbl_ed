@@ -8,7 +8,7 @@
 #include <memory>
 #include <string>
 
-#include "simulation/AveragingModel.h"
+#include "core/AveragingModel.h"
 
 /**
  * @brief A class creating appropriate AveragingModel based on its name.

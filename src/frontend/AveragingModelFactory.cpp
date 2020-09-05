@@ -4,11 +4,11 @@
 
 #include "AveragingModelFactory.h"
 
-#include "simulation/averaging_models/DummyAveragingModel.h"
-#include "simulation/averaging_models/UniformPhi0AveragingModel.h"
-#include "simulation/averaging_models/RandomPhi0AveragingModel.h"
-#include "simulation/averaging_models/OnsiteDisorderAveragingModel.h"
-#include "simulation/averaging_models/CavityConstantsAveragingModel.h"
+#include "core/averaging_models/DummyAveragingModel.h"
+#include "core/averaging_models/UniformPhi0AveragingModel.h"
+#include "core/averaging_models/RandomPhi0AveragingModel.h"
+#include "core/averaging_models/OnsiteDisorderAveragingModel.h"
+#include "core/averaging_models/CavityConstantsAveragingModel.h"
 
 std::unique_ptr<AveragingModel> AveragingModelFactory::create(const std::string &name) {
     if (name == "none")

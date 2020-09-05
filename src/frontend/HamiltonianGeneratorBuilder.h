@@ -7,8 +7,8 @@
 
 #include <memory>
 
-#include "simulation/HamiltonianGenerator.h"
-#include "simulation/RND.h"
+#include "core/HamiltonianGenerator.h"
+#include "core/RND.h"
 #include "Parameters.h"
 
 

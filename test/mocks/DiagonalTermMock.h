@@ -7,7 +7,7 @@
 
 #include <catch2/trompeloeil.hpp>
 
-#include "simulation/DiagonalTerm.h"
+#include "core/DiagonalTerm.h"
 
 class DiagonalTermMock : public trompeloeil::mock_interface<DiagonalTerm> {
     IMPLEMENT_MOCK2(calculate);

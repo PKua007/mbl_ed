@@ -12,20 +12,23 @@
 #include "AveragingModelFactory.h"
 #include "IO.h"
 
-#include "simulation/Simulation.h"
-#include "simulation/FockBaseGenerator.h"
-#include "simulation/DisorderGenerator.h"
+#include "simulation/ExactDiagonalization.h"
+#include "core/FockBaseGenerator.h"
+#include "core/DisorderGenerator.h"
 
-#include "evolution/QuenchCalculator.h"
-#include "evolution/ChebyshevEvolution.h"
+#include "core/QuenchCalculator.h"
+#include "simulation/ChebyshevEvolution.h"
 #include "evolution/CorrelationsTimeEvolution.h"
+
+#include "simulation/RestorableSimulationExecutor.h"
+#include "simulation/QuenchDataSimulation.h"
 
 #include "utils/Fold.h"
 #include "utils/Utils.h"
 #include "utils/Assertions.h"
 
 
-void Frontend::simulate(int argc, char **argv) {
+void Frontend::ed(int argc, char **argv) {
     // Parse options
     cxxopts::Options options(argv[0],
                              Fold("Exact diagonalization mode. Performs one or more simulations depending on the "
@@ -84,40 +87,48 @@ void Frontend::simulate(int argc, char **argv) {
             die("Parameters to print: parameter " + param + " is unknown");
 
     // OpenMP info
-    std::cout << "[Frontend::simulate] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+    std::cout << "[Frontend::ed] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    std::cout << "[Frontend::simulate] Preparing Fock basis... " << std::flush;
+    std::cout << "[Frontend::ed] Preparing Fock basis... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
     std::cout << "done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
-    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto rnd = std::make_unique<RND>();
     auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
-    Analyzer analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, base);
+    auto analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, base);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run simulations
-    SimulationParameters simulationParams;
-    simulationParams.from = params.from;
-    simulationParams.to = params.to;
-    simulationParams.totalSimulations = params.totalSimulations;
+    ExactDiagonalizationParameters simulationParams;
     simulationParams.calculateEigenvectors = params.calculateEigenvectors;
     simulationParams.saveEigenenergies = params.saveEigenenergies;
     simulationParams.fileSignature = directory / params.getOutputFileSignature();
+    ExactDiagonalization simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                                    simulationParams, std::move(analyzer));
 
-    Simulation simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationParams);
-    simulation.perform(this->out, analyzer);
+    SimulationsSpan simulationsSpan;
+    simulationsSpan.from = params.from;
+    simulationsSpan.to = params.to;
+    simulationsSpan.total = params.totalSimulations;
+    RestorableSimulationExecutor restorableSimulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
+                                                              params.splitWorkload);
+    restorableSimulationExecutor.performSimulations(simulation, params.seed, std::cout);
 
     // Save results
-    io.printInlineResults(params, paramsToPrint, analyzer.getInlineResultsHeader(), analyzer.getInlineResultsFields());
-    if (outputFilename.empty())
-        io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
-    else
-        io.storeAnalyzerResults(params, analyzer, paramsToPrint, outputFilename);
+    if (restorableSimulationExecutor.shouldSaveSimulation()) {
+        const Analyzer &analyzerRef = simulation.getAnalyzer();
+        io.printInlineResults(params, paramsToPrint, analyzerRef.getInlineResultsHeader(),
+                              analyzerRef.getInlineResultsFields());
+        if (outputFilename.empty())
+            io.storeAnalyzerResults(params, analyzerRef, paramsToPrint, std::nullopt);
+        else
+            io.storeAnalyzerResults(params, analyzerRef, paramsToPrint, outputFilename);
+    }
 }
 
 void Frontend::analyze(int argc, char **argv) {
@@ -187,7 +198,7 @@ void Frontend::analyze(int argc, char **argv) {
     std::cout << "done (" << timer.toc() << " s)." << std::endl;
 
     // Load eigenenergies and analyze them
-    Analyzer analyzer = AnalyzerBuilder{}.build(tasks, params, base);
+    auto analyzer = AnalyzerBuilder{}.build(tasks, params, base);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())
@@ -200,15 +211,15 @@ void Frontend::analyze(int argc, char **argv) {
 
         Eigensystem eigensystem;
         eigensystem.restore(energiesFile, base);
-        analyzer.analyze(eigensystem, std::cout);
+        analyzer->analyze(eigensystem, std::cout);
     }
 
     // Save results
-    io.printInlineResults(params, paramsToPrint, analyzer.getInlineResultsHeader(), analyzer.getInlineResultsFields());
+    io.printInlineResults(params, paramsToPrint, analyzer->getInlineResultsHeader(), analyzer->getInlineResultsFields());
     if (outputFilename.empty())
-        io.storeAnalyzerResults(params, analyzer, paramsToPrint, std::nullopt);
+        io.storeAnalyzerResults(params, *analyzer, paramsToPrint, std::nullopt);
     else
-        io.storeAnalyzerResults(params, analyzer, paramsToPrint, outputFilename);
+        io.storeAnalyzerResults(params, *analyzer, paramsToPrint, outputFilename);
 }
 
 void Frontend::chebyshev(int argc, char **argv) {
@@ -300,7 +311,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     std::cout << "done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
-    auto rnd = std::make_unique<RND>(params.from + params.seed);
+    auto rnd = std::make_unique<RND>();
     auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
@@ -319,33 +330,38 @@ void Frontend::chebyshev(int argc, char **argv) {
     SimulationsSpan simulationsSpan;
     simulationsSpan.from = params.from;
     simulationsSpan.to = params.to;
-    simulationsSpan.totalSimulations = params.totalSimulations;
+    simulationsSpan.total = params.totalSimulations;
+    RestorableSimulationExecutor simulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
+                                                    params.splitWorkload);
 
     std::unique_ptr<ChebyshevEvolution<>> evolution;
     if (quenchParams.has_value()) {
         using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
         evolutionParameters.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
 
-        auto quenchRnd = std::make_unique<RND>(params.from + params.seed);
+        auto quenchRnd = std::make_unique<RND>();
         auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
         evolution = std::make_unique<ChebyshevEvolution<>>(
-            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationsSpan,
+            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
             std::make_unique<CorrelationsTimeEvolution>(evolutionParameters), std::make_unique<QuenchCalculator>(),
             std::move(quenchHamiltonianGenerator), std::move(quenchRnd)
         );
     } else {
         evolution = std::make_unique<ChebyshevEvolution<>>(
-            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd), simulationsSpan,
+            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
             std::make_unique<CorrelationsTimeEvolution>(evolutionParameters)
         );
     }
 
-    evolution->perform(std::cout);
+    simulationExecutor.performSimulations(*evolution, params.seed, std::cout);
+    evolution->printQuenchInfo(std::cout);
 
-    std::string resultsFilename = params.getOutputFileSignatureWithRange() + "_evolution.txt";
-    std::ofstream resultsFile(resultsFilename);
-    evolution->storeResults(resultsFile);
-    std::cout << "[Frontend::chebyshev] Observables stored to " << resultsFilename << std::endl;
+    if (simulationExecutor.shouldSaveSimulation()) {
+        std::string resultsFilename = params.getOutputFileSignatureWithRange() + "_evolution.txt";
+        std::ofstream resultsFile(resultsFilename);
+        evolution->storeResults(resultsFile);
+        std::cout << "[Frontend::chebyshev] Observables stored to " << resultsFilename << std::endl;
+    }
 }
 
 void Frontend::quench(int argc, char **argv) {
@@ -417,47 +433,41 @@ void Frontend::quench(int argc, char **argv) {
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    std::cout << "[Frontend::simulate] Preparing Fock basis... " << std::flush;
+    std::cout << "[Frontend::quench] Preparing Fock basis... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
     std::cout << "done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare initial and final HamiltonianGenerator
-    // We use two RNDs with identical seeds so that random stuff match in both hamiltonians
-    auto initialRnd = std::make_unique<RND>(params.from + params.seed);
-    auto finalRnd = std::make_unique<RND>(params.from + params.seed);
+    auto initialRnd = std::make_unique<RND>();
+    auto finalRnd = std::make_unique<RND>();
     auto initialHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(quenchParams, base, *initialRnd);
     auto finalHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *finalRnd);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
+    SimulationsSpan simulationsSpan;
+    simulationsSpan.from = params.from;
+    simulationsSpan.to = params.to;
+    simulationsSpan.total = params.totalSimulations;
+    RestorableSimulationExecutor simulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
+                                                    params.splitWorkload);
+
     // Prepare and run quenches
-    QuenchCalculator quenchCalculator;
-    for (std::size_t i = params.from; i < params.to; i++) {
-        std::cout << "[Simulation::quench] Performing quench " << i << "... " << std::flush;
-        timer.tic();
-
-        std::size_t totalSimulations = params.totalSimulations;
-        averagingModel->setupHamiltonianGenerator(*initialHamiltonianGenerator, *initialRnd, i, totalSimulations);
-        averagingModel->setupHamiltonianGenerator(*finalHamiltonianGenerator, *finalRnd, i, totalSimulations);
-        arma::sp_mat initialHamiltonian = initialHamiltonianGenerator->generate();
-        arma::sp_mat finalHamiltonian = finalHamiltonianGenerator->generate();
-
-        quenchCalculator.addQuench(initialHamiltonian, finalHamiltonian);
-
-        std::cout << "done (" << timer.toc() << " s). epsilon: " << quenchCalculator.getLastQuenchEpsilon();
-        std::cout << "; quantum error: " << quenchCalculator.getLastQuenchEpsilonQuantumUncertainty() << std::endl;
-    }
+    auto quenchCalculator = std::make_unique<QuenchCalculator>();
+    QuenchDataSimulation simulation(std::move(initialHamiltonianGenerator), std::move(initialRnd),
+                                    std::move(finalHamiltonianGenerator), std::move(finalRnd),
+                                    std::move(averagingModel), std::move(quenchCalculator));
+    simulationExecutor.performSimulations(simulation, params.seed, std::cout);
 
     // Save results
-    std::vector<std::string> resultHeader = {"epsilon", "avgError", "quantumError"};
-    std::vector<std::string> resultFields = {std::to_string(quenchCalculator.getMeanEpsilon()),
-                                             std::to_string(quenchCalculator.getEpsilonAveragingSampleError()),
-                                             std::to_string(quenchCalculator.getMeanEpsilonQuantumUncertainty())};
-
-    io.printInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields);
-    if (!outputFilename.empty())
-        io.storeInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields, outputFilename);
+    if (simulationExecutor.shouldSaveSimulation()) {
+        std::vector<std::string> resultHeader = simulation.getResultsHeader();
+        std::vector<std::string> resultFields = simulation.getResultsFields();
+        io.printInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields);
+        if (!outputFilename.empty())
+            io.storeInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields, outputFilename);
+    }
 }
 
 void Frontend::printGeneralHelp(const std::string &cmd) {
@@ -467,7 +477,7 @@ void Frontend::printGeneralHelp(const std::string &cmd) {
     std::cout << "Usage: " << cmd << " [mode] (mode dependent parameters). " << std::endl;
     std::cout << std::endl;
     std::cout << "Available modes:" << std::endl;
-    std::cout << "simulate" << std::endl;
+    std::cout << "ed" << std::endl;
     std::cout << Fold("Performs the diagonalizations according to the parameters passed. Some analyzer tasks can "
                       "be performed on the fly.").width(80).margin(4) << std::endl;
     std::cout << "analyze" << std::endl;

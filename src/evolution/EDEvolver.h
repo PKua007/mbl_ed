@@ -7,7 +7,7 @@
 
 #include "Evolver.h"
 
-#include "simulation/Eigensystem.h"
+#include "core/Eigensystem.h"
 
 /**
  * @brief Evolver using exact diagonalization technique.

@@ -5,7 +5,7 @@
 #include "EDCorrelationsTimeEvolution.h"
 
 #include "evolution/EDEvolver.h"
-#include "simulation/Eigensystem.h"
+#include "core/Eigensystem.h"
 #include "utils/Assertions.h"
 
 void EDCorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
@@ -24,3 +24,15 @@ void EDCorrelationsTimeEvolution::storeResult(std::ostream &out) const {
 EDCorrelationsTimeEvolution::EDCorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters)
         : correlationsTimeEvolution(parameters)
 { }
+
+void EDCorrelationsTimeEvolution::storeState(std::ostream &binaryOut) const {
+    this->correlationsTimeEvolution.storeState(binaryOut);
+}
+
+void EDCorrelationsTimeEvolution::joinRestoredState(std::istream &binaryIn) {
+    this->correlationsTimeEvolution.joinRestoredState(binaryIn);
+}
+
+void EDCorrelationsTimeEvolution::clear() {
+    this->correlationsTimeEvolution.clear();
+}

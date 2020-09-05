@@ -3,8 +3,12 @@
 //
 
 #include <iterator>
+
 #include "InverseParticipationRatio.h"
+
 #include "utils/Quantity.h"
+#include "simulation/RestorableHelper.h"
+
 
 InverseParticipationRatio::InverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin)
         : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
@@ -43,4 +47,16 @@ void InverseParticipationRatio::storeResult(std::ostream &out) const {
 std::ostream &operator<<(std::ostream &out, const InverseParticipationRatio::Entry &entry) {
     out << entry.energy << " " << entry.ipr;
     return out;
+}
+
+void InverseParticipationRatio::storeState(std::ostream &binaryOut) const {
+    RestorableHelper::storeStateForVector(this->entries, binaryOut);
+}
+
+void InverseParticipationRatio::joinRestoredState(std::istream &binaryIn) {
+    RestorableHelper::joinRestoredStateForVector(this->entries, binaryIn);
+}
+
+void InverseParticipationRatio::clear() {
+    this->entries.clear();
 }
