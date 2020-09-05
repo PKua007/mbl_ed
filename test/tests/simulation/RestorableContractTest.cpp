@@ -20,12 +20,11 @@
 
 namespace {
     template<typename T>
-    struct RestorableTraits;
+    struct RestorableAccessor;
 
 
     class HubbardQuasiperiodicEigensystems {
     private:
-        std::shared_ptr<FockBase> fockBase;
         UniformPhi0AveragingModel averagingModel{};
         RND rnd{};
         std::unique_ptr<HamiltonianGenerator> hamiltonianGenerator;
@@ -56,12 +55,12 @@ namespace {
 
 
     template<>
-    struct RestorableTraits<BulkMeanGapRatio> : public HubbardQuasiperiodicEigensystems,
-                                                public GetResultForBulkAnalyzerTask
+    struct RestorableAccessor<BulkMeanGapRatio> : public HubbardQuasiperiodicEigensystems,
+                                                  public GetResultForBulkAnalyzerTask
     {
         std::ostringstream logger;
 
-        RestorableTraits() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
+        RestorableAccessor() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
         BulkMeanGapRatio generateRestorable() { return BulkMeanGapRatio(4); }
         void addFirstEntry(BulkMeanGapRatio &bmgr) { bmgr.analyze(this->eigensystem1, this->logger); }
@@ -70,10 +69,10 @@ namespace {
 
 
     template<>
-    struct RestorableTraits<CDF> : public HubbardQuasiperiodicEigensystems, public GetResultForBulkAnalyzerTask {
+    struct RestorableAccessor<CDF> : public HubbardQuasiperiodicEigensystems, public GetResultForBulkAnalyzerTask {
         std::ostringstream logger;
 
-        RestorableTraits() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
+        RestorableAccessor() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
         CDF generateRestorable() { return CDF(4); }
         void addFirstEntry(CDF &cdf) { cdf.analyze(this->eigensystem1, this->logger); }
@@ -82,12 +81,12 @@ namespace {
 
 
     template<>
-    struct RestorableTraits<DressedStatesFinder> : public HubbardQuasiperiodicEigensystems,
-                                                   public GetResultForBulkAnalyzerTask
+    struct RestorableAccessor<DressedStatesFinder> : public HubbardQuasiperiodicEigensystems,
+                                                     public GetResultForBulkAnalyzerTask
     {
         std::ostringstream logger;
 
-        RestorableTraits() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
+        RestorableAccessor() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
         DressedStatesFinder generateRestorable() { return DressedStatesFinder(0.5, 0.3, 0.9); }
         void addFirstEntry(DressedStatesFinder &dsf) { dsf.analyze(this->eigensystem1, this->logger); }
@@ -96,12 +95,12 @@ namespace {
 
 
     template<>
-    struct RestorableTraits<InverseParticipationRatio> : public HubbardQuasiperiodicEigensystems,
-                                                         public GetResultForBulkAnalyzerTask
+    struct RestorableAccessor<InverseParticipationRatio> : public HubbardQuasiperiodicEigensystems,
+                                                           public GetResultForBulkAnalyzerTask
     {
         std::ostringstream logger;
 
-        RestorableTraits() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
+        RestorableAccessor() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
         InverseParticipationRatio generateRestorable() { return InverseParticipationRatio(0.5, 0.3); }
         void addFirstEntry(InverseParticipationRatio &ipr) { ipr.analyze(this->eigensystem1, this->logger); }
@@ -110,10 +109,10 @@ namespace {
 
 
     template<>
-    struct RestorableTraits<MeanGapRatio> : public HubbardQuasiperiodicEigensystems {
+    struct RestorableAccessor<MeanGapRatio> : public HubbardQuasiperiodicEigensystems {
         std::ostringstream logger;
 
-        RestorableTraits() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
+        RestorableAccessor() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
         MeanGapRatio generateRestorable() { return MeanGapRatio(0.5, 0.3); }
         void addFirstEntry(MeanGapRatio &mgr) { mgr.analyze(this->eigensystem1, this->logger); }
@@ -123,10 +122,10 @@ namespace {
 
 
     template<>
-    struct RestorableTraits<MeanInverseParticipationRatio> : public HubbardQuasiperiodicEigensystems {
+    struct RestorableAccessor<MeanInverseParticipationRatio> : public HubbardQuasiperiodicEigensystems {
         std::ostringstream logger;
 
-        RestorableTraits() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
+        RestorableAccessor() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
         MeanInverseParticipationRatio generateRestorable() { return MeanInverseParticipationRatio(0.5, 0.3); }
         void addFirstEntry(MeanInverseParticipationRatio &mipr) { mipr.analyze(this->eigensystem1, this->logger); }
@@ -176,10 +175,10 @@ namespace {
 
 
     template<>
-    struct RestorableTraits<Analyzer> : public HubbardQuasiperiodicEigensystems {
+    struct RestorableAccessor<Analyzer> : public HubbardQuasiperiodicEigensystems {
         std::ostringstream logger;
 
-        RestorableTraits() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
+        RestorableAccessor() : HubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
         Analyzer generateRestorable() {
             Analyzer analyzer;
@@ -197,35 +196,35 @@ namespace {
 TEMPLATE_TEST_CASE("Restorable: contract test", "", BulkMeanGapRatio, CDF, DressedStatesFinder,
                    InverseParticipationRatio, MeanGapRatio, MeanInverseParticipationRatio, Analyzer)
 {
-    RestorableTraits<TestType> restorableTraits;
-    TestType restorable = restorableTraits.generateRestorable();
+    RestorableAccessor<TestType> restorableAccessor;
+    TestType restorable = restorableAccessor.generateRestorable();
 
     SECTION("clearing") {
-        restorableTraits.addFirstEntry(restorable);
-        auto result1 = restorableTraits.getResult(restorable);
+        restorableAccessor.addFirstEntry(restorable);
+        auto result1 = restorableAccessor.getResult(restorable);
 
-        restorableTraits.addSecondEntry(restorable);
+        restorableAccessor.addSecondEntry(restorable);
         restorable.clear();
-        restorableTraits.addFirstEntry(restorable);
-        auto result2 = restorableTraits.getResult(restorable);
+        restorableAccessor.addFirstEntry(restorable);
+        auto result2 = restorableAccessor.getResult(restorable);
 
         REQUIRE(result1 == result2);
     }
 
     SECTION("storing and joining restored") {
-        restorableTraits.addFirstEntry(restorable);
-        restorableTraits.addSecondEntry(restorable);
-        auto normalResult = restorableTraits.getResult(restorable);
+        restorableAccessor.addFirstEntry(restorable);
+        restorableAccessor.addSecondEntry(restorable);
+        auto normalResult = restorableAccessor.getResult(restorable);
 
         restorable.clear();
-        restorableTraits.addSecondEntry(restorable);
+        restorableAccessor.addSecondEntry(restorable);
         std::stringstream simulation2;
         restorable.storeState(simulation2);
 
         restorable.clear();
-        restorableTraits.addFirstEntry(restorable);
+        restorableAccessor.addFirstEntry(restorable);
         restorable.joinRestoredState(simulation2);
-        auto restoredResult = restorableTraits.getResult(restorable);
+        auto restoredResult = restorableAccessor.getResult(restorable);
 
         REQUIRE(normalResult == restoredResult);
     }
