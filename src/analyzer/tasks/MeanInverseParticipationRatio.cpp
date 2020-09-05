@@ -3,7 +3,9 @@
 //
 
 #include "MeanInverseParticipationRatio.h"
+
 #include "utils/Quantity.h"
+#include "simulation/RestorableHelper.h"
 
 MeanInverseParticipationRatio::MeanInverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin)
         : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
@@ -54,21 +56,11 @@ std::vector<std::string> MeanInverseParticipationRatio::getResultFields() const 
 }
 
 void MeanInverseParticipationRatio::storeState(std::ostream &binaryOut) const {
-    std::size_t ratiosSize = this->ratios.size();
-    binaryOut.write(reinterpret_cast<const char*>(&ratiosSize), sizeof(ratiosSize));
-    binaryOut.write(reinterpret_cast<const char*>(this->ratios.data()), sizeof(this->ratios[0]) * ratiosSize);
-    Assert(binaryOut.good());
+    RestorableHelper::storeStateForVector(this->ratios, binaryOut);
 }
 
 void MeanInverseParticipationRatio::joinRestoredState(std::istream &binaryIn) {
-    std::size_t ratiosSizeRestored{};
-    binaryIn.read(reinterpret_cast<char*>(&ratiosSizeRestored), sizeof(ratiosSizeRestored));
-    Assert(binaryIn.good());
-    std::vector<double> entriesRestored(ratiosSizeRestored);
-    binaryIn.read(reinterpret_cast<char*>(entriesRestored.data()), sizeof(entriesRestored[0]) * ratiosSizeRestored);
-    Assert(binaryIn.good());
-    this->ratios.reserve(this->ratios.size() + ratiosSizeRestored);
-    this->ratios.insert(this->ratios.end(), entriesRestored.begin(), entriesRestored.end());
+    RestorableHelper::joinRestoredStateForVector(this->ratios, binaryIn);
 }
 
 void MeanInverseParticipationRatio::clear() {

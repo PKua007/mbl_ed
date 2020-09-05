@@ -3,7 +3,9 @@
 //
 
 #include "MeanGapRatio.h"
+
 #include "utils/Quantity.h"
+#include "simulation/RestorableHelper.h"
 
 MeanGapRatio::MeanGapRatio(double relativeMiddleEnergy, double relativeMargin)
         : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
@@ -98,21 +100,11 @@ std::vector<std::string> MeanGapRatio::getResultFields() const {
 }
 
 void MeanGapRatio::storeState(std::ostream &binaryOut) const {
-    std::size_t gapRatiosSize = this->gapRatios.size();
-    binaryOut.write(reinterpret_cast<const char*>(&gapRatiosSize), sizeof(gapRatiosSize));
-    binaryOut.write(reinterpret_cast<const char*>(this->gapRatios.data()), sizeof(this->gapRatios[0]) * gapRatiosSize);
-    Assert(binaryOut.good());
+    RestorableHelper::storeStateForVector(this->gapRatios, binaryOut);
 }
 
 void MeanGapRatio::joinRestoredState(std::istream &binaryIn) {
-    std::size_t gapRatiosSizeRestored{};
-    binaryIn.read(reinterpret_cast<char*>(&gapRatiosSizeRestored), sizeof(gapRatiosSizeRestored));
-    Assert(binaryIn.good());
-    std::vector<double> entriesRestored(gapRatiosSizeRestored);
-    binaryIn.read(reinterpret_cast<char*>(entriesRestored.data()), sizeof(entriesRestored[0]) * gapRatiosSizeRestored);
-    Assert(binaryIn.good());
-    this->gapRatios.reserve(this->gapRatios.size() + gapRatiosSizeRestored);
-    this->gapRatios.insert(this->gapRatios.end(), entriesRestored.begin(), entriesRestored.end());
+    RestorableHelper::joinRestoredStateForVector(this->gapRatios, binaryIn);
 }
 
 void MeanGapRatio::clear() {

@@ -3,8 +3,12 @@
 //
 
 #include <iterator>
+
 #include "InverseParticipationRatio.h"
+
 #include "utils/Quantity.h"
+#include "simulation/RestorableHelper.h"
+
 
 InverseParticipationRatio::InverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin)
         : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
@@ -46,21 +50,11 @@ std::ostream &operator<<(std::ostream &out, const InverseParticipationRatio::Ent
 }
 
 void InverseParticipationRatio::storeState(std::ostream &binaryOut) const {
-    std::size_t entriesSize = this->entries.size();
-    binaryOut.write(reinterpret_cast<const char*>(&entriesSize), sizeof(entriesSize));
-    binaryOut.write(reinterpret_cast<const char*>(this->entries.data()), sizeof(this->entries[0]) * entriesSize);
-    Assert(binaryOut.good());
+    RestorableHelper::storeStateForVector(this->entries, binaryOut);
 }
 
 void InverseParticipationRatio::joinRestoredState(std::istream &binaryIn) {
-    std::size_t entriesSizeRestored{};
-    binaryIn.read(reinterpret_cast<char*>(&entriesSizeRestored), sizeof(entriesSizeRestored));
-    Assert(binaryIn.good());
-    std::vector<Entry> entriesRestored(entriesSizeRestored);
-    binaryIn.read(reinterpret_cast<char*>(entriesRestored.data()), sizeof(entriesRestored[0]) * entriesSizeRestored);
-    Assert(binaryIn.good());
-    this->entries.reserve(this->entries.size() + entriesSizeRestored);
-    this->entries.insert(this->entries.end(), entriesRestored.begin(), entriesRestored.end());
+    RestorableHelper::joinRestoredStateForVector(this->entries, binaryIn);
 }
 
 void InverseParticipationRatio::clear() {

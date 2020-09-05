@@ -4,6 +4,7 @@
 
 #include "BulkMeanGapRatio.h"
 
+#include "simulation/RestorableHelper.h"
 #include "utils/Quantity.h"
 
 void BulkMeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
@@ -48,32 +49,11 @@ void BulkMeanGapRatio::storeResult(std::ostream &out) const {
 }
 
 void BulkMeanGapRatio::storeState(std::ostream &binaryOut) const {
-    std::size_t numBins = this->gapRatios.size();
-    binaryOut.write(reinterpret_cast<const char*>(&numBins), sizeof(numBins));
-    Assert(binaryOut.good());
-    for (const auto &binEntries : this->gapRatios) {
-        std::size_t numEntries = binEntries.size();
-        binaryOut.write(reinterpret_cast<const char*>(&numEntries), sizeof(numEntries));
-        binaryOut.write(reinterpret_cast<const char*>(binEntries.data()), sizeof(binEntries[0]) * numEntries);
-    }
-    Assert(binaryOut.good());
+    RestorableHelper::storeStateForHistogram(this->gapRatios, binaryOut);
 }
 
 void BulkMeanGapRatio::joinRestoredState(std::istream &binaryIn) {
-    std::size_t numBinsRestored{};
-    binaryIn.read(reinterpret_cast<char*>(&numBinsRestored), sizeof(numBinsRestored));
-    Assert(binaryIn.good());
-    Assert(numBinsRestored == this->gapRatios.size());
-    for (std::size_t i{}; i < this->gapRatios.size(); i++) {
-        std::size_t numEntriesRestored{};
-        binaryIn.read(reinterpret_cast<char*>(&numEntriesRestored), sizeof(numEntriesRestored));
-        std::vector<double> entriesRestored(numEntriesRestored);
-        binaryIn.read(reinterpret_cast<char*>(entriesRestored.data()), sizeof(entriesRestored[0])*numEntriesRestored);
-        Assert(binaryIn.good());
-        std::vector<double> &binEntries = this->gapRatios[i];
-        binEntries.reserve(binEntries.size() + numEntriesRestored);
-        binEntries.insert(binEntries.end(), entriesRestored.begin(), entriesRestored.end());
-    }
+    RestorableHelper::joinRestoredStateForHistogram(this->gapRatios, binaryIn);
 }
 
 void BulkMeanGapRatio::clear() {
