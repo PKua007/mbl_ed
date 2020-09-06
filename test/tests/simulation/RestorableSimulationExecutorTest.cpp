@@ -9,6 +9,7 @@
 #include <ostream>
 
 #include "simulation/RestorableSimulationExecutor.h"
+#include "simulation/RestorableHelper.h"
 
 
 namespace {
@@ -40,21 +41,11 @@ namespace {
         { }
 
         void storeState(std::ostream &binaryOut) const override {
-            std::size_t size = this->simulations.size();
-            binaryOut.write(reinterpret_cast<const char*>(&size), sizeof(size));
-            binaryOut.write(reinterpret_cast<const char*>(this->simulations.data()), sizeof(Data) * size);
-            REQUIRE(binaryOut.good());
+            RestorableHelper::storeStateForVector(this->simulations, binaryOut);
         }
 
         void joinRestoredState(std::istream &binaryIn) override {
-            std::size_t size{};
-            std::vector<Data> restored;
-            binaryIn.read(reinterpret_cast<char*>(&size), sizeof(size));
-            restored.resize(size);
-            binaryIn.read(reinterpret_cast<char*>(restored.data()), sizeof(Data) * size);
-            REQUIRE(binaryIn.good());
-            this->simulations.reserve(this->simulations.size() + size);
-            this->simulations.insert(this->simulations.end(), restored.begin(), restored.end());
+            RestorableHelper::joinRestoredStateForVector(this->simulations, binaryIn);
         }
 
         void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, std::ostream &) override {

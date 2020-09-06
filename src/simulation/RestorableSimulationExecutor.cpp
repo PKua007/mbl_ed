@@ -129,7 +129,8 @@ void RestorableSimulationExecutor::superviseSimulationsSplit(RestorableSimulatio
 }
 
 bool RestorableSimulationExecutor::joinAllRestoredSimulations(RestorableSimulation &simulation,
-                                                              const std::vector<StateFileData> &stateFileDatas) const {
+                                                              const std::vector<StateFileData> &stateFileDatas) const
+{
     simulation.clear();
     for (const auto &stateFileData : stateFileDatas) {
         std::ifstream file(stateFileData.path, std::ios::in | std::ios::binary);
