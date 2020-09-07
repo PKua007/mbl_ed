@@ -62,8 +62,12 @@ HamiltonianGeneratorBuilder::build(const Parameters &params, std::shared_ptr<Foc
             double U1 = termParams.getDouble("U1");
             double beta = termParams.getDouble("beta");
             double phi0 = termParams.getDouble("phi0");
+            double phi0Bias{};
+            try {
+                phi0Bias = termParams.getDouble("phi0Bias");
+            } catch (ConfigNoFieldException &) { }
             Validate(beta > 0);
-            generator->addDiagonalTerm(std::make_unique<CavityLongInteraction>(U1, beta, phi0));
+            generator->addDiagonalTerm(std::make_unique<CavityLongInteraction>(U1, beta, phi0, phi0Bias));
         } else if (termName == "lookupCavityZ2") {
             double U1 = termParams.getDouble("U1");
             Validate(U1 >= 0);

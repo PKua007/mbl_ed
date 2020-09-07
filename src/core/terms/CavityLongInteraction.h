@@ -23,12 +23,18 @@ private:
     double beta{};
     double phi0{};
 
+    /**
+     * @brief A shift, which is always added to the phase, irregardless of the value of the phase.
+     * @details It can be used for example for performing quenches.
+     */
+    double phi0Bias{};
+
 public:
-    CavityLongInteraction(double U1, double beta, double phi0);
+    CavityLongInteraction(double U1, double beta, double phi0, double phi0Bias = 0);
 
     double calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) override;
 
-    void setPhi0(double phi0);
+    void setPhi0(double phi0_);
 };
 
 

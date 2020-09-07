@@ -27,6 +27,9 @@ void QuenchCalculator::addQuench(const arma::sp_mat &initialHamiltonian, const a
     double quenchE = arma::as_scalar(this->lastQuenchedState.t() * hamiltonianTimesQuenchedState);
     double quenchE2 = arma::as_scalar(this->lastQuenchedState.t() * finalHamiltonian * hamiltonianTimesQuenchedState);
     double quenchEVariance = quenchE2 - quenchE * quenchE;
+    // We just correct unmathematical negative values when it should be 0 originating from machine precision
+    if (quenchEVariance < 0)
+        quenchEVariance = 0;
     double quenchEpsilon = (quenchE - Emin) / (Emax - Emin);
     double quenchEpsilonVariance = quenchEVariance / std::pow((Emax - Emin), 2);
 

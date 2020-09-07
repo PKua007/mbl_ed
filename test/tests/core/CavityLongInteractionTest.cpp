@@ -37,4 +37,12 @@ TEST_CASE("CavityLongInteraction: beta=1/12, phi0=pi/6") {
     REQUIRE(longInteraction.calculate(fockBase[3], generator) == Approx(-1));
     REQUIRE(longInteraction.calculate(fockBase[4], generator) == Approx(-1./4));
     REQUIRE(longInteraction.calculate(fockBase[5], generator) == Approx(0).margin(1e-8));
+
+    SECTION("phi0Bias test") {
+        // Should give identical results as above
+        CavityLongInteraction longInteractionWithBias(3, 1./12, M_PI/12, M_PI/12);
+
+        REQUIRE(longInteractionWithBias.calculate(fockBase[0], generator) == Approx(-3));
+        REQUIRE(longInteractionWithBias.calculate(fockBase[1], generator) == Approx(-1-std::sqrt(3)/2));
+    }
 }

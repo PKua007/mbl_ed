@@ -414,12 +414,12 @@ void Frontend::quench(int argc, char **argv) {
     overridenAndQuenchParamEntries.insert(overridenAndQuenchParamEntries.end(), quenchParamsEntries.begin(),
                                           quenchParamsEntries.end());
     Parameters quenchParams = io.loadParameters(inputFilename, overridenAndQuenchParamEntries);
+    for (const auto &param : paramsToPrint)
+        if (!quenchParams.hasParam(param))
+            die("Parameters to print: parameter " + param + " is unknown");
 
     // Prepare (final) parameters
     Parameters params = io.loadParameters(inputFilename, overridenParamsEntries);
-    for (const auto &param : paramsToPrint)
-        if (!params.hasParam(param))
-            die("Parameters to print: parameter " + param + " is unknown");
 
     // Print info on prameters and initial and final Hamiltonians
     params.printGeneral(std::cout);
