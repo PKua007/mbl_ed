@@ -423,6 +423,9 @@ void Frontend::quench(int argc, char **argv) {
     }
 
     Logger logger(std::cout);
+    std::vector allOverridenEntries(overridenParamsEntries);
+    allOverridenEntries.insert(allOverridenEntries.end(), quenchParamsEntries.begin(), quenchParamsEntries.end());
+    this->setOverridenParamsAsAdditionalText(logger, allOverridenEntries);
 
     // Validate parsed options
     std::string cmd(argv[0]);
