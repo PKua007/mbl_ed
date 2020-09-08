@@ -69,6 +69,7 @@ void Frontend::ed(int argc, char **argv) {
     }
 
     Logger logger(std::cout);
+    this->setOverridenParamsAsAdditionalText(logger, overridenParams);
 
     // Validate parsed options
     std::string cmd(argv[0]);
@@ -133,6 +134,18 @@ void Frontend::ed(int argc, char **argv) {
     }
 }
 
+void Frontend::setOverridenParamsAsAdditionalText(Logger &logger, const std::vector<std::string> &overridenParams) const
+{
+    if (overridenParams.empty())
+        return;
+
+    std::ostringstream additionalText;
+    std::copy(overridenParams.begin(), overridenParams.end() - 1,
+              std::ostream_iterator<std::string>(additionalText, ", "));
+    additionalText << overridenParams.back();
+    logger.setAdditionalText(additionalText.str());
+}
+
 void Frontend::analyze(int argc, char **argv) {
     // Parse options
     cxxopts::Options options(argv[0],
@@ -172,6 +185,7 @@ void Frontend::analyze(int argc, char **argv) {
     }
 
     Logger logger(std::cout);
+    this->setOverridenParamsAsAdditionalText(logger, overridenParams);
 
     // Validate options
     std::string cmd(argv[0]);
@@ -266,6 +280,9 @@ void Frontend::chebyshev(int argc, char **argv) {
     }
 
     Logger logger(std::cout);
+    std::vector allOverridenEntries(overridenParamsEntries);
+    allOverridenEntries.insert(allOverridenEntries.end(), quenchParamsEntries.begin(), quenchParamsEntries.end());
+    this->setOverridenParamsAsAdditionalText(logger, allOverridenEntries);
 
     // Validate parsed options - input file
     std::string cmd(argv[0]);
