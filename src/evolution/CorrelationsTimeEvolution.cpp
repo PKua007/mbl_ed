@@ -10,10 +10,9 @@
 #include "Evolver.h"
 #include "simulation/RestorableHelper.h"
 
-void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &logger,
+void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, Logger &logger,
                                              const std::vector<arma::cx_vec> &externalVectors)
 {
-    logger << externalVectors.size() << std::endl;
     std::size_t externalVectorsCounter{};
     for (auto &evolution : this->vectorEvolutions) {
         arma::cx_vec initialState;
@@ -30,8 +29,7 @@ void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, std::ostream &log
             externalVectorsCounter++;
         }
 
-        logger << "[CorrelationsTimeEvolution::addEvolution] Evolving vector " << evolution.getInitialVectorName();
-        logger << std::endl;
+        logger.info() << "Evolving vector " << evolution.getInitialVectorName() << std::endl;
 
         OccupationEvolution occupationEvolution(this->fockBase);
         auto observablesEvolution = occupationEvolution.perform(this->timeSegmentation, initialState, evolver, logger);

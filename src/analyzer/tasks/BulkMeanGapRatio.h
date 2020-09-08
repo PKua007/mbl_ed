@@ -21,7 +21,7 @@ private:
 public:
     explicit BulkMeanGapRatio(std::size_t numBins) : gapRatios(numBins) { Expects(numBins > 0); }
 
-    void analyze(const Eigensystem &eigensystem, std::ostream &logger) override;
+    void analyze(const Eigensystem &eigensystem, Logger &logger) override;
     [[nodiscard]] std::string getName() const override { return "mgrs"; }
 
     /**

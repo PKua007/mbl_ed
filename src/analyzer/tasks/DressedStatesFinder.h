@@ -47,7 +47,7 @@ public:
      */
     DressedStatesFinder(double relativeMiddleEnergy, double relativeMargin, double coefficientThreshold);
 
-    void analyze(const Eigensystem &eigensystem, std::ostream &logger) override;
+    void analyze(const Eigensystem &eigensystem, Logger &logger) override;
     [[nodiscard]] std::string getName() const override;
 
     /**

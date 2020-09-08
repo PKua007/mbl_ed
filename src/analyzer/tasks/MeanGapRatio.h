@@ -60,7 +60,7 @@ public:
      * @param eigensystem Eigensystem to fetch data points from
      * @param logger unused
      */
-    void analyze(const Eigensystem &eigensystem, std::ostream &logger) override;
+    void analyze(const Eigensystem &eigensystem, Logger &logger) override;
     [[nodiscard]] std::string getName() const override;
     [[nodiscard]] std::vector<std::string> getResultHeader() const override;
     [[nodiscard]] std::vector<std::string> getResultFields() const override;

@@ -97,8 +97,8 @@ public:
      * AnalyzerTask -s are performed.
      * <p> Eigenenergy files will be named `[Parameter::fileSignature]_[simulation index]_ngr.txt`.
      */
-    void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, std::ostream &logger) override {
-        logger << "[Simulation::perform] Performing diagonalization " << simulationIndex << "... " << std::flush;
+    void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, Logger &logger) override {
+        logger.info() << "Performing diagonalization " << simulationIndex << "... " << std::flush;
         arma::wall_clock timer;
         timer.tic();
         this->averagingModel->setupHamiltonianGenerator(*this->hamiltonianGenerator, *this->rnd, simulationIndex,

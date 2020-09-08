@@ -13,6 +13,7 @@
 #include "AnalyzerTask.h"
 #include "utils/FileUtils.h"
 #include "simulation/Restorable.h"
+#include "utils/Logger.h"
 
 /**
  * @brief A class which will perform all specified AnalyzerTasks on each Eigensystem passed to be analyzed.
@@ -45,7 +46,7 @@ public:
     /**
      * @brief Performs all analzyer tasks added by Analyzer::addTask on this @a eigensystem.
      */
-    void analyze(const Eigensystem &eigensystem, std::ostream &logger);
+    void analyze(const Eigensystem &eigensystem, Logger &logger);
 
     /**
      * @brief Returns a vector of names of fields imploded from all InlineAnalyzerTask -s. The order is the same

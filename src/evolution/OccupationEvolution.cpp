@@ -6,7 +6,7 @@
 
 std::vector<OccupationEvolution::Occupations>
 OccupationEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSegmentation,
-                             const arma::cx_vec &initialState, Evolver &evolver, std::ostream &logger)
+                             const arma::cx_vec &initialState, Evolver &evolver, Logger &logger)
 {
     this->timeStep = 0;
     this->time = 0;
@@ -16,11 +16,11 @@ OccupationEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSegmen
     std::vector<Occupations> occupationEvolution;
     double lastMaxTime{};
     for (const auto &timeSegment : timeSegmentation) {
-        logger << "[OccupationEvolution::perform] Calculating evolution operator... " << std::endl;
+        logger.info() << "Calculating evolution operator... " << std::endl;
         arma::wall_clock timer;
         timer.tic();
         evolver.prepareFor(evolvedState, timeSegment.maxTime - lastMaxTime, timeSegment.numSteps);
-        logger << "[OccupationEvolution::perform] Calculating evolution operator done (" << timer.toc() << " s).";
+        logger.info() << "Calculating evolution operator done (" << timer.toc() << " s).";
         logger << std::endl;
 
         std::vector<Occupations> evolutionSegment = this->performTimeSegmentEvolution(timeSegment.numSteps, evolver,
@@ -40,12 +40,12 @@ OccupationEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSegmen
  * with a constant time step.
  */
 std::vector<OccupationEvolution::Occupations>
-OccupationEvolution::performTimeSegmentEvolution(std::size_t numSteps, Evolver &evolver, std::ostream &logger) {
+OccupationEvolution::performTimeSegmentEvolution(std::size_t numSteps, Evolver &evolver, Logger &logger) {
     arma::wall_clock timer;
     std::size_t numberOfSites = this->fockBase->getNumberOfSites();
     std::vector<Occupations> observablesEvolution = this->prepareOccupationVector(numSteps, numberOfSites);
     for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {
-        logger << "[OccupationEvolution::performTimeSegmentEvolution] Calculating expectation values for step ";
+        logger.info() << "Calculating expectation values for step ";
         logger << this->timeStep << ", time " << this->time << "... " << std::flush;
         timer.tic();
         for (std::size_t site{}; site < numberOfSites; site++) {

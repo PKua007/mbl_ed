@@ -50,7 +50,7 @@ public:
      * @param eigensystem Eigensystem to add points from
      * @param logger unused
      */
-    void analyze(const Eigensystem &eigensystem, std::ostream &logger) override;
+    void analyze(const Eigensystem &eigensystem, Logger &logger) override;
     [[nodiscard]] std::string getName() const override;
     void storeResult(std::ostream &out) const override;
 

@@ -20,7 +20,8 @@ TEST_CASE("InverseParticipationRatio: names") {
 
 TEST_CASE("InverseParticipationRatio: single energy set") {
     InverseParticipationRatio ratioCalculator(0.5, 0.7);
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     // We are interested in 0.4, 0.5, 0.6, 0.8
     Eigensystem eigensystem(
@@ -47,7 +48,8 @@ TEST_CASE("InverseParticipationRatio: single energy set") {
 
 TEST_CASE("InverseParticipationRatio: multiple simulations") {
     InverseParticipationRatio ratioCalculator(0.5, 0.2);
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     ratioCalculator.analyze(Eigensystem(
             { 0, 0.4, 1},
@@ -70,7 +72,8 @@ TEST_CASE("InverseParticipationRatio: multiple simulations") {
 }
 
 TEST_CASE("InverseParticipationRatio: requires eigenvectors") {
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
     REQUIRE_THROWS_WITH(InverseParticipationRatio(0.5, 0.1).analyze(Eigensystem({0, 1, 2, 3}), logger),
                         Catch::Contains("hasEigenvectors"));
 }

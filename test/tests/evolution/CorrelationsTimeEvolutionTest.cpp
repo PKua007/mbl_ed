@@ -51,7 +51,8 @@ TEST_CASE("CorrelationsTimeEvolution: header") {
     Eigensystem eigensystem({1, 1, 1, 1, 1}, arma::eye(5, 5), fockBase);
     EDCorrelationsTimeEvolution evolution({{{2, 1}}, 5, 1, fockBase,
                                           {FockBase::Vector{1, 0, 0, 0, 0}, FockBase::Vector{0, 1, 0, 0, 0}}});
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     evolution.analyze(eigensystem, logger);
     std::stringstream out;
@@ -67,7 +68,8 @@ TEST_CASE("CorrelationsTimeEvolution: times") {
     auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
     EDCorrelationsTimeEvolution evolution({{{1, 2}, {3, 1}}, 2, 0, fockBase, {FockBase::Vector{1, 0}}});
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     evolution.analyze(eigensystem, logger);
     std::stringstream out;
@@ -93,7 +95,8 @@ TEST_CASE("CorrelationsTimeEvolution: external vectors") {
     CorrelationsTimeEvolution evolution({{{1, 1}}, 2, 0, fockBase,
                                          {FockBase::Vector{1, 0}, ExternalVector{"external"}}
                                         });
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
     EDEvolver evolver(eigensystem);
 
     SECTION("correct number of external vectors") {
@@ -125,7 +128,8 @@ TEST_CASE("CorrelationsTimeEvolution: throw on non-matching eigensystems") {
     auto fockBase2 = FockBaseGenerator{}.generate(1, 3);
     Eigensystem eigensystem2({1, 1, 1}, arma::eye(3, 3), std::move(fockBase2));
     EDCorrelationsTimeEvolution evolution({{{2, 1}}, 2, 0, fockBase1, {FockBase::Vector{1, 0}}});
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
     evolution.analyze(eigensystem1, logger);
 
     REQUIRE_THROWS(evolution.analyze(eigensystem2, logger));
@@ -136,7 +140,8 @@ TEST_CASE("CorrelationsTimeEvolution: throw on wrong initial vectors") {
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
     EDCorrelationsTimeEvolution corr1({{{2, 1}}, 2, 0, fockBase, {FockBase::Vector{1, 0, 0}}});
     EDCorrelationsTimeEvolution corr2({{{2, 1}}, 2, 0, fockBase, {FockBase::Vector{0, 2}}});
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     REQUIRE_THROWS(corr1.analyze(eigensystem, logger));
     REQUIRE_THROWS(corr2.analyze(eigensystem, logger));

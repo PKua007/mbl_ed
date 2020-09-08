@@ -61,7 +61,8 @@ TEST_CASE("ExactDiagonlization: 3 'random' hamiltonians") {
     using TestSimulation = ExactDiagonalization<MockHamiltonianGenerator, MockAveragingModel, MockAnalyzer>;
     TestSimulation simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                               std::make_unique<FileOstreamProviderMock>(), params, std::move(analyzer));
-    std::ostringstream dummyLogger;
+    std::ostringstream dummyLoggerStream;
+    Logger dummyLogger(dummyLoggerStream);
 
     simulation.performSimulation(1, 3, dummyLogger);
 }

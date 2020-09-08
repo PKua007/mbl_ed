@@ -7,7 +7,7 @@
 #include "simulation/RestorableHelper.h"
 #include "utils/Quantity.h"
 
-void BulkMeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+void BulkMeanGapRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
     static_cast<void>(logger);
 
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();

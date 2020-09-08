@@ -23,7 +23,7 @@ RestorableSimulationExecutor::RestorableSimulationExecutor(const SimulationsSpan
 }
 
 void RestorableSimulationExecutor::performSimulations(RestorableSimulation &simulation, unsigned long seed,
-                                                      std::ostream &logger)
+                                                      Logger &logger)
 {
     simulation.clear();
     this->shouldSaveSimulation_ = false;
@@ -47,7 +47,7 @@ void RestorableSimulationExecutor::performSimulations(RestorableSimulation &simu
 
 RestorableSimulationExecutor::SimulationStatus
 RestorableSimulationExecutor::tryRestoringSimulation(RestorableSimulation &simulation, const std::string &stateFilename,
-                                                     std::ostream &logger) const
+                                                     Logger &logger) const
 {
     SimulationStatus simulationStatus;
     std::ifstream stateFile(this->workingDirectory / stateFilename, std::ios::in | std::ios::binary);
@@ -56,14 +56,13 @@ RestorableSimulationExecutor::tryRestoringSimulation(RestorableSimulation &simul
         Assert(simulationStatus.nextSimulationIndex > this->simulationsSpan.from);
         Assert(simulationStatus.nextSimulationIndex <= this->simulationsSpan.to);
 
-        logger << "[RestorableSimulationExecutor::tryRestoringSimulation] State file found, restored simulations [";
-        logger << this->simulationsSpan.from << ", " << (simulationStatus.nextSimulationIndex - 1);
-        logger << "], performing [" << simulationStatus.nextSimulationIndex << ", " << simulationsSpan.to;
-        logger << ") out of " << simulationsSpan.total << std::endl;
+        logger.info() << "State file found, restored simulations [" << this->simulationsSpan.from << ", ";
+        logger << (simulationStatus.nextSimulationIndex - 1) << "], performing [";
+        logger << simulationStatus.nextSimulationIndex << ", " << simulationsSpan.to << ") out of ";
+        logger << simulationsSpan.total << std::endl;
     } else {
-        logger << "[RestorableSimulationExecutor::tryRestoringSimulation] No state file found, starting simulations from ";
-        logger << "scratch, [" << this->simulationsSpan.from << ", " << this->simulationsSpan.to << ") out of ";
-        logger << this->simulationsSpan.total << std::endl;
+        logger.info() << "No state file found, starting simulations from scratch, [" << this->simulationsSpan.from;
+        logger << ", " << this->simulationsSpan.to << ") out of " << this->simulationsSpan.total << std::endl;
 
         simulationStatus.finished = false;
         simulationStatus.nextSimulationIndex = this->simulationsSpan.from;
@@ -75,7 +74,7 @@ RestorableSimulationExecutor::tryRestoringSimulation(RestorableSimulation &simul
 
 void RestorableSimulationExecutor::doPerformSimulations(RestorableSimulation &simulation,
                                                         const SimulationsSpan &actualSpan,
-                                                        const std::string &stateFilename, std::ostream &logger) const
+                                                        const std::string &stateFilename, Logger &logger) const
 {
     for (std::size_t i = actualSpan.from; i < actualSpan.to; i++) {
         simulation.performSimulation(i, actualSpan.total, logger);
@@ -88,12 +87,11 @@ void RestorableSimulationExecutor::doPerformSimulations(RestorableSimulation &si
 }
 
 void RestorableSimulationExecutor::superviseSimulationsSplit(RestorableSimulation &simulation,
-                                                             const std::string &stateFilename, std::ostream &logger)
+                                                             const std::string &stateFilename, Logger &logger)
 {
     this->shouldSaveSimulation_ = false;
 
-    logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] Workload split, searching for state files... ";
-    logger << std::flush;
+    logger.info() << "Workload split, searching for state files... " << std::flush;
     std::vector<StateFileData> stateFileDatas = this->discoverStateFiles(stateFilename);
     std::sort(stateFileDatas.begin(), stateFileDatas.end());
     logger << "found " << stateFileDatas.size() << " files." << std::endl;
@@ -102,29 +100,24 @@ void RestorableSimulationExecutor::superviseSimulationsSplit(RestorableSimulatio
 
     switch (this->checkStateFilesCoverage(stateFileDatas)) {
         case INCOMPLETE:
-            logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] Some state files are missing. ";
-            logger << "Waiting for other tasks to finish." << std::endl;
+            logger.warn() << "Some state files are missing. Waiting for other tasks to finish." << std::endl;
             return;
         case BROKEN:
-            logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] State files have broken ranges. ";
-            logger << "Fix before reruning simulations." << std::endl;
+            logger.error() << "State files have broken ranges. Fix before reruning simulations." << std::endl;
             return;
         case COMPLETE:
             break;
     }
-    logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] No state files are missing. ";
-    logger << "Checking if all are finished." << std::endl;
+    logger.info() << "No state files are missing. Checking if all are finished." << std::endl;
 
     bool allSimulationsFinished = this->joinAllRestoredSimulations(simulation, stateFileDatas);
     this->shouldSaveSimulation_ = allSimulationsFinished;
     if (allSimulationsFinished) {
-        logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] All simulations are finished. ";
-        logger << "Removing state files." << std::endl;
+        logger.info() << "All simulations are finished. Removing state files." << std::endl;
         for (const auto &stateFileData : stateFileDatas)
             std::filesystem::remove(stateFileData.path);
     } else {
-        logger << "[RestorableSimulationExecutor::superviseSimulationsSplit] Some simulations must have been ";
-        logger << "interrupted. Rerun the whole batch." << std::endl;
+        logger.error() << "Some simulations must have been interrupted. Rerun the whole batch." << std::endl;
     }
 }
 

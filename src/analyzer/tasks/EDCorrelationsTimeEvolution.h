@@ -32,7 +32,7 @@ public:
      * @details The number of sites and number of particles are determined in the first invocation and must be kept the
      * same in next ones.
      */
-    void analyze(const Eigensystem &eigensystem, std::ostream &logger) override;
+    void analyze(const Eigensystem &eigensystem, Logger &logger) override;
 
     [[nodiscard]] std::string getName() const override;
 

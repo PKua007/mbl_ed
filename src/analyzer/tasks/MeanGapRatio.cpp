@@ -20,7 +20,7 @@ MeanGapRatio::MeanGapRatio(const FockBase::Vector &middleVector, double relative
     Expects(relativeMargin > 0);
 }
 
-void MeanGapRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+void MeanGapRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
     static_cast<void>(logger);
 
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();

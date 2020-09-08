@@ -14,7 +14,7 @@ MeanInverseParticipationRatio::MeanInverseParticipationRatio(double relativeMidd
     Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
 }
 
-void MeanInverseParticipationRatio::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+void MeanInverseParticipationRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
     static_cast<void>(logger);
 
     Expects(eigensystem.hasEigenvectors());

@@ -101,16 +101,17 @@ void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
     double normLeakage{};
     double initialNorm = arma::norm(initialState);
 
-    this->logger << "[ChebyshevEvolver::prepareFor] Optimizing Chebyshev expansion order:" << std::endl;
+    this->logger.info() << "Optimizing Chebyshev expansion order:" << std::endl;
 
     // Exponentially find the upper limit for order
     this->N = 1;
     do {
         this->N *= 2;
         Assert(this->N <= 2048);
-        this->logger << "[ChebyshevEvolver::prepareFor] Trying " << this->N << "... " << std::flush;
+        this->logger.info() << "Trying " << this->N << "... " << std::flush;
         evolvedState = this->evolveState(initialState);
         normLeakage = std::abs(initialNorm - arma::norm(evolvedState));
+        Assert(!std::isnan(normLeakage));
         this->logger << "Norm leakage: " << normLeakage << std::endl;
     } while (normLeakage > MAXIMAL_NORM_LEAKAGE);
 
@@ -120,9 +121,10 @@ void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
     do {
         std::size_t midN = (minN + maxN) / 2;
         this->N = midN;
-        this->logger << "[ChebyshevEvolver::prepareFor] Trying " << this->N << "... " << std::flush;
+        this->logger.info() << "Trying " << this->N << "... " << std::flush;
         evolvedState = this->evolveState(initialState);
         normLeakage = std::abs(initialNorm - arma::norm(evolvedState));
+        Assert(!std::isnan(normLeakage));
         this->logger << "Norm leakage: " << normLeakage << std::endl;
 
         if (normLeakage <= MAXIMAL_NORM_LEAKAGE)
@@ -131,7 +133,7 @@ void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
             minN = midN;
     } while (maxN - minN > 1);
 
-    this->logger << "[ChebyshevEvolver::prepareFor] Optimal orders needed: " << N << std::endl;
+    this->logger.info() << "Optimal orders needed: " << N << std::endl;
 }
 
 /**
@@ -142,7 +144,7 @@ void ChebyshevEvolver::findSpectrumRange() {
     std::size_t numEigvals = std::min<std::size_t>(MIN_EIGVAL, this->hamiltonian.n_rows - 1);
 
     arma::vec minEigval, maxEigval;
-    this->logger << "[ChebyshevEvolver::findSpectrumRange] Calculating Emin... " << std::flush;
+    this->logger.info() << "Calculating Emin... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     Assert(arma::eigs_sym(minEigval, this->hamiltonian, numEigvals, "sa"));
@@ -169,7 +171,7 @@ const arma::cx_vec &ChebyshevEvolver::getCurrentState() const {
     return this->currentState;
 }
 
-ChebyshevEvolver::ChebyshevEvolver(const arma::sp_mat &hamiltonian, std::ostream &logger)
+ChebyshevEvolver::ChebyshevEvolver(const arma::sp_mat &hamiltonian, Logger &logger)
         : hamiltonian{hamiltonian}, logger{logger}
 {
     this->findSpectrumRange();

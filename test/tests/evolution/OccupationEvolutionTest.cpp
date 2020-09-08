@@ -22,7 +22,8 @@ TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
                                            { 1/sq2, -1/sq2,      0,       0},
                                            { 1/sq6,  1/sq6, -2/sq6,       0},
                                            {1/sq12, 1/sq12, 1/sq12, -3/sq12}}, fockBase);
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
     EDEvolver evolver(eigensystem);
 
     // The values were calculated in Mathematica by creating hamiltonian in Fock basis from eigenvectors and
@@ -61,7 +62,8 @@ TEST_CASE("OccupationEvolution: 2 bosons 2 sites") {
                                         {-6, 3,  2},
                                         { 2, 6, -3}}, fockBase);
     EDEvolver evolver(eigensystem);
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
 
     OccupationEvolution occupationEvolution(fockBase);

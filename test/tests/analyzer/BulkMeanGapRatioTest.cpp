@@ -15,7 +15,8 @@ TEST_CASE("BulkMeanGapRatio: names") {
 TEST_CASE("BulkMeanGapRatio: single set") {
     // bins: [0, 0.5], [0.5, 1.0]
     BulkMeanGapRatio bmgr(2);
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     // for [0, 0.5] => mean{ (0.05 - 0)/(0.25 - 0.05) = 0.25, (0.25 - 0.05)/(0.75 - 0.25) = 0.4 } = 0.325
     // for [0.5, 1] => (1.0 - 0.75)/(0.75 - 0.25) = 0.5
@@ -29,7 +30,8 @@ TEST_CASE("BulkMeanGapRatio: single set") {
 TEST_CASE("BulkMeanGapRatio: 2 sets") {
     // bins: [0, 0.5], [0.5, 1.0]
     BulkMeanGapRatio bmgr(2);
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     // Two eigensystems with "opposite gaps", averaging in both bins to
     // mean{ (0.8 - 0.4)/(0.4 - 0) = 1, (1.0 - 0.8)/(0.8 - 0.4) = 0.5 } = 0.75

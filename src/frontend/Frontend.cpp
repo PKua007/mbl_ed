@@ -117,7 +117,8 @@ void Frontend::ed(int argc, char **argv) {
     simulationsSpan.total = params.totalSimulations;
     RestorableSimulationExecutor restorableSimulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
                                                               params.splitWorkload);
-    restorableSimulationExecutor.performSimulations(simulation, params.seed, std::cout);
+    Logger logger(std::cout);
+    restorableSimulationExecutor.performSimulations(simulation, params.seed, logger);
 
     // Save results
     if (restorableSimulationExecutor.shouldSaveSimulation()) {
@@ -204,6 +205,7 @@ void Frontend::analyze(int argc, char **argv) {
     if (energiesFilenames.empty())
         die("No eigenenergy files were found.");
 
+    Logger logger(std::cout);
     for (const auto &energiesFilename : energiesFilenames) {
         std::ifstream energiesFile(energiesFilename);
         if (!energiesFile)
@@ -211,7 +213,7 @@ void Frontend::analyze(int argc, char **argv) {
 
         Eigensystem eigensystem;
         eigensystem.restore(energiesFile, base);
-        analyzer->analyze(eigensystem, std::cout);
+        analyzer->analyze(eigensystem, logger);
     }
 
     // Save results
@@ -353,8 +355,9 @@ void Frontend::chebyshev(int argc, char **argv) {
         );
     }
 
-    simulationExecutor.performSimulations(*evolution, params.seed, std::cout);
-    evolution->printQuenchInfo(std::cout);
+    Logger logger(std::cout);
+    simulationExecutor.performSimulations(*evolution, params.seed, logger);
+    evolution->printQuenchInfo(logger);
 
     if (simulationExecutor.shouldSaveSimulation()) {
         std::string resultsFilename = params.getOutputFileSignatureWithRange() + "_evolution.txt";
@@ -458,7 +461,8 @@ void Frontend::quench(int argc, char **argv) {
     QuenchDataSimulation simulation(std::move(initialHamiltonianGenerator), std::move(initialRnd),
                                     std::move(finalHamiltonianGenerator), std::move(finalRnd),
                                     std::move(averagingModel), std::move(quenchCalculator));
-    simulationExecutor.performSimulations(simulation, params.seed, std::cout);
+    Logger logger(std::cout);
+    simulationExecutor.performSimulations(simulation, params.seed, logger);
 
     // Save results
     if (simulationExecutor.shouldSaveSimulation()) {

@@ -9,6 +9,7 @@
 #include <filesystem>
 
 #include "RestorableSimulation.h"
+#include "utils/Logger.h"
 
 /**
  * @brief A class performing a span of simulations, which can restore their state after an interruption and managing
@@ -46,13 +47,13 @@ private:
     void storeSimulations(const RestorableSimulation &simulation, std::ostream &binaryOut,
                           const SimulationStatus &simulationStatus) const;
     void superviseSimulationsSplit(RestorableSimulation &simulation, const std::string &stateFilename,
-                                   std::ostream &logger);
+                                   Logger &logger);
 
     void doPerformSimulations(RestorableSimulation &simulation, const SimulationsSpan &actualSpan,
-                              const std::string &stateFilename, std::ostream &logger) const;
+                              const std::string &stateFilename, Logger &logger) const;
 
     [[nodiscard]] SimulationStatus tryRestoringSimulation(RestorableSimulation &simulation,
-                                                          const std::string &stateFilename, std::ostream &logger) const;
+                                                          const std::string &stateFilename, Logger &logger) const;
 
     [[nodiscard]] bool joinAllRestoredSimulations(RestorableSimulation &simulation,
                                                   const std::vector<StateFileData> &stateFileDatas) const;
@@ -96,7 +97,7 @@ public:
      * or broken ranges.
      * </ul>
      */
-    void performSimulations(RestorableSimulation &simulation, unsigned long seed, std::ostream &logger);
+    void performSimulations(RestorableSimulation &simulation, unsigned long seed, Logger &logger);
 
     /**
      * @brief After invoking performSimulations(), it indicates, weather results should be saved of they are not ready.

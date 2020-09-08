@@ -9,6 +9,7 @@
 
 #include "Restorable.h"
 #include "SimulationsSpan.h"
+#include "utils/Logger.h"
 
 /**
  * @brief An interface for a simulation accepted by RestorableSimulationExecutor.
@@ -28,7 +29,7 @@ public:
      * values of @a totalSimulations, with @a simulationsIndex < @a totalSimulations. However calling clear() should
      * allow another set ot potentially different simmulations.
      */
-    virtual void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, std::ostream &logger) = 0;
+    virtual void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, Logger &logger) = 0;
 
     /**
      * @brief Return discernable class tag name used for state file name.

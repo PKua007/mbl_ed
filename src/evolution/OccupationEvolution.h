@@ -12,6 +12,7 @@
 #include "core/FockBase.h"
 #include "Evolver.h"
 #include "EvolutionTimeSegment.h"
+#include "utils/Logger.h"
 
 /**
  * @brief The class performing time evolution of @f$ \left< \hat{n}_i \right> @f$ and
@@ -55,7 +56,7 @@ private:
     void prepareNumOfParticlesObservables();
     void prepareNumOfParticlesSquaredObservables();
     [[nodiscard]] std::vector<Occupations> performTimeSegmentEvolution(std::size_t numSteps, Evolver &evolver,
-                                                                       std::ostream &logger);
+                                                                       Logger &logger);
 
 public:
     explicit OccupationEvolution(std::shared_ptr<FockBase> fockBase);
@@ -70,7 +71,7 @@ public:
      */
     [[nodiscard]] std::vector<Occupations> perform(const std::vector<EvolutionTimeSegment> &timeSegmentation,
                                                    const arma::cx_vec &initialState, Evolver &evolver,
-                                                   std::ostream &logger);
+                                                   Logger &logger);
 };
 
 

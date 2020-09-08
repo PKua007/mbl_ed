@@ -11,7 +11,7 @@
 #include "CDF.h"
 #include "simulation/RestorableHelper.h"
 
-void CDF::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+void CDF::analyze(const Eigensystem &eigensystem, Logger &logger) {
     static_cast<void>(logger);
 
     for (auto &cdfEntry : this->cdfTable)

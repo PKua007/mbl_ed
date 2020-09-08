@@ -8,6 +8,8 @@
 
 #include "Evolver.h"
 
+#include "utils/Logger.h"
+
 /**
  * @brief Evolver usign Chebyshev expansion technique from paper:
  * <em>Many-body localization in presence of cavity mediated long-range interactions</em>
@@ -23,7 +25,7 @@ private:
     double dt{};
     std::size_t currentStep{};
     std::size_t maxSteps{};
-    std::ostream &logger;
+    Logger &logger;
 
     static constexpr std::size_t MIN_EIGVAL = 20;
     static constexpr double MAXIMAL_NORM_LEAKAGE = 1e-12;
@@ -36,7 +38,7 @@ public:
     /**
      * @brief Constructs the evolver which will be using given @a hamiltonian
      */
-    ChebyshevEvolver(const arma::sp_mat &hamiltonian, std::ostream &logger);
+    ChebyshevEvolver(const arma::sp_mat &hamiltonian, Logger &logger);
 
     void prepareFor(const arma::cx_vec &initialState, double maxTime, std::size_t maxSteps_) override;
     void evolve() override;

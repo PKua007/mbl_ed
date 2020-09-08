@@ -70,12 +70,12 @@ public:
      * @details Quench is performed by finding the ground state of the initial hamiltonian and calculating its energy
      * and spread for the final hamiltonian. Hamiltonian is prepared using AveragingModel passed in the constructor.
      */
-    void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, std::ostream &logger) override {
+    void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, Logger &logger) override {
         Expects(totalSimulations > 0);
         Expects(simulationIndex < totalSimulations);
 
         arma::wall_clock timer;
-        logger << "[QuenchDataSimulator::perform] Performing quench " << simulationIndex << "... " << std::flush;
+        logger.info() << "Performing quench " << simulationIndex << "... " << std::flush;
         timer.tic();
 
         this->averagingModel->setupHamiltonianGenerator(*this->initialHamiltonianGenerator, *this->initialRnd,

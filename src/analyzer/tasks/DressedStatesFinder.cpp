@@ -9,7 +9,7 @@
 
 #include "utils/Assertions.h"
 
-void DressedStatesFinder::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+void DressedStatesFinder::analyze(const Eigensystem &eigensystem, Logger &logger) {
     Expects(eigensystem.hasEigenvectors());
     Expects(eigensystem.hasFockBase());
 

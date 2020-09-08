@@ -8,7 +8,7 @@
 #include "core/Eigensystem.h"
 #include "utils/Assertions.h"
 
-void EDCorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+void EDCorrelationsTimeEvolution::analyze(const Eigensystem &eigensystem, Logger &logger) {
     EDEvolver evolver(eigensystem);
     this->correlationsTimeEvolution.addEvolution(evolver, logger);
 }

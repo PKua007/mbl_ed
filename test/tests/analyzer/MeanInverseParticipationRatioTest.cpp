@@ -35,7 +35,8 @@ TEST_CASE("MeanInverseParticipationRatio: single energy set") {
              {1,   1,   0,  1./3,  1./2,          0,   1,   1},
              {1,   1,   0,     0,     0,          0,   1,   1},
              {1,   1,   0, -1./3,     0, -M_SQRT1_2,   1,   1}});
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
     ratioCalculator.analyze(eigensystem, logger);
 
     // (   ( (1)^4 )^(-1)
@@ -47,7 +48,8 @@ TEST_CASE("MeanInverseParticipationRatio: single energy set") {
 
 TEST_CASE("MeanInverseParticipationRatio: calculating mean") {
     MeanInverseParticipationRatio ratioCalculator(0.5, 0.2);
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     ratioCalculator.analyze(Eigensystem(
             { 0, 0.4, 1},
@@ -68,7 +70,8 @@ TEST_CASE("MeanInverseParticipationRatio: calculating mean") {
 }
 
 TEST_CASE("MeanInverseParticipationRatio: requires eigenvectors") {
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
     REQUIRE_THROWS_WITH(MeanInverseParticipationRatio(0.5, 0.1).analyze(Eigensystem({0, 1, 2, 3}), logger),
                         Catch::Contains("hasEigenvectors"));
 }

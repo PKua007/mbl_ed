@@ -100,7 +100,8 @@ TEST_CASE("ChebyshevEvolution: evolutions") {
                 .WITH(spMatApproxEqual(_1.hamiltonian, hamiltonian2) && _3.empty())
                 .IN_SEQUENCE(simulationSequence);
 
-        std::ostringstream logger;
+        std::ostringstream loggerStream;
+        Logger logger(loggerStream);
         TestChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                                          std::move(correlationsTimeEvolution));
 
@@ -157,7 +158,8 @@ TEST_CASE("ChebyshevEvolution: evolutions") {
                       _3.size() == 1 && cxVecApproxEqualVec(_3[0], quenchedState))
                 .IN_SEQUENCE(simulationSequence);
 
-        std::ostringstream logger;
+        std::ostringstream loggerStream;
+        Logger logger(loggerStream);
         TestChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                                          std::move(correlationsTimeEvolution), std::move(quenchCalculator),
                                          std::move(quenchHamiltonianGenerator), std::move(quenchRnd));
@@ -183,7 +185,8 @@ TEST_CASE("ChebyshevEvolution: clearing, storing and restoring") {
     parameters.numberOfSites = 4;
     parameters.setVectorsToEvolveFromTags({"unif"});
     auto correlationsTimeEvolution = std::make_unique<CorrelationsTimeEvolution>(parameters);
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
     ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                                  std::move(correlationsTimeEvolution));
 

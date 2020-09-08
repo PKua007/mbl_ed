@@ -41,7 +41,7 @@ private:
 
 
     auto prepareHamiltonianAndPossiblyQuenchVector(std::size_t simulationIndex, std::size_t totalSimulations,
-                                                   std::ostream &logger) const
+                                                   Logger &logger) const
     {
         std::vector<arma::cx_vec> additionalVectors;
 
@@ -105,12 +105,12 @@ public:
                                  std::move(correlationsTimeEvolution), nullptr, nullptr, nullptr)
     { }
 
-    void printQuenchInfo(std::ostream &logger) {
+    void printQuenchInfo(Logger &logger) {
         if (this->quenchCalculator != nullptr) {
-            logger << "[ChebyshevEvolution::perform] Mean quench data: epsilon: ";
-            logger << this->quenchCalculator->getMeanEpsilon() << "; avg error: ";
-            logger << this->quenchCalculator->getEpsilonAveragingSampleError() << "; quantum error: ";
-            logger << this->quenchCalculator->getLastQuenchEpsilonQuantumUncertainty() << std::endl;
+            logger.info() << "Mean quench data: epsilon: " << this->quenchCalculator->getMeanEpsilon();
+            logger << "; avg error: " << this->quenchCalculator->getEpsilonAveragingSampleError();
+            logger << "; quantum error: " << this->quenchCalculator->getLastQuenchEpsilonQuantumUncertainty();
+            logger << std::endl;
         }
     }
 
@@ -150,26 +150,26 @@ public:
             this->quenchRnd->seed(seed);
     }
 
-    void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, std::ostream &logger) override {
+    void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, Logger &logger) override {
         static_cast<void>(totalSimulations);
 
         arma::wall_clock wholeTimer;
         arma::wall_clock timer;
 
         wholeTimer.tic();
-        logger << "[ChebyshevEvolution::perform] Performing evolution " << simulationIndex << "... " << std::endl;
-        logger << "[ChebyshevEvolution::perform] Preparing hamiltonian... " << std::flush;
+        logger.info() << "Performing evolution " << simulationIndex << "... " << std::endl;
+        logger << "Preparing hamiltonian... " << std::flush;
         timer.tic();
         auto [hamiltonian, additionalVectors]
             = this->prepareHamiltonianAndPossiblyQuenchVector(simulationIndex, totalSimulations, logger);
         logger << "done (" << timer.toc() << " s)" << std::endl;
 
-        logger << "[ChebyshevEvolution::perform] Preparing evolver... " << std::endl;
+        logger.info() << "Preparing evolver... " << std::endl;
         timer.tic();
         ChebyshevEvolver_t evolver(hamiltonian, logger);
-        logger << "[ChebyshevEvolution::perform] Preparing evolver done (" << timer.toc() << " s)." << std::endl;
+        logger.info() << "Preparing evolver done (" << timer.toc() << " s)." << std::endl;
         this->correlationsTimeEvolution->addEvolution(evolver, logger, additionalVectors);
-        logger << "[ChebyshevEvolution::perform] Whole evolution took " << wholeTimer.toc() << " s." << std::endl;
+        logger.info() << "Whole evolution took " << wholeTimer.toc() << " s." << std::endl;
     }
 
     [[nodiscard]] std::string getTagName() const override {

@@ -24,7 +24,8 @@ TEST_CASE("Evolvers test") {
     hamiltonianGenerator.addHoppingTerm(std::make_unique<HubbardHop>(1));
     hamiltonianGenerator.addDiagonalTerm(std::make_unique<HubbardOnsite>(2));
     auto H = hamiltonianGenerator.generate();
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     arma::cx_vec psi0(basis->size(), arma::fill::zeros);
     psi0[0] = 1;

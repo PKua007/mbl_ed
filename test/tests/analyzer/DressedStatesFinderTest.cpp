@@ -24,7 +24,8 @@ TEST_CASE("DressedStatesFinder: single diagonalization") {
                              {0,   0,    0, M_SQRT2,  M_SQRT2}},
                             std::move(base));
     DressedStatesFinder finder(0.5, 0.8, 0.75);
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     // To sum up: we will investigate eigenvalues 0.25, 0.5, 0.75 and only first 2 will be ok (above 0.75 threshold)
     // 0.25 -> 0.8 on 3rd coeff, so 2.2
@@ -50,7 +51,8 @@ TEST_CASE("DressedStatesFinder: 2 diagonalizations") {
                               {0,  0, 1}},
                              base);
     DressedStatesFinder finder(0.5, 0.3, 0.8);
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
 
     finder.analyze(eigensystem1, logger);
     finder.analyze(eigensystem2, logger);

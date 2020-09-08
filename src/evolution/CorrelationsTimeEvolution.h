@@ -14,6 +14,7 @@
 #include "Evolver.h"
 #include "CorrelationsTimeEvolutionParameters.h"
 #include "simulation/Restorable.h"
+#include "utils/Logger.h"
 
 /**
  * @brief The class supervising the whole process of performing the evolution and calculating the observables for
@@ -63,7 +64,7 @@ public:
      * CorrelationsTimeEvolutionParameters::ExternalVector alternatives, the actual arma::cx_vec vectors should be
      * passed through @a externalVectors. The rest are FockBase::Vectors product vectors and are prepared on the go
      */
-    void addEvolution(Evolver &evolver, std::ostream &logger, const std::vector<arma::cx_vec> &externalVectors = {});
+    void addEvolution(Evolver &evolver, Logger &logger, const std::vector<arma::cx_vec> &externalVectors = {});
 
     /**
      * @brief Stores the result to @a out in the form of a table with a header.

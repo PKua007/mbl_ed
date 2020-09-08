@@ -14,7 +14,7 @@ void Analyzer::addTask(std::unique_ptr<AnalyzerTask> task) {
     this->tasks.push_back(std::move(task));
 }
 
-void Analyzer::analyze(const Eigensystem &eigensystem, std::ostream &logger) {
+void Analyzer::analyze(const Eigensystem &eigensystem, Logger &logger) {
     for (auto &task : this->tasks)
         task->analyze(eigensystem, logger);
 }

@@ -35,7 +35,8 @@ TEST_CASE("Analzer: analyze") {
     analyzer.addTask(std::move(task1));
     analyzer.addTask(std::move(task2));
     analyzer.addTask(std::move(task3));
-    std::ostringstream logger;
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);;
 
     analyzer.analyze(eigensystem, logger);
 }
