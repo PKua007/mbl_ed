@@ -14,6 +14,8 @@
 #include <sstream>
 #include <utility>
 
+#include "Utils.h"
+
 // trim from start
 std::string &ltrim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(),
@@ -71,8 +73,12 @@ std::vector<std::string> explode(const std::string &s, char delim) {
     return result;
 }
 
-void die(const std::string & reason)
-{
+void die(const std::string &reason) {
     std::cerr << reason << std::endl;
+    exit(EXIT_FAILURE);
+}
+
+void die(const std::string &reason, Logger &logger) {
+    logger.error() << reason << std::endl;
     exit(EXIT_FAILURE);
 }

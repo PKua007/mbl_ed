@@ -10,13 +10,14 @@
 
 #include "Parameters.h"
 #include "analyzer/Analyzer.h"
+#include "utils/Logger.h"
 
 /**
  * @brief Some input-output helper methods.
  */
 class IO {
 private:
-    std::ostream &logger;
+    Logger &logger;
 
     void saveOutputToFile(const std::string &header, const std::string &fields, const std::string &outputFilename);
     [[nodiscard]] std::string stringifyRow(std::vector<std::string> row) const;
@@ -30,7 +31,7 @@ public:
     /**
      * @param logger Logger used to print some info on storing/restoring stuff.
      */
-    explicit IO(std::ostream &logger) : logger{logger} { }
+    explicit IO(Logger &logger) : logger{logger} { }
 
     /**
      * @brief Loads parameters from a file named @a inputFilename in key=value format, however override some params

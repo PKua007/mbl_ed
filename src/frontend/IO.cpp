@@ -16,7 +16,7 @@ void IO::saveOutputToFile(const std::string &header, const std::string &fields, 
     bool fileExists = std::ifstream(outputFilename).is_open();
     std::ofstream output(outputFilename, std::fstream::app);
     if (!output)
-        die("Cannot open " + outputFilename + " to write analyzer output");
+        die("Cannot open " + outputFilename + " to write analyzer output", this->logger);
     if (!fileExists)
         output << header << std::endl;
 
@@ -73,7 +73,7 @@ void IO::printInlineResults(const Parameters &params, const std::vector<std::str
 {
     std::string headerRow = this->prepareInlineResultHeaderRow(paramsToPrint, additionalHeader);
     std::string fieldsRow = this->prepareInlineResultFieldsRow(params, paramsToPrint, additionalFields);
-    this->logger << std::endl << headerRow << std::endl << fieldsRow << std::endl;
+    this->logger.info() << std::endl << headerRow << std::endl << fieldsRow << std::endl;
 }
 
 void IO::storeAnalyzerResults(const Parameters &params, const Analyzer &analyzer,
@@ -85,23 +85,25 @@ void IO::storeAnalyzerResults(const Parameters &params, const Analyzer &analyzer
                                  analyzer.getInlineResultsFields(), *inlineResultFilename);
     }
 
-    this->logger << std::endl << "Storing bulk results... " << std::flush;
+    this->logger.info() << std::endl << "Storing bulk results... " << std::flush;
     analyzer.storeBulkResults(params.getOutputFileSignatureWithRange());
-    this->logger << "done." << std::endl;
+    this->logger.info() << "done." << std::endl;
 }
 
 Parameters IO::loadParameters(const std::string &inputFilename, const std::vector<std::string> &overridenParams) {
     std::ifstream paramsFile(inputFilename);
     if (!paramsFile)
-        die("Cannot open " + inputFilename + " to read parameters from.");
+        die("Cannot open " + inputFilename + " to read parameters from.", logger);
     std::stringstream paramsStream;
     paramsStream << paramsFile.rdbuf() << std::endl;
 
     for (const auto &overridenParam : overridenParams) {
         std::size_t dotPos = overridenParam.find('.');
         std::size_t equalPos = overridenParam.find('=');
-        if (equalPos == std::string::npos)
-            die("Malformed overriden param. Use: [param name]=[value] or [term name].[param name]=[value]");
+        if (equalPos == std::string::npos) {
+            die("Malformed overriden param. Use: [param name]=[value] or [term name].[param name]=[value]",
+                logger);
+        }
 
         if (dotPos == std::string::npos || dotPos > equalPos) {
             // Overriding general param
@@ -110,8 +112,10 @@ Parameters IO::loadParameters(const std::string &inputFilename, const std::vecto
             paramsStream << "[general]" << std::endl << overridenParam << std::endl;
         } else {
             // Overriding hamiltonian term param
-            if (dotPos == 0 || dotPos == overridenParam.size() - 1)
-                die("Malformed overriden param. Use: [param name]=[value] or [term name].[param name]=[value]");
+            if (dotPos == 0 || dotPos == overridenParam.size() - 1) {
+                die("Malformed overriden param. Use: [param name]=[value] or [term name].[param name]=[value]",
+                    logger);
+            }
             std::string termName = overridenParam.substr(0, dotPos);
             std::string paramName = overridenParam.substr(dotPos + 1);
             paramsStream << "[term." << termName << "]" << std::endl << paramName << std::endl;

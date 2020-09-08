@@ -68,34 +68,36 @@ void Frontend::ed(int argc, char **argv) {
         exit(0);
     }
 
+    Logger logger(std::cout);
+
     // Validate parsed options
     std::string cmd(argv[0]);
     if (argc != 1)
-        die("Unexpected positional arguments. See " + cmd + " --help");
+        die("Unexpected positional arguments. See " + cmd + " --help", logger);
     if (!parsedOptions.count("input"))
-        die("Input file must be specified with option -i [input file name]");
+        die("Input file must be specified with option -i [input file name]", logger);
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
-        die("Output directory " + directory.string() + " does not exist or is not a directory");
+        die("Output directory " + directory.string() + " does not exist or is not a directory", logger);
 
     // Prepare parameters
-    IO io(std::cout);
+    IO io(logger);
     Parameters params = io.loadParameters(inputFilename, overridenParams);
-    params.print(std::cout);
-    std::cout << std::endl;
+    params.print(logger);
+    logger << std::endl;
     for (const auto &param : paramsToPrint)
         if (!params.hasParam(param))
-            die("Parameters to print: parameter " + param + " is unknown");
+            die("Parameters to print: parameter " + param + " is unknown", logger);
 
     // OpenMP info
-    std::cout << "[Frontend::ed] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+    logger.info() << "Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    std::cout << "[Frontend::ed] Preparing Fock basis... " << std::flush;
+    logger.info() << "Preparing Fock basis... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-    std::cout << "done (" << timer.toc() << " s)." << std::endl;
+    logger << "done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
     auto rnd = std::make_unique<RND>();
@@ -117,7 +119,6 @@ void Frontend::ed(int argc, char **argv) {
     simulationsSpan.total = params.totalSimulations;
     RestorableSimulationExecutor restorableSimulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
                                                               params.splitWorkload);
-    Logger logger(std::cout);
     restorableSimulationExecutor.performSimulations(simulation, params.seed, logger);
 
     // Save results
@@ -170,46 +171,47 @@ void Frontend::analyze(int argc, char **argv) {
         exit(0);
     }
 
+    Logger logger(std::cout);
+
     // Validate options
     std::string cmd(argv[0]);
     if (argc != 1)
-        die("Unexpected positional arguments. See " + cmd + " --help");
+        die("Unexpected positional arguments. See " + cmd + " --help", logger);
     if (!parsedOptions.count("input"))
-        die("Input file must be specified with option -i [input file name]");
+        die("Input file must be specified with option -i [input file name]", logger);
     if (!parsedOptions.count("task"))
-        die("At least 1 analyzer task must be specified with option -t [task parameters]");
+        die("At least 1 analyzer task must be specified with option -t [task parameters]", logger);
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
-        die("Directory " + directory.string() + " does not exist or is not a directory");
+        die("Directory " + directory.string() + " does not exist or is not a directory", logger);
 
     // Load parameters
-    IO io(std::cout);
+    IO io(logger);
     Parameters params = io.loadParameters(inputFilename, overridenParams);
-    params.print(std::cout);
-    std::cout << std::endl;
+    params.print(logger);
+    logger << std::endl;
     for (const auto &param : paramsToPrint)
         if (!params.hasParam(param))
-            die("Parameters to print: parameter " + param + " is unknown");
+            die("Parameters to print: parameter " + param + " is unknown", logger);
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    std::cout << "[Frontend::analyze] Preparing Fock basis... " << std::flush;
+    logger.info() << "Preparing Fock basis... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-    std::cout << "done (" << timer.toc() << " s)." << std::endl;
+    logger << "done (" << timer.toc() << " s)." << std::endl;
 
     // Load eigenenergies and analyze them
     auto analyzer = AnalyzerBuilder{}.build(tasks, params, base);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())
-        die("No eigenenergy files were found.");
+        die("No eigenenergy files were found.", logger);
 
-    Logger logger(std::cout);
     for (const auto &energiesFilename : energiesFilenames) {
         std::ifstream energiesFile(energiesFilename);
         if (!energiesFile)
-            die("Cannot open " + energiesFilename + " to read eigenenergies from");
+            die("Cannot open " + energiesFilename + " to read eigenenergies from", logger);
 
         Eigensystem eigensystem;
         eigensystem.restore(energiesFile, base);
@@ -263,28 +265,30 @@ void Frontend::chebyshev(int argc, char **argv) {
         exit(0);
     }
 
+    Logger logger(std::cout);
+
     // Validate parsed options - input file
     std::string cmd(argv[0]);
     if (argc != 1)
-        die("Unexpected positional arguments. See " + cmd + " --help");
+        die("Unexpected positional arguments. See " + cmd + " --help", logger);
     if (!parsedOptions.count("input"))
-        die("Input file must be specified with option -i [input file name]");
+        die("Input file must be specified with option -i [input file name]", logger);
 
     // Prepare parameters
-    IO io(std::cout);
+    IO io(logger);
     Parameters params = io.loadParameters(inputFilename, overridenParamsEntries);
-    params.print(std::cout);
-    std::cout << std::endl;
+    params.print(logger);
+    logger << std::endl;
 
     // Validate rest of the options
     if (!parsedOptions.count("time_segmentation"))
-        die("You have to specify max evolution time using -t [max time]");
+        die("You have to specify max evolution time using -t [max time]", logger);
     if (!parsedOptions.count("margin"))
-        die("You have to specify margin size using -m [margin size]");
+        die("You have to specify margin size using -m [margin size]", logger);
     if (marginSize * 2 > params.K - 2)
-        die("Margin is too big - there should be at least 2 sites left.");
+        die("Margin is too big - there should be at least 2 sites left.", logger);
     if (!parsedOptions.count("vectors") && !parsedOptions.count("quench_param"))
-        die("You have to specify space vectors to evolve using -v [unif/dw/1.0.4.0] or/and via quench -q");
+        die("You have to specify space vectors to evolve using -v [unif/dw/1.0.4.0] or/and via quench -q", logger);
     // Validation of vectors is done later
 
     // Prepare quench parameters, if desired
@@ -295,22 +299,22 @@ void Frontend::chebyshev(int argc, char **argv) {
                                               quenchParamsEntries.end());
         quenchParams = io.loadParameters(inputFilename, overridenAndQuenchParamEntries);
 
-        std::cout << "[Frontend::chebyshev] Together with vectors specified by -v, evolution will be performed ";
-        std::cout << "for a state quenched from initial Hamiltonian:" << std::endl;
-        quenchParams->printHamiltonianTerms(std::cout);
-        std::cout << std::endl;
+        logger.info() << "Together with vectors specified by -v, evolution will be performed for a state quenched ";
+        logger << "from initial Hamiltonian:" << std::endl;
+        quenchParams->printHamiltonianTerms(logger);
+        logger << std::endl;
     }
 
     // OpenMP info
-    std::cout << "[Frontend::chebyshev] Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+    logger.info() << "Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
     // Prepare FockBasis
     FockBaseGenerator baseGenerator;
-    std::cout << "[Frontend::chebyshev] Preparing Fock basis... " << std::flush;
+    logger.info() << "Preparing Fock basis... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-    std::cout << "done (" << timer.toc() << " s)." << std::endl;
+    logger << "done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
     auto rnd = std::make_unique<RND>();
@@ -355,7 +359,6 @@ void Frontend::chebyshev(int argc, char **argv) {
         );
     }
 
-    Logger logger(std::cout);
     simulationExecutor.performSimulations(*evolution, params.seed, logger);
     evolution->printQuenchInfo(logger);
 
@@ -363,7 +366,7 @@ void Frontend::chebyshev(int argc, char **argv) {
         std::string resultsFilename = params.getOutputFileSignatureWithRange() + "_evolution.txt";
         std::ofstream resultsFile(resultsFilename);
         evolution->storeResults(resultsFile);
-        std::cout << "[Frontend::chebyshev] Observables stored to " << resultsFilename << std::endl;
+        logger.info() << "Observables stored to " << resultsFilename << std::endl;
     }
 }
 
@@ -402,45 +405,47 @@ void Frontend::quench(int argc, char **argv) {
         exit(0);
     }
 
+    Logger logger(std::cout);
+
     // Validate parsed options
     std::string cmd(argv[0]);
     if (argc != 1)
-        die("Unexpected positional arguments. See " + cmd + " --help");
+        die("Unexpected positional arguments. See " + cmd + " --help", logger);
     if (!parsedOptions.count("input"))
-        die("Input file must be specified with option -i [input file name]");
+        die("Input file must be specified with option -i [input file name]", logger);
     if (quenchParamsEntries.empty())
-        die("At least one parameter should be specified for quantum quench");
+        die("At least one parameter should be specified for quantum quench", logger);
 
     // Prepare quench (initial) parameters
-    IO io(std::cout);
+    IO io(logger);
     std::vector<std::string> overridenAndQuenchParamEntries = overridenParamsEntries;
     overridenAndQuenchParamEntries.insert(overridenAndQuenchParamEntries.end(), quenchParamsEntries.begin(),
                                           quenchParamsEntries.end());
     Parameters quenchParams = io.loadParameters(inputFilename, overridenAndQuenchParamEntries);
     for (const auto &param : paramsToPrint)
         if (!quenchParams.hasParam(param))
-            die("Parameters to print: parameter " + param + " is unknown");
+            die("Parameters to print: parameter " + param + " is unknown", logger);
 
     // Prepare (final) parameters
     Parameters params = io.loadParameters(inputFilename, overridenParamsEntries);
 
     // Print info on prameters and initial and final Hamiltonians
-    params.printGeneral(std::cout);
-    std::cout << std::endl;
-    std::cout << "[Frontend::quench] Initial Hamiltonian:" << std::endl;
-    quenchParams.printHamiltonianTerms(std::cout);
-    std::cout << std::endl;
-    std::cout << "[Frontend::quench] Final Hamiltonian:" << std::endl;
+    params.printGeneral(logger);
+    logger << std::endl;
+    logger.info() << "Initial Hamiltonian:" << std::endl;
+    quenchParams.printHamiltonianTerms(logger);
+    logger << std::endl;
+    logger.info() << "Final Hamiltonian:" << std::endl;
     params.printHamiltonianTerms(std::cout);
-    std::cout << std::endl;
+    logger << std::endl;
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    std::cout << "[Frontend::quench] Preparing Fock basis... " << std::flush;
+    logger.info() << "Preparing Fock basis... " << std::flush;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-    std::cout << "done (" << timer.toc() << " s)." << std::endl;
+    logger << "done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare initial and final HamiltonianGenerator
     auto initialRnd = std::make_unique<RND>();
@@ -461,7 +466,6 @@ void Frontend::quench(int argc, char **argv) {
     QuenchDataSimulation simulation(std::move(initialHamiltonianGenerator), std::move(initialRnd),
                                     std::move(finalHamiltonianGenerator), std::move(finalRnd),
                                     std::move(averagingModel), std::move(quenchCalculator));
-    Logger logger(std::cout);
     simulationExecutor.performSimulations(simulation, params.seed, logger);
 
     // Save results

@@ -12,6 +12,8 @@
 #include <iosfwd>
 #include <vector>
 
+#include "Logger.h"
+
 // trim from start
 std::string &ltrim(std::string &s);
 
@@ -30,6 +32,7 @@ bool endsWith(const std::string& str, const std::string& suffix);
 bool startsWith(const std::string& str, const std::string& prefix);
 int lastIndexOf(const std::string &s, char target);
 
-void die(const std::string & reason);
+void die(const std::string &reason);
+void die(const std::string &reason, Logger &logger);
 
 #endif /* UTILS_C_ */
