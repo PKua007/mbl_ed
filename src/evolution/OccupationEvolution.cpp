@@ -16,7 +16,7 @@ OccupationEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSegmen
     std::vector<Occupations> occupationEvolution;
     double lastMaxTime{};
     for (const auto &timeSegment : timeSegmentation) {
-        logger.info() << "Calculating evolution operator... " << std::endl;
+        logger.verbose() << "Calculating evolution operator... " << std::endl;
         arma::wall_clock timer;
         timer.tic();
         evolver.prepareFor(evolvedState, timeSegment.maxTime - lastMaxTime, timeSegment.numSteps);
@@ -45,8 +45,9 @@ OccupationEvolution::performTimeSegmentEvolution(std::size_t numSteps, Evolver &
     std::size_t numberOfSites = this->fockBase->getNumberOfSites();
     std::vector<Occupations> observablesEvolution = this->prepareOccupationVector(numSteps, numberOfSites);
     for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {
-        logger.info() << "Calculating expectation values for step ";
-        logger << this->timeStep << ", time " << this->time << "... " << std::flush;
+        logger.verbose() << "Calculating expectation values for step " << this->timeStep << ", time " << this->time;
+        logger << " and state evolution started..." << std::endl;
+
         timer.tic();
         for (std::size_t site{}; site < numberOfSites; site++) {
             observablesEvolution[timeIdx].numParticles[site]
@@ -60,11 +61,14 @@ OccupationEvolution::performTimeSegmentEvolution(std::size_t numSteps, Evolver &
                                                        evolver.getCurrentState());
             }
         }
-        logger << "done (" << timer.toc() << " s). Evolving the state... " << std::flush;
+        double observablesTime = timer.toc();
 
         timer.tic();
         evolver.evolve();
-        logger << "done (" << timer.toc() << " s)." << std::endl;
+        double evolutionTime = timer.toc();
+
+        logger.info() << "Calculating step " << this->timeStep << ", time " << this->time << " done (observables: ";
+        logger << observablesTime << " s, state evolution: " << evolutionTime << " s)." << std::endl;
 
         this->timeStep++;
         this->time += evolver.getDt();

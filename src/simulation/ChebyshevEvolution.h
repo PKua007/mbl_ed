@@ -62,8 +62,9 @@ private:
             std::copy(quenchedStateDouble.begin(), quenchedStateDouble.end(), quenchedState.begin());
             additionalVectors.push_back(quenchedState);
 
-            logger << "quenched state epsilon: " << this->quenchCalculator->getLastQuenchEpsilon();
+            logger.info() << "Quenched state epsilon: " << this->quenchCalculator->getLastQuenchEpsilon();
             logger << "; quantum error: " << this->quenchCalculator->getLastQuenchEpsilonQuantumUncertainty() << ". ";
+            logger << std::endl;
         }
         return std::make_pair(hamiltonian, additionalVectors);
     }
@@ -158,13 +159,13 @@ public:
 
         wholeTimer.tic();
         logger.info() << "Performing evolution " << simulationIndex << "... " << std::endl;
-        logger << "Preparing hamiltonian... " << std::flush;
+        logger.verbose() << "Preparing hamiltonian started... " << std::endl;
         timer.tic();
         auto [hamiltonian, additionalVectors]
             = this->prepareHamiltonianAndPossiblyQuenchVector(simulationIndex, totalSimulations, logger);
-        logger << "done (" << timer.toc() << " s)" << std::endl;
+        logger.info() << "Preparing hamiltonian done (" << timer.toc() << " s)" << std::endl;
 
-        logger.info() << "Preparing evolver... " << std::endl;
+        logger.verbose() << "Preparing evolver started... " << std::endl;
         timer.tic();
         ChebyshevEvolver_t evolver(hamiltonian, logger);
         logger.info() << "Preparing evolver done (" << timer.toc() << " s)." << std::endl;

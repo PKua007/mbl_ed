@@ -108,11 +108,10 @@ void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
     do {
         this->N *= 2;
         Assert(this->N <= 2048);
-        this->logger.info() << "Trying " << this->N << "... " << std::flush;
         evolvedState = this->evolveState(initialState);
         normLeakage = std::abs(initialNorm - arma::norm(evolvedState));
         Assert(!std::isnan(normLeakage));
-        this->logger << "Norm leakage: " << normLeakage << std::endl;
+        this->logger.info() << "Trying " << this->N << "... Norm leakage: " << normLeakage << std::endl;
     } while (normLeakage > MAXIMAL_NORM_LEAKAGE);
 
     // Now, find optimal order using bisection
@@ -121,11 +120,10 @@ void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
     do {
         std::size_t midN = (minN + maxN) / 2;
         this->N = midN;
-        this->logger.info() << "Trying " << this->N << "... " << std::flush;
         evolvedState = this->evolveState(initialState);
         normLeakage = std::abs(initialNorm - arma::norm(evolvedState));
         Assert(!std::isnan(normLeakage));
-        this->logger << "Norm leakage: " << normLeakage << std::endl;
+        this->logger.info() << "Trying " << this->N << "... Norm leakage: " << normLeakage << std::endl;
 
         if (normLeakage <= MAXIMAL_NORM_LEAKAGE)
             maxN = midN;
@@ -142,20 +140,24 @@ void ChebyshevEvolver::optimizeOrder(const arma::cx_vec &initialState) {
  */
 void ChebyshevEvolver::findSpectrumRange() {
     std::size_t numEigvals = std::min<std::size_t>(MIN_EIGVAL, this->hamiltonian.n_rows - 1);
-
     arma::vec minEigval, maxEigval;
-    this->logger.info() << "Calculating Emin... " << std::flush;
+    this->logger.verbose() << "Calculating spectrum bounds started... " << std::endl;
+
     arma::wall_clock timer;
     timer.tic();
     Assert(arma::eigs_sym(minEigval, this->hamiltonian, numEigvals, "sa"));
-    this->logger << "done (" << timer.toc() << " s). Emax... " << std::flush;
+    double EminTime = timer.toc();
+
     timer.tic();
     Assert(arma::eigs_sym(maxEigval, this->hamiltonian, numEigvals, "la"));
-    this->logger << "done (" << timer.toc() << " s). " << std::endl;
+    double EmaxTime = timer.toc();
+
     double Emin = minEigval.front();
     double Emax = maxEigval.back();
     this->a = (Emax - Emin) / 2;
     this->b = (Emax + Emin) / 2;
+    this->logger.info() << "Calculating spectrum range done (Emin: " << EminTime << " s, ";
+    this->logger << "Emax: " << EmaxTime << " s)." << std::endl;
 }
 
 void ChebyshevEvolver::evolve() {

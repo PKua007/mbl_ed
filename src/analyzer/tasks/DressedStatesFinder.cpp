@@ -32,7 +32,7 @@ void DressedStatesFinder::analyze(const Eigensystem &eigensystem, Logger &logger
         }
     }
 
-    logger << "Found " << numOfStatesFound << "/" << indices.size() << " dressed states. " << std::flush;
+    logger.info() << "Found " << numOfStatesFound << "/" << indices.size() << " dressed states. " << std::endl;
     this->simulationIdx++;
 }
 

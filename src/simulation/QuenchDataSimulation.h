@@ -75,7 +75,7 @@ public:
         Expects(simulationIndex < totalSimulations);
 
         arma::wall_clock timer;
-        logger.info() << "Performing quench " << simulationIndex << "... " << std::flush;
+        logger.verbose() << "Performing quench " << simulationIndex << " started... " << std::endl;
         timer.tic();
 
         this->averagingModel->setupHamiltonianGenerator(*this->initialHamiltonianGenerator, *this->initialRnd,
@@ -87,7 +87,8 @@ public:
 
         this->quenchCalculator->addQuench(initialHamiltonian, finalHamiltonian);
 
-        logger << "done (" << timer.toc() << " s). epsilon: " << this->quenchCalculator->getLastQuenchEpsilon();
+        logger.info() << "Performing quench " << simulationIndex << " done (" << timer.toc() << " s). ";
+        logger << "epsilon: " << this->quenchCalculator->getLastQuenchEpsilon();
         logger << "; quantum error: " << this->quenchCalculator->getLastQuenchEpsilonQuantumUncertainty();
         logger << std::endl;
     }

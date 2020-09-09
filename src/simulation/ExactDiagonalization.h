@@ -98,19 +98,23 @@ public:
      * <p> Eigenenergy files will be named `[Parameter::fileSignature]_[simulation index]_ngr.txt`.
      */
     void performSimulation(std::size_t simulationIndex, std::size_t totalSimulations, Logger &logger) override {
-        logger.info() << "Performing diagonalization " << simulationIndex << "... " << std::flush;
+        logger.verbose() << "Performing diagonalization " << simulationIndex << " started..." << std::endl;
         arma::wall_clock timer;
         timer.tic();
         this->averagingModel->setupHamiltonianGenerator(*this->hamiltonianGenerator, *this->rnd, simulationIndex,
                                                         totalSimulations);
         Eigensystem eigensystem = this->hamiltonianGenerator->calculateEigensystem(this->params.calculateEigenvectors);
-        logger << "done (" << timer.toc() << " s). Analyzing... " << std::flush;
+        double diagonalizationTime = timer.toc();
 
+        logger.verbose() << "Performing analysis started..." << std::endl;
         timer.tic();
         this->analyzer->analyze(eigensystem, logger);
         if (this->params.saveEigenenergies)
             this->doSaveEigenenergies(eigensystem, simulationIndex);
-        logger << "done (" << timer.toc() << " s)." << std::endl;
+        double analyzingTime = timer.toc();
+
+        logger.info() << "Diagonalization " << simulationIndex << " done (diagonalization: " << diagonalizationTime;
+        logger << "s, analysis: " << analyzingTime << " s)." << std::endl;
     }
 
     [[nodiscard]] std::string getTagName() const override {

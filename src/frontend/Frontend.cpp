@@ -94,11 +94,11 @@ void Frontend::ed(int argc, char **argv) {
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    logger.info() << "Preparing Fock basis... " << std::flush;
+    logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-    logger << "done (" << timer.toc() << " s)." << std::endl;
+    logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
     auto rnd = std::make_unique<RND>();
@@ -209,11 +209,11 @@ void Frontend::analyze(int argc, char **argv) {
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    logger.info() << "Preparing Fock basis... " << std::flush;
+    logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-    logger << "done (" << timer.toc() << " s)." << std::endl;
+    logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Load eigenenergies and analyze them
     auto analyzer = AnalyzerBuilder{}.build(tasks, params, base);
@@ -327,11 +327,11 @@ void Frontend::chebyshev(int argc, char **argv) {
 
     // Prepare FockBasis
     FockBaseGenerator baseGenerator;
-    logger.info() << "Preparing Fock basis... " << std::flush;
+    logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-    logger << "done (" << timer.toc() << " s)." << std::endl;
+    logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
     auto rnd = std::make_unique<RND>();
@@ -461,11 +461,11 @@ void Frontend::quench(int argc, char **argv) {
 
     // Generate Fock basis
     FockBaseGenerator baseGenerator;
-    logger.info() << "Preparing Fock basis... " << std::flush;
+    logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
     auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
-    logger << "done (" << timer.toc() << " s)." << std::endl;
+    logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare initial and final HamiltonianGenerator
     auto initialRnd = std::make_unique<RND>();
