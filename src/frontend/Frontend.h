@@ -20,7 +20,7 @@ class Frontend {
 private:
     std::ostream &out;
 
-    void setOverridenParamsAsAdditionalText(Logger &logger, const std::vector<std::string> &overridenParams) const;
+    void setOverridenParamsAsAdditionalText(Logger &logger, std::vector<std::string> overridenParams) const;
 
 public:
     explicit Frontend(std::ostream &out) : out{out} { }

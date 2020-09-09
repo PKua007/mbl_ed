@@ -134,10 +134,16 @@ void Frontend::ed(int argc, char **argv) {
     }
 }
 
-void Frontend::setOverridenParamsAsAdditionalText(Logger &logger, const std::vector<std::string> &overridenParams) const
-{
+void Frontend::setOverridenParamsAsAdditionalText(Logger &logger, std::vector<std::string> overridenParams) const {
     if (overridenParams.empty())
         return;
+
+    for (auto &param : overridenParams) {
+        std::regex pattern(R"([a-zA-Z0-9_]+\.(.+=.+))");
+        std::string replaced = std::regex_replace(param, pattern, "$1");
+        if (!replaced.empty())
+            param = replaced;
+    }
 
     std::ostringstream additionalText;
     std::copy(overridenParams.begin(), overridenParams.end() - 1,
