@@ -45,8 +45,8 @@ OccupationEvolution::performTimeSegmentEvolution(std::size_t numSteps, Evolver &
     std::size_t numberOfSites = this->fockBase->getNumberOfSites();
     std::vector<Occupations> observablesEvolution = this->prepareOccupationVector(numSteps, numberOfSites);
     for (std::size_t timeIdx{}; timeIdx < numSteps; timeIdx++) {
-        logger.verbose() << "Calculating expectation values for step " << this->timeStep << ", time " << this->time;
-        logger << " and state evolution started..." << std::endl;
+        logger.verbose() << "Calculating step " << this->timeStep << ", time " << this->time << " started...";
+        logger << std::endl;
 
         timer.tic();
         for (std::size_t site{}; site < numberOfSites; site++) {

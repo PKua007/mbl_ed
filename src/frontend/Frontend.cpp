@@ -42,6 +42,7 @@ void Frontend::ed(int argc, char **argv) {
     std::vector<std::string> paramsToPrint;
     std::vector<std::string> onTheFlyTasks;
     std::vector<std::string> overridenParams;
+    std::string verbosity;
 
     options.add_options()
             ("h,help", "prints help for this mode")
@@ -60,7 +61,10 @@ void Frontend::ed(int argc, char **argv) {
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
                             "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
                             "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
-             cxxopts::value<std::vector<std::string>>(overridenParams));
+             cxxopts::value<std::vector<std::string>>(overridenParams))
+            ("V,verbosity", "how verbose the output should be. Allowed values, with increasing verbosity: "
+                            "error, warn, info, verbose, debug",
+             cxxopts::value<std::string>(verbosity)->default_value("info"));
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
@@ -70,6 +74,7 @@ void Frontend::ed(int argc, char **argv) {
 
     Logger logger(std::cout);
     this->setOverridenParamsAsAdditionalText(logger, overridenParams);
+    this->setVerbosityLevel(logger, verbosity);
 
     // Validate parsed options
     std::string cmd(argv[0]);
@@ -165,6 +170,7 @@ void Frontend::analyze(int argc, char **argv) {
     std::vector<std::string> tasks{};
     std::filesystem::path directory;
     std::vector<std::string> overridenParams;
+    std::string verbosity;
 
     options.add_options()
             ("h,help", "prints help for this mode")
@@ -182,7 +188,10 @@ void Frontend::analyze(int argc, char **argv) {
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
                             "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
                             "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
-             cxxopts::value<std::vector<std::string>>(overridenParams));
+             cxxopts::value<std::vector<std::string>>(overridenParams))
+            ("V,verbosity", "how verbose the output should be. Allowed values, with increasing verbosity: "
+                            "error, warn, info, verbose, debug",
+             cxxopts::value<std::string>(verbosity)->default_value("info"));
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
@@ -192,6 +201,7 @@ void Frontend::analyze(int argc, char **argv) {
 
     Logger logger(std::cout);
     this->setOverridenParamsAsAdditionalText(logger, overridenParams);
+    this->setVerbosityLevel(logger, verbosity);
 
     // Validate options
     std::string cmd(argv[0]);
@@ -257,6 +267,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     std::string timeSegmentation{};
     std::size_t marginSize{};
     std::vector<std::string> vectorsToEvolveTags;
+    std::string verbosity;
 
     options.add_options()
             ("h,help", "prints help for this mode")
@@ -277,7 +288,10 @@ void Frontend::chebyshev(int argc, char **argv) {
             ("q,quench_param", "if specified, evolution will be performed for quenched vector (together with "
                                 "those specified by --vectors). This option overrides the param as in --set_param, "
                                 "applied after --set_param, but for the separate initial Hamiltonian in quantum quench",
-             cxxopts::value<std::vector<std::string>>(quenchParamsEntries));
+             cxxopts::value<std::vector<std::string>>(quenchParamsEntries))
+            ("V,verbosity", "how verbose the output should be. Allowed values, with increasing verbosity: "
+                            "error, warn, info, verbose, debug",
+             cxxopts::value<std::string>(verbosity)->default_value("info"));
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
@@ -289,6 +303,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     std::vector allOverridenEntries(overridenParamsEntries);
     allOverridenEntries.insert(allOverridenEntries.end(), quenchParamsEntries.begin(), quenchParamsEntries.end());
     this->setOverridenParamsAsAdditionalText(logger, allOverridenEntries);
+    this->setVerbosityLevel(logger, verbosity);
 
     // Validate parsed options - input file
     std::string cmd(argv[0]);
@@ -405,6 +420,7 @@ void Frontend::quench(int argc, char **argv) {
     std::vector<std::string> overridenParamsEntries;
     std::vector<std::string> quenchParamsEntries;
     std::vector<std::string> paramsToPrint{};
+    std::string verbosity;
 
     options.add_options()
             ("h,help", "prints help for this mode")
@@ -420,7 +436,10 @@ void Frontend::quench(int argc, char **argv) {
              cxxopts::value<std::vector<std::string>>(overridenParamsEntries))
             ("q,quench_param", "overrides the param as in --set_param, applied after --set_param, but for the initial"
                                "Hamiltonian in quantum quench",
-             cxxopts::value<std::vector<std::string>>(quenchParamsEntries));
+             cxxopts::value<std::vector<std::string>>(quenchParamsEntries))
+            ("V,verbosity", "how verbose the output should be. Allowed values, with increasing verbosity: "
+                            "error, warn, info, verbose, debug",
+             cxxopts::value<std::string>(verbosity)->default_value("info"));
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
@@ -432,6 +451,7 @@ void Frontend::quench(int argc, char **argv) {
     std::vector allOverridenEntries(overridenParamsEntries);
     allOverridenEntries.insert(allOverridenEntries.end(), quenchParamsEntries.begin(), quenchParamsEntries.end());
     this->setOverridenParamsAsAdditionalText(logger, allOverridenEntries);
+    this->setVerbosityLevel(logger, verbosity);
 
     // Validate parsed options
     std::string cmd(argv[0]);
@@ -525,4 +545,19 @@ void Frontend::printGeneralHelp(const std::string &cmd) {
                  .width(80).margin(4) << std::endl;
     std::cout << std::endl;
     std::cout << "Type " + cmd + " [mode] --help to get help on the specific mode." << std::endl;
+}
+
+void Frontend::setVerbosityLevel(Logger &logger, const std::string &verbosityLevelName) const {
+    if (verbosityLevelName == "error")
+        logger.setVerbosityLevel(Logger::ERROR);
+    else if (verbosityLevelName == "warn")
+        logger.setVerbosityLevel(Logger::WARN);
+    else if (verbosityLevelName == "info")
+        logger.setVerbosityLevel(Logger::INFO);
+    else if (verbosityLevelName == "verbose")
+        logger.setVerbosityLevel(Logger::VERBOSE);
+    else if (verbosityLevelName == "debug")
+        logger.setVerbosityLevel(Logger::DEBUG);
+    else
+        die("Unknown verbosity level: " + verbosityLevelName, logger);
 }

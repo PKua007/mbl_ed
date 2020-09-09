@@ -21,6 +21,7 @@ private:
     std::ostream &out;
 
     void setOverridenParamsAsAdditionalText(Logger &logger, std::vector<std::string> overridenParams) const;
+    void setVerbosityLevel(Logger &logger, const std::string &verbosityLevelName) const;
 
 public:
     explicit Frontend(std::ostream &out) : out{out} { }
@@ -30,6 +31,7 @@ public:
     void chebyshev(int argc, char **argv);
     void quench(int argc, char **argv);
     void printGeneralHelp(const std::string &cmd);
+
 };
 
 
