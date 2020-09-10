@@ -43,7 +43,8 @@ public:
     std::size_t from = 0;
     std::size_t totalSimulations = 1;
     std::size_t seed{};
-    bool splitWorkload{};
+    bool splitWorkload = false;
+    bool secureSimulationState = true;
 
     /**
      * @brief All keys from sections @a [term.termName] are mapped to separate config under @a termName key in the map.

@@ -40,12 +40,13 @@ private:
 
     SimulationsSpan simulationsSpan;
     std::string fileSignature;
+    bool storeSimulations{};
     bool splitWorkload{};
     bool shouldSaveSimulation_{};
     std::filesystem::path workingDirectory;
 
-    void storeSimulations(const RestorableSimulation &simulation, std::ostream &binaryOut,
-                          const SimulationStatus &simulationStatus) const;
+    void doStoreSimulations(const RestorableSimulation &simulation, std::ostream &binaryOut,
+                            const SimulationStatus &simulationStatus) const;
     void superviseSimulationsSplit(RestorableSimulation &simulation, const std::string &stateFilename,
                                    Logger &logger);
 
@@ -69,10 +70,13 @@ public:
      * @param simulationsSpan The span of simulations that should be performed.
      * @param fileSignature The signature of file used for storing state files.
      * @param splitWorkload If true, the class will work in workload split mode. See performSimulations.
+     * @param secureSimulationState If false, no things connected with storing the state will be done. It must be set
+     * true if @a splitWorkload is true
      * @param workingDirectory The directory in which simulation state files will be stored/read from.
      */
     explicit RestorableSimulationExecutor(const SimulationsSpan &simulationsSpan, std::string fileSignature,
-                                          bool splitWorkload, std::filesystem::path workingDirectory = "./");
+                                          bool splitWorkload, bool secureSimulationState,
+                                          std::filesystem::path workingDirectory = "./");
 
     /**
      * @brief Intelligently perform a span of simulations.
@@ -80,10 +84,10 @@ public:
      * This is the short story.
      * <p> The long story: first of all, it checks, whether there exists a state file corresponding to this simulation
      * span. If so, it concludes, that this span was already being performed and had been interrupted. So it loads
-     * already done simulations and performs the rest. After each simulation the state is stored.
-     * Simulation::seedRandomGenerators is invoked with @a seed increased by the first simulation index to be performed.
-     * Note, that it would yield different results for interrupted vs not interrupted simulations, but it guarantees
-     * that simulations won't be repeated.
+     * already done simulations and performs the rest. After each simulation the state is stored (provided
+     * secureSimulationState was set to true). Simulation::seedRandomGenerators is invoked with @a seed increased by the
+     * first simulation index to be performed. Note, that it would yield different results for interrupted vs not
+     * interrupted simulations, but it guarantees that simulations won't be repeated.
      * <p> Later behaviour is determined by @a splitWorkload flag from the constructor. If false, the work is done,
      * state file is deleted, the method returns and shouldSaveSimulation() will return true. If the flag is true:
      * <ul>

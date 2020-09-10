@@ -41,6 +41,8 @@ Parameters::Parameters(std::istream &input) {
             this->seed = generalConfig.getUnsignedLong("seed");
         else if (key == "splitWorkload")
             this->splitWorkload = generalConfig.getBoolean("splitWorkload");
+        else if (key == "secureSimulationState")
+            this->secureSimulationState = generalConfig.getBoolean("secureSimulationState");
         else
             throw ParametersParseException("Unknown parameter " + key);
     }
@@ -71,6 +73,8 @@ void Parameters::autocompleteAndValidate() {
     Validate(this->to <= this->totalSimulations);
     Validate(N > 0);
     Validate(K > 0);
+    if (this->splitWorkload)
+        ValidateMsg(this->secureSimulationState, "If splitWorkoload = true, secureSimulationState should also be true");
 }
 
 void Parameters::printGeneral(std::ostream &out) const {
@@ -86,6 +90,7 @@ void Parameters::printGeneral(std::ostream &out) const {
     out << "totalSimulations      : " << this->totalSimulations << std::endl;
     out << "seed                  : " << this->seed << std::endl;
     out << "splitWorkload         : " << (this->splitWorkload ? "true" : "false") << std::endl;
+    out << "secureSimulationState : " << (this->secureSimulationState ? "true" : "false") << std::endl;
 }
 
 void Parameters::printHamiltonianTerms(std::ostream &out) const {
@@ -126,6 +131,8 @@ std::string Parameters::getByName(const std::string &name) const {
         return std::to_string(this->seed);
     else if (name == "splitWorkload")
         return std::to_string(this->splitWorkload);
+    else if (name == "secureSimulationState")
+        return std::to_string(this->secureSimulationState);
 
     // Hamiltonian term parameters
     for (auto &term : this->hamiltonianTerms) {

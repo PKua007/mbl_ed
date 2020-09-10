@@ -72,7 +72,7 @@ TEST_CASE("RestorableSimulationExecutor") {
 
     SECTION("normal simulation [1, 3] out of 4") {
         MockRestorableSimulation restorableSimulation;
-        RestorableSimulationExecutor executor({1, 4, 4}, "N.8_K.8_from.1_to.4_term.value", false, testDir);
+        RestorableSimulationExecutor executor({1, 4, 4}, "N.8_K.8_from.1_to.4_term.value", false, true, testDir);
         loggerStream.clear();
 
         executor.performSimulations(restorableSimulation, 1234, logger);
@@ -86,7 +86,7 @@ TEST_CASE("RestorableSimulationExecutor") {
     SECTION("interrupted simulation [0, 1] + [2] out of 3") {
         MockRestorableSimulation restorableSimulation1(2);
         MockRestorableSimulation restorableSimulation2;
-        RestorableSimulationExecutor executor({0, 3, 3}, "N.8_K.8_from.0_to.3_term.value", false, testDir);
+        RestorableSimulationExecutor executor({0, 3, 3}, "N.8_K.8_from.0_to.3_term.value", false, true, testDir);
 
         CHECK_THROWS_WITH(executor.performSimulations(restorableSimulation1, 1234, logger), "interruption");
 
@@ -107,7 +107,7 @@ TEST_CASE("RestorableSimulationExecutor") {
     SECTION("split simulation") {
         SECTION("first part [2] - not finished yet") {
             MockRestorableSimulation restorableSimulation1;
-            RestorableSimulationExecutor executor1({2, 3, 3}, "N.8_K.8_from.2_to.3_term.value", true, testDir);
+            RestorableSimulationExecutor executor1({2, 3, 3}, "N.8_K.8_from.2_to.3_term.value", true, true, testDir);
             loggerStream.clear();
 
             executor1.performSimulations(restorableSimulation1, 1234, logger);
@@ -118,7 +118,7 @@ TEST_CASE("RestorableSimulationExecutor") {
 
             SECTION("second part [0, 1] - finished") {
                 MockRestorableSimulation restorableSimulation2;
-                RestorableSimulationExecutor executor2({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, testDir);
+                RestorableSimulationExecutor executor2({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, true, testDir);
                 loggerStream.clear();
 
                 executor2.performSimulations(restorableSimulation2, 1234, logger);
@@ -133,7 +133,7 @@ TEST_CASE("RestorableSimulationExecutor") {
 
         SECTION("[0] (interrupted) + [2] - all files, but first not ready, so unfinished") {
             MockRestorableSimulation restorableSimulation1(1);
-            RestorableSimulationExecutor executor1({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, testDir);
+            RestorableSimulationExecutor executor1({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, true, testDir);
             loggerStream.clear();
 
             CHECK_THROWS_WITH(executor1.performSimulations(restorableSimulation1, 1234, logger), "interruption");
@@ -143,7 +143,7 @@ TEST_CASE("RestorableSimulationExecutor") {
 
 
             MockRestorableSimulation restorableSimulation2;
-            RestorableSimulationExecutor executor2({2, 3, 3}, "N.8_K.8_from.2_to.3_term.value", true, testDir);
+            RestorableSimulationExecutor executor2({2, 3, 3}, "N.8_K.8_from.2_to.3_term.value", true, true, testDir);
             loggerStream.clear();
 
             executor2.performSimulations(restorableSimulation2, 1234, logger);
@@ -155,7 +155,7 @@ TEST_CASE("RestorableSimulationExecutor") {
 
             SECTION("redoing [0, 1] - finishing") {
                 MockRestorableSimulation restorableSimulation3;
-                RestorableSimulationExecutor executor3({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, testDir);
+                RestorableSimulationExecutor executor3({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, true, testDir);
                 loggerStream.clear();
 
                 executor3.performSimulations(restorableSimulation3, 1234, logger);
@@ -170,7 +170,7 @@ TEST_CASE("RestorableSimulationExecutor") {
 
         SECTION("[0, 1] + [0, 2] - not finished, because messed up ranges") {
             MockRestorableSimulation restorableSimulation1;
-            RestorableSimulationExecutor executor1({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, testDir);
+            RestorableSimulationExecutor executor1({0, 2, 3}, "N.8_K.8_from.0_to.2_term.value", true, true, testDir);
             loggerStream.clear();
 
             executor1.performSimulations(restorableSimulation1, 1234, logger);
@@ -181,7 +181,7 @@ TEST_CASE("RestorableSimulationExecutor") {
 
 
             MockRestorableSimulation restorableSimulation2;
-            RestorableSimulationExecutor executor2({0, 3, 3}, "N.8_K.8_from.0_to.3_term.value", true, testDir);
+            RestorableSimulationExecutor executor2({0, 3, 3}, "N.8_K.8_from.0_to.3_term.value", true, true, testDir);
             loggerStream.clear();
 
             executor2.performSimulations(restorableSimulation2, 1234, logger);
@@ -190,6 +190,23 @@ TEST_CASE("RestorableSimulationExecutor") {
             CHECK_FALSE(executor2.shouldSaveSimulation());
             CHECK_THAT(loggerStream.str(), Catch::Contains("State files have broken ranges"));
         }
+    }
+
+    SECTION("not storing simulation") {
+        MockRestorableSimulation restorableSimulation1(1);
+        RestorableSimulationExecutor executor({0, 2, 2}, "N.8_K.8_from.0_to.2_term.value", false, false, testDir);
+
+        CHECK_THROWS_WITH(executor.performSimulations(restorableSimulation1, 1234, logger),
+                          Catch::Contains("interruption"));
+
+
+        MockRestorableSimulation restorableSimulation2;
+        loggerStream.clear();
+
+        executor.performSimulations(restorableSimulation2, 1234, logger);
+
+        CHECK(restorableSimulation2.simulations == Simulations{{0, 2, 1234}, {1, 2, 1234}});
+        CHECK_THAT(loggerStream.str(), Catch::Contains("No state file found"));
     }
 
     std::filesystem::remove_all(testDir);

@@ -124,7 +124,7 @@ void Frontend::ed(int argc, char **argv) {
     simulationsSpan.to = params.to;
     simulationsSpan.total = params.totalSimulations;
     RestorableSimulationExecutor restorableSimulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
-                                                              params.splitWorkload);
+                                                              params.splitWorkload, params.secureSimulationState);
     restorableSimulationExecutor.performSimulations(simulation, params.seed, logger);
 
     // Save results
@@ -376,7 +376,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     simulationsSpan.to = params.to;
     simulationsSpan.total = params.totalSimulations;
     RestorableSimulationExecutor simulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
-                                                    params.splitWorkload);
+                                                    params.splitWorkload, params.secureSimulationState);
 
     std::unique_ptr<ChebyshevEvolution<>> evolution;
     if (quenchParams.has_value()) {
@@ -505,7 +505,7 @@ void Frontend::quench(int argc, char **argv) {
     simulationsSpan.to = params.to;
     simulationsSpan.total = params.totalSimulations;
     RestorableSimulationExecutor simulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
-                                                    params.splitWorkload);
+                                                    params.splitWorkload, params.secureSimulationState);
 
     // Prepare and run quenches
     auto quenchCalculator = std::make_unique<QuenchCalculator>();

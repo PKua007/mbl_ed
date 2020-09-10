@@ -13,13 +13,16 @@
 
 RestorableSimulationExecutor::RestorableSimulationExecutor(const SimulationsSpan &simulationsSpan,
                                                            std::string fileSignature, bool splitWorkload,
+                                                           bool secureSimulationState,
                                                            std::filesystem::path workingDirectory)
-        : simulationsSpan{simulationsSpan}, fileSignature{std::move(fileSignature)}, splitWorkload{splitWorkload},
-          workingDirectory{std::move(workingDirectory)}
+        : simulationsSpan{simulationsSpan}, fileSignature{std::move(fileSignature)}, storeSimulations{secureSimulationState},
+          splitWorkload{splitWorkload}, workingDirectory{std::move(workingDirectory)}
 {
     Expects(simulationsSpan.total > 0);
     Expects(simulationsSpan.from < simulationsSpan.to);
     Expects(simulationsSpan.to <= simulationsSpan.total);
+    if (splitWorkload)
+        Expects(secureSimulationState);
 }
 
 void RestorableSimulationExecutor::performSimulations(RestorableSimulation &simulation, unsigned long seed,
@@ -52,11 +55,11 @@ RestorableSimulationExecutor::tryRestoringSimulation(RestorableSimulation &simul
     SimulationStatus simulationStatus;
     std::ifstream stateFile(this->workingDirectory / stateFilename, std::ios::in | std::ios::binary);
     if (stateFile.is_open()) {
-        simulationStatus = joinRestoredSimulations(simulation, stateFile);
+        simulationStatus = this->joinRestoredSimulations(simulation, stateFile);
         Assert(simulationStatus.nextSimulationIndex > this->simulationsSpan.from);
         Assert(simulationStatus.nextSimulationIndex <= this->simulationsSpan.to);
 
-        logger.info() << "State file found, restored simulations [" << this->simulationsSpan.from << ", ";
+        logger.warn() << "State file found, restored simulations [" << this->simulationsSpan.from << ", ";
         logger << (simulationStatus.nextSimulationIndex - 1) << "], performing [";
         logger << simulationStatus.nextSimulationIndex << ", " << simulationsSpan.to << ") out of ";
         logger << simulationsSpan.total << std::endl;
@@ -78,11 +81,14 @@ void RestorableSimulationExecutor::doPerformSimulations(RestorableSimulation &si
 {
     for (std::size_t i = actualSpan.from; i < actualSpan.to; i++) {
         simulation.performSimulation(i, actualSpan.total, logger);
-        std::ofstream storeFile(workingDirectory / stateFilename, std::ios::out | std::ios::binary);
-        SimulationStatus simulationStatus;
-        simulationStatus.finished = (i == actualSpan.to - 1);
-        simulationStatus.nextSimulationIndex = i + 1;
-        storeSimulations(simulation, storeFile, simulationStatus);
+
+        if (this->storeSimulations) {
+            std::ofstream storeFile(this->workingDirectory / stateFilename, std::ios::out | std::ios::binary);
+            SimulationStatus simulationStatus;
+            simulationStatus.finished = (i == actualSpan.to - 1);
+            simulationStatus.nextSimulationIndex = i + 1;
+            this->doStoreSimulations(simulation, storeFile, simulationStatus);
+        }
     }
 }
 
@@ -100,7 +106,7 @@ void RestorableSimulationExecutor::superviseSimulationsSplit(RestorableSimulatio
 
     switch (this->checkStateFilesCoverage(stateFileDatas)) {
         case INCOMPLETE:
-            logger.warn() << "Some state files are missing. Waiting for other tasks to finish." << std::endl;
+            logger.info() << "Some state files are missing. Waiting for other tasks to finish." << std::endl;
             return;
         case BROKEN:
             logger.error() << "State files have broken ranges. Fix before reruning simulations." << std::endl;
@@ -193,10 +199,10 @@ std::string RestorableSimulationExecutor::prepareStateFilenamePattern(const std:
     return pattern;
 }
 
-void RestorableSimulationExecutor::storeSimulations(const RestorableSimulation &simulation, std::ostream &binaryOut,
-                                                    const SimulationStatus &status) const
+void RestorableSimulationExecutor::doStoreSimulations(const RestorableSimulation &simulation, std::ostream &binaryOut,
+                                                      const SimulationStatus &simulationStatus) const
 {
-    binaryOut.write(reinterpret_cast<const char*>(&status), sizeof(status));
+    binaryOut.write(reinterpret_cast<const char*>(&simulationStatus), sizeof(simulationStatus));
     Assert(binaryOut);
     simulation.storeState(binaryOut);
 }
