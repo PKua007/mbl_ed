@@ -79,7 +79,14 @@ void RestorableSimulationExecutor::doPerformSimulations(RestorableSimulation &si
                                                         const SimulationsSpan &actualSpan,
                                                         const std::string &stateFilename, Logger &logger) const
 {
+    std::string previousAdditionalText = logger.getAdditionalText();
+
     for (std::size_t i = actualSpan.from; i < actualSpan.to; i++) {
+        if (previousAdditionalText.empty())
+            logger.setAdditionalText("i=" + std::to_string(i));
+        else
+            logger.setAdditionalText(previousAdditionalText + ", i=" + std::to_string(i));
+
         simulation.performSimulation(i, actualSpan.total, logger);
 
         if (this->storeSimulations) {
@@ -90,6 +97,8 @@ void RestorableSimulationExecutor::doPerformSimulations(RestorableSimulation &si
             this->doStoreSimulations(simulation, storeFile, simulationStatus);
         }
     }
+
+    logger.setAdditionalText(previousAdditionalText);
 }
 
 void RestorableSimulationExecutor::superviseSimulationsSplit(RestorableSimulation &simulation,

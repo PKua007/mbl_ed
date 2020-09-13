@@ -58,10 +58,17 @@ TEST_CASE("Logger: additional text") {
     std::ostringstream out;
     LoggerUnderTest logger(out);
 
-    logger.setAdditionalText("additional text");
-    logger << "info" << std::endl;
+    SECTION("default additional text should be empty") {
+        REQUIRE(logger.getAdditionalText().empty());
+    }
 
-    REQUIRE(out.str() == "[   INFO] [date] [additional text] info\n");
+    SECTION("displaying additional text") {
+        logger.setAdditionalText("additional text");
+        logger << "info" << std::endl;
+
+        REQUIRE(logger.getAdditionalText() == "additional text");
+        REQUIRE(out.str() == "[   INFO] [date] [additional text] info\n");
+    }
 }
 
 TEST_CASE("Logger: verbosity level") {

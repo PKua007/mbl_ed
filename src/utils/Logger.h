@@ -84,6 +84,8 @@ public:
      */
     void setAdditionalText(std::string additionalText_) { this->additionalText = std::move(additionalText_); }
 
+    [[nodiscard]] const std::string &getAdditionalText() const { return this->additionalText; }
+
     /**
      * @brief Sets the log type with maximal verbosity level, which should be displayed.
      * @brief Verbosity levels are given by LogType in an ascending order, with LogType::ERROR being the least verbose
