@@ -10,9 +10,7 @@
 #include "Evolver.h"
 #include "simulation/RestorableHelper.h"
 
-void TimeEvolution::addEvolution(Evolver &evolver, Logger &logger,
-                                 const std::vector<arma::cx_vec> &externalVectors)
-{
+void TimeEvolution::addEvolution(Evolver &evolver, Logger &logger, const std::vector<arma::cx_vec> &externalVectors) {
     Expects(externalVectors.size() == this->countExternalVectors());
 
     std::size_t externalVectorsCounter{};
@@ -44,8 +42,8 @@ void TimeEvolution::storeResult(std::ostream &out) const {
     Assert(!this->vectorEvolutions.empty());
 
     auto headerPrinter = [](const auto &entry) { return entry.getHeader(); };
-    std::transform(this->vectorEvolutions.begin(), this->vectorEvolutions.end(), std::ostream_iterator<std::string>(out, ""),
-                   headerPrinter);
+    std::transform(this->vectorEvolutions.begin(), this->vectorEvolutions.end(),
+                   std::ostream_iterator<std::string>(out, ""), headerPrinter);
     out << std::endl;
 
     std::size_t numSteps = this->vectorEvolutions.front().timeEntries.size();
@@ -63,7 +61,10 @@ TimeEvolution::TimeEvolution(const TimeEvolutionParameters &parameters,
 {
     Expects(!parameters.vectorsToEvolve.empty());
 
-    std::size_t numOfStoredValues = parameters.countStoredObservableValues();
+    std::size_t numOfStoredObservableValues = parameters.countStoredObservableValues();
+    this->occupationEvolution->setPrimaryObservables(parameters.primaryObservables);
+    this->occupationEvolution->setSecondaryObservables(parameters.secondaryObservables);
+    this->occupationEvolution->setStoredObservables(parameters.storedObservables);
 
     this->vectorEvolutions.reserve(parameters.vectorsToEvolve.size());
     for (const auto &vectorToEvolve : parameters.vectorsToEvolve) {
@@ -75,14 +76,14 @@ TimeEvolution::TimeEvolution(const TimeEvolutionParameters &parameters,
         // Prepare entries for each time segment
         for (const auto &timeSegment : this->timeSegmentation) {
             for (std::size_t timeIdx{}; timeIdx < timeSegment.numSteps; timeIdx++) {
-                double time = lastMaxTime + (timeSegment.maxTime - lastMaxTime)
-                              / static_cast<double>(timeSegment.numSteps) * timeIdx;
-                evolution.timeEntries.emplace_back(time, numOfStoredValues);
+                double time = lastMaxTime +
+                              (timeSegment.maxTime - lastMaxTime) / static_cast<double>(timeSegment.numSteps) * timeIdx;
+                evolution.timeEntries.emplace_back(time, numOfStoredObservableValues);
             }
             lastMaxTime = timeSegment.maxTime;
         }
         // The last step should be separately added
-        evolution.timeEntries.emplace_back(lastMaxTime, numOfStoredValues);
+        evolution.timeEntries.emplace_back(lastMaxTime, numOfStoredObservableValues);
 
         this->vectorEvolutions.push_back(evolution);
     }
@@ -102,12 +103,12 @@ void TimeEvolution::clear() {
 }
 
 std::size_t TimeEvolution::countExternalVectors() const {
-    std::size_t externalVectorCounter{};
+    std::size_t count{};
     using ExternalVector = TimeEvolutionParameters::ExternalVector;
     for (const auto &vectorEvolution : this->vectorEvolutions)
         if (std::holds_alternative<ExternalVector>(vectorEvolution.initialVector))
-            externalVectorCounter++;
-    return externalVectorCounter;
+            count++;
+    return count;
 }
 
 std::string TimeEvolution::VectorEvolution::getHeader() const {
@@ -116,7 +117,7 @@ std::string TimeEvolution::VectorEvolution::getHeader() const {
     std::ostringstream out;
     if (std::holds_alternative<FockBase::Vector>(initialVector))
         out << std::get<FockBase::Vector>(initialVector);
-    else
+    else    // holds alternative ExternalVector
         out << std::get<ExternalVector>(initialVector).name;
     out << "_t " << this->observablesHeader;
 

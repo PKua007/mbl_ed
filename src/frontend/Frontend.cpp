@@ -377,9 +377,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParams.secondaryObservables = observablesBuilder.releaseSecondaryObservables();
     evolutionParams.storedObservables = observablesBuilder.releaseStoredObservables();
 
-    auto occupationEvolution = std::make_unique<OservablesTimeEvolution>(
-        evolutionParams.primaryObservables, evolutionParams.secondaryObservables, evolutionParams.storedObservables
-    );
+    auto observablesEvolution = std::make_unique<OservablesTimeEvolution>();
 
     SimulationsSpan simulationsSpan;
     simulationsSpan.from = params.from;
@@ -397,13 +395,13 @@ void Frontend::chebyshev(int argc, char **argv) {
         auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
         evolution = std::make_unique<ChebyshevEvolution<>>(
                 std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-                std::make_unique<TimeEvolution>(evolutionParams, std::move(occupationEvolution)),
+                std::make_unique<TimeEvolution>(evolutionParams, std::move(observablesEvolution)),
                 std::make_unique<QuenchCalculator>(), std::move(quenchHamiltonianGenerator), std::move(quenchRnd)
         );
     } else {
         evolution = std::make_unique<ChebyshevEvolution<>>(
             std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-            std::make_unique<TimeEvolution>(evolutionParams, std::move(occupationEvolution))
+            std::make_unique<TimeEvolution>(evolutionParams, std::move(observablesEvolution))
         );
     }
 

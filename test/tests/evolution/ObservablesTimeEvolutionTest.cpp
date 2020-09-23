@@ -29,7 +29,7 @@ namespace {
     }
 }
 
-TEST_CASE("OccupationEvolution") {
+TEST_CASE("OservablesTimeEvolution") {
     trompeloeil::sequence seq1;
     auto primary = std::make_shared<PrimaryObservableMock>();
     ALLOW_CALL(*primary, getHeader()).RETURN(std::vector<std::string>{"p1", "p2"});
@@ -71,7 +71,10 @@ TEST_CASE("OccupationEvolution") {
 
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
-    OservablesTimeEvolution evolution({primary}, {secondary}, {primary, secondary});
+    OservablesTimeEvolution evolution;
+    evolution.setPrimaryObservables({primary});
+    evolution.setSecondaryObservables({secondary});
+    evolution.setStoredObservables({primary, secondary});
 
 
     auto result = evolution.perform({{1, 2}, {3, 1}}, arma::cx_vec{1, 0, 0, 0, 0}, evolver, logger);

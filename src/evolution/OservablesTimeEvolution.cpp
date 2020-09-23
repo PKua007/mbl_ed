@@ -15,7 +15,7 @@ OservablesTimeEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSe
 
     arma::cx_vec evolvedState = initialState;
 
-    std::vector<TimeEvolutionEntry> occupationEvolution;
+    std::vector<TimeEvolutionEntry> observablesEvolution;
     double lastMaxTime{};
     for (const auto &timeSegment : timeSegmentation) {
         logger.verbose() << "Calculating evolution operator... " << std::endl;
@@ -27,14 +27,14 @@ OservablesTimeEvolution::perform(const std::vector<EvolutionTimeSegment> &timeSe
 
         std::vector<TimeEvolutionEntry> evolutionSegment
             = this->performTimeSegmentEvolution(timeSegment.numSteps, evolver, logger);
-        occupationEvolution.insert(occupationEvolution.end(), evolutionSegment.begin(), evolutionSegment.end());
+        observablesEvolution.insert(observablesEvolution.end(), evolutionSegment.begin(), evolutionSegment.end());
         evolvedState = evolver.getCurrentState();
         lastMaxTime = timeSegment.maxTime;
     }
     std::vector<TimeEvolutionEntry> lastEvolutionStep = performTimeSegmentEvolution(1, evolver, logger);
-    occupationEvolution.push_back(lastEvolutionStep.front());
+    observablesEvolution.push_back(lastEvolutionStep.front());
 
-    return occupationEvolution;
+    return observablesEvolution;
 }
 
 /**
@@ -57,14 +57,15 @@ OservablesTimeEvolution::performTimeSegmentEvolution(std::size_t numSteps, Evolv
         for (auto &secondaryObservable : this->secondaryObservables)
             secondaryObservable->calculateForObservables(this->primaryObservables);
 
-        TimeEvolutionEntry entry(this->time, this->numOfStoredValues);
-        std::vector<double> values;
-        values.reserve(this->numOfStoredValues);
+        TimeEvolutionEntry entry(this->time, this->numOfObservableValues);
+        std::vector<double> observableValues;
+        observableValues.reserve(this->numOfObservableValues);
         for (const auto &storedObservable : this->storedObservables) {
-            auto observableValues = storedObservable->getValues();
-            values.insert(values.end(), observableValues.begin(), observableValues.end());
+            auto singleObservableValues = storedObservable->getValues();
+            observableValues.insert(observableValues.end(), singleObservableValues.begin(),
+                                    singleObservableValues.end());
         }
-        entry.addValues(values);
+        entry.addValues(observableValues);
         observablesEvolution.push_back(entry);
         double observablesTime = timer.toc();
 
@@ -81,12 +82,9 @@ OservablesTimeEvolution::performTimeSegmentEvolution(std::size_t numSteps, Evolv
     return observablesEvolution;
 }
 
-OservablesTimeEvolution::OservablesTimeEvolution(std::vector<std::shared_ptr<PrimaryObservable>> primaryObservables,
-                                                 std::vector<std::shared_ptr<SecondaryObservable>> secondaryObservables,
-                                                 std::vector<std::shared_ptr<Observable>> storedObservables)
-        : primaryObservables{std::move(primaryObservables)}, secondaryObservables{std::move(secondaryObservables)},
-          storedObservables{std::move(storedObservables)}
-{
+void OservablesTimeEvolution::setStoredObservables(const std::vector<std::shared_ptr<Observable>> &storedObservables_) {
+    this->storedObservables = storedObservables_;
+    this->numOfObservableValues = 0;
     for (const auto &storedObservable : this->storedObservables)
-        this->numOfStoredValues += storedObservable->getHeader().size();
+        this->numOfObservableValues += storedObservable->getHeader().size();
 }

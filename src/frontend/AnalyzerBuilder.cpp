@@ -13,7 +13,7 @@
 #include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/InverseParticipationRatio.h"
-#include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
+#include "analyzer/tasks/EDTimeEvolution.h"
 #include "analyzer/tasks/DressedStatesFinder.h"
 #include "analyzer/tasks/BulkMeanGapRatio.h"
 #include "evolution/observables/OnsiteOccupations.h"
@@ -113,13 +113,10 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             evolutionParams.secondaryObservables = {correlations, borderlessCorrelations, fluctuations};
             evolutionParams.storedObservables = {correlations, borderlessCorrelations, fluctuations, occupations};
 
-            auto occupationEvolution = std::make_unique<OservablesTimeEvolution>(
-                evolutionParams.primaryObservables, evolutionParams.secondaryObservables,
-                evolutionParams.storedObservables
-            );
+            auto occupationEvolution = std::make_unique<OservablesTimeEvolution>();
 
             analyzer->addTask(
-                std::make_unique<EDCorrelationsTimeEvolution>(evolutionParams, std::move(occupationEvolution))
+                std::make_unique<EDTimeEvolution>(evolutionParams, std::move(occupationEvolution))
             );
         } else if (taskName == "dressed") {
             double mgrCenter, mgrMargin, coeffThreshold;

@@ -7,6 +7,8 @@
 
 #include <utility>
 
+#include <armadillo>
+
 #include "evolution/TimeEvolution.h"
 #include "simulation/SimulationsSpan.h"
 #include "evolution/ChebyshevEvolver.h"
@@ -24,8 +26,8 @@
  * mocking purposes. See the default classes description for details of what they do.
  */
 template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel,
-         typename CorrelationsTimeEvolution_t = TimeEvolution,
-         typename QuenchCalculator_t = QuenchCalculator, typename ChebyshevEvolver_t = ChebyshevEvolver>
+         typename TimeEvolution_t = TimeEvolution, typename QuenchCalculator_t = QuenchCalculator,
+         typename ChebyshevEvolver_t = ChebyshevEvolver>
 class ChebyshevEvolution : public RestorableSimulation {
 private:
     std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator;
@@ -33,7 +35,7 @@ private:
     std::unique_ptr<RND> rnd;
 
 private:
-    std::unique_ptr<CorrelationsTimeEvolution_t> correlationsTimeEvolution;
+    std::unique_ptr<TimeEvolution_t> timeEvolution;
 
     std::unique_ptr<QuenchCalculator_t> quenchCalculator;
     std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator;
@@ -78,21 +80,21 @@ public:
      */
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
                        std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
-                       std::unique_ptr<CorrelationsTimeEvolution_t> correlationsTimeEvolution,
+                       std::unique_ptr<TimeEvolution_t> timeEvolution,
                        std::unique_ptr<QuenchCalculator_t> quenchCalculator,
                        std::unique_ptr<HamiltonianGenerator_t> quenchHamiltonianGenerator,
                        std::unique_ptr<RND> quenchRnd)
             : hamiltonianGenerator{std::move(hamiltonianGenerator)}, averagingModel{std::move(averagingModel)},
-              rnd{std::move(rnd)}, correlationsTimeEvolution{std::move(correlationsTimeEvolution)},
+              rnd{std::move(rnd)}, timeEvolution{std::move(timeEvolution)},
               quenchCalculator{std::move(quenchCalculator)},
               quenchHamiltonianGenerator{std::move(quenchHamiltonianGenerator)}, quenchRnd{std::move(quenchRnd)}
     {
         if (this->quenchCalculator == nullptr) {
-            Expects(this->correlationsTimeEvolution->countExternalVectors() == 0);
+            Expects(this->timeEvolution->countExternalVectors() == 0);
         } else {
             Expects(this->quenchHamiltonianGenerator != nullptr);
             Expects(this->quenchRnd != nullptr);
-            Expects(this->correlationsTimeEvolution->countExternalVectors() == 1);
+            Expects(this->timeEvolution->countExternalVectors() == 1);
         }
     }
 
@@ -101,9 +103,9 @@ public:
      */
     ChebyshevEvolution(std::unique_ptr<HamiltonianGenerator_t> hamiltonianGenerator,
                        std::unique_ptr<AveragingModel_t> averagingModel, std::unique_ptr<RND> rnd,
-                       std::unique_ptr<CorrelationsTimeEvolution_t> correlationsTimeEvolution)
+                       std::unique_ptr<TimeEvolution_t> timeEvolution)
             : ChebyshevEvolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-                                 std::move(correlationsTimeEvolution), nullptr, nullptr, nullptr)
+                                 std::move(timeEvolution), nullptr, nullptr, nullptr)
     { }
 
     void printQuenchInfo(Logger &logger) {
@@ -116,7 +118,7 @@ public:
     }
 
     void storeResults(std::ostream &out) const {
-        this->correlationsTimeEvolution->storeResult(out);
+        this->timeEvolution->storeResult(out);
     }
 
     void storeState(std::ostream &binaryOut) const override {
@@ -125,22 +127,22 @@ public:
         Assert(binaryOut.good());
         if (doesDoQuench)
             this->quenchCalculator->storeState(binaryOut);
-        this->correlationsTimeEvolution->storeState(binaryOut);
+        this->timeEvolution->storeState(binaryOut);
     }
 
     void joinRestoredState(std::istream &binaryIn) override {
-        bool doesDoQuench = (this->quenchCalculator != nullptr);
-        bool doesDoQuenchRestored{};
-        binaryIn.read(reinterpret_cast<char*>(&doesDoQuenchRestored), sizeof(doesDoQuenchRestored));
+        bool doQuench = (this->quenchCalculator != nullptr);
+        bool doQuenchRestored{};
+        binaryIn.read(reinterpret_cast<char*>(&doQuenchRestored), sizeof(doQuenchRestored));
         Assert(binaryIn.good());
-        Assert(doesDoQuench == doesDoQuenchRestored);
-        if (doesDoQuench)
+        Assert(doQuench == doQuenchRestored);
+        if (doQuench)
             this->quenchCalculator->joinRestoredState(binaryIn);
-        this->correlationsTimeEvolution->joinRestoredState(binaryIn);
+        this->timeEvolution->joinRestoredState(binaryIn);
     }
 
     void clear() override {
-        this->correlationsTimeEvolution->clear();
+        this->timeEvolution->clear();
         if (this->quenchCalculator != nullptr)
             this->quenchCalculator->clear();
     }
@@ -169,7 +171,7 @@ public:
         timer.tic();
         ChebyshevEvolver_t evolver(hamiltonian, logger);
         logger.info() << "Preparing evolver done (" << timer.toc() << " s)." << std::endl;
-        this->correlationsTimeEvolution->addEvolution(evolver, logger, additionalVectors);
+        this->timeEvolution->addEvolution(evolver, logger, additionalVectors);
         logger.info() << "Whole evolution took " << wholeTimer.toc() << " s." << std::endl;
     }
 

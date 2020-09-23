@@ -8,21 +8,27 @@
 
 #include "evolution/TimeEvolutionEntry.h"
 
-TEST_CASE("CorrelationsTimeEntry: no entries") {
-    SECTION("no fields") {
+TEST_CASE("TimeEvolutionEntry: construction") {
+    SECTION("default") {
         TimeEvolutionEntry correlationsTimeEntry{};
 
         REQUIRE(correlationsTimeEntry.toString() == "0 ");
     }
 
-    SECTION("some fields") {
+    SECTION("with fields") {
         TimeEvolutionEntry correlationsTimeEntry(2, 3);
 
         REQUIRE_THAT(correlationsTimeEntry.toString(), Catch::StartsWith("2 0 0 0 "));
     }
+
+    SECTION("from vector") {
+        TimeEvolutionEntry correlationsTimeEntry(2, {1, 2, 3});
+
+        REQUIRE_THAT(correlationsTimeEntry.toString(), Catch::StartsWith("2 1 2 3 "));
+    }
 }
 
-TEST_CASE("CorrelationsTimeEntry: single observables set") {
+TEST_CASE("TimeEvolutionEntry: single observables set") {
     TimeEvolutionEntry correlationsTimeEntry(2, 3);
 
     correlationsTimeEntry.addValues({3, 4, 5});
@@ -30,7 +36,7 @@ TEST_CASE("CorrelationsTimeEntry: single observables set") {
     REQUIRE(correlationsTimeEntry.toString() == "2 3 4 5 ");
 }
 
-TEST_CASE("CorrelationsTimeEntry: averaging") {
+TEST_CASE("TimeEvolutionEntry: averaging") {
     TimeEvolutionEntry correlationsTimeEntry(2, 3);
 
     correlationsTimeEntry.addValues({3, 4, 5});

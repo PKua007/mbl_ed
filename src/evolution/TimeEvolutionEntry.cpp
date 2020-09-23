@@ -48,6 +48,7 @@ void TimeEvolutionEntry::joinRestoredState(std::istream &binaryIn) {
     restoredEntry.t = tRestored;
     restoredEntry.numberOfMeanEntries = numberOfMeanEntriesRestored;
 
+    // This will also do the validation, if joined state is compatible
     (*this) += restoredEntry;
 }
 

@@ -31,17 +31,23 @@ private:
     std::vector<std::shared_ptr<SecondaryObservable>> secondaryObservables;
     std::vector<std::shared_ptr<Observable>> storedObservables;
 
-    std::size_t numOfStoredValues{};
+    std::size_t numOfObservableValues{};
 
     [[nodiscard]] std::vector<TimeEvolutionEntry> performTimeSegmentEvolution(std::size_t numSteps, Evolver &evolver,
                                                                               Logger &logger);
 
 public:
-    OservablesTimeEvolution() = default;
-    explicit OservablesTimeEvolution(std::vector<std::shared_ptr<PrimaryObservable>> primaryObservables,
-                                     std::vector<std::shared_ptr<SecondaryObservable>> secondaryObservables,
-                                     std::vector<std::shared_ptr<Observable>> storedObservables);
     virtual ~OservablesTimeEvolution() = default;
+
+    void setPrimaryObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObservables_) {
+        this->primaryObservables = primaryObservables_;
+    }
+
+    void setSecondaryObservables(const std::vector<std::shared_ptr<SecondaryObservable>> &secondaryObservables_) {
+        this->secondaryObservables = secondaryObservables_;
+    }
+
+    void setStoredObservables(const std::vector<std::shared_ptr<Observable>> &storedObservables_);
 
     /**
      * @brief Perform the evolution of the fock state of index @a initialFockStateIdx for times specified by

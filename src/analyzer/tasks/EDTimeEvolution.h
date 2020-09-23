@@ -2,8 +2,8 @@
 // Created by Piotr Kubala on 17/02/2020.
 //
 
-#ifndef MBL_ED_EDCORRELATIONSTIMEEVOLUTION_H
-#define MBL_ED_EDCORRELATIONSTIMEEVOLUTION_H
+#ifndef MBL_ED_EDTIMEEVOLUTION_H
+#define MBL_ED_EDTIMEEVOLUTION_H
 
 #include "analyzer/BulkAnalyzerTask.h"
 #include "utils/Assertions.h"
@@ -14,9 +14,9 @@
  * @brief BulkAnalyzerTask, which performs time evolution of correlations and fluctuations for a few given Fock states.
  * @details Consult CorrelationsTimeEntry and its helper classes for the description.
  */
-class EDCorrelationsTimeEvolution : public BulkAnalyzerTask {
+class EDTimeEvolution : public BulkAnalyzerTask {
 private:
-    TimeEvolution correlationsTimeEvolution;
+    TimeEvolution timeEvolution;
 
 public:
     /**
@@ -25,8 +25,8 @@ public:
      * @details Consult CorrelationTimeEntry for the description of @a marginSize. The evolution will be performed
      * separately for all @a vectorsToEvolve. To know what observables are measures, check CorrelationTimeEntry.
      */
-    EDCorrelationsTimeEvolution(const TimeEvolutionParameters &parameters,
-                                std::unique_ptr<OservablesTimeEvolution> occupationEvolution);
+    EDTimeEvolution(const TimeEvolutionParameters &parameters,
+                    std::unique_ptr<OservablesTimeEvolution> observablesEvolution);
 
     /**
      * @brief Adds another Eigensystem to the analyzis, to all observables means are enriched by more data.
@@ -61,4 +61,4 @@ public:
 };
 
 
-#endif //MBL_ED_EDCORRELATIONSTIMEEVOLUTION_H
+#endif //MBL_ED_EDTIMEEVOLUTION_H

@@ -11,9 +11,9 @@ add_executable(tests TestMain.cpp tests/core/FockBaseGeneratorTest.cpp tests/cor
         tests/core/CavityLongInteractionTest.cpp tests/core/OnsiteDisorderTest.cpp tests/core/HubbardHopTest.cpp
         tests/utils/ConfigTest.cpp tests/core/CavityConstantsTest.cpp tests/frontend/CavityConstantsReaderTest.cpp
         tests/core/LookupCavityZ2Test.cpp tests/core/LookupCavityYZTest.cpp mocks/DoubleHoppingTermMock.h
-        tests/core/LookupCavityY2Test.cpp tests/evolution/CorrelationsTimeEvolutionTest.cpp
-        tests/evolution/SymmetricMatrixTest.cpp tests/evolution/OccupationEvolutionTest.cpp
-        matchers/VectorApproxEqualMatcher.h  tests/evolution/CorrelationsTimeEntryTest.cpp
+        tests/core/LookupCavityY2Test.cpp tests/evolution/TimeEvolutionTest.cpp
+        tests/evolution/SymmetricMatrixTest.cpp tests/evolution/ObservablesTimeEvolutionTest.cpp
+        matchers/VectorApproxEqualMatcher.h tests/evolution/TimeEvolutionEntryTest.cpp
         tests/core/QuasiperiodicDisorderTest.cpp tests/core/ListOnsiteTest.cpp tests/evolution/EvolversTest.cpp
         tests/core/FockVectorTest.cpp tests/analyzer/DressedStatesFinderTest.cpp tests/analyzer/BulkMeanGapRatioTest.cpp
         tests/core/QuenchCalculatorTest.cpp tests/simulation/ChebyshevEvolutionTest.cpp mocks/RestorableSimulationMock.h

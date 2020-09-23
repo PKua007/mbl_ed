@@ -188,12 +188,8 @@ TEST_CASE("ChebyshevEvolution: clearing, storing and restoring") {
     auto onsiteOccupations = std::make_shared<OnsiteOccupations>(fockBase);
     params.primaryObservables = {onsiteOccupations};
     params.storedObservables = {onsiteOccupations};
-    auto occupationEvolution = std::make_unique<OservablesTimeEvolution>(
-        params.primaryObservables, params.secondaryObservables, params.storedObservables
-    );
-    auto correlationsTimeEvolution = std::make_unique<TimeEvolution>(
-        params, std::move(occupationEvolution)
-    );
+    auto occupationEvolution = std::make_unique<OservablesTimeEvolution>();
+    auto correlationsTimeEvolution = std::make_unique<TimeEvolution>(params, std::move(occupationEvolution));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
     ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
