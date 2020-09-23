@@ -7,7 +7,7 @@
 
 #include <utility>
 
-#include "evolution/CorrelationsTimeEvolution.h"
+#include "evolution/TimeEvolution.h"
 #include "simulation/SimulationsSpan.h"
 #include "evolution/ChebyshevEvolver.h"
 #include "core/HamiltonianGenerator.h"

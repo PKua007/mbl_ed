@@ -180,7 +180,7 @@ TEST_CASE("ChebyshevEvolution: clearing, storing and restoring") {
     hamiltonianGenerator->addDiagonalTerm(std::make_unique<QuasiperiodicDisorder>(1, 0.3, 0));
     auto averagingModel = std::make_unique<UniformPhi0AveragingModel>();
     auto rnd = std::make_unique<RND>();
-    CorrelationsTimeEvolutionParameters params;
+    TimeEvolutionParameters params;
     params.timeSegmentation = {{1, 1}};
     params.fockBase = fockBase;
     params.numberOfSites = 4;
@@ -188,10 +188,10 @@ TEST_CASE("ChebyshevEvolution: clearing, storing and restoring") {
     auto onsiteOccupations = std::make_shared<OnsiteOccupations>(4, fockBase);
     params.primaryObservables = {onsiteOccupations};
     params.storedObservables = {onsiteOccupations};
-    auto occupationEvolution = std::make_unique<OccupationEvolution>(
+    auto occupationEvolution = std::make_unique<OservablesTimeEvolution>(
         params.primaryObservables, params.secondaryObservables, params.storedObservables
     );
-    auto correlationsTimeEvolution = std::make_unique<CorrelationsTimeEvolution>(
+    auto correlationsTimeEvolution = std::make_unique<TimeEvolution>(
         params, std::move(occupationEvolution)
     );
     std::ostringstream loggerStream;

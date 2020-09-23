@@ -11,7 +11,7 @@
 #include "mocks/SecondaryObservableMock.h"
 #include "mocks/EvolverMock.h"
 
-#include "evolution/OccupationEvolution.h"
+#include "evolution/OservablesTimeEvolution.h"
 
 using trompeloeil::_;
 
@@ -71,13 +71,13 @@ TEST_CASE("OccupationEvolution") {
 
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
-    OccupationEvolution evolution({primary}, {secondary}, {primary, secondary});
+    OservablesTimeEvolution evolution({primary}, {secondary}, {primary, secondary});
 
 
     auto result = evolution.perform({{1, 2}, {3, 1}}, arma::cx_vec{1, 0, 0, 0, 0}, evolver, logger);
 
 
-    REQUIRE(result == std::vector<CorrelationsTimeEntry>{
+    REQUIRE(result == std::vector<TimeEvolutionEntry>{
         {0,   {1, 2, 11, 12}},
         {0.5, {3, 4, 13, 14}},
         {1,   {5, 6, 15, 16}},

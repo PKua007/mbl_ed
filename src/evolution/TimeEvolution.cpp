@@ -5,13 +5,13 @@
 #include <iterator>
 #include <utility>
 
-#include "CorrelationsTimeEvolution.h"
+#include "TimeEvolution.h"
 #include "utils/Assertions.h"
 #include "Evolver.h"
 #include "simulation/RestorableHelper.h"
 
-void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, Logger &logger,
-                                             const std::vector<arma::cx_vec> &externalVectors)
+void TimeEvolution::addEvolution(Evolver &evolver, Logger &logger,
+                                 const std::vector<arma::cx_vec> &externalVectors)
 {
     Expects(externalVectors.size() == this->countExternalVectors());
 
@@ -40,7 +40,7 @@ void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, Logger &logger,
     }
 }
 
-void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
+void TimeEvolution::storeResult(std::ostream &out) const {
     Assert(!this->vectorEvolutions.empty());
 
     auto headerPrinter = [](const auto &entry) { return entry.getHeader(); };
@@ -56,8 +56,8 @@ void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
     }
 }
 
-CorrelationsTimeEvolution::CorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters,
-                                                     std::unique_ptr<OccupationEvolution> occupationEvolution)
+TimeEvolution::TimeEvolution(const TimeEvolutionParameters &parameters,
+                             std::unique_ptr<OservablesTimeEvolution> occupationEvolution)
         : fockBase{parameters.fockBase}, occupationEvolution{std::move(occupationEvolution)},
           timeSegmentation{parameters.timeSegmentation}
 {
@@ -88,29 +88,29 @@ CorrelationsTimeEvolution::CorrelationsTimeEvolution(const CorrelationsTimeEvolu
     }
 }
 
-void CorrelationsTimeEvolution::storeState(std::ostream &binaryOut) const {
+void TimeEvolution::storeState(std::ostream &binaryOut) const {
     RestorableHelper::storeStateForStaticRestorableVector(this->vectorEvolutions, binaryOut);
 }
 
-void CorrelationsTimeEvolution::joinRestoredState(std::istream &binaryIn) {
+void TimeEvolution::joinRestoredState(std::istream &binaryIn) {
     RestorableHelper::joinRestoredStateForStaticRestorableVector(this->vectorEvolutions, binaryIn);
 }
 
-void CorrelationsTimeEvolution::clear() {
+void TimeEvolution::clear() {
     for (auto &vectorEvolution : this->vectorEvolutions)
         vectorEvolution.clear();
 }
 
-std::size_t CorrelationsTimeEvolution::countExternalVectors() const {
+std::size_t TimeEvolution::countExternalVectors() const {
     std::size_t externalVectorCounter{};
-    using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
+    using ExternalVector = TimeEvolutionParameters::ExternalVector;
     for (const auto &vectorEvolution : this->vectorEvolutions)
         if (std::holds_alternative<ExternalVector>(vectorEvolution.initialVector))
             externalVectorCounter++;
     return externalVectorCounter;
 }
 
-std::string CorrelationsTimeEvolution::VectorEvolution::getHeader() const {
+std::string TimeEvolution::VectorEvolution::getHeader() const {
     Assert(!this->timeEntries.empty());
 
     std::ostringstream out;
@@ -123,7 +123,7 @@ std::string CorrelationsTimeEvolution::VectorEvolution::getHeader() const {
     return out.str();
 }
 
-std::string CorrelationsTimeEvolution::VectorEvolution::getInitialVectorName() const {
+std::string TimeEvolution::VectorEvolution::getInitialVectorName() const {
     if (std::holds_alternative<FockBase::Vector>(this->initialVector)) {
         std::ostringstream nameStream;
         nameStream << std::get<FockBase::Vector>(this->initialVector);
@@ -134,15 +134,15 @@ std::string CorrelationsTimeEvolution::VectorEvolution::getInitialVectorName() c
     }
 }
 
-void CorrelationsTimeEvolution::VectorEvolution::storeState(std::ostream &binaryOut) const {
+void TimeEvolution::VectorEvolution::storeState(std::ostream &binaryOut) const {
     RestorableHelper::storeStateForStaticRestorableVector(this->timeEntries, binaryOut);
 }
 
-void CorrelationsTimeEvolution::VectorEvolution::joinRestoredState(std::istream &binaryIn) {
+void TimeEvolution::VectorEvolution::joinRestoredState(std::istream &binaryIn) {
     RestorableHelper::joinRestoredStateForStaticRestorableVector(this->timeEntries, binaryIn);
 }
 
-void CorrelationsTimeEvolution::VectorEvolution::clear() {
+void TimeEvolution::VectorEvolution::clear() {
     for (auto &timeEntry : this->timeEntries)
         timeEntry.clear();
 }

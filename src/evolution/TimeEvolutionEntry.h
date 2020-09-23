@@ -2,8 +2,8 @@
 // Created by Piotr Kubala on 21/02/2020.
 //
 
-#ifndef MBL_ED_CORRELATIONSTIMEENTRY_H
-#define MBL_ED_CORRELATIONSTIMEENTRY_H
+#ifndef MBL_ED_TIMEEVOLUTIONENTRY_H
+#define MBL_ED_TIMEEVOLUTIONENTRY_H
 
 #include <utility>
 #include <vector>
@@ -28,7 +28,7 @@
  *     <li>onsite occupaitons (see CorrelationsTimeEntry::OnsiteOccupations in the code)
  * </ul>
  */
-class CorrelationsTimeEntry : public Restorable {
+class TimeEvolutionEntry : public Restorable {
 private:
     static constexpr double EPSILON = 1e-10;
 
@@ -37,9 +37,9 @@ private:
     std::size_t numberOfMeanEntries{};
 
 public:
-    CorrelationsTimeEntry() = default;
-    CorrelationsTimeEntry(double t, std::size_t numOfValues) : t{t}, values(numOfValues) { }
-    CorrelationsTimeEntry(double t, std::vector<double> values)
+    TimeEvolutionEntry() = default;
+    TimeEvolutionEntry(double t, std::size_t numOfValues) : t{t}, values(numOfValues) { }
+    TimeEvolutionEntry(double t, std::vector<double> values)
             : t{t}, values{std::move(values)}, numberOfMeanEntries{1}
     { }
 
@@ -48,10 +48,10 @@ public:
      */
     void addValues(const std::vector<double> &newValues);
 
-    friend CorrelationsTimeEntry operator+(const CorrelationsTimeEntry &first, const CorrelationsTimeEntry &second);
-    CorrelationsTimeEntry &operator+=(const CorrelationsTimeEntry &other);
-    friend bool operator==(const CorrelationsTimeEntry &first, const CorrelationsTimeEntry &second);
-    friend std::ostream &operator<<(std::ostream &os, const CorrelationsTimeEntry &entry);
+    friend TimeEvolutionEntry operator+(const TimeEvolutionEntry &first, const TimeEvolutionEntry &second);
+    TimeEvolutionEntry &operator+=(const TimeEvolutionEntry &other);
+    friend bool operator==(const TimeEvolutionEntry &first, const TimeEvolutionEntry &second);
+    friend std::ostream &operator<<(std::ostream &os, const TimeEvolutionEntry &entry);
 
     /**
      * @brief Constructs the row of values of all stuff - time and observable values
@@ -64,4 +64,4 @@ public:
 };
 
 
-#endif //MBL_ED_CORRELATIONSTIMEENTRY_H
+#endif //MBL_ED_TIMEEVOLUTIONENTRY_H

@@ -2,16 +2,16 @@
 // Created by pkua on 08.05.2020.
 //
 
-#ifndef MBL_ED_CORRELATIONSTIMEEVOLUTION_H
-#define MBL_ED_CORRELATIONSTIMEEVOLUTION_H
+#ifndef MBL_ED_TIMEEVOLUTION_H
+#define MBL_ED_TIMEEVOLUTION_H
 
 #include <memory>
 #include <variant>
 
 #include "SymmetricMatrix.h"
-#include "OccupationEvolution.h"
+#include "OservablesTimeEvolution.h"
 #include "Evolver.h"
-#include "CorrelationsTimeEvolutionParameters.h"
+#include "TimeEvolutionParameters.h"
 #include "simulation/Restorable.h"
 #include "utils/Logger.h"
 
@@ -22,16 +22,16 @@
  * averaged. The evolution is perform for one or more initial states. For details on observables measured check
  * CorrelationsTimeEntry.
  */
-class CorrelationsTimeEvolution : public Restorable {
+class TimeEvolution : public Restorable {
 private:
     /**
      * @brief Evolution of observables for the specific initial Fock state.
      */
     struct VectorEvolution : public Restorable {
-        using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
+        using ExternalVector = TimeEvolutionParameters::ExternalVector;
 
         std::variant<FockBase::Vector, ExternalVector> initialVector;
-        std::vector<CorrelationsTimeEntry> timeEntries{};
+        std::vector<TimeEvolutionEntry> timeEntries{};
         std::string observablesHeader;
 
         [[nodiscard]] std::string getHeader() const;
@@ -42,7 +42,7 @@ private:
     };
 
     std::shared_ptr<FockBase> fockBase;
-    std::unique_ptr<OccupationEvolution> occupationEvolution;
+    std::unique_ptr<OservablesTimeEvolution> occupationEvolution;
     std::vector<VectorEvolution> vectorEvolutions{};
     std::vector<EvolutionTimeSegment> timeSegmentation{};
 
@@ -52,8 +52,8 @@ public:
      * @details The evolution will be performed separately for all @a vectorsToEvolve. To know what observables are
      * measured, check CorrelationTimeEntry.
      */
-    explicit CorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters,
-                                       std::unique_ptr<OccupationEvolution> occupationEvolution);
+    explicit TimeEvolution(const TimeEvolutionParameters &parameters,
+                           std::unique_ptr<OservablesTimeEvolution> occupationEvolution);
 
     /**
      * @brief Adds another evolution to the analyzis.
@@ -91,4 +91,4 @@ public:
 };
 
 
-#endif //MBL_ED_CORRELATIONSTIMEEVOLUTION_H
+#endif //MBL_ED_TIMEEVOLUTION_H

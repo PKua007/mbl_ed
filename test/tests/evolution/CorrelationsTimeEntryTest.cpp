@@ -6,24 +6,24 @@
 
 #include <catch2/catch.hpp>
 
-#include "evolution/CorrelationsTimeEntry.h"
+#include "evolution/TimeEvolutionEntry.h"
 
 TEST_CASE("CorrelationsTimeEntry: no entries") {
     SECTION("no fields") {
-        CorrelationsTimeEntry correlationsTimeEntry{};
+        TimeEvolutionEntry correlationsTimeEntry{};
 
         REQUIRE(correlationsTimeEntry.toString() == "0 ");
     }
 
     SECTION("some fields") {
-        CorrelationsTimeEntry correlationsTimeEntry(2, 3);
+        TimeEvolutionEntry correlationsTimeEntry(2, 3);
 
         REQUIRE_THAT(correlationsTimeEntry.toString(), Catch::StartsWith("2 0 0 0 "));
     }
 }
 
 TEST_CASE("CorrelationsTimeEntry: single observables set") {
-    CorrelationsTimeEntry correlationsTimeEntry(2, 3);
+    TimeEvolutionEntry correlationsTimeEntry(2, 3);
 
     correlationsTimeEntry.addValues({3, 4, 5});
 
@@ -31,7 +31,7 @@ TEST_CASE("CorrelationsTimeEntry: single observables set") {
 }
 
 TEST_CASE("CorrelationsTimeEntry: averaging") {
-    CorrelationsTimeEntry correlationsTimeEntry(2, 3);
+    TimeEvolutionEntry correlationsTimeEntry(2, 3);
 
     correlationsTimeEntry.addValues({3, 4, 5});
     correlationsTimeEntry.addValues({5, 6, 7});

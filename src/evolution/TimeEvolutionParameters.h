@@ -2,8 +2,8 @@
 // Created by pkua on 09.05.2020.
 //
 
-#ifndef MBL_ED_CORRELATIONSTIMEEVOLUTIONPARAMETERS_H
-#define MBL_ED_CORRELATIONSTIMEEVOLUTIONPARAMETERS_H
+#ifndef MBL_ED_TIMEEVOLUTIONPARAMETERS_H
+#define MBL_ED_TIMEEVOLUTIONPARAMETERS_H
 
 #include <memory>
 #include <vector>
@@ -17,7 +17,7 @@
 /**
  * @brief Parameters of time evolution.
  */
-struct CorrelationsTimeEvolutionParameters {
+struct TimeEvolutionParameters {
     /**
      * @brief Helper struct representing "an external initial vector", which is not FockBase::Vector and should be
      * passed right before the evolution (see CorrelationsTimeEvolution::addEvolution)
@@ -63,4 +63,4 @@ struct CorrelationsTimeEvolutionParameters {
     [[nodiscard]] std::string generateStoredObservablesHeader() const;
 };
 
-#endif //MBL_ED_CORRELATIONSTIMEEVOLUTIONPARAMETERS_H
+#endif //MBL_ED_TIMEEVOLUTIONPARAMETERS_H

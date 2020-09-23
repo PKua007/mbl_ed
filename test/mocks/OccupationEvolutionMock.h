@@ -7,11 +7,11 @@
 
 #include <catch2/trompeloeil.hpp>
 
-#include "evolution/OccupationEvolution.h"
+#include "evolution/OservablesTimeEvolution.h"
 
-class OccupationEvolutionMock : public OccupationEvolution {
+class OccupationEvolutionMock : public OservablesTimeEvolution {
 public:
-    MAKE_MOCK4(perform, std::vector<CorrelationsTimeEntry>(const std::vector<EvolutionTimeSegment> &,
+    MAKE_MOCK4(perform, std::vector<TimeEvolutionEntry>(const std::vector<EvolutionTimeSegment> &,
                                                            const arma::cx_vec &, Evolver &, Logger &),
                override);
 };

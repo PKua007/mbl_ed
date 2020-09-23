@@ -5,11 +5,11 @@
 #include <sstream>
 #include <iterator>
 
-#include "CorrelationsTimeEvolutionParameters.h"
+#include "TimeEvolutionParameters.h"
 #include "utils/Assertions.h"
 
 
-void CorrelationsTimeEvolutionParameters::setVectorsToEvolveFromTags(const std::vector <std::string> &strings) {
+void TimeEvolutionParameters::setVectorsToEvolveFromTags(const std::vector <std::string> &strings) {
     Expects(this->numberOfSites > 0);
 
     this->vectorsToEvolve.clear();
@@ -24,14 +24,14 @@ void CorrelationsTimeEvolutionParameters::setVectorsToEvolveFromTags(const std::
     }
 }
 
-std::size_t CorrelationsTimeEvolutionParameters::countStoredObservableValues() const {
+std::size_t TimeEvolutionParameters::countStoredObservableValues() const {
     std::size_t numOfValues{};
     for (const auto &storedObservable : this->storedObservables)
         numOfValues += storedObservable->getHeader().size();
     return numOfValues;
 }
 
-std::string CorrelationsTimeEvolutionParameters::generateStoredObservablesHeader() const {
+std::string TimeEvolutionParameters::generateStoredObservablesHeader() const {
     std::vector<std::string> headerStrings;
     headerStrings.reserve(this->countStoredObservableValues());
     for (const auto &storedObservable : this->storedObservables) {

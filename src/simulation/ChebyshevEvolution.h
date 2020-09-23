@@ -7,7 +7,7 @@
 
 #include <utility>
 
-#include "evolution/CorrelationsTimeEvolution.h"
+#include "evolution/TimeEvolution.h"
 #include "simulation/SimulationsSpan.h"
 #include "evolution/ChebyshevEvolver.h"
 #include "core/HamiltonianGenerator.h"
@@ -24,7 +24,7 @@
  * mocking purposes. See the default classes description for details of what they do.
  */
 template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel,
-         typename CorrelationsTimeEvolution_t = CorrelationsTimeEvolution,
+         typename CorrelationsTimeEvolution_t = TimeEvolution,
          typename QuenchCalculator_t = QuenchCalculator, typename ChebyshevEvolver_t = ChebyshevEvolver>
 class ChebyshevEvolution : public RestorableSimulation {
 private:

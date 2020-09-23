@@ -84,7 +84,7 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             if (params.N != params.K || params.K % 2 != 0)
                 throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
 
-            CorrelationsTimeEvolutionParameters evolutionParams;
+            TimeEvolutionParameters evolutionParams;
             evolutionParams.fockBase = fockBase;
             evolutionParams.numberOfSites = params.K;
 
@@ -113,7 +113,7 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             evolutionParams.secondaryObservables = {correlations, borderlessCorrelations, fluctuations};
             evolutionParams.storedObservables = {correlations, borderlessCorrelations, fluctuations, occupations};
 
-            auto occupationEvolution = std::make_unique<OccupationEvolution>(
+            auto occupationEvolution = std::make_unique<OservablesTimeEvolution>(
                 evolutionParams.primaryObservables, evolutionParams.secondaryObservables,
                 evolutionParams.storedObservables
             );
