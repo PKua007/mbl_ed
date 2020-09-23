@@ -185,7 +185,7 @@ TEST_CASE("ChebyshevEvolution: clearing, storing and restoring") {
     params.fockBase = fockBase;
     params.numberOfSites = 4;
     params.setVectorsToEvolveFromTags({"unif"});
-    auto onsiteOccupations = std::make_shared<OnsiteOccupations>(4, fockBase);
+    auto onsiteOccupations = std::make_shared<OnsiteOccupations>(fockBase);
     params.primaryObservables = {onsiteOccupations};
     params.storedObservables = {onsiteOccupations};
     auto occupationEvolution = std::make_unique<OservablesTimeEvolution>(

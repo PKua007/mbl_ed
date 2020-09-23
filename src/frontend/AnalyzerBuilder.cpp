@@ -104,8 +104,8 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
 
             evolutionParams.setVectorsToEvolveFromTags(tags);
 
-            auto occupations = std::make_shared<OnsiteOccupations>(params.K, fockBase);
-            auto occupationsSquared = std::make_shared<OnsiteOccupationsSquared>(params.K, fockBase);
+            auto occupations = std::make_shared<OnsiteOccupations>(fockBase);
+            auto occupationsSquared = std::make_shared<OnsiteOccupationsSquared>(fockBase);
             auto correlations = std::make_shared<Correlations>(params.K, 0);
             auto borderlessCorrelations = std::make_shared<Correlations>(params.K, marginSize);
             auto fluctuations = std::make_shared<OnsiteFluctuations>(params.K);

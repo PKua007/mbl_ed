@@ -23,25 +23,11 @@ OnsiteFluctuations::OnsiteFluctuations(std::size_t numOfSites) : numOfSites{numO
     Expects(numOfSites > 0);
 }
 
-void OnsiteFluctuations::calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &rawObservables)
+void
+OnsiteFluctuations::calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObservables)
 {
-    std::vector<double> numParticles;
-    SymmetricMatrix<double> numParticlesSquared;
-    bool occupationsFound{}, occupationsSquaredFound{};
-    for (const auto &observble : rawObservables) {
-        try {
-            const auto &occupations = dynamic_cast<const OnsiteOccupations &>(*observble);
-            numParticles = occupations.getValues();
-            occupationsFound = true;
-        } catch (std::bad_cast&) { }
-
-        try {
-            const auto &occupations = dynamic_cast<const OnsiteOccupationsSquared &>(*observble);
-            numParticlesSquared = occupations.getOccupationsSquared();
-            occupationsSquaredFound = true;
-        } catch (std::bad_cast&) { }
-    }
-    Assert(occupationsFound && occupationsSquaredFound);
+    auto numParticles = findObservable<OnsiteOccupations>(primaryObservables).getValues();
+    auto numParticlesSquared = findObservable<OnsiteOccupationsSquared>(primaryObservables).getOccupationsSquared();
     Assert(numParticles.size() == this->numOfSites);
     Assert(numParticlesSquared.size() == this->numOfSites);
 

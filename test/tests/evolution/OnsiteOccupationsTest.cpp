@@ -11,7 +11,7 @@
 
 TEST_CASE("OnsiteOccupations") {
     auto base = std::shared_ptr(FockBaseGenerator{}.generate(2, 2));
-    OnsiteOccupations onsiteOccupations(2, base);
+    OnsiteOccupations onsiteOccupations(base);
 
     SECTION("header") {
         REQUIRE(onsiteOccupations.getHeader() == std::vector<std::string>{"n_1", "n_2"});

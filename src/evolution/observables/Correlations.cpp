@@ -27,26 +27,11 @@ Correlations::Correlations(std::size_t numOfSites, std::size_t marginSize)
     this->G_d.resize(this->borderlessNumOfSites - 1);
 }
 
-void Correlations::calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &rawObservables) {
+void Correlations::calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObservables) {
     std::fill(this->G_d.begin(), this->G_d.end(), 0.);
 
-    std::vector<double> numParticles;
-    SymmetricMatrix<double> numParticlesSquared;
-    bool occupationsFound{}, occupationsSquaredFound{};
-    for (const auto &observble : rawObservables) {
-        try {
-            const auto &occupations = dynamic_cast<const OnsiteOccupations &>(*observble);
-            numParticles = occupations.getValues();
-            occupationsFound = true;
-        } catch (std::bad_cast&) { }
-
-        try {
-            const auto &occupations = dynamic_cast<const OnsiteOccupationsSquared &>(*observble);
-            numParticlesSquared = occupations.getOccupationsSquared();
-            occupationsSquaredFound = true;
-        } catch (std::bad_cast&) { }
-    }
-    Assert(occupationsFound && occupationsSquaredFound);
+    auto numParticles = findObservable<OnsiteOccupations>(primaryObservables).getValues();
+    auto numParticlesSquared = findObservable<OnsiteOccupationsSquared>(primaryObservables).getOccupationsSquared();
     Assert(numParticles.size() == this->numOfSites);
     Assert(numParticlesSquared.size() == this->numOfSites);
 

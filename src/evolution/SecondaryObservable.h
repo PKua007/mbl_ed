@@ -7,13 +7,26 @@
 
 #include <vector>
 #include <memory>
+#include <type_traits>
 
 #include "Observable.h"
 #include "PrimaryObservable.h"
 
 class SecondaryObservable : public Observable {
 public:
-    virtual void calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &rawObservables) = 0;
+    template<typename ConcretePrimaryObservable>
+    static const ConcretePrimaryObservable &
+    findObservable(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObservables) {
+        static_assert(std::is_base_of_v<PrimaryObservable, ConcretePrimaryObservable>);
+        for (const auto &observable : primaryObservables) {
+            try {
+                return dynamic_cast<const ConcretePrimaryObservable &>(*observable);
+            } catch (std::bad_cast &) { }
+        }
+        throw std::runtime_error("Desired PrimaryObservable wasn't found");
+    }
+
+    virtual void calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObservables) = 0;
 };
 
 

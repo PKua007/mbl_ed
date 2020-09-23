@@ -23,7 +23,7 @@ private:
 
 public:
     OnsiteOccupations() = default;
-    OnsiteOccupations(std::size_t numOfSites, std::shared_ptr<FockBase> fockBase);
+    OnsiteOccupations(std::shared_ptr<FockBase> fockBase);
 
     [[nodiscard]] std::vector<std::string> getHeader() const override;
     [[nodiscard]] std::vector<double> getValues() const override;

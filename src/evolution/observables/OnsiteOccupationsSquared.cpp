@@ -4,25 +4,23 @@
 
 #include "OnsiteOccupationsSquared.h"
 
-OnsiteOccupationsSquared::OnsiteOccupationsSquared(std::size_t numOfSites, std::shared_ptr<FockBase> fockBase)
-        : numOfSites{numOfSites}, diagonalObservables(numOfSites, arma::vec(fockBase->size())), n_iN_j(numOfSites),
-          header(numOfSites), fockBase{std::move(fockBase)}
+OnsiteOccupationsSquared::OnsiteOccupationsSquared(std::shared_ptr<FockBase> fockBase)
+        : numOfSites{fockBase->getNumberOfSites()}, diagonalObservables(numOfSites, arma::vec(fockBase->size())),
+          n_iN_j(numOfSites), headerStrings(numOfSites), fockBase{std::move(fockBase)}
 {
-    Expects(numOfSites > 0);
-
     for (std::size_t i{}; i < this->numOfSites; i++) {
         for (std::size_t j = i; j < this->numOfSites; j++) {
             for (std::size_t fockIdx{}; fockIdx < this->fockBase->size(); fockIdx++) {
                 this->diagonalObservables(i, j)[fockIdx] =
                     (*this->fockBase)[fockIdx][i] * (*this->fockBase)[fockIdx][j];
-                this->header(i, j) = "n_" + std::to_string(i + 1) + "N_" + std::to_string(j + 1);
+                this->headerStrings(i, j) = "n_" + std::to_string(i + 1) + "N_" + std::to_string(j + 1);
             }
         }
     }
 }
 
 std::vector<std::string> OnsiteOccupationsSquared::getHeader() const {
-    return std::vector(this->header.begin(), this->header.end());
+    return std::vector(this->headerStrings.begin(), this->headerStrings.end());
 }
 
 std::vector<double> OnsiteOccupationsSquared::getValues() const {

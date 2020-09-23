@@ -20,12 +20,12 @@ private:
     std::size_t numOfSites{};
     SymmetricMatrix<arma::vec> diagonalObservables;
     SymmetricMatrix<double> n_iN_j;
-    SymmetricMatrix<std::string> header;
+    SymmetricMatrix<std::string> headerStrings;
     std::shared_ptr<FockBase> fockBase;
 
 public:
     OnsiteOccupationsSquared() = default;
-    explicit OnsiteOccupationsSquared(std::size_t numOfSites, std::shared_ptr<FockBase> fockBase);
+    explicit OnsiteOccupationsSquared(std::shared_ptr<FockBase> fockBase);
 
     [[nodiscard]] std::vector<std::string> getHeader() const override;
     [[nodiscard]] std::vector<double> getValues() const override;

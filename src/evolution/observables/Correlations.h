@@ -28,7 +28,7 @@ public:
 
     [[nodiscard]] std::vector<std::string> getHeader() const override;
     [[nodiscard]] std::vector<double> getValues() const override;
-    void calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &rawObservables) override;
+    void calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObservables) override;
 };
 
 #endif //MBL_ED_CORRELATIONS_H

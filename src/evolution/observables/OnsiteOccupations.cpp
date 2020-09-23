@@ -10,12 +10,10 @@ void OnsiteOccupations::calculateForState(const arma::cx_vec &state) {
         this->n_i[siteIdx] = Observable::calculateExpectedValue(this->diagonalObservables[siteIdx], state);
 }
 
-OnsiteOccupations::OnsiteOccupations(std::size_t numOfSites, std::shared_ptr<FockBase> fockBase)
-        : numOfSites{numOfSites}, diagonalObservables(numOfSites, arma::vec(fockBase->size())), n_i(numOfSites),
-          fockBase{std::move(fockBase)}
+OnsiteOccupations::OnsiteOccupations(std::shared_ptr<FockBase> fockBase)
+        : numOfSites{fockBase->getNumberOfSites()}, diagonalObservables(numOfSites, arma::vec(fockBase->size())),
+          n_i(numOfSites), fockBase{std::move(fockBase)}
 {
-    Expects(numOfSites > 0);
-
     for (std::size_t siteIdx{}; siteIdx < this->numOfSites; siteIdx++)
         for (std::size_t fockIdx{}; fockIdx < this->fockBase->size(); fockIdx++)
             this->diagonalObservables[siteIdx][fockIdx] = (*this->fockBase)[fockIdx][siteIdx];
@@ -23,8 +21,8 @@ OnsiteOccupations::OnsiteOccupations(std::size_t numOfSites, std::shared_ptr<Foc
 
 std::vector<std::string> OnsiteOccupations::getHeader() const {
     std::vector<std::string> headerStrings;
-    for (std::size_t i = 0; i < numOfSites; i++)
-        headerStrings.push_back("n_" + std::to_string(i + 1));
+    for (std::size_t siteIdx = 0; siteIdx < numOfSites; siteIdx++)
+        headerStrings.push_back("n_" + std::to_string(siteIdx + 1));
     return headerStrings;
 }
 

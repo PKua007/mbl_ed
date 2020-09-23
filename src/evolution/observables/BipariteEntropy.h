@@ -13,8 +13,6 @@
 
 class BipariteEntropy : public PrimaryObservable {
 private:
-    std::size_t numOfSites{};
-    std::size_t halfNumOfSites{};
     std::size_t numOfParticles{};
     double S{};
     std::shared_ptr<FockBase> fockBase;

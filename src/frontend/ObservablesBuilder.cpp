@@ -28,16 +28,16 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
         observableStream >> observableName;
 
         if (observableName == "n_i") {
-            occupations = std::make_shared<OnsiteOccupations>(params.K, fockBase);
+            occupations = std::make_shared<OnsiteOccupations>(fockBase);
             this->storedObservables.push_back(occupations);
         } else if (observableName == "n_iN_j") {
-            occupations2 = std::make_shared<OnsiteOccupationsSquared>(params.K, fockBase);
+            occupations2 = std::make_shared<OnsiteOccupationsSquared>(fockBase);
             this->storedObservables.push_back(occupations2);
         } else if (observableName == "rho_i") {
             if (occupations == nullptr)
-                occupations = std::make_shared<OnsiteOccupations>(params.K, fockBase);
+                occupations = std::make_shared<OnsiteOccupations>(fockBase);
             if (occupations2 == nullptr)
-                occupations2 = std::make_shared<OnsiteOccupationsSquared>(params.K, fockBase);
+                occupations2 = std::make_shared<OnsiteOccupationsSquared>(fockBase);
             auto fluctuations = std::make_shared<OnsiteFluctuations>(params.K);
             this->secondaryObservables.push_back(fluctuations);
             this->storedObservables.push_back(fluctuations);
@@ -47,9 +47,9 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
             ValidateMsg(observableStream, "Wrong G_d format. Usage: G_d [margin size]");
             Validate(2*marginSize + 2 <= params.K);
             if (occupations == nullptr)
-                occupations = std::make_shared<OnsiteOccupations>(params.K, fockBase);
+                occupations = std::make_shared<OnsiteOccupations>(fockBase);
             if (occupations2 == nullptr)
-                occupations2 = std::make_shared<OnsiteOccupationsSquared>(params.K, fockBase);
+                occupations2 = std::make_shared<OnsiteOccupationsSquared>(fockBase);
             auto correlations = std::make_shared<Correlations>(params.K, marginSize);
             this->secondaryObservables.push_back(correlations);
             this->storedObservables.push_back(correlations);
