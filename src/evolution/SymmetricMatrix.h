@@ -39,7 +39,9 @@ public:
     using const_iterator = typename std::vector<T>::const_iterator;
 
     SymmetricMatrix() = default;
-    explicit SymmetricMatrix(std::size_t size_) : size_{size_}, elements(size_*(size_ + 1)/2) { }
+    explicit SymmetricMatrix(std::size_t size_, const T &fill = T{})
+            : size_{size_}, elements(size_*(size_ + 1)/2, fill)
+    { }
 
     /**
      * @brief Returns the linear size of the matrix, ie. number of rows or columns.

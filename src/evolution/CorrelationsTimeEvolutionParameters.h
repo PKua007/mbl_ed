@@ -10,8 +10,9 @@
 #include <variant>
 
 #include "core/FockBase.h"
-#include "utils/Assertions.h"
 #include "EvolutionTimeSegment.h"
+#include "PrimaryObservable.h"
+#include "SecondaryObservable.h"
 
 /**
  * @brief Parameters of time evolution.
@@ -31,12 +32,8 @@ struct CorrelationsTimeEvolutionParameters {
      * should be 0, 0.5, 1, 3
      */
     std::vector<EvolutionTimeSegment> timeSegmentation;
-    std::size_t numberOfSites{};
 
-    /**
-     * @brief Margin size for borderless observables (see CorrelationsTimeEntry)
-     */
-    std::size_t marginSize{};
+    std::size_t numberOfSites{};
     std::shared_ptr<FockBase> fockBase{};
 
     /**
@@ -47,6 +44,10 @@ struct CorrelationsTimeEvolutionParameters {
      */
     std::vector<std::variant<FockBase::Vector, ExternalVector>> vectorsToEvolve{};
 
+    std::vector<std::shared_ptr<PrimaryObservable>> primaryObservables;
+    std::vector<std::shared_ptr<SecondaryObservable>> secondaryObservables;
+    std::vector<std::shared_ptr<Observable>> storedObservables;
+
     /**
      * @brief Constructs CorrelationsTimeEvolutionParameters::vectorsToEvolve from a string.
      * @details It can be either a tag
@@ -56,20 +57,10 @@ struct CorrelationsTimeEvolutionParameters {
      * </ul>
      * or occupation representation 2.3.0.0.1
      */
-    void setVectorsToEvolveFromTags(const std::vector<std::string> &strings) {
-        Expects(this->numberOfSites > 0);
+    void setVectorsToEvolveFromTags(const std::vector<std::string> &strings);
 
-        this->vectorsToEvolve.clear();
-        for (const auto &string : strings) {
-            try {
-                // Try a tag representation
-                this->vectorsToEvolve.emplace_back(FockBase::Vector(this->numberOfSites, string));
-            } catch (FockVectorParseException &) {
-                // If tag failed, try occupation representation
-                this->vectorsToEvolve.emplace_back(FockBase::Vector(string));
-            }
-        }
-    }
+    [[nodiscard]] std::size_t countStoredObservableValues() const;
+    [[nodiscard]] std::string generateStoredObservablesHeader() const;
 };
 
 #endif //MBL_ED_CORRELATIONSTIMEEVOLUTIONPARAMETERS_H

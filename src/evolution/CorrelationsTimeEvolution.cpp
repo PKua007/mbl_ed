@@ -13,6 +13,8 @@
 void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, Logger &logger,
                                              const std::vector<arma::cx_vec> &externalVectors)
 {
+    Expects(externalVectors.size() == this->countExternalVectors());
+
     std::size_t externalVectorsCounter{};
     for (auto &evolution : this->vectorEvolutions) {
         arma::cx_vec initialState;
@@ -30,19 +32,12 @@ void CorrelationsTimeEvolution::addEvolution(Evolver &evolver, Logger &logger,
         }
 
         logger.info() << "Evolving vector " << evolution.getInitialVectorName() << std::endl;
-
-        OccupationEvolution occupationEvolution(this->fockBase);
-        auto observablesEvolution = occupationEvolution.perform(this->timeSegmentation, initialState, evolver, logger);
-
+        auto observablesEvolution = this->occupationEvolution->perform(this->timeSegmentation, initialState, evolver,
+                                                                       logger);
         Assert(observablesEvolution.size() == evolution.timeEntries.size());
-        for (std::size_t i{}; i < observablesEvolution.size(); i++) {
-            auto &timeEntry = evolution.timeEntries[i];
-            auto &observables = observablesEvolution[i];
-            timeEntry.addObservables(observables);
-        }
+        std::transform(evolution.timeEntries.begin(), evolution.timeEntries.end(), observablesEvolution.begin(),
+                       evolution.timeEntries.begin(), std::plus{});
     }
-
-    Assert(externalVectorsCounter == externalVectors.size());
 }
 
 void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
@@ -61,16 +56,20 @@ void CorrelationsTimeEvolution::storeResult(std::ostream &out) const {
     }
 }
 
-CorrelationsTimeEvolution::CorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters)
-        : fockBase{parameters.fockBase}, marginSize{parameters.marginSize},
-          numberOfSites{parameters.numberOfSites}, timeSegmentation{parameters.timeSegmentation}
+CorrelationsTimeEvolution::CorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters,
+                                                     std::unique_ptr<OccupationEvolution> occupationEvolution)
+        : fockBase{parameters.fockBase}, occupationEvolution{std::move(occupationEvolution)},
+          timeSegmentation{parameters.timeSegmentation}
 {
     Expects(!parameters.vectorsToEvolve.empty());
+
+    std::size_t numOfStoredValues = parameters.countStoredObservableValues();
 
     this->vectorEvolutions.reserve(parameters.vectorsToEvolve.size());
     for (const auto &vectorToEvolve : parameters.vectorsToEvolve) {
         VectorEvolution evolution;
         evolution.initialVector = vectorToEvolve;
+        evolution.observablesHeader = parameters.generateStoredObservablesHeader();
 
         double lastMaxTime{};
         // Prepare entries for each time segment
@@ -78,19 +77,15 @@ CorrelationsTimeEvolution::CorrelationsTimeEvolution(const CorrelationsTimeEvolu
             for (std::size_t timeIdx{}; timeIdx < timeSegment.numSteps; timeIdx++) {
                 double time = lastMaxTime + (timeSegment.maxTime - lastMaxTime)
                               / static_cast<double>(timeSegment.numSteps) * timeIdx;
-                evolution.timeEntries.emplace_back(time, marginSize, numberOfSites);
+                evolution.timeEntries.emplace_back(time, numOfStoredValues);
             }
             lastMaxTime = timeSegment.maxTime;
         }
         // The last step should be separately added
-        evolution.timeEntries.emplace_back(lastMaxTime, marginSize, numberOfSites);
+        evolution.timeEntries.emplace_back(lastMaxTime, numOfStoredValues);
 
         this->vectorEvolutions.push_back(evolution);
     }
-}
-
-std::size_t CorrelationsTimeEvolution::getNumberOfSites() const {
-    return this->numberOfSites;
 }
 
 void CorrelationsTimeEvolution::storeState(std::ostream &binaryOut) const {
@@ -106,6 +101,15 @@ void CorrelationsTimeEvolution::clear() {
         vectorEvolution.clear();
 }
 
+std::size_t CorrelationsTimeEvolution::countExternalVectors() const {
+    std::size_t externalVectorCounter{};
+    using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
+    for (const auto &vectorEvolution : this->vectorEvolutions)
+        if (std::holds_alternative<ExternalVector>(vectorEvolution.initialVector))
+            externalVectorCounter++;
+    return externalVectorCounter;
+}
+
 std::string CorrelationsTimeEvolution::VectorEvolution::getHeader() const {
     Assert(!this->timeEntries.empty());
 
@@ -114,8 +118,8 @@ std::string CorrelationsTimeEvolution::VectorEvolution::getHeader() const {
         out << std::get<FockBase::Vector>(initialVector);
     else
         out << std::get<ExternalVector>(initialVector).name;
+    out << "_t " << this->observablesHeader;
 
-    out << "_" << this->timeEntries.front().getHeader();
     return out.str();
 }
 

@@ -10,7 +10,6 @@
 
 #include "SymmetricMatrix.h"
 #include "OccupationEvolution.h"
-#include "CorrelationsTimeEntry.h"
 #include "Evolver.h"
 #include "CorrelationsTimeEvolutionParameters.h"
 #include "simulation/Restorable.h"
@@ -33,6 +32,7 @@ private:
 
         std::variant<FockBase::Vector, ExternalVector> initialVector;
         std::vector<CorrelationsTimeEntry> timeEntries{};
+        std::string observablesHeader;
 
         [[nodiscard]] std::string getHeader() const;
         [[nodiscard]] std::string getInitialVectorName() const;
@@ -42,12 +42,9 @@ private:
     };
 
     std::shared_ptr<FockBase> fockBase;
-    std::size_t marginSize{};
-    std::size_t numberOfSites{};
+    std::unique_ptr<OccupationEvolution> occupationEvolution;
     std::vector<VectorEvolution> vectorEvolutions{};
     std::vector<EvolutionTimeSegment> timeSegmentation{};
-
-    [[nodiscard]] std::size_t getNumberOfSites() const;
 
 public:
     /**
@@ -55,7 +52,8 @@ public:
      * @details The evolution will be performed separately for all @a vectorsToEvolve. To know what observables are
      * measured, check CorrelationTimeEntry.
      */
-    explicit CorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters);
+    explicit CorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters,
+                                       std::unique_ptr<OccupationEvolution> occupationEvolution);
 
     /**
      * @brief Adds another evolution to the analyzis.
@@ -85,14 +83,7 @@ public:
      */
     void storeResult(std::ostream &out) const;
 
-    [[nodiscard]] std::size_t countExternalVectors() const {
-        std::size_t externalVectorCounter{};
-        using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
-        for (const auto &vectorEvolution : this->vectorEvolutions)
-            if (std::holds_alternative<ExternalVector>(vectorEvolution.initialVector))
-                externalVectorCounter++;
-        return externalVectorCounter;
-    }
+    [[nodiscard]] std::size_t countExternalVectors() const;
 
     void storeState(std::ostream &binaryOut) const override;
     void joinRestoredState(std::istream &binaryIn) override;

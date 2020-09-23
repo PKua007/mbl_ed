@@ -21,8 +21,9 @@ void EDCorrelationsTimeEvolution::storeResult(std::ostream &out) const {
     this->correlationsTimeEvolution.storeResult(out);
 }
 
-EDCorrelationsTimeEvolution::EDCorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters)
-        : correlationsTimeEvolution(parameters)
+EDCorrelationsTimeEvolution::EDCorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters,
+                                                         std::unique_ptr<OccupationEvolution> occupationEvolution)
+        : correlationsTimeEvolution(parameters, std::move(occupationEvolution))
 { }
 
 void EDCorrelationsTimeEvolution::storeState(std::ostream &binaryOut) const {

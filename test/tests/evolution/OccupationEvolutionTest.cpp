@@ -2,89 +2,85 @@
 // Created by Piotr Kubala on 20/02/2020.
 //
 
-#include <catch2/catch.hpp>
 #include <iterator>
 
-#include "matchers/ArmaApproxEqualMatcher.h"
-#include "matchers/VectorApproxEqualMatcher.h"
+#include <catch2/catch.hpp>
+#include <catch2/trompeloeil.hpp>
+
+#include "mocks/PrimaryObservableMock.h"
+#include "mocks/SecondaryObservableMock.h"
+#include "mocks/EvolverMock.h"
 
 #include "evolution/OccupationEvolution.h"
-#include "evolution/EDEvolver.h"
-#include "core/FockBaseGenerator.h"
 
-TEST_CASE("OccupationEvolution: 1 boson 4 sites") {
-    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 4));
-    // Just a random nontrivial orthogonal matrix as eigenstates
-    const double sq2 = std::sqrt(2);
-    const double sq6 = std::sqrt(6);
-    const double sq12 = std::sqrt(12);
-    Eigensystem eigensystem({1, 2, 3, 4}, {{   0.5,    0.5,    0.5,     0.5},
-                                           { 1/sq2, -1/sq2,      0,       0},
-                                           { 1/sq6,  1/sq6, -2/sq6,       0},
-                                           {1/sq12, 1/sq12, 1/sq12, -3/sq12}}, fockBase);
-    std::ostringstream loggerStream;
-    Logger logger(loggerStream);
-    EDEvolver evolver(eigensystem);
+using trompeloeil::_;
 
-    // The values were calculated in Mathematica by creating hamiltonian in Fock basis from eigenvectors and
-    // eigenvalues, computing |psi(t)> = e^(-iHt) |psi> explicitly and calculating all <psi(t)|observable|psi(t)>
-    std::vector<double> nsT0 = {0, 1, 0, 0};
-    arma::vec nnsT0 = {0, 1, 0, 0};
-    std::vector<double> nsT2 = {0.3540367091367856, 0.2919265817264288, 0.2360244727578571, 0.11801223637892853};
-    arma::vec nnsT2 = arma::vec{0.3540367091367856, 0.2919265817264288, 0.2360244727578571, 0.11801223637892853};
-
-    SECTION("single time segment - t = 0, 2") {
-        OccupationEvolution occupationEvolution(fockBase);
-        auto evolution = occupationEvolution.perform({{2, 1}}, {0, 1, 0, 0}, evolver, logger);
-
-        REQUIRE(evolution.size() == 2);
-        REQUIRE_THAT(evolution[0].numParticles, IsApproxEqual(nsT0, 1e-15));
-        REQUIRE_THAT(evolution[0].numParticlesSquared.toArma(),IsApproxEqual(arma::mat(arma::diagmat(nnsT0)), 1e-15));
-        REQUIRE_THAT(evolution[1].numParticles, IsApproxEqual(nsT2, 1e-12));
-        REQUIRE_THAT(evolution[1].numParticlesSquared.toArma(),IsApproxEqual(arma::mat(arma::diagmat(nnsT2)), 1e-12));
-    }
-
-    SECTION("2 time segments - t = 0, 0.5, 1, 2") {
-        OccupationEvolution occupationEvolution(fockBase);
-        auto evolution = occupationEvolution.perform({{1, 2}, {2, 1}}, {0, 1, 0, 0}, evolver, logger);
-
-        REQUIRE(evolution.size() == 4);
-        REQUIRE_THAT(evolution[0].numParticles, IsApproxEqual(nsT0, 1e-15));
-        REQUIRE_THAT(evolution[0].numParticlesSquared.toArma(),IsApproxEqual(arma::mat(arma::diagmat(nnsT0)), 1e-15));
-        REQUIRE_THAT(evolution[3].numParticles, IsApproxEqual(nsT2, 1e-12));
-        REQUIRE_THAT(evolution[3].numParticlesSquared.toArma(),IsApproxEqual(arma::mat(arma::diagmat(nnsT2)), 1e-12));
+namespace {
+    inline auto arma_eq(const arma::cx_vec &vec) {
+        return trompeloeil::make_matcher<arma::cx_vec>(
+            [](const arma::cx_vec &value, const arma::cx_vec &expected) {
+                return arma::approx_equal(value, expected, "absdiff", 1e-8);
+            },
+            [](std::ostream &os, const arma::cx_vec &expected) {
+                os << " arma::approx_equal " << expected;
+            },
+            vec
+        );
     }
 }
 
-TEST_CASE("OccupationEvolution: 2 bosons 2 sites") {
-    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(2, 2));
-    Eigensystem eigensystem({1, 2, 3}, {{ 3, 2,  6},
-                                        {-6, 3,  2},
-                                        { 2, 6, -3}}, fockBase);
-    EDEvolver evolver(eigensystem);
+TEST_CASE("OccupationEvolution") {
+    trompeloeil::sequence seq1;
+    auto primary = std::make_shared<PrimaryObservableMock>();
+    ALLOW_CALL(*primary, getHeader()).RETURN(std::vector<std::string>{"p1", "p2"});
+    REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{1, 0, 0, 0, 0}))).IN_SEQUENCE(seq1);
+    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{1, 2});
+    REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{0, 1, 0, 0, 0}))).IN_SEQUENCE(seq1);
+    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{3, 4});
+    REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{0, 0, 1, 0, 0}))).IN_SEQUENCE(seq1);
+    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{5, 6});
+    REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{0, 0, 0, 1, 0}))).IN_SEQUENCE(seq1);
+    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{7, 8});
+
+    trompeloeil::sequence seq3;
+    auto secondary = std::make_shared<SecondaryObservableMock>();
+    ALLOW_CALL(*secondary, getHeader()).RETURN(std::vector<std::string>{"s1", "s2"});
+    REQUIRE_CALL(*secondary, calculateForObservables(_))
+        .WITH(_1.size() == 1 && _1[0]->getValues() == std::vector<double>{1, 2}).IN_SEQUENCE(seq3);
+    REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq3).RETURN(std::vector<double>{11, 12});
+    REQUIRE_CALL(*secondary, calculateForObservables(_))
+        .WITH(_1.size() == 1 && _1[0]->getValues() == std::vector<double>{3, 4}).IN_SEQUENCE(seq3);
+    REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq3).RETURN(std::vector<double>{13, 14});
+    REQUIRE_CALL(*secondary, calculateForObservables(_))
+        .WITH(_1.size() == 1 && _1[0]->getValues() == std::vector<double>{5, 6}).IN_SEQUENCE(seq3);
+    REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq3).RETURN(std::vector<double>{15, 16});
+    REQUIRE_CALL(*secondary, calculateForObservables(_))
+        .WITH(_1.size() == 1 && _1[0]->getValues() == std::vector<double>{7, 8}).IN_SEQUENCE(seq3);
+    REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq3).RETURN(std::vector<double>{17, 18});
+
+    trompeloeil::sequence seq5;
+    std::vector<arma::cx_vec> vectors = {{1, 0, 0, 0, 0}, {0, 1, 0, 0, 0}, {0, 0, 1, 0, 0}, {0, 0, 0, 1, 0}};
+    std::size_t i{};
+    EvolverMock evolver;
+    REQUIRE_CALL(evolver, prepareFor(arma_eq(arma::cx_vec{1, 0, 0, 0, 0}), 1, 2ul)).IN_SEQUENCE(seq5);
+    REQUIRE_CALL(evolver, getDt()).TIMES(AT_LEAST(1)).RETURN(0.5).IN_SEQUENCE(seq5);
+    REQUIRE_CALL(evolver, prepareFor(arma_eq(arma::cx_vec{0, 0, 1, 0, 0}), 2, 1ul)).IN_SEQUENCE(seq5);
+    REQUIRE_CALL(evolver, getDt()).TIMES(AT_LEAST(1)).RETURN(2).IN_SEQUENCE(seq5);
+    ALLOW_CALL(evolver, getCurrentState()).LR_RETURN(vectors.at(i));
+    ALLOW_CALL(evolver, evolve()).LR_SIDE_EFFECT(i++);
+
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
+    OccupationEvolution evolution({primary}, {secondary}, {primary, secondary});
 
 
-    OccupationEvolution occupationEvolution(fockBase);
-    auto evolution = occupationEvolution.perform({{2, 1}}, {0, 1, 0}, evolver, logger);
+    auto result = evolution.perform({{1, 2}, {3, 1}}, arma::cx_vec{1, 0, 0, 0, 0}, evolver, logger);
 
 
-    REQUIRE(evolution.size() == 2);
-
-    // all <n_i> and <n_i n_j> = 1 for t = 0
-    REQUIRE(evolution[0].numParticles.size() == 2);
-    REQUIRE(evolution[0].numParticles[0] == Approx(1));
-    REQUIRE(evolution[0].numParticles[1] == Approx(1));
-    REQUIRE_THAT(evolution[0].numParticlesSquared.toArma(), IsApproxEqual(arma::mat{{1, 1}, {1, 1}}, 1e-12));
-
-    REQUIRE(evolution[1].numParticles.size() == 2);
-    REQUIRE(evolution[1].numParticles[0] == Approx(1.0569754884490989));
-    REQUIRE(evolution[1].numParticles[1] == Approx(0.9430245115509011));
-    REQUIRE_THAT(evolution[1].numParticlesSquared.toArma(),
-                 IsApproxEqual(
-                     arma::mat{{ 1.736972669993851, 0.3769783069043470},
-                               {0.3769783069043470,  1.509070716197455}},
-                     1e-12
-                 ));
+    REQUIRE(result == std::vector<CorrelationsTimeEntry>{
+        {0,   {1, 2, 11, 12}},
+        {0.5, {3, 4, 13, 14}},
+        {1,   {5, 6, 15, 16}},
+        {3,   {7, 8, 17, 18}}
+    });
 }

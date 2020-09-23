@@ -18,6 +18,9 @@ add_executable(tests TestMain.cpp tests/core/FockBaseGeneratorTest.cpp tests/cor
         tests/core/FockVectorTest.cpp tests/analyzer/DressedStatesFinderTest.cpp tests/analyzer/BulkMeanGapRatioTest.cpp
         tests/core/QuenchCalculatorTest.cpp tests/simulation/ChebyshevEvolutionTest.cpp mocks/RestorableSimulationMock.h
         tests/simulation/RestorableSimulationExecutorTest.cpp object_mothers/HamiltonianGeneratorMother.cpp
-        tests/simulation/RestorableContractTest.cpp tests/utils/LoggerTest.cpp)
+        tests/simulation/RestorableContractTest.cpp tests/utils/LoggerTest.cpp mocks/ObservableMock.h
+        mocks/OccupationEvolutionMock.h mocks/PrimaryObservableMock.h mocks/SecondaryObservableMock.h
+        mocks/EvolverMock.h tests/evolution/CorrelationsTest.cpp tests/evolution/OnsiteFluctuationsTest.cpp
+        tests/evolution/OnsiteOccupationsTest.cpp tests/evolution/OnsiteOccupationsSquaredTest.cpp)
 target_link_libraries(tests PRIVATE mbl_ed_src Catch2::Catch2 trompeloeil)
 target_include_directories(tests PRIVATE ../test)

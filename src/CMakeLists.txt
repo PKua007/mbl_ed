@@ -28,7 +28,10 @@ add_library(mbl_ed_src STATIC utils/Assertions.h core/FockBaseGenerator.cpp core
         analyzer/tasks/DressedStatesFinder.cpp analyzer/tasks/BulkMeanGapRatio.cpp core/QuenchCalculator.cpp
         simulation/SimulationsSpan.h utils/OMPMacros.h simulation/QuenchDataSimulation.h simulation/Restorable.h
         simulation/RestorableSimulation.h simulation/RestorableSimulationExecutor.cpp simulation/RestorableHelper.h
-        utils/Logger.h)
+        utils/Logger.h evolution/Observable.h evolution/PrimaryObservable.h evolution/SecondaryObservable.h
+        evolution/CorrelationsTimeEvolutionParameters.cpp evolution/observables/OnsiteOccupations.cpp
+        evolution/observables/OnsiteFluctuations.cpp evolution/observables/Correlations.cpp
+        evolution/observables/OnsiteOccupationsSquared.cpp)
 
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)

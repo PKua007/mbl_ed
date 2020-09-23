@@ -25,7 +25,8 @@ public:
      * @details Consult CorrelationTimeEntry for the description of @a marginSize. The evolution will be performed
      * separately for all @a vectorsToEvolve. To know what observables are measures, check CorrelationTimeEntry.
      */
-    EDCorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters);
+    EDCorrelationsTimeEvolution(const CorrelationsTimeEvolutionParameters &parameters,
+                                std::unique_ptr<OccupationEvolution> occupationEvolution);
 
     /**
      * @brief Adds another Eigensystem to the analyzis, to all observables means are enriched by more data.

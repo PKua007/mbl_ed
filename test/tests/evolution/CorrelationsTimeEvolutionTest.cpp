@@ -2,104 +2,104 @@
 // Created by Piotr Kubala on 19/02/2020.
 //
 
+#include <vector>
 
 #include <catch2/catch.hpp>
-#include <chrono>
-#include <catch2/trompeloeil.hpp>
 
-#include "mocks/DiagonalTermMock.h"
+#include "mocks/ObservableMock.h"
+#include "mocks/OccupationEvolutionMock.h"
 
-#include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
+#include "evolution/CorrelationsTimeEvolution.h"
 #include "evolution/EDEvolver.h"
 #include "core/FockBaseGenerator.h"
-#include "core/HamiltonianGenerator.h"
-#include "core/terms/HubbardHop.h"
 
-/*TEST_CASE("EDCorrelationsTimeEvolution: benchmark") {
-    auto base = FockBaseGenerator{}.generate(6, 6);
-    HamiltonianGenerator hamiltonianGenerator(std::move(base), false);
-    auto diagonal = std::make_unique<DiagonalTermMock>();
-    using trompeloeil::_;
-    ALLOW_CALL(*diagonal, calculate(_, _))
-        .RETURN(_2.getFockBase()->findIndex(_1).value());
-    hamiltonianGenerator.addDiagonalTerm(std::move(diagonal));
-    hamiltonianGenerator.addHoppingTerm(std::make_unique<HubbardHop>(1));
-    arma::mat hamiltonian = hamiltonianGenerator.generate();
-    arma::mat eigenvectors;
-    arma::vec eigenvalues;
-    arma::eig_sym(eigenvalues, eigenvectors, hamiltonian);
-    Eigensystem eigensystem(eigenvalues, eigenvectors, hamiltonianGenerator.getFockBase());
+using trompeloeil::_;
 
-    EDCorrelationsTimeEvolution correlationsTimeEvolution(1, 11, 1,
-                                                        {{1, 1, 1, 1, 1, 1, 1, 1}, {2, 0, 2, 0, 2, 0, 2, 0}});
-
-    // Warmup
-    for (std::size_t i = 0; i < 2; i++)
-        correlationsTimeEvolution.analyze(eigensystem);
-
-    // Actual test
-    auto start = std::chrono::high_resolution_clock::now();
-    for (std::size_t i = 0; i < 5; i++)
-        correlationsTimeEvolution.analyze(eigensystem);
-    auto end = std::chrono::high_resolution_clock::now();
-
-    std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
-}*/
-
-TEST_CASE("CorrelationsTimeEvolution: header") {
-    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 5));
-    Eigensystem eigensystem({1, 1, 1, 1, 1}, arma::eye(5, 5), fockBase);
-    EDCorrelationsTimeEvolution evolution({{{2, 1}}, 5, 1, fockBase,
-                                          {FockBase::Vector{1, 0, 0, 0, 0}, FockBase::Vector{0, 1, 0, 0, 0}}});
-    std::ostringstream loggerStream;
-    Logger logger(loggerStream);
-
-    evolution.analyze(eigensystem, logger);
-    std::stringstream out;
-    evolution.storeResult(out);
-
-    std::string line;
-    std::getline(out, line);
-    REQUIRE(line == "1.0.0.0.0_t Gm0_1 Gm0_2 Gm0_3 Gm0_4 Gm1_1 Gm1_2 rho_0 rho_1 rho_2 rho_3 rho_4 n_0 n_1 n_2 n_3 n_4 "
-                    "0.1.0.0.0_t Gm0_1 Gm0_2 Gm0_3 Gm0_4 Gm1_1 Gm1_2 rho_0 rho_1 rho_2 rho_3 rho_4 n_0 n_1 n_2 n_3 n_4 ");
-}
-
-TEST_CASE("CorrelationsTimeEvolution: times") {
+TEST_CASE("CorrelationsTimeEvolution: header and entries") {
     auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
-    EDCorrelationsTimeEvolution evolution({{{1, 2}, {3, 1}}, 2, 0, fockBase, {FockBase::Vector{1, 0}}});
+    CorrelationsTimeEvolutionParameters params;
+    params.fockBase = fockBase;
+    params.timeSegmentation = {{1, 2}, {3, 1}};
+    params.numberOfSites = 2;
+    params.vectorsToEvolve = {FockBase::Vector{1, 0}, FockBase::Vector{0, 1}};
+
+    auto observable1 = std::make_shared<ObservableMock>();
+    auto observable2 = std::make_shared<ObservableMock>();
+    ALLOW_CALL(*observable1, getHeader()).RETURN(std::vector<std::string>{"o1.1", "o1.2"});
+    ALLOW_CALL(*observable2, getHeader()).RETURN(std::vector<std::string>{"o2.1", "o2.2"});
+    params.storedObservables = {observable1, observable2};
+
+    auto occupationEvolution = std::make_unique<OccupationEvolutionMock>();
+    REQUIRE_CALL(*occupationEvolution, perform(params.timeSegmentation, _, _, _))
+        .WITH(arma::approx_equal(_2, arma::cx_vec{1, 0}, "absdiff", 1e-8))
+        .RETURN(std::vector<CorrelationsTimeEntry>{
+            {0,   {1, 2, 3, 4}},
+            {0.5, {5, 6, 7, 8}},
+            {1,   {9, 10, 11, 12}},
+            {3,   {13, 14, 15, 16}},
+        });
+    REQUIRE_CALL(*occupationEvolution, perform(params.timeSegmentation, _, _, _))
+        .WITH(arma::approx_equal(_2, arma::cx_vec{0, 1}, "absdiff", 1e-8))
+        .RETURN(std::vector<CorrelationsTimeEntry>{
+            {0,   {17, 18, 19, 20}},
+            {0.5, {21, 22, 23, 24}},
+            {1,   {25, 26, 27, 28}},
+            {3,   {29, 30, 31, 32}},
+        });
+
+    EDEvolver evolver(eigensystem);
+    CorrelationsTimeEvolution evolution(params, std::move(occupationEvolution));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
-    evolution.analyze(eigensystem, logger);
+
+    evolution.addEvolution(evolver, logger);
     std::stringstream out;
     evolution.storeResult(out);
 
-    std::string line;
-    std::getline(out, line);
-    double t, G_1, bG_1, rho_0, rho_1, n_0, n_1;
-    out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
-    REQUIRE(t == 0);
-    out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
-    REQUIRE(t == 0.5);
-    out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
-    REQUIRE(t == 1);
-    out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> n_0 >> n_1;
-    REQUIRE(t == 3);
+    SECTION("header") {
+        std::string line;
+        std::getline(out, line);
+        REQUIRE(line == "1.0_t o1.1 o1.2 o2.1 o2.2 0.1_t o1.1 o1.2 o2.1 o2.2 ");
+
+        SECTION("entries") {
+            std::getline(out, line);
+            REQUIRE(line == "0 1 2 3 4 0 17 18 19 20 ");
+            std::getline(out, line);
+            REQUIRE(line == "0.5 5 6 7 8 0.5 21 22 23 24 ");
+            std::getline(out, line);
+            REQUIRE(line == "1 9 10 11 12 1 25 26 27 28 ");
+            std::getline(out, line);
+            REQUIRE(line == "3 13 14 15 16 3 29 30 31 32 ");
+        }
+    }
 }
 
 TEST_CASE("CorrelationsTimeEvolution: external vectors") {
     auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
-    using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
-    CorrelationsTimeEvolution evolution({{{1, 1}}, 2, 0, fockBase,
-                                         {FockBase::Vector{1, 0}, ExternalVector{"external"}}
-                                        });
+    CorrelationsTimeEvolutionParameters params;
+    params.fockBase = fockBase;
+    params.timeSegmentation = {{1, 1}};
+    params.numberOfSites = 2;
+    params.vectorsToEvolve = {FockBase::Vector{1, 0}, CorrelationsTimeEvolutionParameters::ExternalVector{"external"}};
+
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
-    EDEvolver evolver(eigensystem);
 
     SECTION("correct number of external vectors") {
+        auto occupationEvolution = std::make_unique<OccupationEvolutionMock>();
+        REQUIRE_CALL(*occupationEvolution, perform(params.timeSegmentation, _, _, _))
+                .WITH(arma::approx_equal(_2, arma::cx_vec{1, 0}, "absdiff", 1e-8))
+                .RETURN(std::vector<CorrelationsTimeEntry>{{0, {}}, {1, {}}});
+        REQUIRE_CALL(*occupationEvolution, perform(params.timeSegmentation, _, _, _))
+                .WITH(arma::approx_equal(_2, arma::cx_vec{M_SQRT1_2, M_SQRT1_2}, "absdiff", 1e-8))
+                .RETURN(std::vector<CorrelationsTimeEntry>{{0, {}}, {1, {}}});
+
+        EDEvolver evolver(eigensystem);
+        CorrelationsTimeEvolution evolution(params, std::move(occupationEvolution));
+
         evolution.addEvolution(evolver, logger, {{M_SQRT1_2, M_SQRT1_2}});
         std::stringstream out;
         evolution.storeResult(out);
@@ -107,42 +107,15 @@ TEST_CASE("CorrelationsTimeEvolution: external vectors") {
         std::string line;
         std::getline(out, line);
         // Check header
-        REQUIRE(line == "1.0_t Gm0_1 Gm0_1 rho_0 rho_1 n_0 n_1 external_t Gm0_1 Gm0_1 rho_0 rho_1 n_0 n_1 ");
-        // Make sure that initial values of <n_0> and <n_1> for external vector are correct
-        double t, G_1, bG_1, rho_0, rho_1, Fock_n_0, Fock_n_1, external_n_0, external_n_1;
-        out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> Fock_n_0 >> Fock_n_1;
-        out >> t >> G_1 >> bG_1 >> rho_0 >> rho_1 >> external_n_0 >> external_n_1;
-        REQUIRE(external_n_0 == Approx(0.5));
-        REQUIRE(external_n_1 == Approx(0.5));
+        REQUIRE(line == "1.0_t external_t ");
     }
 
     SECTION("throw on incorrect number of external vectors") {
+        auto occupationEvolution = std::make_unique<OccupationEvolutionMock>();
+        EDEvolver evolver(eigensystem);
+        CorrelationsTimeEvolution evolution(params, std::move(occupationEvolution));
+
         REQUIRE_THROWS(evolution.addEvolution(evolver, logger, {}));
         REQUIRE_THROWS(evolution.addEvolution(evolver, logger, {{1, 0}, {0, 1}}));
     }
-}
-
-TEST_CASE("CorrelationsTimeEvolution: throw on non-matching eigensystems") {
-    auto fockBase1 = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
-    Eigensystem eigensystem1({1, 1}, arma::eye(2, 2), fockBase1);
-    auto fockBase2 = FockBaseGenerator{}.generate(1, 3);
-    Eigensystem eigensystem2({1, 1, 1}, arma::eye(3, 3), std::move(fockBase2));
-    EDCorrelationsTimeEvolution evolution({{{2, 1}}, 2, 0, fockBase1, {FockBase::Vector{1, 0}}});
-    std::ostringstream loggerStream;
-    Logger logger(loggerStream);
-    evolution.analyze(eigensystem1, logger);
-
-    REQUIRE_THROWS(evolution.analyze(eigensystem2, logger));
-}
-
-TEST_CASE("CorrelationsTimeEvolution: throw on wrong initial vectors") {
-    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
-    Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
-    EDCorrelationsTimeEvolution corr1({{{2, 1}}, 2, 0, fockBase, {FockBase::Vector{1, 0, 0}}});
-    EDCorrelationsTimeEvolution corr2({{{2, 1}}, 2, 0, fockBase, {FockBase::Vector{0, 2}}});
-    std::ostringstream loggerStream;
-    Logger logger(loggerStream);
-
-    REQUIRE_THROWS(corr1.analyze(eigensystem, logger));
-    REQUIRE_THROWS(corr2.analyze(eigensystem, logger));
 }

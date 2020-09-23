@@ -256,6 +256,11 @@ void Frontend::analyze(int argc, char **argv) {
         io.storeAnalyzerResults(params, *analyzer, paramsToPrint, outputFilename);
 }
 
+#include "evolution/observables/OnsiteOccupations.h"
+#include "evolution/observables/OnsiteOccupationsSquared.h"
+#include "evolution/observables/Correlations.h"
+#include "evolution/observables/OnsiteFluctuations.h"
+
 void Frontend::chebyshev(int argc, char **argv) {
     // Parse options
     cxxopts::Options options(argv[0],
@@ -360,16 +365,28 @@ void Frontend::chebyshev(int argc, char **argv) {
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run evolutions
-    CorrelationsTimeEvolutionParameters evolutionParameters;
+    CorrelationsTimeEvolutionParameters evolutionParams;
 
     std::istringstream timeSegmentationStream(timeSegmentation);
     std::copy(std::istream_iterator<EvolutionTimeSegment>(timeSegmentationStream),
               std::istream_iterator<EvolutionTimeSegment>(),
-              std::back_inserter(evolutionParameters.timeSegmentation));
-    evolutionParameters.numberOfSites = params.K;
-    evolutionParameters.fockBase = base;
-    evolutionParameters.marginSize = marginSize;
-    evolutionParameters.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
+              std::back_inserter(evolutionParams.timeSegmentation));
+    evolutionParams.numberOfSites = params.K;
+    evolutionParams.fockBase = base;
+    evolutionParams.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
+
+    auto occupations = std::make_shared<OnsiteOccupations>(params.K, base);
+    auto occupationsSquared = std::make_shared<OnsiteOccupationsSquared>(params.K, base);
+    auto correlations = std::make_shared<Correlations>(params.K, 0);
+    auto borderlessCorrelations = std::make_shared<Correlations>(params.K, marginSize);
+    auto fluctuations = std::make_shared<OnsiteFluctuations>(params.K);
+    evolutionParams.primaryObservables = {occupations, occupationsSquared};
+    evolutionParams.secondaryObservables = {correlations, borderlessCorrelations, fluctuations};
+    evolutionParams.storedObservables = {correlations, borderlessCorrelations, fluctuations, occupations};
+
+    auto occupationEvolution = std::make_unique<OccupationEvolution>(
+        evolutionParams.primaryObservables, evolutionParams.secondaryObservables, evolutionParams.storedObservables
+    );
 
     SimulationsSpan simulationsSpan;
     simulationsSpan.from = params.from;
@@ -381,19 +398,19 @@ void Frontend::chebyshev(int argc, char **argv) {
     std::unique_ptr<ChebyshevEvolution<>> evolution;
     if (quenchParams.has_value()) {
         using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
-        evolutionParameters.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
+        evolutionParams.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
 
         auto quenchRnd = std::make_unique<RND>();
         auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
         evolution = std::make_unique<ChebyshevEvolution<>>(
-            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-            std::make_unique<CorrelationsTimeEvolution>(evolutionParameters), std::make_unique<QuenchCalculator>(),
-            std::move(quenchHamiltonianGenerator), std::move(quenchRnd)
+                std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                std::make_unique<CorrelationsTimeEvolution>(evolutionParams, std::move(occupationEvolution)),
+                std::make_unique<QuenchCalculator>(), std::move(quenchHamiltonianGenerator), std::move(quenchRnd)
         );
     } else {
         evolution = std::make_unique<ChebyshevEvolution<>>(
             std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-            std::make_unique<CorrelationsTimeEvolution>(evolutionParameters)
+            std::make_unique<CorrelationsTimeEvolution>(evolutionParams, std::move(occupationEvolution))
         );
     }
 
