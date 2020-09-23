@@ -11,6 +11,7 @@
 #include "AnalyzerBuilder.h"
 #include "AveragingModelFactory.h"
 #include "IO.h"
+#include "ObservablesBuilder.h"
 
 #include "simulation/ExactDiagonalization.h"
 #include "core/FockBaseGenerator.h"
@@ -181,8 +182,7 @@ void Frontend::analyze(int argc, char **argv) {
             ("t,task", "analyzer task(s) to be performed",
              cxxopts::value<std::vector<std::string>>(tasks))
             ("p,print_parameter", "parameters to be included in inline results",
-             cxxopts::value<std::vector<std::string>>(paramsToPrint)
-                 ->default_value("N,K"))
+             cxxopts::value<std::vector<std::string>>(paramsToPrint)->default_value("N,K"))
             ("d,directory", "directory to search simulation results",
              cxxopts::value<std::filesystem::path>(directory)->default_value("."))
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
@@ -256,11 +256,6 @@ void Frontend::analyze(int argc, char **argv) {
         io.storeAnalyzerResults(params, *analyzer, paramsToPrint, outputFilename);
 }
 
-#include "evolution/observables/OnsiteOccupations.h"
-#include "evolution/observables/OnsiteOccupationsSquared.h"
-#include "evolution/observables/Correlations.h"
-#include "evolution/observables/OnsiteFluctuations.h"
-
 void Frontend::chebyshev(int argc, char **argv) {
     // Parse options
     cxxopts::Options options(argv[0],
@@ -270,9 +265,9 @@ void Frontend::chebyshev(int argc, char **argv) {
     std::vector<std::string> overridenParamsEntries;
     std::vector<std::string> quenchParamsEntries;
     std::string timeSegmentation{};
-    std::size_t marginSize{};
     std::vector<std::string> vectorsToEvolveTags;
     std::string verbosity;
+    std::vector<std::string> observableStrings;
 
     options.add_options()
             ("h,help", "prints help for this mode")
@@ -286,8 +281,13 @@ void Frontend::chebyshev(int argc, char **argv) {
                                     "of steps 1] [time 2] [number of steps 2] ... . For example, '1 2 5 4' divides 0-1 "
                                     "in 2 and 1-5 in 4, giving times: 0, 0.5, 1, 2, 3, 4, 5",
              cxxopts::value<std::string>(timeSegmentation))
-            ("m,margin", "margin size - one averaging of correlations is done for all sites, the second one for all "
-                         "but a given margin from both sides", cxxopts::value<std::size_t>(marginSize))
+            ("o,observable", "which observables should be calculated and stored. One or more of: "
+                             "n_j - onsite occupations; "
+                             "n_iN_j - products of 2 onsite occupations; "
+                             "G_d [margin size] - site averaged correlations, without including [margin size] sites on "
+                             "both ends; "
+                             "rho_i - fluctiations;",
+             cxxopts::value<std::vector<std::string>>(observableStrings)->default_value("G_d 0, rho_i, n_i"))
             ("v,vectors", "vectors to evolve. Available options: unif/dw/2.3.0.0.1. You can specify more than one",
              cxxopts::value<std::vector<std::string>>(vectorsToEvolveTags))
             ("q,quench_param", "if specified, evolution will be performed for quenched vector (together with "
@@ -326,10 +326,6 @@ void Frontend::chebyshev(int argc, char **argv) {
     // Validate rest of the options
     if (!parsedOptions.count("time_segmentation"))
         die("You have to specify max evolution time using -t [max time]", logger);
-    if (!parsedOptions.count("margin"))
-        die("You have to specify margin size using -m [margin size]", logger);
-    if (marginSize * 2 > params.K - 2)
-        die("Margin is too big - there should be at least 2 sites left.", logger);
     if (!parsedOptions.count("vectors") && !parsedOptions.count("quench_param"))
         die("You have to specify space vectors to evolve using -v [unif/dw/1.0.4.0] or/and via quench -q", logger);
     // Validation of vectors is done later
@@ -375,14 +371,11 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParams.fockBase = base;
     evolutionParams.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
 
-    auto occupations = std::make_shared<OnsiteOccupations>(params.K, base);
-    auto occupationsSquared = std::make_shared<OnsiteOccupationsSquared>(params.K, base);
-    auto correlations = std::make_shared<Correlations>(params.K, 0);
-    auto borderlessCorrelations = std::make_shared<Correlations>(params.K, marginSize);
-    auto fluctuations = std::make_shared<OnsiteFluctuations>(params.K);
-    evolutionParams.primaryObservables = {occupations, occupationsSquared};
-    evolutionParams.secondaryObservables = {correlations, borderlessCorrelations, fluctuations};
-    evolutionParams.storedObservables = {correlations, borderlessCorrelations, fluctuations, occupations};
+    ObservablesBuilder observablesBuilder;
+    observablesBuilder.build(observableStrings, params, base);
+    evolutionParams.primaryObservables = observablesBuilder.releasePrimaryObservables();
+    evolutionParams.secondaryObservables = observablesBuilder.releaseSecondaryObservables();
+    evolutionParams.storedObservables = observablesBuilder.releaseStoredObservables();
 
     auto occupationEvolution = std::make_unique<OccupationEvolution>(
         evolutionParams.primaryObservables, evolutionParams.secondaryObservables, evolutionParams.storedObservables
