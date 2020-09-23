@@ -41,6 +41,8 @@ public:
     [[nodiscard]] const_iterator begin() const { return data.begin(); }
     [[nodiscard]] const_iterator end() const { return data.end(); }
 
+    [[nodiscard]] friend FockVector operator+(const FockVector &fw1, const FockVector &fw2);
+
     [[nodiscard]] friend bool operator==(const FockVector &fw1, const FockVector &fw2) { return fw1.data == fw2.data; }
     [[nodiscard]] friend bool operator!=(const FockVector &fw1, const FockVector &fw2) { return fw1.data == fw2.data; }
 

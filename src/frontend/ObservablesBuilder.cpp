@@ -9,6 +9,7 @@
 #include "evolution/observables/OnsiteOccupationsSquared.h"
 #include "evolution/observables/OnsiteFluctuations.h"
 #include "evolution/observables/Correlations.h"
+#include "evolution/observables/BipariteEntropy.h"
 
 void ObservablesBuilder::build(const std::vector<std::string> &observables, const Parameters &params,
                                const std::shared_ptr<FockBase> &fockBase)
@@ -19,6 +20,7 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
 
     std::shared_ptr<OnsiteOccupations> occupations;
     std::shared_ptr<OnsiteOccupationsSquared> occupations2;
+    std::shared_ptr<BipariteEntropy> bipariteEntropy;
 
     for (const auto &observable : observables) {
         std::istringstream observableStream(observable);
@@ -51,6 +53,9 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
             auto correlations = std::make_shared<Correlations>(params.K, marginSize);
             this->secondaryObservables.push_back(correlations);
             this->storedObservables.push_back(correlations);
+        } else if (observableName == "S") {
+            bipariteEntropy = std::make_shared<BipariteEntropy>(fockBase);
+            this->storedObservables.push_back(bipariteEntropy);
         } else {
             throw ValidationException("Unknown observable: " + observable);
         }
@@ -59,5 +64,7 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
             this->primaryObservables.push_back(occupations);
         if (occupations2 != nullptr)
             this->primaryObservables.push_back(occupations2);
+        if (bipariteEntropy != nullptr)
+            this->primaryObservables.push_back(bipariteEntropy);
     }
 }

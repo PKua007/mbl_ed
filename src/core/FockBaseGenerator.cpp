@@ -5,8 +5,10 @@
 #include <numeric>
 
 #include "FockBaseGenerator.h"
+#include "utils/Assertions.h"
 
 std::unique_ptr<FockBase> FockBaseGenerator::generate(int numberOfParticles, int numberOfSites) const {
+    Expects(numberOfSites > 0);
     auto base = std::make_unique<FockBase>();
 
     // An algorithm from https://arxiv.org/pdf/1102.4006.pdf

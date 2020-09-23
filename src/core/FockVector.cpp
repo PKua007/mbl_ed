@@ -48,3 +48,11 @@ FockVector::FockVector(std::size_t sites, const std::string &tag) {
         throw FockVectorParseException("unknown tag: " + tag);
     }
 }
+
+FockVector operator+(const FockVector &fw1, const FockVector &fw2) {
+    FockVector result;
+    result.data.reserve(fw1.size());
+    result.data = fw1.data;
+    result.data.insert(result.data.end(), fw2.data.begin(), fw2.data.end());
+    return result;
+}

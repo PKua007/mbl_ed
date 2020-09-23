@@ -31,7 +31,8 @@ add_library(mbl_ed_src STATIC utils/Assertions.h core/FockBaseGenerator.cpp core
         utils/Logger.h evolution/Observable.h evolution/PrimaryObservable.h evolution/SecondaryObservable.h
         evolution/CorrelationsTimeEvolutionParameters.cpp evolution/observables/OnsiteOccupations.cpp
         evolution/observables/OnsiteFluctuations.cpp evolution/observables/Correlations.cpp
-        evolution/observables/OnsiteOccupationsSquared.cpp frontend/ObservablesBuilder.cpp)
+        evolution/observables/OnsiteOccupationsSquared.cpp frontend/ObservablesBuilder.cpp
+        evolution/observables/BipariteEntropy.cpp)
 
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)
