@@ -5,6 +5,8 @@
 #ifndef MBL_ED_ONSITEOCCUPATIONS_H
 #define MBL_ED_ONSITEOCCUPATIONS_H
 
+#include <memory>
+
 #include <armadillo>
 
 #include "evolution/PrimaryObservable.h"
