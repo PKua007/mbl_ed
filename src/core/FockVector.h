@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 struct FockVectorParseException : public std::runtime_error {
     explicit FockVectorParseException(const std::string &what) : std::runtime_error(what) { }
