@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 struct FockVectorParseException : public std::runtime_error {
     explicit FockVectorParseException(const std::string &what) : std::runtime_error(what) { }
@@ -40,6 +41,11 @@ public:
     [[nodiscard]] iterator end() { return data.end(); }
     [[nodiscard]] const_iterator begin() const { return data.begin(); }
     [[nodiscard]] const_iterator end() const { return data.end(); }
+
+    /**
+     * @brief Concatenated @a fw1 and @a fw2 into one, larger vector.
+     */
+    [[nodiscard]] friend FockVector operator+(const FockVector &fw1, const FockVector &fw2);
 
     [[nodiscard]] friend bool operator==(const FockVector &fw1, const FockVector &fw2) { return fw1.data == fw2.data; }
     [[nodiscard]] friend bool operator!=(const FockVector &fw1, const FockVector &fw2) { return fw1.data == fw2.data; }

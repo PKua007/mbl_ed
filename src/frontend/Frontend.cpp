@@ -11,6 +11,7 @@
 #include "AnalyzerBuilder.h"
 #include "AveragingModelFactory.h"
 #include "IO.h"
+#include "ObservablesBuilder.h"
 
 #include "simulation/ExactDiagonalization.h"
 #include "core/FockBaseGenerator.h"
@@ -18,7 +19,7 @@
 
 #include "core/QuenchCalculator.h"
 #include "simulation/ChebyshevEvolution.h"
-#include "evolution/CorrelationsTimeEvolution.h"
+#include "evolution/TimeEvolution.h"
 
 #include "simulation/RestorableSimulationExecutor.h"
 #include "simulation/QuenchDataSimulation.h"
@@ -181,8 +182,7 @@ void Frontend::analyze(int argc, char **argv) {
             ("t,task", "analyzer task(s) to be performed",
              cxxopts::value<std::vector<std::string>>(tasks))
             ("p,print_parameter", "parameters to be included in inline results",
-             cxxopts::value<std::vector<std::string>>(paramsToPrint)
-                 ->default_value("N,K"))
+             cxxopts::value<std::vector<std::string>>(paramsToPrint)->default_value("N,K"))
             ("d,directory", "directory to search simulation results",
              cxxopts::value<std::filesystem::path>(directory)->default_value("."))
             ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
@@ -265,9 +265,9 @@ void Frontend::chebyshev(int argc, char **argv) {
     std::vector<std::string> overridenParamsEntries;
     std::vector<std::string> quenchParamsEntries;
     std::string timeSegmentation{};
-    std::size_t marginSize{};
     std::vector<std::string> vectorsToEvolveTags;
     std::string verbosity;
+    std::vector<std::string> observableStrings;
 
     options.add_options()
             ("h,help", "prints help for this mode")
@@ -281,8 +281,13 @@ void Frontend::chebyshev(int argc, char **argv) {
                                     "of steps 1] [time 2] [number of steps 2] ... . For example, '1 2 5 4' divides 0-1 "
                                     "in 2 and 1-5 in 4, giving times: 0, 0.5, 1, 2, 3, 4, 5",
              cxxopts::value<std::string>(timeSegmentation))
-            ("m,margin", "margin size - one averaging of correlations is done for all sites, the second one for all "
-                         "but a given margin from both sides", cxxopts::value<std::size_t>(marginSize))
+            ("o,observable", "which observables should be calculated and stored. One or more of: "
+                             "n_j - onsite occupations; "
+                             "n_iN_j - products of 2 onsite occupations; "
+                             "G_d [margin size] - site averaged correlations, without including [margin size] sites on "
+                             "both ends; "
+                             "rho_i - fluctiations;",
+             cxxopts::value<std::vector<std::string>>(observableStrings)->default_value("G_d 0, rho_i, n_i"))
             ("v,vectors", "vectors to evolve. Available options: unif/dw/2.3.0.0.1. You can specify more than one",
              cxxopts::value<std::vector<std::string>>(vectorsToEvolveTags))
             ("q,quench_param", "if specified, evolution will be performed for quenched vector (together with "
@@ -321,10 +326,6 @@ void Frontend::chebyshev(int argc, char **argv) {
     // Validate rest of the options
     if (!parsedOptions.count("time_segmentation"))
         die("You have to specify max evolution time using -t [max time]", logger);
-    if (!parsedOptions.count("margin"))
-        die("You have to specify margin size using -m [margin size]", logger);
-    if (marginSize * 2 > params.K - 2)
-        die("Margin is too big - there should be at least 2 sites left.", logger);
     if (!parsedOptions.count("vectors") && !parsedOptions.count("quench_param"))
         die("You have to specify space vectors to evolve using -v [unif/dw/1.0.4.0] or/and via quench -q", logger);
     // Validation of vectors is done later
@@ -360,16 +361,23 @@ void Frontend::chebyshev(int argc, char **argv) {
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run evolutions
-    CorrelationsTimeEvolutionParameters evolutionParameters;
+    TimeEvolutionParameters evolutionParams;
 
     std::istringstream timeSegmentationStream(timeSegmentation);
     std::copy(std::istream_iterator<EvolutionTimeSegment>(timeSegmentationStream),
               std::istream_iterator<EvolutionTimeSegment>(),
-              std::back_inserter(evolutionParameters.timeSegmentation));
-    evolutionParameters.numberOfSites = params.K;
-    evolutionParameters.fockBase = base;
-    evolutionParameters.marginSize = marginSize;
-    evolutionParameters.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
+              std::back_inserter(evolutionParams.timeSegmentation));
+    evolutionParams.numberOfSites = params.K;
+    evolutionParams.fockBase = base;
+    evolutionParams.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
+
+    ObservablesBuilder observablesBuilder;
+    observablesBuilder.build(observableStrings, params, base);
+    evolutionParams.primaryObservables = observablesBuilder.releasePrimaryObservables();
+    evolutionParams.secondaryObservables = observablesBuilder.releaseSecondaryObservables();
+    evolutionParams.storedObservables = observablesBuilder.releaseStoredObservables();
+
+    auto observablesEvolution = std::make_unique<OservablesTimeEvolution>();
 
     SimulationsSpan simulationsSpan;
     simulationsSpan.from = params.from;
@@ -380,20 +388,20 @@ void Frontend::chebyshev(int argc, char **argv) {
 
     std::unique_ptr<ChebyshevEvolution<>> evolution;
     if (quenchParams.has_value()) {
-        using ExternalVector = CorrelationsTimeEvolutionParameters::ExternalVector;
-        evolutionParameters.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
+        using ExternalVector = TimeEvolutionParameters::ExternalVector;
+        evolutionParams.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
 
         auto quenchRnd = std::make_unique<RND>();
         auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
         evolution = std::make_unique<ChebyshevEvolution<>>(
-            std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-            std::make_unique<CorrelationsTimeEvolution>(evolutionParameters), std::make_unique<QuenchCalculator>(),
-            std::move(quenchHamiltonianGenerator), std::move(quenchRnd)
+                std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
+                std::make_unique<TimeEvolution>(evolutionParams, std::move(observablesEvolution)),
+                std::make_unique<QuenchCalculator>(), std::move(quenchHamiltonianGenerator), std::move(quenchRnd)
         );
     } else {
         evolution = std::make_unique<ChebyshevEvolution<>>(
             std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
-            std::make_unique<CorrelationsTimeEvolution>(evolutionParameters)
+            std::make_unique<TimeEvolution>(evolutionParams, std::move(observablesEvolution))
         );
     }
 

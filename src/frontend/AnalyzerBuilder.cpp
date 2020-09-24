@@ -13,9 +13,14 @@
 #include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/InverseParticipationRatio.h"
-#include "analyzer/tasks/EDCorrelationsTimeEvolution.h"
+#include "analyzer/tasks/EDTimeEvolution.h"
 #include "analyzer/tasks/DressedStatesFinder.h"
 #include "analyzer/tasks/BulkMeanGapRatio.h"
+#include "evolution/observables/OnsiteOccupations.h"
+#include "evolution/observables/OnsiteOccupationsSquared.h"
+#include "evolution/observables/Correlations.h"
+#include "evolution/observables/OnsiteFluctuations.h"
+
 
 std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
                                                  std::shared_ptr<FockBase> fockBase)
@@ -79,26 +84,40 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             if (params.N != params.K || params.K % 2 != 0)
                 throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
 
-            CorrelationsTimeEvolutionParameters evolutionParameters;
-            evolutionParameters.fockBase = fockBase;
-            evolutionParameters.numberOfSites = params.K;
+            TimeEvolutionParameters evolutionParams;
+            evolutionParams.fockBase = fockBase;
+            evolutionParams.numberOfSites = params.K;
 
             double maxTime;
             std::size_t numSteps;
-            taskStream >> maxTime >> numSteps >> evolutionParameters.marginSize;
-            evolutionParameters.timeSegmentation.push_back({maxTime, numSteps});
+            std::size_t marginSize;
+            taskStream >> maxTime >> numSteps >> marginSize;
+            evolutionParams.timeSegmentation.emplace_back(EvolutionTimeSegment{maxTime, numSteps});
             ValidateMsg(taskStream, "Wrong format, use: evolution [max time] [number of steps] [margin size] "
                                     "[space-separated vectors to evolve - unif/dw/1.0.4.0]");
             std::vector<std::string> tags;
             std::copy(std::istream_iterator<std::string>(taskStream), std::istream_iterator<std::string>(),
                       std::back_inserter(tags));
-            Validate(evolutionParameters.timeSegmentation[0].maxTime > 0);
-            Validate(evolutionParameters.timeSegmentation[0].numSteps >= 2);
-            Validate(evolutionParameters.marginSize * 2 < params.K);
+            Validate(evolutionParams.timeSegmentation[0].maxTime > 0);
+            Validate(evolutionParams.timeSegmentation[0].numSteps >= 2);
+            Validate(marginSize * 2 < params.K);
 
-            evolutionParameters.setVectorsToEvolveFromTags(tags);
+            evolutionParams.setVectorsToEvolveFromTags(tags);
 
-            analyzer->addTask(std::make_unique<EDCorrelationsTimeEvolution>(evolutionParameters));
+            auto occupations = std::make_shared<OnsiteOccupations>(fockBase);
+            auto occupationsSquared = std::make_shared<OnsiteOccupationsSquared>(fockBase);
+            auto correlations = std::make_shared<Correlations>(params.K, 0);
+            auto borderlessCorrelations = std::make_shared<Correlations>(params.K, marginSize);
+            auto fluctuations = std::make_shared<OnsiteFluctuations>(params.K);
+            evolutionParams.primaryObservables = {occupations, occupationsSquared};
+            evolutionParams.secondaryObservables = {correlations, borderlessCorrelations, fluctuations};
+            evolutionParams.storedObservables = {correlations, borderlessCorrelations, fluctuations, occupations};
+
+            auto occupationEvolution = std::make_unique<OservablesTimeEvolution>();
+
+            analyzer->addTask(
+                std::make_unique<EDTimeEvolution>(evolutionParams, std::move(occupationEvolution))
+            );
         } else if (taskName == "dressed") {
             double mgrCenter, mgrMargin, coeffThreshold;
             taskStream >> mgrCenter >> mgrMargin >> coeffThreshold;

@@ -9,6 +9,7 @@
 #include <ostream>
 #include <istream>
 #include <type_traits>
+#include <memory>
 
 #include "utils/Assertions.h"
 #include "Restorable.h"
@@ -17,6 +18,12 @@
  * @brief A set of helper function for storing/restoring selected types of data for Restorable classes.
  */
 class RestorableHelper {
+private:
+    template<typename T> struct is_smart_ptr : std::false_type {};
+    template<typename T> struct is_smart_ptr<std::shared_ptr<T>> : std::true_type {};
+    template<typename T> struct is_smart_ptr<std::unique_ptr<T>> : std::true_type {};
+    template<typename T> inline static constexpr bool is_smart_ptr_v = is_smart_ptr<T>::value;
+
 public:
     /**
      * @brief Restorable::storeState for vector data.
@@ -75,6 +82,43 @@ public:
 
         for (auto &entry : vector)
             entry.joinRestoredState(binaryIn);
+    }
+
+    /**
+     * @brief Restorable::storeState for vector data with static size containing other Restorables as a smart pointer.
+     */
+    template<typename T, template<typename> typename SmartPointer>
+    static void storeStateForStaticRestorableVector(const std::vector<SmartPointer<T>> &vector,
+                                                    std::ostream &binaryOut)
+    {
+        static_assert(std::is_base_of_v<Restorable, T>);
+        static_assert(is_smart_ptr_v<std::remove_cv_t<SmartPointer<T>>>);
+
+        std::size_t vectorSize = vector.size();
+        binaryOut.write(reinterpret_cast<const char*>(&vectorSize), sizeof(vectorSize));
+        Assert(binaryOut.good());
+        for (const auto &entry : vector)
+            entry->storeState(binaryOut);
+    }
+
+    /**
+     * @brief Restorable::joinRestoredState for vector data with static size containing other Restorables as a smart
+     * pointer.
+     */
+    template<typename T, template<typename> typename SmartPointer>
+    static void joinRestoredStateForStaticRestorableVector(const std::vector<SmartPointer<T>> &vector,
+                                                           std::istream &binaryIn)
+    {
+        static_assert(std::is_base_of_v<Restorable, T>);
+        static_assert(is_smart_ptr_v<std::remove_cv_t<SmartPointer<T>>>);
+
+        std::size_t vectorSizeRestored{};
+        binaryIn.read(reinterpret_cast<char*>(&vectorSizeRestored), sizeof(vectorSizeRestored));
+        Assert(binaryIn.good());
+        Assert(vectorSizeRestored == vector.size());
+
+        for (auto &entry : vector)
+            entry->joinRestoredState(binaryIn);
     }
 
     /**

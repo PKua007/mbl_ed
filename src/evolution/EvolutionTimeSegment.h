@@ -36,6 +36,14 @@ struct EvolutionTimeSegment {
         segment = {maxTime_, numSteps_};
         return in;
     }
+
+    friend bool operator==(const EvolutionTimeSegment &lhs, const EvolutionTimeSegment &rhs) {
+        return std::tie(lhs.maxTime, lhs.numSteps) == std::tie(rhs.maxTime, rhs.numSteps);
+    }
+
+    friend bool operator!=(const EvolutionTimeSegment &lhs, const EvolutionTimeSegment &rhs) {
+        return !(rhs == lhs);
+    }
 };
 
 

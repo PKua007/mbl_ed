@@ -15,6 +15,8 @@
 #include "core/terms/QuasiperiodicDisorder.h"
 #include "core/averaging_models/UniformPhi0AveragingModel.h"
 
+#include "evolution/observables/OnsiteOccupations.h"
+
 using namespace trompeloeil;
 
 namespace {
@@ -178,13 +180,16 @@ TEST_CASE("ChebyshevEvolution: clearing, storing and restoring") {
     hamiltonianGenerator->addDiagonalTerm(std::make_unique<QuasiperiodicDisorder>(1, 0.3, 0));
     auto averagingModel = std::make_unique<UniformPhi0AveragingModel>();
     auto rnd = std::make_unique<RND>();
-    CorrelationsTimeEvolutionParameters parameters;
-    parameters.timeSegmentation = {{1, 1}};
-    parameters.marginSize = 1;
-    parameters.fockBase = fockBase;
-    parameters.numberOfSites = 4;
-    parameters.setVectorsToEvolveFromTags({"unif"});
-    auto correlationsTimeEvolution = std::make_unique<CorrelationsTimeEvolution>(parameters);
+    TimeEvolutionParameters params;
+    params.timeSegmentation = {{1, 1}};
+    params.fockBase = fockBase;
+    params.numberOfSites = 4;
+    params.setVectorsToEvolveFromTags({"unif"});
+    auto onsiteOccupations = std::make_shared<OnsiteOccupations>(fockBase);
+    params.primaryObservables = {onsiteOccupations};
+    params.storedObservables = {onsiteOccupations};
+    auto occupationEvolution = std::make_unique<OservablesTimeEvolution>();
+    auto correlationsTimeEvolution = std::make_unique<TimeEvolution>(params, std::move(occupationEvolution));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
     ChebyshevEvolution evolution(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),

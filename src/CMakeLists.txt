@@ -13,11 +13,11 @@ add_library(mbl_ed_src STATIC utils/Assertions.h core/FockBaseGenerator.cpp core
         core/terms/OnsiteDisorder.h core/terms/CavityLongInteraction.cpp core/CavityConstants.cpp
         frontend/CavityConstantsReader.cpp core/terms/LookupCavityZ2.cpp core/terms/LookupCavityYZ.cpp
         core/DoubleHoppingTerm.h core/terms/LookupCavityY2.cpp
-        analyzer/tasks/EDCorrelationsTimeEvolution.cpp evolution/OccupationEvolution.cpp evolution/SymmetricMatrix.h
-        evolution/CorrelationsTimeEntry.cpp core/terms/QuasiperiodicDisorder.cpp
+        analyzer/tasks/EDTimeEvolution.cpp evolution/OservablesTimeEvolution.cpp evolution/SymmetricMatrix.h
+        evolution/TimeEvolutionEntry.cpp core/terms/QuasiperiodicDisorder.cpp
         core/terms/QuasiperiodicDisorder.h core/terms/ListOnsite.cpp evolution/Evolver.h
-        evolution/EDEvolver.cpp evolution/ChebyshevEvolver.cpp evolution/CorrelationsTimeEvolution.cpp
-        simulation/ChebyshevEvolution.h evolution/CorrelationsTimeEvolutionParameters.h
+        evolution/EDEvolver.cpp evolution/ChebyshevEvolver.cpp evolution/TimeEvolution.cpp
+        simulation/ChebyshevEvolution.h evolution/TimeEvolutionParameters.h
         evolution/EvolutionTimeSegment.h frontend/HamiltonianGeneratorBuilder.cpp frontend/AnalyzerBuilder.cpp
         core/terms/OnsiteDisorder.cpp frontend/AveragingModelFactory.cpp
         core/averaging_models/DummyAveragingModel.h core/averaging_models/CavityConstantsAveragingModel.cpp
@@ -28,7 +28,11 @@ add_library(mbl_ed_src STATIC utils/Assertions.h core/FockBaseGenerator.cpp core
         analyzer/tasks/DressedStatesFinder.cpp analyzer/tasks/BulkMeanGapRatio.cpp core/QuenchCalculator.cpp
         simulation/SimulationsSpan.h utils/OMPMacros.h simulation/QuenchDataSimulation.h simulation/Restorable.h
         simulation/RestorableSimulation.h simulation/RestorableSimulationExecutor.cpp simulation/RestorableHelper.h
-        utils/Logger.h)
+        utils/Logger.h evolution/Observable.h evolution/PrimaryObservable.h evolution/SecondaryObservable.h
+        evolution/TimeEvolutionParameters.cpp evolution/observables/OnsiteOccupations.cpp
+        evolution/observables/OnsiteFluctuations.cpp evolution/observables/Correlations.cpp
+        evolution/observables/OnsiteOccupationsSquared.cpp frontend/ObservablesBuilder.cpp
+        evolution/observables/BipariteEntropy.cpp)
 
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)
