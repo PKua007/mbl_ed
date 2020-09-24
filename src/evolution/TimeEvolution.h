@@ -19,8 +19,8 @@
  * @brief The class supervising the whole process of performing the evolution and calculating the observables for
  * some discrete time steps.
  * @details The subsequents evolutions are performed when addEvolution() is invoked and the overall results are
- * averaged. The evolution is perform for one or more initial states. For details on observables measured check
- * CorrelationsTimeEntry.
+ * averaged. The evolution is performed for one or more initial states. The observables measured are determined by
+ * TimeEvolutionParameters from the constructor.
  */
 class TimeEvolution : public Restorable {
 private:
@@ -49,31 +49,29 @@ private:
 public:
     /**
      * @brief Creates the class, which will perform evolution parametrised by @a parameters
-     * @details The evolution will be performed separately for all @a vectorsToEvolve. To know what observables are
-     * measured, check CorrelationTimeEntry.
+     * @details The evolution will be performed separately for all TimeEvolutionParameters::vectorsToEvolve.
+     * @a occupationEvolution is used for the acutal evolution process.
      */
     explicit TimeEvolution(const TimeEvolutionParameters &parameters,
                            std::unique_ptr<OservablesTimeEvolution> occupationEvolution);
 
     /**
      * @brief Adds another evolution to the analyzis.
-     * @details The actual evolution is done by the given @a evolver. New data are averaged will the old ones.
-     * If field @a initialVectors from @a parameters from the constructor contained some
-     * CorrelationsTimeEvolutionParameters::ExternalVector alternatives, the actual arma::cx_vec vectors should be
-     * passed through @a externalVectors. The rest are FockBase::Vectors product vectors and are prepared on the go
+     * @details The actual evolution is done by OservablesTimeEvolution using the given @a evolver. New data are
+     * averaged will the old ones. If field @a initialVectors from @a parameters from the constructor contained some
+     * TimeEvolutionParameters::ExternalVector alternatives, the actual arma::cx_vec vectors should be passed through
+     * @a externalVectors. The rest are FockBase::Vectors product vectors and are prepared on the go.
      */
     void addEvolution(Evolver &evolver, Logger &logger, const std::vector<arma::cx_vec> &externalVectors = {});
 
     /**
      * @brief Stores the result to @a out in the form of a table with a header.
      * @details It is constructed from horizontally glued tables for all vectors to evolve specified in the constructor.
-     * <p> The table for a single vector is constructed from CorrelationsTimeEntry -ies. The header is obtained from
-     * CorrelationsTimeEntry::getHeader and the values are for subsequent times and are constructed by
-     * CorrelationsTimeEntry::toString. Moreover, to the first column name, in header, namely time, a representation
-     * of the initial vector is prepended in the form of site1occupaiton.site2occupaiton.[...].lastSiteOccupation_.
-     * <p> To sum up, for 2 vectors, {1, 1, 1, 1} and {2, 0, 2, 0}, for @a maxTime = 1 and @a numSteps = 3
-     * (see CorrelationsTimeEvolutionParameters), it will
-     * look like:
+     * <p> The table for a single vector is constructed from TimeEvolutionEntry -ies. The header contains time with
+     * evolved vector, in format (site1occupaiton).(site2occupaiton).[...].(lastSiteOccupation)_t, see below, and all
+     * stored observables names.
+     * <p> Example: for 2 vectors, {1, 1, 1, 1} and {2, 0, 2, 0}, for @a maxTime = 1 and @a numSteps = 3 (see
+     * TimeEvolutionParameters), it will look like:
      * <pre>
      * 1.1.1.1_t [observables] 2.0.2.0_t [observables]
      * 0 [values] 0 [values]
@@ -83,6 +81,9 @@ public:
      */
     void storeResult(std::ostream &out) const;
 
+    /**
+     * @brief Returns how many external vector are present in this evolution.
+     */
     [[nodiscard]] std::size_t countExternalVectors() const;
 
     void storeState(std::ostream &binaryOut) const override;

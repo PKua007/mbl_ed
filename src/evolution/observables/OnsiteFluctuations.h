@@ -8,8 +8,7 @@
 #include "evolution/SecondaryObservable.h"
 
 /**
- * @brief Onsite fluctuations for a site @a i defined as rho(i) = <n_i^2> - <n_i>^2. The values are calculated from
- * OccupationEvolution::Occupations observables and can be added multiple times - they are then averaged.
+ * @brief Onsite fluctuations for all sites defined as rho(i) = <n_i^2> - <n_i>^2.
  */
 class OnsiteFluctuations : public SecondaryObservable {
 private:
@@ -20,7 +19,11 @@ public:
     OnsiteFluctuations() = default;
     explicit OnsiteFluctuations(std::size_t numOfSites);
 
+    /**
+     * @brief Returns the names of fields in format rho_i, where i = 1, ..., (number of sites)
+     */
     [[nodiscard]] std::vector<std::string> getHeader() const override;
+
     [[nodiscard]] std::vector<double> getValues() const override;
     void calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObservables) override;
 };

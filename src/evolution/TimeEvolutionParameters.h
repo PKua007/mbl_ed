@@ -20,7 +20,7 @@
 struct TimeEvolutionParameters {
     /**
      * @brief Helper struct representing "an external initial vector", which is not FockBase::Vector and should be
-     * passed right before the evolution (see CorrelationsTimeEvolution::addEvolution)
+     * passed right before the evolution (see TimeEvolution::addEvolution)
      */
     struct ExternalVector {
         std::string name;
@@ -44,8 +44,20 @@ struct TimeEvolutionParameters {
      */
     std::vector<std::variant<FockBase::Vector, ExternalVector>> vectorsToEvolve{};
 
+    /**
+     * @brief PrimaryObservable -s which should be calculated during the evolution.
+     */
     std::vector<std::shared_ptr<PrimaryObservable>> primaryObservables;
+
+    /**
+     * @brief SecondaryObservable -s which should be calculated during the evolution.
+     */
     std::vector<std::shared_ptr<SecondaryObservable>> secondaryObservables;
+
+    /**
+     * @brief Observables (may be both PrimaryObservables and SecondaryObservables) which should be in the output
+     * of the evolution.
+     */
     std::vector<std::shared_ptr<Observable>> storedObservables;
 
     /**
@@ -59,7 +71,19 @@ struct TimeEvolutionParameters {
      */
     void setVectorsToEvolveFromTags(const std::vector<std::string> &strings);
 
+    /**
+     * @brief Returns how many observable values (so summing sets from all stored observables) will be in the output.
+     */
     [[nodiscard]] std::size_t countStoredObservableValues() const;
+
+    /**
+     * @brief Constructs space-separated header of stored observable names from all stored observables sets,
+     * preserving the order.
+     * @brief Namely, it will look like:
+     * <pre>
+     * [observable 1 value 1] ... [o. 1 last value] ... [last observable value 1] ... [l. o. last value]
+     * </pre>
+     */
     [[nodiscard]] std::string generateStoredObservablesHeader() const;
 };
 

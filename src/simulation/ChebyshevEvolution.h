@@ -20,10 +20,10 @@
 
 /**
  * @brief A class performing time evolutions using Chebyshev expansion technique.
- * @details See CorrelationsTimeEvolution and its "slave" classes to see what is calculated. The hamiltonian generator
- * is prepared for each simulation according to a specific averaging model and, if desired, the quench stated is
- * prepared for evolution (see constructor). The template parameters default to standard classes and exist solely for
- * mocking purposes. See the default classes description for details of what they do.
+ * @details See TimeEvolution and its "slave" classes to see what is calculated. The hamiltonian generator is prepared
+ * for each simulation according to a specific averaging model and, if desired, the quench stated is prepared for
+ * evolution (see constructor). The template parameters default to standard classes and exist solely for mocking
+ * purposes. See the default classes description for details of what they do.
  */
 template<typename HamiltonianGenerator_t = HamiltonianGenerator, typename AveragingModel_t = AveragingModel,
          typename TimeEvolution_t = TimeEvolution, typename QuenchCalculator_t = QuenchCalculator,

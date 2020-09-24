@@ -18,6 +18,7 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
     this->secondaryObservables.clear();
     this->storedObservables.clear();
 
+    // Here are of all possible PrimaryObservables, but will be initialized only if needed
     std::shared_ptr<OnsiteOccupations> occupations;
     std::shared_ptr<OnsiteOccupationsSquared> occupations2;
     std::shared_ptr<BipariteEntropy> bipariteEntropy;
@@ -27,6 +28,8 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
         std::string observableName;
         observableStream >> observableName;
 
+        // Here PrimaryObservables are created on explicit request, or if SecondaryObservables need them. They
+        // are created only once
         if (observableName == "n_i") {
             occupations = std::make_shared<OnsiteOccupations>(fockBase);
             this->storedObservables.push_back(occupations);

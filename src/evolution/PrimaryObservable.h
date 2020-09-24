@@ -9,6 +9,9 @@
 
 #include "Observable.h"
 
+/**
+ * @brief An observable, which is calculated directly from a state.
+ */
 class PrimaryObservable : public Observable {
 public:
     virtual void calculateForState(const arma::cx_vec &state) = 0;

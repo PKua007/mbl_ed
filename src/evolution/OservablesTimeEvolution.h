@@ -18,9 +18,8 @@
 #include "TimeEvolutionEntry.h"
 
 /**
- * @brief The class performing time evolution of @f$ \left< \hat{n}_i \right> @f$ and
- * @f$ \left< \hat{n}_i \hat{n}_j \right> @f$ expected values of observables, where @f$ \hat{n}_i @f$ is onsite number
- * of particles observable.
+ * @brief The class performing time evolution of all PrimaryObservable -s and SecondaryObservable -s specified by the
+ * setters.
  */
 class OservablesTimeEvolution {
 private:
@@ -39,23 +38,31 @@ private:
 public:
     virtual ~OservablesTimeEvolution() = default;
 
+    /**
+     * @brief Sets which PrimaryObservable -s will be calculated.
+     */
     void setPrimaryObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObservables_) {
         this->primaryObservables = primaryObservables_;
     }
 
+    /**
+     * @brief Sets which SecondaryObservable -s will be calculated.
+     */
     void setSecondaryObservables(const std::vector<std::shared_ptr<SecondaryObservable>> &secondaryObservables_) {
         this->secondaryObservables = secondaryObservables_;
     }
 
+    /**
+     * @brief Sets which Observable -s will be return as a result of perform() invokation.
+     */
     void setStoredObservables(const std::vector<std::shared_ptr<Observable>> &storedObservables_);
 
     /**
-     * @brief Perform the evolution of the fock state of index @a initialFockStateIdx for times specified by
-     * @a timeSegmentation.
-     * @details The actual evolution is performed by a given Evolver. Time segmentation is described in
-     * CorrelationsTimeEvolutionParameters.
-     * @return The vector of Occupations, where elements corresponds to expected values of observables in subsequent
-     * time steps.
+     * @brief Perform the evolution of the @a initialFockStateIdx for times specified by @a timeSegmentation.
+     * @details The actual evolution is performed by the given Evolver. Time segmentation is described in
+     * TimeEvolutionParameters.
+     * @return The vector of TimeEvolutionEntry -ies, where elements corresponds to expected values of observables in
+     * subsequent time steps. The observables to be returned are determined by setStoredObservables().
      */
     [[nodiscard]] virtual std::vector<TimeEvolutionEntry>
     perform(const std::vector<EvolutionTimeSegment> &timeSegmentation, const arma::cx_vec &initialState,

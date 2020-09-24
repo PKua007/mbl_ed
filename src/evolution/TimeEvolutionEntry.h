@@ -15,18 +15,8 @@
 
 
 /**
- * @brief Class collecting OccupationEvolution::Occupations for subsequent eigensystems and calculating disorder
- * averages of correlations as well as onsite occupations and fluctuations calculated from before mentioned occupations
- * for a specific moment of time.
- * @details The class contains:
- * <ul>
- *     <li>site-averaged correlations, for all distanced from 1 to <em> number of sites - 1 </em>
- *     (see CorrelationsTimeEntry::Correlations in the code)
- *     <li>site-averaget correlations, but taking into account only sites after removing a few on the borders
- *     (@a marginSize parameters from the constructor)
- *     <li>onsite fluctuations (see CorrelationsTimeEntry::OnsiteFluctuations in the code)
- *     <li>onsite occupaitons (see CorrelationsTimeEntry::OnsiteOccupations in the code)
- * </ul>
+ * @brief Class collecting all stored observable values for a specific moment of time.
+ * @details More than one set can be added - it will be avraged.
  */
 class TimeEvolutionEntry : public Restorable {
 private:
@@ -37,24 +27,43 @@ private:
     std::size_t numberOfMeanEntries{};
 
 public:
+    /**
+     * @brief Constructs the class with t = 0 and no values.
+     */
     TimeEvolutionEntry() = default;
+
+    /**
+     * @brief Constrcts the class with t = @a t and @a numOfValues zero-initialized values (no mean entries yet)
+     */
     TimeEvolutionEntry(double t, std::size_t numOfValues) : t{t}, values(numOfValues) { }
+
+    /**
+     * @brief Constrcts the class with t = @a t and values initialized from @a values.
+     * @details Of course, those @a values are like a single mean entry - they will be properly averaged with other
+     * values added with addValues().
+     */
     TimeEvolutionEntry(double t, std::vector<double> values)
             : t{t}, values{std::move(values)}, numberOfMeanEntries{1}
     { }
 
     /**
-     * @brief Adds next entry of observables
+     * @brief Adds next entry of observable values to be averaged.
      */
     void addValues(const std::vector<double> &newValues);
 
     friend TimeEvolutionEntry operator+(const TimeEvolutionEntry &first, const TimeEvolutionEntry &second);
+
+    /**
+     * @brief Adds all averaging entries from @a other to this instance.
+     * @details Times of this instance and other must coincide.
+     */
     TimeEvolutionEntry &operator+=(const TimeEvolutionEntry &other);
+
     friend bool operator==(const TimeEvolutionEntry &first, const TimeEvolutionEntry &second);
     friend std::ostream &operator<<(std::ostream &os, const TimeEvolutionEntry &entry);
 
     /**
-     * @brief Constructs the row of values of all stuff - time and observable values
+     * @brief Constructs the row of values of all stuff - time and observable values, of course averaged.
      */
     [[nodiscard]] std::string toString() const;
 

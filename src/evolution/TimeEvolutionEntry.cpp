@@ -73,7 +73,8 @@ TimeEvolutionEntry operator+(const TimeEvolutionEntry &first, const TimeEvolutio
 }
 
 bool operator==(const TimeEvolutionEntry &first, const TimeEvolutionEntry &second) {
-    return first.values == second.values && std::abs(first.t - second.t) < TimeEvolutionEntry::EPSILON;
+    return first.values == second.values && first.numberOfMeanEntries == second.numberOfMeanEntries
+           && std::abs(first.t - second.t) < TimeEvolutionEntry::EPSILON;
 }
 
 std::ostream &operator<<(std::ostream &out, const TimeEvolutionEntry &entry) {

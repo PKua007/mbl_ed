@@ -9,11 +9,9 @@
 
 /**
  * @brief Site-averaged correlations for all sites apart from @a marginSize sites on the border.
- * @details Correlations are defined as G(i, i+d) = <n_i n_{i+d}> - <n_i> <n_{i+d}>. The struct contains
- * correlations for a specific @a d - distance, averaged over all sites i without the before mentioned marginal
- * sites. So, for example for 5 sites, marginSize = 1, d = 1, G_d = (G(1, 2) + G(2, 3)) / 2. The values are
- * calculated from OccupationEvolution::Occupations observables and can be added multiple times - they are then
- * averaged.
+ * @details Correlations are defined as G(i, i+d) = <n_i n_{i+d}> - <n_i> <n_{i+d}>. The class outputs correlations for
+ * all d-s which are plausible - namely at least one valule will go to site averaging. As an example, for 6 sites and
+ * margin 1, we have: G_1 as an average of G(2, 3), G(3, 4), G(4, 5); G_2 - G(2, 4), G(3, 5); G_3 - G(2, 5).
  */
 class Correlations : public SecondaryObservable {
 private:
@@ -26,7 +24,12 @@ public:
     Correlations() = default;
     Correlations(std::size_t numOfSites, std::size_t marginSize);
 
+    /**
+     * @brief Returns the names of fields with correlations, names Gmx_d, where 'm' is margin size and 'd' is described
+     * the class description.
+     */
     [[nodiscard]] std::vector<std::string> getHeader() const override;
+
     [[nodiscard]] std::vector<double> getValues() const override;
     void calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObservables) override;
 };

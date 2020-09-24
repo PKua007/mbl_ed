@@ -11,8 +11,7 @@
 #include "core/FockBase.h"
 
 /**
- * @brief Onsite mean occupations for a site @a i defined as <n_i>. The values are calculated from
- * OccupationEvolution::Occupations observables and can be added multiple times - they are then averaged.
+ * @brief Onsite mean occupations for all sites defined as <n_i>.
  */
 class OnsiteOccupations : public PrimaryObservable {
 private:
@@ -25,7 +24,11 @@ public:
     OnsiteOccupations() = default;
     OnsiteOccupations(std::shared_ptr<FockBase> fockBase);
 
+    /**
+     * @brief Returns the names of fields in format n_i, where i = 1, ..., (number of sites)
+     */
     [[nodiscard]] std::vector<std::string> getHeader() const override;
+
     [[nodiscard]] std::vector<double> getValues() const override;
     void calculateForState(const arma::cx_vec &state) override;
 };
