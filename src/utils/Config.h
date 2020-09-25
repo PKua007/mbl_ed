@@ -10,7 +10,7 @@
 
 #include <map>
 #include <stdexcept>
-#include <iosfwd>
+#include <string>
 #include <vector>
 #include <algorithm>
 

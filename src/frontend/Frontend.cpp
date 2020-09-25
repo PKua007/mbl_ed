@@ -4,7 +4,6 @@
 
 #include <cxxopts.hpp>
 #include <filesystem>
-#include <omp.h>
 
 #include "Frontend.h"
 #include "HamiltonianGeneratorBuilder.h"
@@ -27,6 +26,7 @@
 #include "utils/Fold.h"
 #include "utils/Utils.h"
 #include "utils/Assertions.h"
+#include "utils/OMPMacros.h"
 
 
 void Frontend::ed(int argc, char **argv) {
@@ -69,11 +69,11 @@ void Frontend::ed(int argc, char **argv) {
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
-        std::cout << options.help() << std::endl;
+        this->out << options.help() << std::endl;
         exit(0);
     }
 
-    Logger logger(std::cout);
+    Logger logger(this->out);
     this->setOverridenParamsAsAdditionalText(logger, overridenParams);
     this->setVerbosityLevel(logger, verbosity);
 
@@ -96,14 +96,14 @@ void Frontend::ed(int argc, char **argv) {
             die("Parameters to print: parameter " + param + " is unknown", logger);
 
     // OpenMP info
-    logger.info() << "Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+    logger.info() << "Using " << _OMP_MAXTHREADS << " OpenMP threads" << std::endl;
 
     // Generate Fock basis
     FockBasisGenerator basisGenerator;
     logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
-    auto basis = std::shared_ptr(basisGenerator.generate(params.N, params.K));
+    auto basis = std::shared_ptr<FockBasis>(basisGenerator.generate(params.N, params.K));
     logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
@@ -195,11 +195,11 @@ void Frontend::analyze(int argc, char **argv) {
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
-        std::cout << options.help() << std::endl;
+        this->out << options.help() << std::endl;
         exit(0);
     }
 
-    Logger logger(std::cout);
+    Logger logger(this->out);
     this->setOverridenParamsAsAdditionalText(logger, overridenParams);
     this->setVerbosityLevel(logger, verbosity);
 
@@ -228,7 +228,7 @@ void Frontend::analyze(int argc, char **argv) {
     logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
-    auto basis = std::shared_ptr(basisGenerator.generate(params.N, params.K));
+    auto basis = std::shared_ptr<FockBasis>(basisGenerator.generate(params.N, params.K));
     logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Load eigenenergies and analyze them
@@ -300,11 +300,11 @@ void Frontend::chebyshev(int argc, char **argv) {
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
-        std::cout << options.help() << std::endl;
+        this->out << options.help() << std::endl;
         exit(0);
     }
 
-    Logger logger(std::cout);
+    Logger logger(this->out);
     std::vector allOverridenEntries(overridenParamsEntries);
     allOverridenEntries.insert(allOverridenEntries.end(), quenchParamsEntries.begin(), quenchParamsEntries.end());
     this->setOverridenParamsAsAdditionalText(logger, allOverridenEntries);
@@ -345,14 +345,14 @@ void Frontend::chebyshev(int argc, char **argv) {
     }
 
     // OpenMP info
-    logger.info() << "Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
+    logger.info() << "Using " << _OMP_MAXTHREADS << " OpenMP threads" << std::endl;
 
     // Prepare FockBasis
     FockBasisGenerator basisGenerator;
     logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
-    auto basis = std::shared_ptr(basisGenerator.generate(params.N, params.K));
+    auto basis = std::shared_ptr<FockBasis>(basisGenerator.generate(params.N, params.K));
     logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
@@ -451,11 +451,11 @@ void Frontend::quench(int argc, char **argv) {
 
     auto parsedOptions = options.parse(argc, argv);
     if (parsedOptions.count("help")) {
-        std::cout << options.help() << std::endl;
+        this->out << options.help() << std::endl;
         exit(0);
     }
 
-    Logger logger(std::cout);
+    Logger logger(this->out);
     std::vector allOverridenEntries(overridenParamsEntries);
     allOverridenEntries.insert(allOverridenEntries.end(), quenchParamsEntries.begin(), quenchParamsEntries.end());
     this->setOverridenParamsAsAdditionalText(logger, allOverridenEntries);
@@ -490,7 +490,7 @@ void Frontend::quench(int argc, char **argv) {
     quenchParams.printHamiltonianTerms(logger);
     logger << std::endl;
     logger.info() << "Final Hamiltonian:" << std::endl;
-    params.printHamiltonianTerms(std::cout);
+    params.printHamiltonianTerms(this->out);
     logger << std::endl;
 
     // Generate Fock basis
@@ -498,7 +498,7 @@ void Frontend::quench(int argc, char **argv) {
     logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
-    auto basis = std::shared_ptr(basisGenerator.generate(params.N, params.K));
+    auto basis = std::shared_ptr<FockBasis>(basisGenerator.generate(params.N, params.K));
     logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare initial and final HamiltonianGenerator
@@ -533,26 +533,26 @@ void Frontend::quench(int argc, char **argv) {
 }
 
 void Frontend::printGeneralHelp(const std::string &cmd) {
-    std::cout << Fold("Program performing exact diagonalization of Hubbard-like hamiltonians with analyzing "
+    this->out << Fold("Program performing exact diagonalization of Hubbard-like hamiltonians with analyzing "
                       "facilities. ").width(80) << std::endl;
-    std::cout << std::endl;
-    std::cout << "Usage: " << cmd << " [mode] (mode dependent parameters). " << std::endl;
-    std::cout << std::endl;
-    std::cout << "Available modes:" << std::endl;
-    std::cout << "ed" << std::endl;
-    std::cout << Fold("Performs the diagonalizations according to the parameters passed. Some analyzer tasks can "
+    this->out << std::endl;
+    this->out << "Usage: " << cmd << " [mode] (mode dependent parameters). " << std::endl;
+    this->out << std::endl;
+    this->out << "Available modes:" << std::endl;
+    this->out << "ed" << std::endl;
+    this->out << Fold("Performs the diagonalizations according to the parameters passed. Some analyzer tasks can "
                       "be performed on the fly.").width(80).margin(4) << std::endl;
-    std::cout << "analyze" << std::endl;
-    std::cout << Fold("Performs one or more analyzer tasks after loading simulation results from the files.")
+    this->out << "analyze" << std::endl;
+    this->out << Fold("Performs one or more analyzer tasks after loading simulation results from the files.")
                  .width(80).margin(4) << std::endl;
-    std::cout << "chebyshev" << std::endl;
-    std::cout << Fold("Performs time evolution using Chebyshev expansion technique.")
+    this->out << "chebyshev" << std::endl;
+    this->out << Fold("Performs time evolution using Chebyshev expansion technique.")
                  .width(80).margin(4) << std::endl;
-    std::cout << "quench" << std::endl;
-    std::cout << Fold("Performs quantum quench from some initial to final Hamiltonian and print energy info.")
+    this->out << "quench" << std::endl;
+    this->out << Fold("Performs quantum quench from some initial to final Hamiltonian and print energy info.")
                  .width(80).margin(4) << std::endl;
-    std::cout << std::endl;
-    std::cout << "Type " + cmd + " [mode] --help to get help on the specific mode." << std::endl;
+    this->out << std::endl;
+    this->out << "Type " + cmd + " [mode] --help to get help on the specific mode." << std::endl;
 }
 
 void Frontend::setVerbosityLevel(Logger &logger, const std::string &verbosityLevelName) const {

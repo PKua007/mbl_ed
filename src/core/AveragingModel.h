@@ -26,6 +26,8 @@
  */
 class AveragingModel {
 public:
+    virtual ~AveragingModel() = default;
+
     /**
      * @brief Prepares @a hamiltonianGenerator for a new simulation.
      * @details @a rnd is used for resampling random stuff, while @a simulationIndex and @a numberOfSimulations

@@ -6,7 +6,7 @@
 #define MBL_ED_DOUBLEHOPPINGTERM_H
 
 class HamiltonianGenerator;
-class HopData;
+struct HopData;
 
 /**
  * @brief A class representing double hopping term (two \f$ b^\dagger b \f$ pairs) of second-quantized hamiltonian.

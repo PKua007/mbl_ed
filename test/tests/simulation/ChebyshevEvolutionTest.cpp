@@ -173,7 +173,7 @@ TEST_CASE("ChebyshevEvolution: evolutions") {
 
 TEST_CASE("ChebyshevEvolution: clearing, storing and restoring") {
     // Actually we are doing integration test in the whole hierarchy of storing/restoring down CorrelationsTimeEvolution
-    auto fockBase = std::shared_ptr(FockBasisGenerator().generate(4, 4));
+    auto fockBase = std::shared_ptr<FockBasis>(FockBasisGenerator().generate(4, 4));
     auto hamiltonianGenerator = std::make_unique<HamiltonianGenerator>(fockBase, false);
     hamiltonianGenerator->addHoppingTerm(std::make_unique<HubbardHop>(1));
     hamiltonianGenerator->addDiagonalTerm(std::make_unique<HubbardOnsite>(1));

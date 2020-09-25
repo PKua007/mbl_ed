@@ -16,7 +16,7 @@
 using trompeloeil::_;
 
 TEST_CASE("TimeEvolution: header and entries") {
-    auto fockBase = std::shared_ptr(FockBasisGenerator{}.generate(1, 2));
+    auto fockBase = std::shared_ptr<FockBasis>(FockBasisGenerator{}.generate(1, 2));
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
     TimeEvolutionParameters params;
     params.fockBasis = fockBase;
@@ -77,7 +77,7 @@ TEST_CASE("TimeEvolution: header and entries") {
 }
 
 TEST_CASE("TimeEvolution: external vectors") {
-    auto fockBase = std::shared_ptr(FockBasisGenerator{}.generate(1, 2));
+    auto fockBase = std::shared_ptr<FockBasis>(FockBasisGenerator{}.generate(1, 2));
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
     TimeEvolutionParameters params;
     params.fockBasis = fockBase;

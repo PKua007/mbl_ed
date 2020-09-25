@@ -8,7 +8,7 @@
 #include "FockBasis.h"
 
 class HamiltonianGenerator;
-class HopData;
+struct HopData;
 
 /**
  * @brief A class representing hopping term (off-diagonal term) of second-quantized hamiltonian.

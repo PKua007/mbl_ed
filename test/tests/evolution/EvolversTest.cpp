@@ -19,7 +19,7 @@ using namespace std::complex_literals;
 
 TEST_CASE("Evolvers test") {
     FockBasisGenerator generator;
-    auto basis = std::shared_ptr(generator.generate(2, 3));
+    auto basis = std::shared_ptr<FockBasis>(generator.generate(2, 3));
     HamiltonianGenerator hamiltonianGenerator(basis, false);
     hamiltonianGenerator.addHoppingTerm(std::make_unique<HubbardHop>(1));
     hamiltonianGenerator.addDiagonalTerm(std::make_unique<HubbardOnsite>(2));

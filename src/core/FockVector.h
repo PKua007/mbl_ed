@@ -45,7 +45,7 @@ public:
     /**
      * @brief Concatenated @a fw1 and @a fw2 into one, larger vector.
      */
-    [[nodiscard]] friend FockVector operator+(const FockVector &fw1, const FockVector &fw2);
+    friend FockVector operator+(const FockVector &fw1, const FockVector &fw2);
 
     [[nodiscard]] friend bool operator==(const FockVector &fw1, const FockVector &fw2) { return fw1.data == fw2.data; }
     [[nodiscard]] friend bool operator!=(const FockVector &fw1, const FockVector &fw2) { return fw1.data == fw2.data; }

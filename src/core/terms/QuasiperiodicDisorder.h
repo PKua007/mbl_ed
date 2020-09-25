@@ -17,7 +17,7 @@
  * operator, \f$ \hat{n}_i = \hat{b}_i^\dagger\hat{b}_i \f$. The rest of parameters are in the constructor (also
  * \f$ \phi_0 \f$ can be changed by setPhi0().
  */
-class QuasiperiodicDisorder : public DiagonalTerm {double U1{};
+class QuasiperiodicDisorder : public DiagonalTerm {
     double W{};
     double beta{};
     double phi0{};

@@ -12,6 +12,8 @@
  */
 class DisorderGenerator {
 public:
+    virtual ~DisorderGenerator() = default;
+
     /**
      * @brief Sample next chemical potential using passed @a rnd.
      */

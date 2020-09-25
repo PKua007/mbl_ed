@@ -10,7 +10,7 @@
 #include "core/FockBasisGenerator.h"
 
 TEST_CASE("BipariteEntropy") {
-    auto fockBase = std::shared_ptr(FockBasisGenerator{}.generate(2, 4));
+    auto fockBase = std::shared_ptr<FockBasis>(FockBasisGenerator{}.generate(2, 4));
     BipariteEntropy bipariteEntropy(fockBase);
 
     SECTION("header") {

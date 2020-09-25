@@ -10,7 +10,7 @@
 #include "core/FockBasisGenerator.h"
 
 TEST_CASE("OnsiteOccupations") {
-    auto base = std::shared_ptr(FockBasisGenerator{}.generate(2, 2));
+    auto base = std::shared_ptr<FockBasis>(FockBasisGenerator{}.generate(2, 2));
     OnsiteOccupations onsiteOccupations(base);
 
     SECTION("header") {

@@ -4,9 +4,10 @@
 
 #include <filesystem>
 #include <vector>
+#include <ostream>
+#include <sstream>
 
 #include <catch2/catch.hpp>
-#include <ostream>
 
 #include "simulation/RestorableSimulationExecutor.h"
 #include "simulation/RestorableHelper.h"
