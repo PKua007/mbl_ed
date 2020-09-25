@@ -6,7 +6,7 @@
 
 #include "utils/Assertions.h"
 
-double ListOnsite::calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) {
+double ListOnsite::calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) {
     Expects(vector.size() == this->onsitePotential.size());
 
     static_cast<void>(generator);

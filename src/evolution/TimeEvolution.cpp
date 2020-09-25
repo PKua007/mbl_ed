@@ -17,11 +17,11 @@ void TimeEvolution::addEvolution(Evolver &evolver, Logger &logger, const std::ve
     for (auto &evolution : this->vectorEvolutions) {
         arma::cx_vec initialState;
 
-        if (std::holds_alternative<FockBase::Vector>(evolution.initialVector)) {
-            FockBase::Vector initialFockVector = std::get<FockBase::Vector>(evolution.initialVector);
-            auto initialIdx = fockBase->findIndex(initialFockVector);
+        if (std::holds_alternative<FockBasis::Vector>(evolution.initialVector)) {
+            FockBasis::Vector initialFockVector = std::get<FockBasis::Vector>(evolution.initialVector);
+            auto initialIdx = this->fockBasis->findIndex(initialFockVector);
             Assert(initialIdx.has_value());
-            initialState = arma::cx_vec(this->fockBase->size(), arma::fill::zeros);
+            initialState = arma::cx_vec(this->fockBasis->size(), arma::fill::zeros);
             initialState[*initialIdx] = 1;
         } else {    // holds alternative ExternalVector
             Assert(externalVectorsCounter < externalVectors.size());
@@ -56,7 +56,7 @@ void TimeEvolution::storeResult(std::ostream &out) const {
 
 TimeEvolution::TimeEvolution(const TimeEvolutionParameters &parameters,
                              std::unique_ptr<OservablesTimeEvolution> occupationEvolution)
-        : fockBase{parameters.fockBase}, occupationEvolution{std::move(occupationEvolution)},
+        : fockBasis{parameters.fockBasis}, occupationEvolution{std::move(occupationEvolution)},
           timeSegmentation{parameters.timeSegmentation}
 {
     Expects(!parameters.vectorsToEvolve.empty());
@@ -115,8 +115,8 @@ std::string TimeEvolution::VectorEvolution::getHeader() const {
     Assert(!this->timeEntries.empty());
 
     std::ostringstream out;
-    if (std::holds_alternative<FockBase::Vector>(initialVector))
-        out << std::get<FockBase::Vector>(initialVector);
+    if (std::holds_alternative<FockBasis::Vector>(initialVector))
+        out << std::get<FockBasis::Vector>(initialVector);
     else    // holds alternative ExternalVector
         out << std::get<ExternalVector>(initialVector).name;
     out << "_t " << this->observablesHeader;
@@ -125,9 +125,9 @@ std::string TimeEvolution::VectorEvolution::getHeader() const {
 }
 
 std::string TimeEvolution::VectorEvolution::getInitialVectorName() const {
-    if (std::holds_alternative<FockBase::Vector>(this->initialVector)) {
+    if (std::holds_alternative<FockBasis::Vector>(this->initialVector)) {
         std::ostringstream nameStream;
-        nameStream << std::get<FockBase::Vector>(this->initialVector);
+        nameStream << std::get<FockBasis::Vector>(this->initialVector);
         return nameStream.str();
     } else {    // holds alternative ExternalVector
         ExternalVector externalVector = std::get<ExternalVector>(this->initialVector);

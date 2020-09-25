@@ -8,15 +8,15 @@
 #include <memory>
 
 #include "core/HamiltonianGenerator.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 
 
 class HamiltonianGeneratorMother {
 private:
-    std::shared_ptr<FockBase> fockBase;
+    std::shared_ptr<FockBasis> fockBase;
 
 public:
-    HamiltonianGeneratorMother(std::size_t N, std::size_t K) : fockBase{FockBaseGenerator{}.generate(N, K)}
+    HamiltonianGeneratorMother(std::size_t N, std::size_t K) : fockBase{FockBasisGenerator{}.generate(N, K)}
     { }
 
    std::unique_ptr<HamiltonianGenerator> hubbardQuasiperiodic(double J, double U, double W, double beta, double phi0,

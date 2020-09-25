@@ -21,10 +21,10 @@
 #include "core/disorder_generators/UniformGenerator.h"
 
 std::unique_ptr<HamiltonianGenerator>
-HamiltonianGeneratorBuilder::build(const Parameters &params, std::shared_ptr<FockBase> fockBase, RND &rnd)
+HamiltonianGeneratorBuilder::build(const Parameters &params, std::shared_ptr<FockBasis> fockBasis, RND &rnd)
 {
-    std::size_t numberOfSites = fockBase->getNumberOfSites();
-    auto generator = std::make_unique<HamiltonianGenerator>(fockBase, params.usePeriodicBC);
+    std::size_t numberOfSites = fockBasis->getNumberOfSites();
+    auto generator = std::make_unique<HamiltonianGenerator>(fockBasis, params.usePeriodicBC);
 
     for (auto &term : params.hamiltonianTerms) {
         std::string termName = term.first;

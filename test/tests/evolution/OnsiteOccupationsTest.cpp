@@ -7,10 +7,10 @@
 #include "matchers/VectorApproxEqualMatcher.h"
 
 #include "evolution/observables/OnsiteOccupations.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 
 TEST_CASE("OnsiteOccupations") {
-    auto base = std::shared_ptr(FockBaseGenerator{}.generate(2, 2));
+    auto base = std::shared_ptr(FockBasisGenerator{}.generate(2, 2));
     OnsiteOccupations onsiteOccupations(base);
 
     SECTION("header") {

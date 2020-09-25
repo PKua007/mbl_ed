@@ -6,7 +6,7 @@
 
 #include "core/terms/OnsiteDisorder.h"
 #include "core/HamiltonianGenerator.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/RND.h"
 #include "core/DisorderGenerator.h"
 
@@ -27,8 +27,8 @@ namespace {
 }
 
 TEST_CASE("OnsiteDisorder: first sample") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(3, 3), false);
-    const auto &fockBase = *generator.getFockBase();
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(3, 3), false);
+    const auto &fockBase = *generator.getFockBasis();
     RND rnd;
     auto disorderGenerator = std::make_unique<SequenceDisorderGenerator>(std::vector<double>{1, 2, 3});
     OnsiteDisorder onsiteDisorder(std::move(disorderGenerator), 3, rnd);
@@ -46,8 +46,8 @@ TEST_CASE("OnsiteDisorder: first sample") {
 }
 
 TEST_CASE("OnsiteDisorder: resample") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(3, 3), false);
-    const auto &fockBase = *generator.getFockBase();
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(3, 3), false);
+    const auto &fockBase = *generator.getFockBasis();
     RND rnd;
     auto disorderGenerator = std::make_unique<SequenceDisorderGenerator>(std::vector<double>{0, 0, 0, 1, 2, 3});
     OnsiteDisorder onsiteDisorder(std::move(disorderGenerator), 3, rnd);

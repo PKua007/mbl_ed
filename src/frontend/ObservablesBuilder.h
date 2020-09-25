@@ -10,7 +10,7 @@
 #include <memory>
 
 #include "Parameters.h"
-#include "core/FockBase.h"
+#include "core/FockBasis.h"
 #include "evolution/PrimaryObservable.h"
 #include "evolution/SecondaryObservable.h"
 
@@ -33,7 +33,7 @@ public:
      * explicitly, but needed by SecondaryObservables.
      */
     void build(const std::vector<std::string> &observables, const Parameters &params,
-               const std::shared_ptr<FockBase> &fockBase);
+               const std::shared_ptr<FockBasis> &fockBasis);
 
     /**
      * @brief Returns the list of PrimaryObservables and releases it from the memory of the class.

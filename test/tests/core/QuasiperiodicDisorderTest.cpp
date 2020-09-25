@@ -5,12 +5,12 @@
 #include <catch2/catch.hpp>
 
 #include "core/terms/QuasiperiodicDisorder.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/HamiltonianGenerator.h"
 
 TEST_CASE("QuasiperiodicDisorder") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 3), false);
-    const auto &fockBase = *generator.getFockBase();
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(2, 3), false);
+    const auto &fockBase = *generator.getFockBasis();
     QuasiperiodicDisorder quasiperiodicDisorder(3, 1./12, 800);
     quasiperiodicDisorder.setPhi0(M_PI/6);    // Check setPhi0 as well
 

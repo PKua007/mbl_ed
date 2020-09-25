@@ -14,7 +14,7 @@
 #include "ObservablesBuilder.h"
 
 #include "simulation/ExactDiagonalization.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/DisorderGenerator.h"
 
 #include "core/QuenchCalculator.h"
@@ -99,17 +99,17 @@ void Frontend::ed(int argc, char **argv) {
     logger.info() << "Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
     // Generate Fock basis
-    FockBaseGenerator baseGenerator;
+    FockBasisGenerator basisGenerator;
     logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
-    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    auto basis = std::shared_ptr(basisGenerator.generate(params.N, params.K));
     logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
     auto rnd = std::make_unique<RND>();
-    auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
-    auto analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, base);
+    auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, basis, *rnd);
+    auto analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, basis);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run simulations
@@ -224,15 +224,15 @@ void Frontend::analyze(int argc, char **argv) {
             die("Parameters to print: parameter " + param + " is unknown", logger);
 
     // Generate Fock basis
-    FockBaseGenerator baseGenerator;
+    FockBasisGenerator basisGenerator;
     logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
-    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    auto basis = std::shared_ptr(basisGenerator.generate(params.N, params.K));
     logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Load eigenenergies and analyze them
-    auto analyzer = AnalyzerBuilder{}.build(tasks, params, base);
+    auto analyzer = AnalyzerBuilder{}.build(tasks, params, basis);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())
@@ -244,7 +244,7 @@ void Frontend::analyze(int argc, char **argv) {
             die("Cannot open " + energiesFilename + " to read eigenenergies from", logger);
 
         Eigensystem eigensystem;
-        eigensystem.restore(energiesFile, base);
+        eigensystem.restore(energiesFile, basis);
         analyzer->analyze(eigensystem, logger);
     }
 
@@ -348,16 +348,16 @@ void Frontend::chebyshev(int argc, char **argv) {
     logger.info() << "Using " << omp_get_max_threads() << " OpenMP threads" << std::endl;
 
     // Prepare FockBasis
-    FockBaseGenerator baseGenerator;
+    FockBasisGenerator basisGenerator;
     logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
-    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    auto basis = std::shared_ptr(basisGenerator.generate(params.N, params.K));
     logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
     auto rnd = std::make_unique<RND>();
-    auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *rnd);
+    auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, basis, *rnd);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run evolutions
@@ -368,11 +368,11 @@ void Frontend::chebyshev(int argc, char **argv) {
               std::istream_iterator<EvolutionTimeSegment>(),
               std::back_inserter(evolutionParams.timeSegmentation));
     evolutionParams.numberOfSites = params.K;
-    evolutionParams.fockBase = base;
+    evolutionParams.fockBasis = basis;
     evolutionParams.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
 
     ObservablesBuilder observablesBuilder;
-    observablesBuilder.build(observableStrings, params, base);
+    observablesBuilder.build(observableStrings, params, basis);
     evolutionParams.primaryObservables = observablesBuilder.releasePrimaryObservables();
     evolutionParams.secondaryObservables = observablesBuilder.releaseSecondaryObservables();
     evolutionParams.storedObservables = observablesBuilder.releaseStoredObservables();
@@ -392,7 +392,7 @@ void Frontend::chebyshev(int argc, char **argv) {
         evolutionParams.vectorsToEvolve.emplace_back(ExternalVector{"quench"});
 
         auto quenchRnd = std::make_unique<RND>();
-        auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, base, *quenchRnd);
+        auto quenchHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(*quenchParams, basis, *quenchRnd);
         evolution = std::make_unique<ChebyshevEvolution<>>(
                 std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                 std::make_unique<TimeEvolution>(evolutionParams, std::move(observablesEvolution)),
@@ -494,18 +494,18 @@ void Frontend::quench(int argc, char **argv) {
     logger << std::endl;
 
     // Generate Fock basis
-    FockBaseGenerator baseGenerator;
+    FockBasisGenerator basisGenerator;
     logger.verbose() << "Preparing Fock basis started... " << std::endl;
     arma::wall_clock timer;
     timer.tic();
-    auto base = std::shared_ptr(baseGenerator.generate(params.N, params.K));
+    auto basis = std::shared_ptr(basisGenerator.generate(params.N, params.K));
     logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Prepare initial and final HamiltonianGenerator
     auto initialRnd = std::make_unique<RND>();
     auto finalRnd = std::make_unique<RND>();
-    auto initialHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(quenchParams, base, *initialRnd);
-    auto finalHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, base, *finalRnd);
+    auto initialHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(quenchParams, basis, *initialRnd);
+    auto finalHamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, basis, *finalRnd);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     SimulationsSpan simulationsSpan;

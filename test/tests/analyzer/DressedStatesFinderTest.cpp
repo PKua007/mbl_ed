@@ -5,16 +5,16 @@
 #include <catch2/catch.hpp>
 
 #include "analyzer/tasks/DressedStatesFinder.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/terms/HubbardHop.h"
 #include "core/terms/HubbardOnsite.h"
 #include "core/terms/QuasiperiodicDisorder.h"
 #include "core/averaging_models/UniformPhi0AveragingModel.h"
 
 TEST_CASE("DressedStatesFinder: single diagonalization") {
-    FockBaseGenerator generator;
+    FockBasisGenerator generator;
     auto base = generator.generate(4, 2);
     Eigensystem eigensystem({0, 0.25, 0.5, 0.75, 1},
                             {{1,   0,    0,       0,        0},
@@ -38,8 +38,8 @@ TEST_CASE("DressedStatesFinder: single diagonalization") {
 }
 
 TEST_CASE("DressedStatesFinder: 2 diagonalizations") {
-    FockBaseGenerator generator;
-    auto base = std::shared_ptr<FockBase>(generator.generate(2, 2));
+    FockBasisGenerator generator;
+    auto base = std::shared_ptr<FockBasis>(generator.generate(2, 2));
     Eigensystem eigensystem1({0, 0.5, 1},
                              {{1, 0, 0},
                               {0, 1, 0},

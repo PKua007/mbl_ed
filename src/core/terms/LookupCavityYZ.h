@@ -10,7 +10,7 @@
 
 #include "core/CavityConstants.h"
 #include "core/HoppingTerm.h"
-#include "core/FockBase.h"
+#include "core/FockBasis.h"
 #include "utils/Assertions.h"
 
 /**
@@ -34,7 +34,7 @@ private:
     CavityConstants cavityConstants;
     CavityConstants::Realisation currentRealisation;
 
-    double calculateZTerm(const FockBase::Vector &vector) const;
+    double calculateZTerm(const FockBasis::Vector &vector) const;
 
 public:
     LookupCavityYZ(double U1, CavityConstants cavityConstants, std::size_t realisationIndex = 0)

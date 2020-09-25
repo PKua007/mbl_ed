@@ -7,7 +7,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/HamiltonianGenerator.h"
 #include "core/terms/HubbardHop.h"
 #include "core/terms/HubbardOnsite.h"
@@ -18,7 +18,7 @@
 using namespace std::complex_literals;
 
 TEST_CASE("Evolvers test") {
-    FockBaseGenerator generator;
+    FockBasisGenerator generator;
     auto basis = std::shared_ptr(generator.generate(2, 3));
     HamiltonianGenerator hamiltonianGenerator(basis, false);
     hamiltonianGenerator.addHoppingTerm(std::make_unique<HubbardHop>(1));

@@ -5,7 +5,7 @@
 #ifndef MBL_ED_DIAGONALTERM_H
 #define MBL_ED_DIAGONALTERM_H
 
-#include "FockBase.h"
+#include "FockBasis.h"
 
 class HamiltonianGenerator;
 
@@ -17,10 +17,10 @@ public:
     virtual ~DiagonalTerm() = default;
 
     /**
-     * @brief Given fock base vector it is supposed to calculate its diagonal entry.
+     * @brief Given fock basis vector it is supposed to calculate its diagonal entry.
      * @details @a generator is passed in case it is needed.
      */
-    virtual double calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) = 0;
+    virtual double calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) = 0;
 };
 
 #endif //MBL_ED_DIAGONALTERM_H

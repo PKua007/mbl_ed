@@ -26,7 +26,7 @@ double LookupCavityYZ::calculate(const HopData &hopData, const HamiltonianGenera
            * this->currentRealisation.siteEntries[smallerSite].y;
 }
 
-double LookupCavityYZ::calculateZTerm(const FockBase::Vector &vector) const {
+double LookupCavityYZ::calculateZTerm(const FockBasis::Vector &vector) const {
     std::size_t siteIndex{};
     auto siteAccumulator = [&siteIndex, this](auto sum, auto element) {
         return sum + this->currentRealisation.siteEntries[siteIndex++].wannier * element;

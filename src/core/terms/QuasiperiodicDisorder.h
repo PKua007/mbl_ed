@@ -25,7 +25,7 @@ class QuasiperiodicDisorder : public DiagonalTerm {double U1{};
 public:
     QuasiperiodicDisorder(double W, double beta, double phi0);
 
-    double calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) override;
+    double calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) override;
 
     void setPhi0(double phi0);
 };

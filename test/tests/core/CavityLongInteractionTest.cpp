@@ -6,11 +6,11 @@
 
 #include "core/terms/CavityLongInteraction.h"
 #include "core/HamiltonianGenerator.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 
 TEST_CASE("CavityLongInteraction: +-1 interactions") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(3, 3), false);
-    const auto &fockBase = *generator.getFockBase();
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(3, 3), false);
+    const auto &fockBase = *generator.getFockBasis();
     CavityLongInteraction longInteraction(3, 0.5, 0);
 
     REQUIRE(longInteraction.calculate(fockBase[0], generator) == Approx(-9));
@@ -26,8 +26,8 @@ TEST_CASE("CavityLongInteraction: +-1 interactions") {
 }
 
 TEST_CASE("CavityLongInteraction: beta=1/12, phi0=pi/6") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 3), false);
-    const auto &fockBase = *generator.getFockBase();
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(2, 3), false);
+    const auto &fockBase = *generator.getFockBasis();
     CavityLongInteraction longInteraction(3, 1./12, 800);
     longInteraction.setPhi0(M_PI/6);    // Check setPhi0 as well
 

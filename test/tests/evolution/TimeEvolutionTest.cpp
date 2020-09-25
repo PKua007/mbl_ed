@@ -11,18 +11,18 @@
 
 #include "evolution/TimeEvolution.h"
 #include "evolution/EDEvolver.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 
 using trompeloeil::_;
 
 TEST_CASE("TimeEvolution: header and entries") {
-    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
+    auto fockBase = std::shared_ptr(FockBasisGenerator{}.generate(1, 2));
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
     TimeEvolutionParameters params;
-    params.fockBase = fockBase;
+    params.fockBasis = fockBase;
     params.timeSegmentation = {{1, 2}, {3, 1}};
     params.numberOfSites = 2;
-    params.vectorsToEvolve = {FockBase::Vector{1, 0}, FockBase::Vector{0, 1}};
+    params.vectorsToEvolve = {FockBasis::Vector{1, 0}, FockBasis::Vector{0, 1}};
 
     auto observable1 = std::make_shared<ObservableMock>();
     auto observable2 = std::make_shared<ObservableMock>();
@@ -77,13 +77,13 @@ TEST_CASE("TimeEvolution: header and entries") {
 }
 
 TEST_CASE("TimeEvolution: external vectors") {
-    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(1, 2));
+    auto fockBase = std::shared_ptr(FockBasisGenerator{}.generate(1, 2));
     Eigensystem eigensystem({1, 1}, arma::eye(2, 2), fockBase);
     TimeEvolutionParameters params;
-    params.fockBase = fockBase;
+    params.fockBasis = fockBase;
     params.timeSegmentation = {{1, 1}};
     params.numberOfSites = 2;
-    params.vectorsToEvolve = {FockBase::Vector{1, 0}, TimeEvolutionParameters::ExternalVector{"external"}};
+    params.vectorsToEvolve = {FockBasis::Vector{1, 0}, TimeEvolutionParameters::ExternalVector{"external"}};
 
     std::ostringstream loggerStream;
     Logger logger(loggerStream);

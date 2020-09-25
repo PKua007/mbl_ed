@@ -10,7 +10,7 @@
 
 #include "matchers/ArmaApproxEqualMatcher.h"
 
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/HamiltonianGenerator.h"
 #include "utils/Assertions.h"
 
@@ -42,7 +42,7 @@ TEST_CASE("HamiltonianGenerator: non-periodic hop") {
         .WITH(HopBetween(_1) == HopBetween(1, 2))
         .RETURN(1)
         .TIMES(AT_LEAST(1));
-    FockBaseGenerator baseGenerator;
+    FockBasisGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 3);
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
     hamiltonianGenerator.addHoppingTerm(std::move(hopping));
@@ -64,7 +64,7 @@ TEST_CASE("HamiltonianGenerator: double hop 2 on 2") {
             .WITH(_3.getSiteDistance(_1.fromSite, _1.toSite) == 1 && _3.getSiteDistance(_2.fromSite, _2.toSite) == 1)
             .RETURN(1)
             .TIMES(AT_LEAST(1));
-    FockBaseGenerator baseGenerator;
+    FockBasisGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 2);
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
     hamiltonianGenerator.addDoubleHoppingTerm(std::move(hopping));
@@ -83,7 +83,7 @@ TEST_CASE("HamiltonianGenerator: double hop 2 on 3") {
             .WITH(_3.getSiteDistance(_1.fromSite, _1.toSite) == 1 && _3.getSiteDistance(_2.fromSite, _2.toSite) == 1)
             .RETURN(1)
             .TIMES(AT_LEAST(1));
-    FockBaseGenerator baseGenerator;
+    FockBasisGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 3);
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
     hamiltonianGenerator.addDoubleHoppingTerm(std::move(hopping));
@@ -102,8 +102,8 @@ TEST_CASE("HamiltonianGenerator: double hop 2 on 3") {
 TEST_CASE("HamiltonianGenerator: diagonal") {
     auto diagonal = std::make_unique<DiagonalTermMock>();
     ALLOW_CALL(*diagonal, calculate(_, _))
-        .RETURN(_2.getFockBase()->findIndex(_1).value());
-    FockBaseGenerator baseGenerator;
+        .RETURN(_2.getFockBasis()->findIndex(_1).value());
+    FockBasisGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 3);
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);
     hamiltonianGenerator.addDiagonalTerm(std::move(diagonal));
@@ -118,11 +118,11 @@ TEST_CASE("HamiltonianGenerator: diagonalization") {
     SECTION("diagonal") {
         // Simple {2, 1} on diagonal - it should only get the order {1, 2} right
         auto diagonal = std::make_unique<DiagonalTermMock>();
-        ALLOW_CALL(*diagonal, calculate(FockBase::Vector{1, 0}, _))
+        ALLOW_CALL(*diagonal, calculate(FockBasis::Vector{1, 0}, _))
             .RETURN(2);
-        ALLOW_CALL(*diagonal, calculate(FockBase::Vector{0, 1}, _))
+        ALLOW_CALL(*diagonal, calculate(FockBasis::Vector{0, 1}, _))
             .RETURN(1);
-        FockBaseGenerator baseGenerator;
+        FockBasisGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(1, 2);
         HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);
         hamiltonianGenerator.addDiagonalTerm(std::move(diagonal));
@@ -140,7 +140,7 @@ TEST_CASE("HamiltonianGenerator: diagonalization") {
                 .WITH(HopBetween(_1) == HopBetween(0, 1))
                 .RETURN(1)
                 .TIMES(AT_LEAST(1));
-        FockBaseGenerator baseGenerator;
+        FockBasisGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(1, 2);
         HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
         hamiltonianGenerator.addHoppingTerm(std::move(hopping));
@@ -171,7 +171,7 @@ TEST_CASE("HamiltonianGenerator: PBC") {
                 .WITH(HopBetween(_1) == HopBetween(0, 2))
                 .RETURN(-1)
                 .TIMES(AT_LEAST(1));
-        FockBaseGenerator baseGenerator;
+        FockBasisGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(2, 3);
         HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);
         hamiltonianGenerator.addHoppingTerm(std::move(hopping));
@@ -189,7 +189,7 @@ TEST_CASE("HamiltonianGenerator: PBC") {
                 .WITH(HopBetween(_1) == HopBetween(1, 2))
                 .RETURN(-1)
                 .TIMES(AT_LEAST(1));
-        FockBaseGenerator baseGenerator;
+        FockBasisGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(2, 3);
         HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
         hamiltonianGenerator.addHoppingTerm(std::move(hopping));
@@ -199,7 +199,7 @@ TEST_CASE("HamiltonianGenerator: PBC") {
 }
 
 TEST_CASE("HamiltonianGenerator: site distance") {
-    FockBaseGenerator baseGenerator;
+    FockBasisGenerator baseGenerator;
     auto evenBase = baseGenerator.generate(1, 6);
     auto oddBase = baseGenerator.generate(1, 7);
 

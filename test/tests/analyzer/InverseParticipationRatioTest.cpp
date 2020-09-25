@@ -6,7 +6,7 @@
 
 #include "analyzer/tasks/InverseParticipationRatio.h"
 
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/terms/HubbardHop.h"
 #include "core/terms/HubbardOnsite.h"
 #include "core/terms/QuasiperiodicDisorder.h"

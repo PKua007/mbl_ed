@@ -16,10 +16,10 @@ void TimeEvolutionParameters::setVectorsToEvolveFromTags(const std::vector <std:
     for (const auto &string : strings) {
         try {
             // Try a tag representation
-            this->vectorsToEvolve.emplace_back(FockBase::Vector(this->numberOfSites, string));
+            this->vectorsToEvolve.emplace_back(FockBasis::Vector(this->numberOfSites, string));
         } catch (FockVectorParseException &) {
             // If tag failed, try occupation representation
-            this->vectorsToEvolve.emplace_back(FockBase::Vector(string));
+            this->vectorsToEvolve.emplace_back(FockBasis::Vector(string));
         }
     }
 }

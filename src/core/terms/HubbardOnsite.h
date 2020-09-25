@@ -24,7 +24,7 @@ private:
 public:
     explicit HubbardOnsite(double U);
 
-    double calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) override;
+    double calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) override;
 };
 
 

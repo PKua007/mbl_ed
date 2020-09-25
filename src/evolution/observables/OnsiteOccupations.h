@@ -10,7 +10,7 @@
 #include <armadillo>
 
 #include "evolution/PrimaryObservable.h"
-#include "core/FockBase.h"
+#include "core/FockBasis.h"
 
 /**
  * @brief Onsite mean occupations for all sites defined as <n_i>.
@@ -20,11 +20,11 @@ private:
     std::size_t numOfSites{};
     std::vector<arma::vec> diagonalObservables;
     std::vector<double> n_i{};
-    std::shared_ptr<FockBase> fockBase;
+    std::shared_ptr<FockBasis> fockBasis;
 
 public:
     OnsiteOccupations() = default;
-    OnsiteOccupations(std::shared_ptr<FockBase> fockBase);
+    OnsiteOccupations(std::shared_ptr<FockBasis> fockBasis);
 
     /**
      * @brief Returns the names of fields in format n_i, where i = 1, ..., (number of sites)

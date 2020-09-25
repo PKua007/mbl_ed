@@ -6,11 +6,11 @@
 
 #include "core/terms/HubbardOnsite.h"
 #include "core/HamiltonianGenerator.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 
 TEST_CASE("HubbardOnsite") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(4, 2), false);
-    const auto &fockBase = *generator.getFockBase();
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(4, 2), false);
+    const auto &fockBase = *generator.getFockBasis();
     HubbardOnsite hubbardOnsite(2);
 
     REQUIRE(hubbardOnsite.calculate(fockBase[0], generator) == 12);

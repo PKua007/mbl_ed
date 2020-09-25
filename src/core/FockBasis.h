@@ -2,8 +2,8 @@
 // Created by pkua on 01.11.2019.
 //
 
-#ifndef MBL_ED_FOCKBASE_H
-#define MBL_ED_FOCKBASE_H
+#ifndef MBL_ED_FOCKBASIS_H
+#define MBL_ED_FOCKBASIS_H
 
 
 #include <vector>
@@ -12,17 +12,17 @@
 #include "FockVector.h"
 
 /**
- * @brief A class representing a base of product states of bosons/fermion trapped inside an optical lattice.
+ * @brief A class representing a basis of product states of bosons/fermion trapped inside an optical lattice.
  * @details It uses hashing technique for a fast access to the elements.
  */
-class FockBase {
+class FockBasis {
 public:
     using Vector = FockVector;
     using iterator = std::vector<Vector>::iterator;
     using const_iterator = std::vector<Vector>::const_iterator;
 
 private:
-    std::vector<Vector> theBase;
+    std::vector<Vector> theBasis;
     std::map<double, std::size_t> indexMap;
 
     [[nodiscard]] double computeHash(const Vector &vector) const;
@@ -56,4 +56,4 @@ public:
 };
 
 
-#endif //MBL_ED_FOCKBASE_H
+#endif //MBL_ED_FOCKBASIS_H

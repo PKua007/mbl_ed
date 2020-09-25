@@ -18,7 +18,7 @@ namespace {
     class MockHamiltonianGenerator {
     public:
         MAKE_CONST_MOCK1(calculateEigensystem, Eigensystem(bool));
-        MAKE_CONST_MOCK0(getFockBase, std::shared_ptr<const FockBase>());
+        MAKE_CONST_MOCK0(getFockBase, std::shared_ptr<const FockBasis>());
     };
 
     class MockAveragingModel {

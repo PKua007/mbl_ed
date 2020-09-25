@@ -38,7 +38,7 @@ public:
      * @brief Calculates the diagonal elements for @a vector. CavityConstants from the constructor must have enough
      * sites defined.
      */
-    double calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) override;
+    double calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) override;
 
     /**
      * @brief Changes the realisation, i.e. phi0 and wanniers, to the one pointed by @a index in CavityConstants from

@@ -10,13 +10,13 @@ void OnsiteOccupations::calculateForState(const arma::cx_vec &state) {
         this->n_i[siteIdx] = Observable::calculateExpectedValue(this->diagonalObservables[siteIdx], state);
 }
 
-OnsiteOccupations::OnsiteOccupations(std::shared_ptr<FockBase> fockBase)
-        : numOfSites{fockBase->getNumberOfSites()}, diagonalObservables(numOfSites, arma::vec(fockBase->size())),
-          n_i(numOfSites), fockBase{std::move(fockBase)}
+OnsiteOccupations::OnsiteOccupations(std::shared_ptr<FockBasis> fockBasis)
+        : numOfSites{fockBasis->getNumberOfSites()}, diagonalObservables(numOfSites, arma::vec(fockBasis->size())),
+          n_i(numOfSites), fockBasis{std::move(fockBasis)}
 {
     for (std::size_t siteIdx{}; siteIdx < this->numOfSites; siteIdx++)
-        for (std::size_t fockIdx{}; fockIdx < this->fockBase->size(); fockIdx++)
-            this->diagonalObservables[siteIdx][fockIdx] = (*this->fockBase)[fockIdx][siteIdx];
+        for (std::size_t fockIdx{}; fockIdx < this->fockBasis->size(); fockIdx++)
+            this->diagonalObservables[siteIdx][fockIdx] = (*this->fockBasis)[fockIdx][siteIdx];
 }
 
 std::vector<std::string> OnsiteOccupations::getHeader() const {

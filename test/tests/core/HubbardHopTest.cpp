@@ -6,10 +6,10 @@
 
 #include "core/terms/HubbardHop.h"
 #include "core/HamiltonianGenerator.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 
 TEST_CASE("HubbardHop") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(4, 4), true);
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(4, 4), true);
     HubbardHop hubbardHop(2);
 
     SECTION("1 hops") {

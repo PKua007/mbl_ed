@@ -9,7 +9,7 @@
 #include <utility>
 
 #include "SymmetricMatrix.h"
-#include "core/FockBase.h"
+#include "core/FockBasis.h"
 #include "Evolver.h"
 #include "EvolutionTimeSegment.h"
 #include "utils/Logger.h"

@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "evolution/PrimaryObservable.h"
-#include "core/FockBase.h"
+#include "core/FockBasis.h"
 
 /**
  * @brief The observable defined as -Tr [rho_a log(rho_a)].
@@ -20,11 +20,11 @@ class BipariteEntropy : public PrimaryObservable {
 private:
     std::size_t numOfParticles{};
     double S{};
-    std::shared_ptr<FockBase> fockBase;
-    std::vector<std::unique_ptr<FockBase>> halfFockBases;
+    std::shared_ptr<FockBasis> fockBasis;
+    std::vector<std::unique_ptr<FockBasis>> halfFockBases;
 
 public:
-    explicit BipariteEntropy(std::shared_ptr<FockBase> fockBase);
+    explicit BipariteEntropy(std::shared_ptr<FockBasis> fockBasis);
 
     [[nodiscard]] std::vector<std::string> getHeader() const override { return {"S"}; }
     [[nodiscard]] std::vector<double> getValues() const override { return {S}; }

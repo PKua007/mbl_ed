@@ -9,7 +9,7 @@
 
 #include "simulation/ChebyshevEvolution.h"
 
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/terms/HubbardHop.h"
 #include "core/terms/HubbardOnsite.h"
 #include "core/terms/QuasiperiodicDisorder.h"
@@ -173,7 +173,7 @@ TEST_CASE("ChebyshevEvolution: evolutions") {
 
 TEST_CASE("ChebyshevEvolution: clearing, storing and restoring") {
     // Actually we are doing integration test in the whole hierarchy of storing/restoring down CorrelationsTimeEvolution
-    auto fockBase = std::shared_ptr(FockBaseGenerator().generate(4, 4));
+    auto fockBase = std::shared_ptr(FockBasisGenerator().generate(4, 4));
     auto hamiltonianGenerator = std::make_unique<HamiltonianGenerator>(fockBase, false);
     hamiltonianGenerator->addHoppingTerm(std::make_unique<HubbardHop>(1));
     hamiltonianGenerator->addDiagonalTerm(std::make_unique<HubbardOnsite>(1));
@@ -182,7 +182,7 @@ TEST_CASE("ChebyshevEvolution: clearing, storing and restoring") {
     auto rnd = std::make_unique<RND>();
     TimeEvolutionParameters params;
     params.timeSegmentation = {{1, 1}};
-    params.fockBase = fockBase;
+    params.fockBasis = fockBase;
     params.numberOfSites = 4;
     params.setVectorsToEvolveFromTags({"unif"});
     auto onsiteOccupations = std::make_shared<OnsiteOccupations>(fockBase);

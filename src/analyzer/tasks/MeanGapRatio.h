@@ -28,12 +28,12 @@
  */
 class MeanGapRatio : public InlineAnalyzerTask {
 private:
-    std::optional<FockBase::Vector> middleVector;
+    std::optional<FockBasis::Vector> middleVector;
     double relativeMiddleEnergy{};
     double relativeMargin{};
     std::vector<double> gapRatios{};
 
-    double calculateEnergyOfFockState(const FockBase::Vector &state, const Eigensystem &eigensystem) const;
+    double calculateEnergyOfFockState(const FockBasis::Vector &state, const Eigensystem &eigensystem) const;
     [[nodiscard]] Quantity calculateMean() const;
 
 public:
@@ -51,7 +51,7 @@ public:
      * @param middleVector vector around which we should compute mgr
      * @param relativeMargin relativeMargin the width of the band (in the [0, 1] regime)
      */
-    MeanGapRatio(const FockBase::Vector &middleVector, double relativeMargin);
+    MeanGapRatio(const FockBasis::Vector &middleVector, double relativeMargin);
 
     /**
      * @brief Adds point from a given @a eigensystem to the average mean gap ratio.

@@ -5,7 +5,7 @@
 #ifndef MBL_ED_HOPPINGTERM_H
 #define MBL_ED_HOPPINGTERM_H
 
-#include "FockBase.h"
+#include "FockBasis.h"
 
 class HamiltonianGenerator;
 class HopData;

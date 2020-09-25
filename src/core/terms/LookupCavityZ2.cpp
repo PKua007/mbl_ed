@@ -7,7 +7,7 @@
 #include "LookupCavityZ2.h"
 #include "core/HamiltonianGenerator.h"
 
-double LookupCavityZ2::calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) {
+double LookupCavityZ2::calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) {
     Expects(!generator.usingPBC());
     Expects(vector.size() <= this->cavityConstants.getNumberOfSites());
 

@@ -11,9 +11,9 @@
 
 void DressedStatesFinder::analyze(const Eigensystem &eigensystem, Logger &logger) {
     Expects(eigensystem.hasEigenvectors());
-    Expects(eigensystem.hasFockBase());
+    Expects(eigensystem.hasFockBasis());
 
-    const auto &base = eigensystem.getFockBase();
+    const auto &basis = eigensystem.getFockBasis();
     arma::mat normalizedEnergies = eigensystem.getNormalizedEigenenergies();
     auto indices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy, this->relativeMargin);
 
@@ -24,7 +24,7 @@ void DressedStatesFinder::analyze(const Eigensystem &eigensystem, Logger &logger
             double coeffValue = vector[coeffIndex];
             if (std::abs(coeffValue) > this->coefficientThreshold) {
                 std::ostringstream vectorStream;
-                vectorStream << base[coeffIndex];
+                vectorStream << basis[coeffIndex];
                 this->result.push_back({this->simulationIdx, vectorStream.str(), normalizedEnergies[eigvecIdx], coeffValue});
                 numOfStatesFound++;
                 break;

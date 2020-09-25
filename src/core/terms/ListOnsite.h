@@ -19,7 +19,7 @@ private:
 public:
     explicit ListOnsite(std::vector<double> onsitePotential) : onsitePotential{std::move(onsitePotential)} { }
 
-    double calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) override;
+    double calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) override;
 };
 
 

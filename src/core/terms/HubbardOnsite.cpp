@@ -6,7 +6,7 @@
 
 #include "HubbardOnsite.h"
 
-double HubbardOnsite::calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) {
+double HubbardOnsite::calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) {
     static_cast<void>(generator);
 
     auto bosonAccumulator = [](auto sum, auto numberOfParticles) {

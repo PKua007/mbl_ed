@@ -14,7 +14,7 @@ QuasiperiodicDisorder::QuasiperiodicDisorder(double W, double beta, double phi0)
     Expects(beta >= 0);
 }
 
-double QuasiperiodicDisorder::calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) {
+double QuasiperiodicDisorder::calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) {
     static_cast<void>(generator);
 
     double energy{};

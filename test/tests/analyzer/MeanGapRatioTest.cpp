@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "analyzer/tasks/MeanGapRatio.h"
 
 TEST_CASE("GapRadioCalculator: names") {
@@ -26,8 +26,8 @@ TEST_CASE("MeanGapRatio: single energy set (number)") {
 }
 
 TEST_CASE("MeanGapRatio: single energy set (around vector)") {
-    auto base = std::shared_ptr<FockBase>(FockBaseGenerator{}.generate(7, 2));
-    MeanGapRatio ratioCalculator(FockBase::Vector{5, 2}, 0.3);
+    auto base = std::shared_ptr<FockBasis>(FockBasisGenerator{}.generate(7, 2));
+    MeanGapRatio ratioCalculator(FockBasis::Vector{5, 2}, 0.3);
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 

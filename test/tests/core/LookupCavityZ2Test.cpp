@@ -4,12 +4,12 @@
 
 #include <catch2/catch.hpp>
 
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/terms/LookupCavityZ2.h"
 #include "core/HamiltonianGenerator.h"
 
 TEST_CASE("LookupCavityZ2: correct") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 2), false);
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(2, 2), false);
     CavityConstants cavityConstants;
     cavityConstants.addRealisation(CavityConstants::Realisation{0.4, {{1, 2, 3}, {4, 5, 6}}});
     cavityConstants.addRealisation(CavityConstants::Realisation{0.5, {{7, 8, 9}, {10, 11, 12}}});
@@ -39,7 +39,7 @@ TEST_CASE("LookupCavityZ2: correct") {
 }
 
 TEST_CASE("LookupCavityZ2: errors") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 2), false);
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(2, 2), false);
     CavityConstants cavityConstants;
     cavityConstants.addRealisation(CavityConstants::Realisation{0.4, {{1, 2, 3}, {4, 5, 6}}});
     cavityConstants.addRealisation(CavityConstants::Realisation{0.5, {{7, 8, 9}, {10, 11, 12}}});

@@ -4,15 +4,15 @@
 
 #include "OnsiteOccupationsSquared.h"
 
-OnsiteOccupationsSquared::OnsiteOccupationsSquared(std::shared_ptr<FockBase> fockBase)
-        : numOfSites{fockBase->getNumberOfSites()}, diagonalObservables(numOfSites, arma::vec(fockBase->size())),
-          n_iN_j(numOfSites), headerStrings(numOfSites), fockBase{std::move(fockBase)}
+OnsiteOccupationsSquared::OnsiteOccupationsSquared(std::shared_ptr<FockBasis> fockBasis)
+        : numOfSites{fockBasis->getNumberOfSites()}, diagonalObservables(numOfSites, arma::vec(fockBasis->size())),
+          n_iN_j(numOfSites), headerStrings(numOfSites), fockBasis{std::move(fockBasis)}
 {
     for (std::size_t i{}; i < this->numOfSites; i++) {
         for (std::size_t j = i; j < this->numOfSites; j++) {
-            for (std::size_t fockIdx{}; fockIdx < this->fockBase->size(); fockIdx++) {
+            for (std::size_t fockIdx{}; fockIdx < this->fockBasis->size(); fockIdx++) {
                 this->diagonalObservables(i, j)[fockIdx] =
-                    (*this->fockBase)[fockIdx][i] * (*this->fockBase)[fockIdx][j];
+                        (*this->fockBasis)[fockIdx][i] * (*this->fockBasis)[fockIdx][j];
                 this->headerStrings(i, j) = "n_" + std::to_string(i + 1) + "N_" + std::to_string(j + 1);
             }
         }

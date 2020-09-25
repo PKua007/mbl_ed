@@ -19,7 +19,7 @@ void OnsiteDisorder::resampleOnsiteEnergies(RND &rnd) {
     });
 }
 
-double OnsiteDisorder::calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) {
+double OnsiteDisorder::calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) {
     Expects(vector.size() == this->onsiteEnergies.size());
     static_cast<void>(generator);
 

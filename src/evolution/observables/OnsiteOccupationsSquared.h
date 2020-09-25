@@ -11,7 +11,7 @@
 
 #include "evolution/PrimaryObservable.h"
 #include "evolution/SymmetricMatrix.h"
-#include "core/FockBase.h"
+#include "core/FockBasis.h"
 
 /**
  * @brief Expected values of all combinations of 2 occupation operators <n_j n_j>.
@@ -22,11 +22,11 @@ private:
     SymmetricMatrix<arma::vec> diagonalObservables;
     SymmetricMatrix<double> n_iN_j;
     SymmetricMatrix<std::string> headerStrings;
-    std::shared_ptr<FockBase> fockBase;
+    std::shared_ptr<FockBasis> fockBasis;
 
 public:
     OnsiteOccupationsSquared() = default;
-    explicit OnsiteOccupationsSquared(std::shared_ptr<FockBase> fockBase);
+    explicit OnsiteOccupationsSquared(std::shared_ptr<FockBasis> fockBasis);
 
     /**
      * @brief Returns the names of fields in format n_iN_j, where i, j = 1, ..., (number of sites).

@@ -9,7 +9,7 @@
 #include <random>
 #include <memory>
 
-#include "FockBase.h"
+#include "FockBasis.h"
 #include "DiagonalTerm.h"
 #include "HoppingTerm.h"
 #include "DoubleHoppingTerm.h"
@@ -21,8 +21,8 @@
 struct HopData {
     std::size_t fromSite{};
     std::size_t toSite{};
-    FockBase::Vector fromVector{};
-    FockBase::Vector toVector{};
+    FockBasis::Vector fromVector{};
+    FockBasis::Vector toVector{};
 
     /**
      * @brief The constant given by acting with \f$ \hat{b}_\text{toSite} \hat{b}_\text{fromSite} \f$ on
@@ -37,13 +37,13 @@ struct HopData {
 class HamiltonianGenerator {
 private:
     const bool usePBC;
-    std::shared_ptr<const FockBase> fockBase;
+    std::shared_ptr<const FockBasis> fockBasis;
     std::vector<std::unique_ptr<DiagonalTerm>> diagonalTerms;
     std::vector<std::unique_ptr<HoppingTerm>> hoppingTerms;
     std::vector<std::unique_ptr<DoubleHoppingTerm>> doubleHoppingTerms;
 
     [[nodiscard]] std::optional<HopData>
-    hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
+    hoppingAction(const FockBasis::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
     [[nodiscard]] auto calculateDoubleHopMatrixElement(const HopData &firstHop, const HopData &secondHop) const;
     void performSecondHop(arma::sp_mat &result, std::size_t fromIdx, const HopData &firstHop) const;
     void addDiagonalTerms(arma::sp_mat &result, std::size_t vectorIdx) const;
@@ -51,15 +51,15 @@ private:
     void addDoubleHoppingTerms(arma::sp_mat &result, std::size_t fromIdx) const;
 
 public:
-    HamiltonianGenerator(std::shared_ptr<const FockBase> fockBase, bool usePBC)
-            : usePBC{usePBC}, fockBase{std::move(fockBase)}
+    HamiltonianGenerator(std::shared_ptr<const FockBasis> fockBasis, bool usePBC)
+            : usePBC{usePBC}, fockBasis{std::move(fockBasis)}
     { }
     virtual ~HamiltonianGenerator() = default;
 
     /**
      * @brief Generates the hamiltonian matrix - it uses all provided DiagonalTerm -s and HoppingTerms -s.
-     * @details For HoppingTerms -s, it produces them by doing one-site hop on each base vector and finding which
-     * another base vector is obtained that way.
+     * @details For HoppingTerms -s, it produces them by doing one-site hop on each basis vector and finding which
+     * another basis vector is obtained that way.
      */
     [[nodiscard]] arma::sp_mat generate() const;
 
@@ -95,7 +95,7 @@ public:
      */
     [[nodiscard]] std::vector<std::unique_ptr<DoubleHoppingTerm>> &getDoubleHoppingTerms();
 
-    [[nodiscard]] const std::shared_ptr<const FockBase> &getFockBase() const { return this->fockBase; };
+    [[nodiscard]] const std::shared_ptr<const FockBasis> &getFockBasis() const { return this->fockBasis; };
     [[nodiscard]] bool usingPBC() const { return this->usePBC; }
 };
 

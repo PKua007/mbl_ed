@@ -18,7 +18,7 @@
  */
 class HamiltonianGeneratorBuilder {
 public:
-    std::unique_ptr<HamiltonianGenerator> build(const Parameters &params, std::shared_ptr<FockBase> fockBase, RND &rnd);
+    std::unique_ptr<HamiltonianGenerator> build(const Parameters &params, std::shared_ptr<FockBasis> fockBasis, RND &rnd);
 };
 
 

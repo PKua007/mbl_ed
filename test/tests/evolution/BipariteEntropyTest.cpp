@@ -7,10 +7,10 @@
 #include "matchers/VectorApproxEqualMatcher.h"
 
 #include "evolution/observables/BipariteEntropy.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 
 TEST_CASE("BipariteEntropy") {
-    auto fockBase = std::shared_ptr(FockBaseGenerator{}.generate(2, 4));
+    auto fockBase = std::shared_ptr(FockBasisGenerator{}.generate(2, 4));
     BipariteEntropy bipariteEntropy(fockBase);
 
     SECTION("header") {

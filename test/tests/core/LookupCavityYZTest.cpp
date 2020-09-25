@@ -6,12 +6,12 @@
 
 #include "matchers/ArmaApproxEqualMatcher.h"
 
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/terms/LookupCavityYZ.h"
 #include "core/HamiltonianGenerator.h"
 
 TEST_CASE("LookupCavityYZ: correct") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 2), false);
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(2, 2), false);
     CavityConstants cavityConstants;
     cavityConstants.addRealisation(CavityConstants::Realisation{0.4, {{1, 2, 3}, {4, 5, 6}}});
     cavityConstants.addRealisation(CavityConstants::Realisation{0.5, {{7, 8, 9}, {10, 11, 12}}});
@@ -51,7 +51,7 @@ TEST_CASE("LookupCavityYZ: correct") {
 }
 
 TEST_CASE("LookupCavityYZ: integration with HamiltonianGenerator") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 2), false);
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(2, 2), false);
     CavityConstants cavityConstants;
     cavityConstants.addRealisation(CavityConstants::Realisation{0.4, {{1, 2, 3}, {4, 5, 6}}});
     generator.addHoppingTerm(std::make_unique<LookupCavityYZ>(2, cavityConstants));
@@ -66,7 +66,7 @@ TEST_CASE("LookupCavityYZ: integration with HamiltonianGenerator") {
 }
 
 TEST_CASE("LookupCavityYZ: errors") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 2), false);
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(2, 2), false);
     CavityConstants cavityConstants;
     cavityConstants.addRealisation(CavityConstants::Realisation{0.4, {{1, 2, 3}, {4, 5, 6}}});
     cavityConstants.addRealisation(CavityConstants::Realisation{0.5, {{7, 8, 9}, {10, 11, 12}}});

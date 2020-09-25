@@ -32,7 +32,7 @@ private:
 public:
     CavityLongInteraction(double U1, double beta, double phi0, double phi0Bias = 0);
 
-    double calculate(const FockBase::Vector &vector, const HamiltonianGenerator &generator) override;
+    double calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) override;
 
     void setPhi0(double phi0_);
 };

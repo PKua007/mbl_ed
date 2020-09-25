@@ -9,7 +9,7 @@
 #include <vector>
 #include <variant>
 
-#include "core/FockBase.h"
+#include "core/FockBasis.h"
 #include "EvolutionTimeSegment.h"
 #include "PrimaryObservable.h"
 #include "SecondaryObservable.h"
@@ -19,7 +19,7 @@
  */
 struct TimeEvolutionParameters {
     /**
-     * @brief Helper struct representing "an external initial vector", which is not FockBase::Vector and should be
+     * @brief Helper struct representing "an external initial vector", which is not FockBasis::Vector and should be
      * passed right before the evolution (see TimeEvolution::addEvolution)
      */
     struct ExternalVector {
@@ -34,7 +34,7 @@ struct TimeEvolutionParameters {
     std::vector<EvolutionTimeSegment> timeSegmentation;
 
     std::size_t numberOfSites{};
-    std::shared_ptr<FockBase> fockBase{};
+    std::shared_ptr<FockBasis> fockBasis{};
 
     /**
      * @brief Initial vectors to evolve.
@@ -42,7 +42,7 @@ struct TimeEvolutionParameters {
      * which is not known from the beginning and should be passed before evolution (see
      * CorrelationsTimeEvolution::addEvolution)
      */
-    std::vector<std::variant<FockBase::Vector, ExternalVector>> vectorsToEvolve{};
+    std::vector<std::variant<FockBasis::Vector, ExternalVector>> vectorsToEvolve{};
 
     /**
      * @brief PrimaryObservable -s which should be calculated during the evolution.

@@ -14,7 +14,7 @@ MeanGapRatio::MeanGapRatio(double relativeMiddleEnergy, double relativeMargin)
     Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
 }
 
-MeanGapRatio::MeanGapRatio(const FockBase::Vector &middleVector, double relativeMargin)
+MeanGapRatio::MeanGapRatio(const FockBasis::Vector &middleVector, double relativeMargin)
         : middleVector{middleVector}, relativeMargin{relativeMargin}
 {
     Expects(relativeMargin > 0);
@@ -47,11 +47,11 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
     }
 }
 
-double MeanGapRatio::calculateEnergyOfFockState(const FockBase::Vector &state, const Eigensystem &eigensystem) const {
-    Assert(eigensystem.hasFockBase());
+double MeanGapRatio::calculateEnergyOfFockState(const FockBasis::Vector &state, const Eigensystem &eigensystem) const {
+    Assert(eigensystem.hasFockBasis());
     Assert(eigensystem.hasEigenvectors());
 
-    const auto &basis = eigensystem.getFockBase();
+    const auto &basis = eigensystem.getFockBasis();
     std::size_t basisIndex = *basis.findIndex(state);
     arma::vec fockVector(eigensystem.size(), arma::fill::zeros);
     fockVector[basisIndex] = 1;

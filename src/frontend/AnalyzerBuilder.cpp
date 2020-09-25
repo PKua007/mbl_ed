@@ -23,7 +23,7 @@
 
 
 std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
-                                                 std::shared_ptr<FockBase> fockBase)
+                                                 std::shared_ptr<FockBasis> fockBasis)
 {
     auto analyzer = std::make_unique<Analyzer>();
     for (const auto &task : tasks) {
@@ -37,14 +37,14 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             ValidateMsg(taskStream, "Wrong format, use: mgr [epsilon center - number or 'unif' or 'dw']"
                                     " [epsilon margin]");
 
-            std::optional<FockBase::Vector> middleVector;
+            std::optional<FockBasis::Vector> middleVector;
             if (mgrCenterString == "unif") {
                 ValidateMsg(params.K == params.N, "'unif' and 'dw' are only for a unity filling");
-                middleVector = FockBase::Vector(params.K, 1);
+                middleVector = FockBasis::Vector(params.K, 1);
             } else if (mgrCenterString == "dw") {
                 ValidateMsg(params.K == params.N, "'unif' and 'dw' are only for a unity filling");
                 ValidateMsg(params.K % 2 == 0, "'dw' is only available for even number of sites");
-                middleVector = FockBase::Vector(params.K);
+                middleVector = FockBasis::Vector(params.K);
                 for (std::size_t i{}; i < middleVector->size(); i += 2)
                     (*middleVector)[i] = 2;
             }
@@ -85,7 +85,7 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
                 throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
 
             TimeEvolutionParameters evolutionParams;
-            evolutionParams.fockBase = fockBase;
+            evolutionParams.fockBasis = fockBasis;
             evolutionParams.numberOfSites = params.K;
 
             double maxTime;
@@ -104,8 +104,8 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
 
             evolutionParams.setVectorsToEvolveFromTags(tags);
 
-            auto occupations = std::make_shared<OnsiteOccupations>(fockBase);
-            auto occupationsSquared = std::make_shared<OnsiteOccupationsSquared>(fockBase);
+            auto occupations = std::make_shared<OnsiteOccupations>(fockBasis);
+            auto occupationsSquared = std::make_shared<OnsiteOccupationsSquared>(fockBasis);
             auto correlations = std::make_shared<Correlations>(params.K, 0);
             auto borderlessCorrelations = std::make_shared<Correlations>(params.K, marginSize);
             auto fluctuations = std::make_shared<OnsiteFluctuations>(params.K);

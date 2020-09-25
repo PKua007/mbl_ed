@@ -10,13 +10,13 @@
 #include "utils/Assertions.h"
 #include "Eigensystem.h"
 
-Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::shared_ptr<const FockBase> fockBase)
+Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::shared_ptr<const FockBasis> fockBasis)
         : eigenenergies{std::move(eigenvalues)}, eigenstates{std::move(eigenvectors)}, hasEigenvectors_{true},
-          fockBase{std::move(fockBase)}
+          fockBasis{std::move(fockBasis)}
 {
     std::size_t size = this->eigenenergies.size();
-    if (this->fockBase != nullptr)
-        Expects(this->fockBase->size() == size);
+    if (this->fockBasis != nullptr)
+        Expects(this->fockBasis->size() == size);
     Expects(this->eigenstates.n_cols == size);
     Expects(this->eigenstates.n_rows == size);
     for (std::size_t i{}; i < size; i++)
@@ -27,11 +27,11 @@ Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::sha
     this->sortEigenenergiesAndNormalizeEigenstates();
 }
 
-Eigensystem::Eigensystem(arma::vec eigenvalues, std::shared_ptr<const FockBase> fockBase)
-        : eigenenergies{std::move(eigenvalues)}, hasEigenvectors_{false}, fockBase{std::move(fockBase)}
+Eigensystem::Eigensystem(arma::vec eigenvalues, std::shared_ptr<const FockBasis> fockBasis)
+        : eigenenergies{std::move(eigenvalues)}, hasEigenvectors_{false}, fockBasis{std::move(fockBasis)}
 {
-    if (this->fockBase != nullptr)
-        Expects(this->fockBase->size() == this->eigenenergies.size());
+    if (this->fockBasis != nullptr)
+        Expects(this->fockBasis->size() == this->eigenenergies.size());
     this->sortEigenenergies();
 }
 
@@ -82,11 +82,11 @@ void Eigensystem::store(std::ostream &eigenenergiesOut) const {
         throw std::runtime_error("Store procedure failed");
 }
 
-void Eigensystem::restore(std::istream &in, std::shared_ptr<const FockBase> newFockBase) {
+void Eigensystem::restore(std::istream &in, std::shared_ptr<const FockBasis> newFockBasis) {
     arma::vec newEigenenergies;
     if (!newEigenenergies.load(in))
         throw std::runtime_error("Restore procedure failed");
-    *this = Eigensystem(newEigenenergies, std::move(newFockBase));
+    *this = Eigensystem(newEigenenergies, std::move(newFockBasis));
 }
 
 bool operator==(const Eigensystem &lhs, const Eigensystem &rhs) {
@@ -135,19 +135,19 @@ std::vector<std::size_t> Eigensystem::getIndicesOfNormalizedEnergiesInBand(doubl
     return indices;
 }
 
-const FockBase &Eigensystem::getFockBase() const {
-    return *(this->fockBase);
+const FockBasis &Eigensystem::getFockBasis() const {
+    return *(this->fockBasis);
 }
 
-bool Eigensystem::hasFockBase() const {
-    return this->fockBase != nullptr;
+bool Eigensystem::hasFockBasis() const {
+    return this->fockBasis != nullptr;
 }
 
 bool Eigensystem::isOrthonormal() const {
     if (!this->hasEigenvectors_)
         throw std::runtime_error("Eigensystem does not contain eigenvectors");
 
-    // we have up to this->fockBase->size() additions
+    // we have up to this->fockBasis->size() additions
     double epsilon = std::numeric_limits<double>::epsilon() * this->size();
 
     for (std::size_t i{}; i < this->size(); i++) {

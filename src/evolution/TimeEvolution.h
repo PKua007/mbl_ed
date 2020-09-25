@@ -30,7 +30,7 @@ private:
     struct VectorEvolution : public Restorable {
         using ExternalVector = TimeEvolutionParameters::ExternalVector;
 
-        std::variant<FockBase::Vector, ExternalVector> initialVector;
+        std::variant<FockBasis::Vector, ExternalVector> initialVector;
         std::vector<TimeEvolutionEntry> timeEntries{};
         std::string observablesHeader;
 
@@ -41,7 +41,7 @@ private:
         void clear() override;
     };
 
-    std::shared_ptr<FockBase> fockBase;
+    std::shared_ptr<FockBasis> fockBasis;
     std::unique_ptr<OservablesTimeEvolution> occupationEvolution;
     std::vector<VectorEvolution> vectorEvolutions{};
     std::vector<EvolutionTimeSegment> timeSegmentation{};
@@ -60,7 +60,7 @@ public:
      * @details The actual evolution is done by OservablesTimeEvolution using the given @a evolver. New data are
      * averaged will the old ones. If field @a initialVectors from @a parameters from the constructor contained some
      * TimeEvolutionParameters::ExternalVector alternatives, the actual arma::cx_vec vectors should be passed through
-     * @a externalVectors. The rest are FockBase::Vectors product vectors and are prepared on the go.
+     * @a externalVectors. The rest are FockBasis::Vectors product vectors and are prepared on the go.
      */
     void addEvolution(Evolver &evolver, Logger &logger, const std::vector<arma::cx_vec> &externalVectors = {});
 

@@ -5,12 +5,12 @@
 #include <catch2/catch.hpp>
 
 #include "core/terms/ListOnsite.h"
-#include "core/FockBaseGenerator.h"
+#include "core/FockBasisGenerator.h"
 #include "core/HamiltonianGenerator.h"
 
 TEST_CASE("ListOnsite") {
-    HamiltonianGenerator generator(FockBaseGenerator{}.generate(2, 3), false);
-    const auto &fockBase = *generator.getFockBase();
+    HamiltonianGenerator generator(FockBasisGenerator{}.generate(2, 3), false);
+    const auto &fockBase = *generator.getFockBasis();
     ListOnsite listOnsite({1, 2, 3});
 
     REQUIRE(listOnsite.calculate(fockBase[0], generator) == 2);

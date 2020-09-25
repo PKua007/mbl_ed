@@ -10,13 +10,13 @@
  * constant
  */
 std::optional<HopData>
-HamiltonianGenerator::hoppingAction(const FockBase::Vector &fromVector, std::size_t fromSite,
+HamiltonianGenerator::hoppingAction(const FockBasis::Vector &fromVector, std::size_t fromSite,
                                     std::size_t toSite) const {
     Expects(toSite != fromSite);
     if (this->usePBC) {
-        fromSite %= this->fockBase->getNumberOfSites();
-        toSite %= this->fockBase->getNumberOfSites();
-    } else if (fromSite >= this->fockBase->getNumberOfSites() || toSite >= this->fockBase->getNumberOfSites()) {
+        fromSite %= this->fockBasis->getNumberOfSites();
+        toSite %= this->fockBasis->getNumberOfSites();
+    } else if (fromSite >= this->fockBasis->getNumberOfSites() || toSite >= this->fockBasis->getNumberOfSites()) {
         return std::nullopt;
     }
 
@@ -37,8 +37,8 @@ HamiltonianGenerator::hoppingAction(const FockBase::Vector &fromVector, std::siz
 }
 
 arma::sp_mat HamiltonianGenerator::generate() const {
-    arma::sp_mat result(this->fockBase->size(), this->fockBase->size());
-    for (std::size_t vectorIdx = 0; vectorIdx < this->fockBase->size(); vectorIdx++) {
+    arma::sp_mat result(this->fockBasis->size(), this->fockBasis->size());
+    for (std::size_t vectorIdx = 0; vectorIdx < this->fockBasis->size(); vectorIdx++) {
         if (!this->diagonalTerms.empty())
             this->addDiagonalTerms(result, vectorIdx);
         if (!this->hoppingTerms.empty())
@@ -51,12 +51,12 @@ arma::sp_mat HamiltonianGenerator::generate() const {
 
 void HamiltonianGenerator::addDiagonalTerms(arma::sp_mat &result, std::size_t vectorIdx) const {
     for (auto &diagonalTerm : this->diagonalTerms)
-        result(vectorIdx, vectorIdx) += diagonalTerm->calculate((*this->fockBase)[vectorIdx], *this);
+        result(vectorIdx, vectorIdx) += diagonalTerm->calculate((*this->fockBasis)[vectorIdx], *this);
 }
 
 void HamiltonianGenerator::addHoppingTerms(arma::sp_mat &result, std::size_t fromIdx) const {
-    for (std::size_t fromSite = 0; fromSite < this->fockBase->getNumberOfSites(); fromSite++) {
-        auto hopData = this->hoppingAction((*this->fockBase)[fromIdx], fromSite, fromSite + 1);
+    for (std::size_t fromSite = 0; fromSite < this->fockBasis->getNumberOfSites(); fromSite++) {
+        auto hopData = this->hoppingAction((*this->fockBasis)[fromIdx], fromSite, fromSite + 1);
         if (hopData == std::nullopt)
             continue;
 
@@ -65,7 +65,7 @@ void HamiltonianGenerator::addHoppingTerms(arma::sp_mat &result, std::size_t fro
             matrixElement += hoppingTerm->calculate(*hopData, *this);
 
         matrixElement *= hopData->ladderConstant;
-        std::size_t toIdx = *(this->fockBase->findIndex(hopData->toVector));
+        std::size_t toIdx = *(this->fockBasis->findIndex(hopData->toVector));
 
         result(fromIdx, toIdx) += matrixElement;
         result(toIdx, fromIdx) += matrixElement;
@@ -78,13 +78,13 @@ auto HamiltonianGenerator::calculateDoubleHopMatrixElement(const HopData &firstH
         matrixElement += doubleHoppingTerm->calculate(firstHop, secondHop, *this);
 
     matrixElement *= firstHop.ladderConstant * secondHop.ladderConstant;
-    std::size_t toIdx = *(this->fockBase->findIndex(secondHop.toVector));
+    std::size_t toIdx = *(this->fockBasis->findIndex(secondHop.toVector));
 
     return std::make_tuple(matrixElement, toIdx);
 }
 
 void HamiltonianGenerator::performSecondHop(arma::sp_mat &result, std::size_t fromIdx, const HopData &firstHop) const {
-    for (std::size_t fromSite2 = 0; fromSite2 < this->fockBase->getNumberOfSites(); fromSite2++) {
+    for (std::size_t fromSite2 = 0; fromSite2 < this->fockBasis->getNumberOfSites(); fromSite2++) {
         auto secondHopForward = this->hoppingAction(firstHop.toVector, fromSite2, fromSite2 + 1);
         if (secondHopForward != std::nullopt) {
             auto[matrixElement, toIdx] = this->calculateDoubleHopMatrixElement(firstHop, *secondHopForward);
@@ -100,23 +100,23 @@ void HamiltonianGenerator::performSecondHop(arma::sp_mat &result, std::size_t fr
 }
 
 void HamiltonianGenerator::addDoubleHoppingTerms(arma::sp_mat &result, std::size_t fromIdx) const {
-    for (std::size_t fromSite1 = 0; fromSite1 < this->fockBase->getNumberOfSites(); fromSite1++) {
-        auto firstHopForward = this->hoppingAction((*this->fockBase)[fromIdx], fromSite1, fromSite1 + 1);
+    for (std::size_t fromSite1 = 0; fromSite1 < this->fockBasis->getNumberOfSites(); fromSite1++) {
+        auto firstHopForward = this->hoppingAction((*this->fockBasis)[fromIdx], fromSite1, fromSite1 + 1);
         if (firstHopForward != std::nullopt)
             this->performSecondHop(result, fromIdx, *firstHopForward);
 
-        auto firstHopBackward = this->hoppingAction((*this->fockBase)[fromIdx], fromSite1 + 1, fromSite1);
+        auto firstHopBackward = this->hoppingAction((*this->fockBasis)[fromIdx], fromSite1 + 1, fromSite1);
         if (firstHopBackward != std::nullopt)
             this->performSecondHop(result, fromIdx, *firstHopBackward);
     }
 }
 
 size_t HamiltonianGenerator::getSiteDistance(std::size_t fromSite, std::size_t toIdx) const {
-    Expects(fromSite < this->fockBase->getNumberOfSites());
-    Expects(toIdx < this->fockBase->getNumberOfSites());
+    Expects(fromSite < this->fockBasis->getNumberOfSites());
+    Expects(toIdx < this->fockBasis->getNumberOfSites());
     std::size_t distance = abs(static_cast<int>(fromSite) - static_cast<int>(toIdx));
-    if (this->usePBC && distance > this->fockBase->getNumberOfSites() / 2)
-        distance = this->fockBase->getNumberOfSites() - distance;
+    if (this->usePBC && distance > this->fockBasis->getNumberOfSites() / 2)
+        distance = this->fockBasis->getNumberOfSites() - distance;
     return distance;
 }
 
@@ -147,15 +147,16 @@ void HamiltonianGenerator::addDoubleHoppingTerm(std::unique_ptr<DoubleHoppingTer
 Eigensystem HamiltonianGenerator::calculateEigensystem(bool calculateEigenvectors) const {
     if (this->hoppingTerms.empty() && this->doubleHoppingTerms.empty()) {
         // For only diagonal terms there is no need to diagonalize
-        arma::vec energies(this->fockBase->size());
+        arma::vec energies(this->fockBasis->size());
         for (auto &diagonalTerm : this->diagonalTerms)
-            for (std::size_t i{}; i < this->fockBase->size(); i++)
-                energies[i] += diagonalTerm->calculate((*this->fockBase)[i], *this);
+            for (std::size_t i{}; i < this->fockBasis->size(); i++)
+                energies[i] += diagonalTerm->calculate((*this->fockBasis)[i], *this);
 
         if (calculateEigenvectors)
-            return Eigensystem(energies, arma::eye(this->fockBase->size(), this->fockBase->size()), this->getFockBase());
+            return Eigensystem(energies, arma::eye(this->fockBasis->size(), this->fockBasis->size()),
+                               this->getFockBasis());
         else
-            return Eigensystem(energies, this->getFockBase());
+            return Eigensystem(energies, this->getFockBasis());
     } else {
         // If off-diagonal elements are non-empty, diagonalization is needed
         arma::mat hamiltonian = arma::mat(this->generate());
@@ -165,10 +166,10 @@ Eigensystem HamiltonianGenerator::calculateEigensystem(bool calculateEigenvector
 
         if (calculateEigenvectors) {
             Assert(arma::eig_sym(armaEnergies, armaEigvec, hamiltonian));
-            return Eigensystem(armaEnergies, armaEigvec, this->getFockBase());
+            return Eigensystem(armaEnergies, armaEigvec, this->getFockBasis());
         } else {
             Assert(arma::eig_sym(armaEnergies, hamiltonian));
-            return Eigensystem(armaEnergies, this->getFockBase());
+            return Eigensystem(armaEnergies, this->getFockBasis());
         }
     }
 }

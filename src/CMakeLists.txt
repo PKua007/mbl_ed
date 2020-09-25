@@ -1,6 +1,6 @@
 project(mbl_ed_app)
 
-add_library(mbl_ed_src STATIC utils/Assertions.h core/FockBaseGenerator.cpp core/FockBase.cpp
+add_library(mbl_ed_src STATIC utils/Assertions.h core/FockBasisGenerator.cpp core/FockBasis.cpp
         core/HamiltonianGenerator.cpp analyzer/tasks/MeanGapRatio.cpp
         utils/Quantity.cpp simulation/ExactDiagonalization.h utils/Config.cpp utils/Utils.cpp frontend/Parameters.cpp
         analyzer/AnalyzerTask.h analyzer/Analyzer.cpp utils/FileUtils.h analyzer/InlineAnalyzerTask.h
