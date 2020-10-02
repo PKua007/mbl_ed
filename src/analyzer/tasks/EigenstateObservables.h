@@ -25,7 +25,7 @@ private:
         void clear() override;
     };
 
-    std::vector<std::string> headers;
+    std::string header;
     std::vector<BinEntry> binEntries;
     std::size_t numValues{};
 
@@ -33,7 +33,8 @@ private:
     std::vector<std::shared_ptr<SecondaryObservable>> secondaryObservables;
     std::vector<std::shared_ptr<Observable>> storedObservables;
 
-    std::size_t countStoredObservableValues() const;
+    [[nodiscard]] std::string generateStoredObservablesHeader() const;
+    [[nodiscard]] std::size_t countStoredObservableValues() const;
 
 public:
     EigenstateObservables(std::size_t numOfBins, std::vector<std::shared_ptr<PrimaryObservable>> primaryObservables,

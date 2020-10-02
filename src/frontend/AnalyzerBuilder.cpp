@@ -7,8 +7,11 @@
 #include <algorithm>
 
 #include "AnalyzerBuilder.h"
+#include "ObservablesBuilder.h"
 
 #include "utils/Assertions.h"
+#include "utils/Utils.h"
+
 #include "analyzer/tasks/CDF.h"
 #include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
@@ -16,10 +19,13 @@
 #include "analyzer/tasks/EDTimeEvolution.h"
 #include "analyzer/tasks/DressedStatesFinder.h"
 #include "analyzer/tasks/BulkMeanGapRatio.h"
+#include "analyzer/tasks/EigenstateObservables.h"
+
 #include "evolution/observables/OnsiteOccupations.h"
 #include "evolution/observables/OnsiteOccupationsSquared.h"
 #include "evolution/observables/Correlations.h"
 #include "evolution/observables/OnsiteFluctuations.h"
+
 
 
 std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
@@ -134,6 +140,20 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             ValidateMsg(taskStream, "Wrong format, use: mgrs [number of bins]");
             Validate(numBins > 0);
             analyzer->addTask(std::make_unique<BulkMeanGapRatio>(numBins));
+        } else if (taskName == "obs") {
+            std::size_t numBins;
+            taskStream >> numBins;
+            ValidateMsg(taskStream, "Wrong format, use: obs [number of bins] (obs. 1) (obs. 1 params);"
+                                    "(obs. 2) (obs. 2 params);...");
+            std::string observablesString;
+            std::getline(taskStream, observablesString);
+            std::vector<std::string> observables = explode(observablesString, ';');
+            ObservablesBuilder builder;
+            builder.build(observables, params, fockBasis);
+            analyzer->addTask(std::make_unique<EigenstateObservables>(
+                numBins, builder.releasePrimaryObservables(), builder.releaseSecondaryObservables(),
+                builder.releaseStoredObservables())
+            );
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
         }

@@ -23,9 +23,10 @@ EigenstateObservables::EigenstateObservables(std::size_t numOfBins,
     this->numValues = this->countStoredObservableValues();
     for (auto &binEntry : this->binEntries)
         binEntry.observableValues.resize(this->numValues);
+    this->header = "binStart " + this->generateStoredObservablesHeader();
 }
 
-void EigenstateObservables::analyze(const Eigensystem &eigensystem, Logger &logger) {
+void EigenstateObservables::analyze(const Eigensystem &eigensystem, [[maybe_unused]] Logger &logger) {
     Expects(eigensystem.hasEigenvectors());
 
     std::size_t numBins = this->binEntries.size();
@@ -65,7 +66,7 @@ void EigenstateObservables::analyze(const Eigensystem &eigensystem, Logger &logg
         for (std::size_t i{}; i < observableValues.size(); i++) {
             auto &binObservableValues = this->binEntries[binIdx].observableValues;
             Assert(binObservableValues.size() == observableValues.size());
-            binObservableValues[i].push_back(observableValues[i]);
+            binObservableValues[i].push_back(observableValues[i] / bandIndices.size());
         }
     }
 }
@@ -75,11 +76,7 @@ std::string EigenstateObservables::getName() const {
 }
 
 void EigenstateObservables::storeResult(std::ostream &out) const {
-    auto headerPlusError = [](const std::string &header) { return header + " d" + header; };
-    out << "binStart ";
-    std::transform(this->headers.begin(), this->headers.end(), std::ostream_iterator<std::string>(out, " "),
-                   headerPlusError);
-    out << std::endl;
+    out << this->header << std::endl;
 
     std::size_t numBins = this->binEntries.size();
     for (std::size_t binIdx{}; binIdx < numBins; binIdx++) {
@@ -114,6 +111,21 @@ std::size_t EigenstateObservables::countStoredObservableValues() const {
     for (const auto &storedObservable : this->storedObservables)
         numOfValues += storedObservable->getHeader().size();
     return numOfValues;
+}
+
+std::string EigenstateObservables::generateStoredObservablesHeader() const {
+    std::vector<std::string> headerStrings;
+    headerStrings.reserve(this->countStoredObservableValues());
+    for (const auto &storedObservable : this->storedObservables) {
+        auto observableHeaderStrings = storedObservable->getHeader();
+        headerStrings.insert(headerStrings.end(), observableHeaderStrings.begin(), observableHeaderStrings.end());
+    }
+
+    std::ostringstream out;
+    auto headerPlusError = [](const std::string &headerString) { return headerString + " d" + headerString; };
+    std::transform(headerStrings.begin(), headerStrings.end(), std::ostream_iterator<std::string>(out, " "),
+                   headerPlusError);
+    return out.str();
 }
 
 void EigenstateObservables::BinEntry::storeState(std::ostream &binaryOut) const {
