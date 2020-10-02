@@ -16,7 +16,7 @@
  * @brief InlineAnalyzerTask which computer mean gap ratio of eigenenergies normalized to [0, 1] from a specific energy
  * band.
  *
- * Gap ratio \f$ \bar{r} \f$ is the ratio of the gaps between consecutive eigenenergies
+ * @p Gap ratio \f$ \bar{r} \f$ is the ratio of the gaps between consecutive eigenenergies
  * \f$ \epsilon_1, \dots, \epsilon_\text{dim} \f$. Is is defined to be always non-greater than 1:
  * \f[
  *     \bar{r}(\epsilon_i) = \min
@@ -25,6 +25,10 @@
  *             \frac{\epsilon_i - \epsilon_{i-1}}{\epsilon_{i+1} - \epsilon_i}
  *         \right)
  * \f]
+ *
+ * @p Averaging is done in a following way: for a single Eigensystem the average value is computed, and this average
+ * is a single sample value in the next averaging performed over multiple Eigensystems. The error is also of the
+ * second average.
  */
 class MeanGapRatio : public InlineAnalyzerTask {
 private:
@@ -46,7 +50,7 @@ public:
     MeanGapRatio(double relativeMiddleEnergy, double relativeMargin);
 
     /**
-     * @brief Constructs the class, which will compute mean gap ratio olny for normalized eigenerergies around a
+     * @brief Constructs the class, which will compute mean gap ratio only for normalized eigenerergies around a
      * specific vector.
      * @param middleVector vector around which we should compute mgr
      * @param relativeMargin relativeMargin the width of the band (in the [0, 1] regime)
@@ -54,9 +58,7 @@ public:
     MeanGapRatio(const FockBasis::Vector &middleVector, double relativeMargin);
 
     /**
-     * @brief Adds point from a given @a eigensystem to the average mean gap ratio.
-     *
-     * Multiple invocations result in adding more points to the average.
+     * @brief Adds value for a given @a eigensystem to the average mean gap ratio.
      * @param eigensystem Eigensystem to fetch data points from
      * @param logger unused
      */

@@ -29,11 +29,16 @@ void BulkMeanGapRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
         if (bandIndices.empty())
             continue;
 
+        double singleGapRatio{};
+        std::size_t numEntries{};
         for (auto i : bandIndices) {
             double gap1 = normalizedEnergies[i] - normalizedEnergies[i - 1];
             double gap2 = normalizedEnergies[i + 1] - normalizedEnergies[i];
-            this->gapRatios[binIdx].push_back(gap1 < gap2 ? gap1 / gap2 : gap2 / gap1);
+            singleGapRatio += (gap1 < gap2 ? gap1 / gap2 : gap2 / gap1);
+            numEntries++;
         }
+        if (numEntries > 0)
+            this->gapRatios[binIdx].push_back(singleGapRatio / numEntries);
     }
 }
 

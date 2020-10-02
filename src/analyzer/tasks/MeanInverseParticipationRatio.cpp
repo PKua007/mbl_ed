@@ -22,13 +22,18 @@ void MeanInverseParticipationRatio::analyze(const Eigensystem &eigensystem, Logg
     auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
                                                                         this->relativeMargin);
 
+    double singleRatio{};
+    std::size_t numEntries{};
     for (auto i : bandIndices) {
         auto state = eigensystem.getEigenstate(i);
         double participationRatio = std::accumulate(state.begin(), state.end(), 0., [](double sum, double d) {
             return sum + d*d*d*d;
         });
-        this->ratios.push_back(1. / participationRatio);
+        singleRatio += (1. / participationRatio);
+        numEntries++;
     }
+    if (numEntries > 0)
+        this->ratios.push_back(singleRatio / numEntries);
 }
 
 Quantity MeanInverseParticipationRatio::calculateMean() const {

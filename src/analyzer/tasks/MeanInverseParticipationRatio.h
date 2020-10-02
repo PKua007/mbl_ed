@@ -12,7 +12,11 @@
  * @brief InlineAnalyzerTask which computer inverse participation ratio of eigenenergies normalized to [0, 1] from a
  * specific energy band.
  *
- * For the definition of inverse participation ratio see InverseParticipationRatio.
+ * @p For the definition of inverse participation ratio see InverseParticipationRatio.
+ *
+ * @p Averaging is done in a following way: for a single Eigensystem the average value is computed, and this average
+ * is a single sample value in the next averaging performed over multiple Eigensystems. The error is also of the
+ * second average.
  */
 class MeanInverseParticipationRatio : public InlineAnalyzerTask {
 private:
@@ -32,9 +36,7 @@ public:
     MeanInverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin);
 
     /**
-     * @brief Adds point from a given @a eigensystem to the average inverse participation ratio.
-     *
-     * Multiple invocations result in adding more points to the average.
+     * @brief Adds a value for a given @a eigensystem to the average inverse participation ratio.
      * @param eigensystem Eigensystem to fetch data points from
      * @param logger unused
      */

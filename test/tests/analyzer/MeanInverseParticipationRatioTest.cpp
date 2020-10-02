@@ -43,30 +43,24 @@ TEST_CASE("MeanInverseParticipationRatio: single energy set") {
     //   + ( (2/3)^4 + 5*(1/3)^4 )^(-1)
     //   + ( 4*(1/2)^4 )^(-1)
     //   + ( 2*(1/sqrt(2))^4 )^(-1)     ) / 4  =  2.71428571429
-    REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"2.7143", "0.7308"});
+    REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"2.71429", "0"});
 }
 
 TEST_CASE("MeanInverseParticipationRatio: calculating mean") {
-    MeanInverseParticipationRatio ratioCalculator(0.5, 0.2);
+    MeanInverseParticipationRatio ratioCalculator(0.5, 0.3);
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
-    ratioCalculator.analyze(Eigensystem(
-            { 0, 0.4, 1},
+    // Here: energy 0.4 with ipr = 1
+    ratioCalculator.analyze(Eigensystem({0, 0.4, 0.9, 1}, arma::eye(4, 4)), logger);
+    // Here: energies 0.5, 0.6 with avg ipr = 1.5
+    ratioCalculator.analyze(Eigensystem({         0,        0.5, 0.6, 1},
+                                        {{M_SQRT1_2, -M_SQRT1_2,   0, 0},
+                                         {M_SQRT1_2,  M_SQRT1_2,   0, 0},
+                                         {        0,          0,   1, 0},
+                                         {        0,          0,   0, 1}}), logger);
 
-            {{1,   0, 1},
-             {1,   1, 1},
-             {1,   0, 1}}), logger);
-    ratioCalculator.analyze(Eigensystem(
-            { 0,        0.5, 1},
-
-            {{1, -M_SQRT1_2, 1},
-             {1,  M_SQRT1_2, 1},
-             {1,          0, 1}}), logger);
-
-    // (   ( (1)^4 )^(-1)
-    //   + ( 2*(1/sqrt(2))^4 )^(-1) ) / 2  =  1.5
-    REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"1.5000", "0.5000"});
+    REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"1.2500", "0.2500"});
 }
 
 TEST_CASE("MeanInverseParticipationRatio: requires eigenvectors") {
