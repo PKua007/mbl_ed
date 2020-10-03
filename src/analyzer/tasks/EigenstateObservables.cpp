@@ -33,6 +33,11 @@ void EigenstateObservables::analyze(const Eigensystem &eigensystem, [[maybe_unus
     for (std::size_t binIdx{}; binIdx < numBins; binIdx++) {
         double binBeg = static_cast<double>(binIdx) / numBins;
         double binEnd = static_cast<double>(binIdx + 1) / numBins;
+        if (binIdx == 0)
+            binBeg = -binEnd/2;
+        if (binIdx == numBins - 1)
+            binEnd = 1 + (1 - binBeg)/2;
+
         double binMid = (binBeg + binEnd) / 2;
         double binMargin = binEnd - binBeg;
 
