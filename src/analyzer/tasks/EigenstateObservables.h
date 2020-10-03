@@ -13,6 +13,12 @@
 #include "core/PrimaryObservable.h"
 #include "core/SecondaryObservable.h"
 
+/**
+ * @brief A BulkAnalyzerTask calculating values of given observables for epsilons in a specified number of bins.
+ * @details For each observable value, we calculate and average over the epsilons landing in a given bin for a single
+ * eigensystem, and then this average is a single "experiment", which is then averaged over multiple eigensystems
+ * and its error is calculated
+ */
 class EigenstateObservables : public BulkAnalyzerTask {
 private:
     struct BinEntry : public Restorable {
@@ -47,6 +53,12 @@ public:
 
     void analyze(const Eigensystem &eigensystem, Logger &logger) override;
     std::string getName() const override;
+
+    /**
+     * @brief Each line in out is the entry for subsequent bins with format: [bin start] [observable 1] [obs 1 error]
+     * [obs 2] [obs 2 error], ...
+     * @details Moreover, first line is a header: binStart [obs 1 name] d[obs1 name] [obs 2 name] d[obs 2 name] ...
+     */
     void storeResult(std::ostream &out) const override;
 
     void storeState(std::ostream &binaryOut) const override;
