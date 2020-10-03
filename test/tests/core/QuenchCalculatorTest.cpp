@@ -4,7 +4,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "matchers/ArmaApproxEqualMatcher.h"
+#include "matchers/ArmaApproxEqualCatchMatcher.h"
 
 #include "core/QuenchCalculator.h"
 

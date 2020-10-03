@@ -5,7 +5,8 @@
 #include <catch2/catch.hpp>
 #include <catch2/trompeloeil.hpp>
 
-#include "matchers/TrompeloeilMatchers.h"
+#include "matchers/ArmaApproxEqualTrompeloeilMatcher.h"
+#include "matchers/FirstObservableValuesTrompeloeilMatcher.h"
 
 #include "mocks/PrimaryObservableMock.h"
 #include "mocks/SecondaryObservableMock.h"
@@ -14,23 +15,10 @@
 
 using trompeloeil::_;
 
-namespace {
-    inline auto first_observable_values_eq(const std::vector<double> &values) {
-        return trompeloeil::make_matcher<std::vector<std::shared_ptr<PrimaryObservable>>>(
-                [](const std::vector<std::shared_ptr<PrimaryObservable>> &obs, const std::vector<double> &expected) {
-                    return obs.size() == 1 && obs[0]->getValues() == expected;
-                },
-                [](std::ostream &os, const std::vector<double> &expected) {
-                    os << " == {";
-                    std::copy(expected.begin(), expected.end(), std::ostream_iterator<double>(os, ", "));
-                    os << "}";
-                },
-                values
-        );
-    }
-}
 
 TEST_CASE("EigenstateObservables: single set") {
+    // Primary observable "p" giving values: { mean{1, 2} = 1.5, mean{3} = 3} }
+    // see eigenstateObservables range and passed eigensystem
     trompeloeil::sequence seq1;
     auto primary = std::make_shared<PrimaryObservableMock>();
     ALLOW_CALL(*primary, getHeader()).RETURN(std::vector<std::string>{"p"});
@@ -41,6 +29,8 @@ TEST_CASE("EigenstateObservables: single set") {
     REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{0, 0, 1}))).IN_SEQUENCE(seq1);
     REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{3});
 
+    // Secondary observable "p" giving values: { mean{4, 5} = 4.5, mean{6} = 6} }
+    // see eigenstateObservables range and passed eigensystem
     trompeloeil::sequence seq2;
     auto secondary = std::make_shared<SecondaryObservableMock>();
     ALLOW_CALL(*secondary, getHeader()).RETURN(std::vector<std::string>{"s"});
@@ -53,12 +43,14 @@ TEST_CASE("EigenstateObservables: single set") {
 
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
-
     EigenstateObservables eigenstateObservables(2, {primary}, {secondary}, {primary, secondary});
+
+
     eigenstateObservables.analyze(Eigensystem({0, 0.3, 1},
                                               {{1, 0, 0},
                                                {0, 1, 0},
                                                {0, 0, 1}}), logger);
+
 
     std::ostringstream out;
     eigenstateObservables.storeResult(out);
@@ -68,6 +60,10 @@ TEST_CASE("EigenstateObservables: single set") {
 }
 
 TEST_CASE("EigenstateObservables: two sets - averaging") {
+    // Primary observable "p" giving values:
+    // - first set: { mean{1, 2} = 1.5, mean{3} = 3} }
+    // - second set: { mean{4} = 4, mean{5, 6} = 5.5} }
+    // see eigenstateObservables range and passed eigensystem
     trompeloeil::sequence seq1;
     auto primary = std::make_shared<PrimaryObservableMock>();
     ALLOW_CALL(*primary, getHeader()).RETURN(std::vector<std::string>{"p"});
@@ -87,8 +83,9 @@ TEST_CASE("EigenstateObservables: two sets - averaging") {
 
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
-
     EigenstateObservables eigenstateObservables(2, {primary}, {}, {primary});
+
+
     eigenstateObservables.analyze(Eigensystem({0, 0.3, 1},
                                               {{1, 0, 0},
                                                {0, 1, 0},
@@ -97,6 +94,7 @@ TEST_CASE("EigenstateObservables: two sets - averaging") {
                                               {{1, 0, 0},
                                                {0, 1, 0},
                                                {0, 0, 1}}), logger);
+
 
     std::ostringstream out;
     eigenstateObservables.storeResult(out);

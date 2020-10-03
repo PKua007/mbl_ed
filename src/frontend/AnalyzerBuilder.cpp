@@ -21,11 +21,10 @@
 #include "analyzer/tasks/BulkMeanGapRatio.h"
 #include "analyzer/tasks/EigenstateObservables.h"
 
-#include "evolution/observables/OnsiteOccupations.h"
-#include "evolution/observables/OnsiteOccupationsSquared.h"
-#include "evolution/observables/Correlations.h"
-#include "evolution/observables/OnsiteFluctuations.h"
-
+#include "core/observables/OnsiteOccupations.h"
+#include "core/observables/OnsiteOccupationsSquared.h"
+#include "core/observables/Correlations.h"
+#include "core/observables/OnsiteFluctuations.h"
 
 
 std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
@@ -147,9 +146,9 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
                                     "(obs. 2) (obs. 2 params);...");
             std::string observablesString;
             std::getline(taskStream, observablesString);
-            std::vector<std::string> observables = explode(observablesString, ';');
+            std::vector<std::string> observablesParams = explode(observablesString, ';');
             ObservablesBuilder builder;
-            builder.build(observables, params, fockBasis);
+            builder.build(observablesParams, params, fockBasis);
             analyzer->addTask(std::make_unique<EigenstateObservables>(
                 numBins, builder.releasePrimaryObservables(), builder.releaseSecondaryObservables(),
                 builder.releaseStoredObservables())

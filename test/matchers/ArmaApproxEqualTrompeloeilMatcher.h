@@ -2,8 +2,8 @@
 // Created by Piotr Kubala on 03/10/2020.
 //
 
-#ifndef MBL_ED_TROMPELOEILMATCHERS_H
-#define MBL_ED_TROMPELOEILMATCHERS_H
+#ifndef MBL_ED_ARMAAPPROXEQUALTROMPELOEILMATCHER_H
+#define MBL_ED_ARMAAPPROXEQUALTROMPELOEILMATCHER_H
 
 #include <catch2/trompeloeil.hpp>
 #include <armadillo>
@@ -20,4 +20,4 @@ inline auto arma_eq(const arma::cx_vec &vec) {
     );
 }
 
-#endif //MBL_ED_TROMPELOEILMATCHERS_H
+#endif //MBL_ED_ARMAAPPROXEQUALTROMPELOEILMATCHER_H

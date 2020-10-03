@@ -5,7 +5,7 @@
 #ifndef MBL_ED_CORRELATIONS_H
 #define MBL_ED_CORRELATIONS_H
 
-#include "evolution/SecondaryObservable.h"
+#include "core/SecondaryObservable.h"
 
 /**
  * @brief Site-averaged correlations for all sites apart from @a marginSize sites on the border.

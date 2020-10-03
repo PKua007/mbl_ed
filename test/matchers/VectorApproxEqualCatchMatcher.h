@@ -2,8 +2,8 @@
 // Created by Piotr Kubala on 21/02/2020.
 //
 
-#ifndef MBL_ED_VECTORAPPROXEQUALMATCHER_H
-#define MBL_ED_VECTORAPPROXEQUALMATCHER_H
+#ifndef MBL_ED_VECTORAPPROXEQUALCATCHMATCHER_H
+#define MBL_ED_VECTORAPPROXEQUALCATCHMATCHER_H
 
 #include <catch2/catch.hpp>
 #include <sstream>
@@ -39,4 +39,4 @@ inline VectorApproxEqualMatcher<Containter> IsApproxEqual(const Containter &expe
     return VectorApproxEqualMatcher(expected, epsilon);
 }
 
-#endif //MBL_ED_VECTORAPPROXEQUALMATCHER_H
+#endif //MBL_ED_VECTORAPPROXEQUALCATCHMATCHER_H

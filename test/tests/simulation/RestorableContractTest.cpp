@@ -19,8 +19,8 @@
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/EigenstateObservables.h"
 
-#include "evolution/observables/OnsiteOccupationsSquared.h"
-#include "evolution/observables/OnsiteOccupations.h"
+#include "core/observables/OnsiteOccupationsSquared.h"
+#include "core/observables/OnsiteOccupations.h"
 
 namespace {
     template<typename T>

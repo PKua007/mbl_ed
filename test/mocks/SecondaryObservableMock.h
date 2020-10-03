@@ -7,7 +7,7 @@
 
 #include <catch2/trompeloeil.hpp>
 
-#include "evolution/SecondaryObservable.h"
+#include "core/SecondaryObservable.h"
 
 class SecondaryObservableMock : public trompeloeil::mock_interface<SecondaryObservable> {
 public:

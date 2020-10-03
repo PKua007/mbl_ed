@@ -13,8 +13,8 @@
 #include "Evolver.h"
 #include "EvolutionTimeSegment.h"
 #include "utils/Logger.h"
-#include "PrimaryObservable.h"
-#include "SecondaryObservable.h"
+#include "core/PrimaryObservable.h"
+#include "core/SecondaryObservable.h"
 #include "TimeEvolutionEntry.h"
 
 /**

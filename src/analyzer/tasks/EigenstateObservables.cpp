@@ -26,54 +26,72 @@ EigenstateObservables::EigenstateObservables(std::size_t numOfBins,
     this->header = "binStart " + this->generateStoredObservablesHeader();
 }
 
+auto EigenstateObservables::calculateBinRange(std::size_t binIdx, std::size_t numBins) {
+    double binBeg = static_cast<double>(binIdx) / numBins;
+    double binEnd = static_cast<double>(binIdx + 1) / numBins;
+
+    // For first and last bin we want to go a little bit, respectively, lower that 0 and higher than 1 in order for
+    // machine precision not to miss epsilon=0 and epsilon=1
+    if (binIdx == 0)
+        binBeg = -binEnd/2;
+    if (binIdx == numBins - 1)
+        binEnd = 1 + (1 - binBeg)/2;
+
+    double binMid = (binBeg + binEnd) / 2;
+    double binMargin = binEnd - binBeg;
+    return std::make_pair(binMid, binMargin);
+}
+
 void EigenstateObservables::analyze(const Eigensystem &eigensystem, [[maybe_unused]] Logger &logger) {
     Expects(eigensystem.hasEigenvectors());
 
     std::size_t numBins = this->binEntries.size();
     for (std::size_t binIdx{}; binIdx < numBins; binIdx++) {
-        double binBeg = static_cast<double>(binIdx) / numBins;
-        double binEnd = static_cast<double>(binIdx + 1) / numBins;
-        if (binIdx == 0)
-            binBeg = -binEnd/2;
-        if (binIdx == numBins - 1)
-            binEnd = 1 + (1 - binBeg)/2;
-
-        double binMid = (binBeg + binEnd) / 2;
-        double binMargin = binEnd - binBeg;
-
+        auto [binMid, binMargin] = this->calculateBinRange(binIdx, numBins);
         auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(binMid, binMargin);
         if (bandIndices.empty())
             continue;
 
-        std::vector<double> observableValues(this->numValues);
-        for (std::size_t bandIdx : bandIndices) {
-            arma::vec doubleState = eigensystem.getEigenstate(bandIdx);
-            arma::cx_vec state(arma::size(doubleState));
-            std::copy(doubleState.begin(), doubleState.end(), state.begin());
-
-            for (auto &primaryObservable : this->primaryObservables)
-                primaryObservable->calculateForState(state);
-            for (auto &secondaryObservable : this->secondaryObservables)
-                secondaryObservable->calculateForObservables(this->primaryObservables);
-
-            std::size_t offset{};
-            for (const auto &storedObservable : this->storedObservables) {
-                auto singleObservableValues = storedObservable->getValues();
-                Assert(offset + singleObservableValues.size() <= this->numValues);
-                std::transform(singleObservableValues.begin(), singleObservableValues.end(),
-                               observableValues.begin() + offset, observableValues.begin() + offset,
-                               std::plus<>{});
-                offset += singleObservableValues.size();
-            }
-            Assert(offset == this->numValues);
-        }
-
+        std::vector<double> observableValues = this->calculateMeanObservableValuesForBand(eigensystem, bandIndices);
         for (std::size_t i{}; i < observableValues.size(); i++) {
             auto &binObservableValues = this->binEntries[binIdx].observableValues;
             Assert(binObservableValues.size() == observableValues.size());
-            binObservableValues[i].push_back(observableValues[i] / bandIndices.size());
+            binObservableValues[i].push_back(observableValues[i]);
         }
     }
+}
+
+std::vector<double>
+EigenstateObservables::calculateMeanObservableValuesForBand(const Eigensystem &eigensystem,
+                                                            const std::vector<std::size_t> &bandIndices) const
+{
+    std::vector<double> observableValues(numValues);
+    for (std::size_t bandIdx : bandIndices) {
+        // Change arma::vec into cx_vec. Yup, armadillo is that annoying...
+        arma::vec doubleState = eigensystem.getEigenstate(bandIdx);
+        arma::cx_vec state(arma::size(doubleState));
+        std::copy(doubleState.begin(), doubleState.end(), state.begin());
+
+        for (auto &primaryObservable : primaryObservables)
+            primaryObservable->calculateForState(state);
+        for (auto &secondaryObservable : secondaryObservables)
+            secondaryObservable->calculateForObservables(primaryObservables);
+
+        std::size_t offset{};
+        for (const auto &storedObservable : storedObservables) {
+            auto singleObservableValues = storedObservable->getValues();
+            Assert(offset + singleObservableValues.size() <= numValues);
+            std::transform(singleObservableValues.begin(), singleObservableValues.end(),
+                           observableValues.begin() + offset, observableValues.begin() + offset,
+                           std::plus<>{});
+            offset += singleObservableValues.size();
+        }
+        Assert(offset == numValues);
+    }
+
+    for (double &value : observableValues)
+        value /= bandIndices.size();
+    return observableValues;
 }
 
 std::string EigenstateObservables::getName() const {
@@ -88,9 +106,9 @@ void EigenstateObservables::storeResult(std::ostream &out) const {
         double binBeg = static_cast<double>(binIdx) / numBins;
 
         out << binBeg << " ";
-        for (const auto &observableValues : this->binEntries[binIdx].observableValues) {
+        for (const auto &concreteObservableValues : this->binEntries[binIdx].observableValues) {
             Quantity binValue;
-            binValue.calculateFromSamples(observableValues);
+            binValue.calculateFromSamples(concreteObservableValues);
             binValue.separator = Quantity::Separator::SPACE;
             out << binValue << " ";
         }
@@ -142,6 +160,6 @@ void EigenstateObservables::BinEntry::joinRestoredState(std::istream &binaryIn) 
 }
 
 void EigenstateObservables::BinEntry::clear() {
-    for (auto &observableValuesEntry : this->observableValues)
-        observableValuesEntry.clear();
+    for (auto &concreteObservableValues : this->observableValues)
+        concreteObservableValues.clear();
 }

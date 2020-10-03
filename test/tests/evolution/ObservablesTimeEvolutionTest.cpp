@@ -7,7 +7,8 @@
 #include <catch2/catch.hpp>
 #include <catch2/trompeloeil.hpp>
 
-#include "matchers/TrompeloeilMatchers.h"
+#include "matchers/ArmaApproxEqualTrompeloeilMatcher.h"
+#include "matchers/FirstObservableValuesTrompeloeilMatcher.h"
 
 #include "mocks/PrimaryObservableMock.h"
 #include "mocks/SecondaryObservableMock.h"
@@ -33,17 +34,13 @@ TEST_CASE("OservablesTimeEvolution") {
     trompeloeil::sequence seq3;
     auto secondary = std::make_shared<SecondaryObservableMock>();
     ALLOW_CALL(*secondary, getHeader()).RETURN(std::vector<std::string>{"s1", "s2"});
-    REQUIRE_CALL(*secondary, calculateForObservables(_))
-        .WITH(_1.size() == 1 && _1[0]->getValues() == std::vector<double>{1, 2}).IN_SEQUENCE(seq3);
+    REQUIRE_CALL(*secondary, calculateForObservables(first_observable_values_eq({1, 2}))).IN_SEQUENCE(seq3);
     REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq3).RETURN(std::vector<double>{11, 12});
-    REQUIRE_CALL(*secondary, calculateForObservables(_))
-        .WITH(_1.size() == 1 && _1[0]->getValues() == std::vector<double>{3, 4}).IN_SEQUENCE(seq3);
+    REQUIRE_CALL(*secondary, calculateForObservables(first_observable_values_eq({3, 4}))).IN_SEQUENCE(seq3);
     REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq3).RETURN(std::vector<double>{13, 14});
-    REQUIRE_CALL(*secondary, calculateForObservables(_))
-        .WITH(_1.size() == 1 && _1[0]->getValues() == std::vector<double>{5, 6}).IN_SEQUENCE(seq3);
+    REQUIRE_CALL(*secondary, calculateForObservables(first_observable_values_eq({5, 6}))).IN_SEQUENCE(seq3);
     REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq3).RETURN(std::vector<double>{15, 16});
-    REQUIRE_CALL(*secondary, calculateForObservables(_))
-        .WITH(_1.size() == 1 && _1[0]->getValues() == std::vector<double>{7, 8}).IN_SEQUENCE(seq3);
+    REQUIRE_CALL(*secondary, calculateForObservables(first_observable_values_eq({7, 8}))).IN_SEQUENCE(seq3);
     REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq3).RETURN(std::vector<double>{17, 18});
 
     trompeloeil::sequence seq5;
