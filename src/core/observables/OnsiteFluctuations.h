@@ -5,7 +5,7 @@
 #ifndef MBL_ED_ONSITEFLUCTUATIONS_H
 #define MBL_ED_ONSITEFLUCTUATIONS_H
 
-#include "evolution/SecondaryObservable.h"
+#include "core/SecondaryObservable.h"
 
 /**
  * @brief Onsite fluctuations for all sites defined as rho(i) = <n_i^2> - <n_i>^2.

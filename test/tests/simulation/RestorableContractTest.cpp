@@ -17,6 +17,10 @@
 #include "analyzer/tasks/InverseParticipationRatio.h"
 #include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
+#include "analyzer/tasks/EigenstateObservables.h"
+
+#include "core/observables/OnsiteOccupationsSquared.h"
+#include "core/observables/OnsiteOccupations.h"
 
 namespace {
     template<typename T>
@@ -189,10 +193,28 @@ namespace {
         void addSecondEntry(Analyzer &analyzer) { analyzer.analyze(this->eigensystem2, this->logger); }
         auto getResult(const Analyzer &analyzer) { return analyzer.getInlineResultsFields(); }
     };
+
+
+    template<>
+    struct RestorableAccessor<EigenstateObservables> : public WithHubbardQuasiperiodicEigensystems, public WithLogger,
+                                                       public WithGetResultForBulkAnalyzerTask
+    {
+        RestorableAccessor() : WithHubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
+
+        EigenstateObservables generateRestorable() {
+            auto basis = std::shared_ptr<FockBasis>(FockBasisGenerator{}.generate(4, 4));
+            auto occupations = std::make_shared<OnsiteOccupations>(basis);
+            auto occupationsSquared = std::make_shared<OnsiteOccupationsSquared>(basis);
+            return EigenstateObservables(3, {occupations, occupationsSquared}, {}, {occupations, occupationsSquared});
+        }
+        void addFirstEntry(EigenstateObservables &eo) { eo.analyze(this->eigensystem1, this->logger); }
+        void addSecondEntry(EigenstateObservables &eo) { eo.analyze(this->eigensystem2, this->logger); }
+    };
 }
 
 TEMPLATE_TEST_CASE("Restorable: contract test", "", BulkMeanGapRatio, CDF, DressedStatesFinder,
-                   InverseParticipationRatio, MeanGapRatio, MeanInverseParticipationRatio, Analyzer)
+                   InverseParticipationRatio, MeanGapRatio, MeanInverseParticipationRatio, Analyzer,
+                   EigenstateObservables)
 {
     RestorableAccessor<TestType> restorableAccessor;
     TestType restorable = restorableAccessor.generateRestorable();

@@ -9,7 +9,7 @@
 
 #include <armadillo>
 
-#include "evolution/PrimaryObservable.h"
+#include "core/PrimaryObservable.h"
 #include "core/FockBasis.h"
 
 /**

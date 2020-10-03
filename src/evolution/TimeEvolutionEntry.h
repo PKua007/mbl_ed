@@ -10,8 +10,8 @@
 #include <ostream>
 
 #include "simulation/Restorable.h"
-#include "PrimaryObservable.h"
-#include "SecondaryObservable.h"
+#include "core/PrimaryObservable.h"
+#include "core/SecondaryObservable.h"
 
 
 /**

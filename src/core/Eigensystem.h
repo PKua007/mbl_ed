@@ -67,7 +67,8 @@ public:
 
     /**
      * @brief Returns indices in vector from getNormalizedEigenenergies() corresponding to energies from a band
-     * specified  by @a epsilon and @a delta.
+     * specified by @a epsilon and @a delta.
+     * @details One of endpoint of resulting epsilon range may be outside [0, 1].
      * @param epsilon the middle energy from the band (from [0, 1])
      * @param delta the width of the band
      */

@@ -15,7 +15,7 @@
 #include "core/terms/QuasiperiodicDisorder.h"
 #include "core/averaging_models/UniformPhi0AveragingModel.h"
 
-#include "evolution/observables/OnsiteOccupations.h"
+#include "core/observables/OnsiteOccupations.h"
 
 using namespace trompeloeil;
 

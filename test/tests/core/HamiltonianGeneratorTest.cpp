@@ -8,7 +8,7 @@
 #include "mocks/HoppingTermMock.h"
 #include "mocks/DoubleHoppingTermMock.h"
 
-#include "matchers/ArmaApproxEqualMatcher.h"
+#include "matchers/ArmaApproxEqualCatchMatcher.h"
 
 #include "core/FockBasisGenerator.h"
 #include "core/HamiltonianGenerator.h"

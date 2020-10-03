@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 
-#include "evolution/PrimaryObservable.h"
+#include "core/PrimaryObservable.h"
 #include "core/FockBasis.h"
 
 /**

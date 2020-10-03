@@ -11,8 +11,8 @@
 
 #include "core/FockBasis.h"
 #include "EvolutionTimeSegment.h"
-#include "PrimaryObservable.h"
-#include "SecondaryObservable.h"
+#include "core/PrimaryObservable.h"
+#include "core/SecondaryObservable.h"
 
 /**
  * @brief Parameters of time evolution.

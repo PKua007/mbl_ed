@@ -2,8 +2,8 @@
 // Created by pkua on 15.11.2019.
 //
 
-#ifndef MBL_ED_ARMAAPPROXEQUALMATCHER_H
-#define MBL_ED_ARMAAPPROXEQUALMATCHER_H
+#ifndef MBL_ED_ARMAAPPROXEQUALCATCHMATCHER_H
+#define MBL_ED_ARMAAPPROXEQUALCATCHMATCHER_H
 
 #include <catch2/catch.hpp>
 #include <armadillo>
@@ -35,4 +35,4 @@ inline ArmaApproxEqualMatcher<T> IsApproxEqual(const T &expected, double epsilon
     return ArmaApproxEqualMatcher(expected, epsilon);
 }
 
-#endif //MBL_ED_ARMAAPPROXEQUALMATCHER_H
+#endif //MBL_ED_ARMAAPPROXEQUALCATCHMATCHER_H

@@ -5,11 +5,11 @@
 #include <sstream>
 
 #include "ObservablesBuilder.h"
-#include "evolution/observables/OnsiteOccupations.h"
-#include "evolution/observables/OnsiteOccupationsSquared.h"
-#include "evolution/observables/OnsiteFluctuations.h"
-#include "evolution/observables/Correlations.h"
-#include "evolution/observables/BipariteEntropy.h"
+#include "core/observables/OnsiteOccupations.h"
+#include "core/observables/OnsiteOccupationsSquared.h"
+#include "core/observables/OnsiteFluctuations.h"
+#include "core/observables/Correlations.h"
+#include "core/observables/BipariteEntropy.h"
 
 void ObservablesBuilder::build(const std::vector<std::string> &observables, const Parameters &params,
                                const std::shared_ptr<FockBasis> &fockBasis)

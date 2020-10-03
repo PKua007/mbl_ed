@@ -121,7 +121,8 @@ std::ostream &operator<<(std::ostream &out, const Eigensystem &eigensystem) {
 std::vector<std::size_t> Eigensystem::getIndicesOfNormalizedEnergiesInBand(double epsilon, double delta) const {
     Expects(epsilon > 0 && epsilon < 1);
     Expects(delta > 0);
-    Expects(epsilon - delta/2 >= 0 && epsilon + delta/2 <= 1);
+    // We let the endpoints of the range to be outside [0, 1], because it's hard to catch 0 or 1 otherwise due to
+    // machine precision - we no longer use Expects(epsilon - delta/2 >= 0 && epsilon + delta/2 <= 1)
 
     auto normalizedEnergies = this->getNormalizedEigenenergies();
     double relativeFrom = epsilon - delta/2;

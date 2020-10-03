@@ -4,9 +4,9 @@
 
 #include <catch2/catch.hpp>
 
-#include "matchers/VectorApproxEqualMatcher.h"
+#include "matchers/VectorApproxEqualCatchMatcher.h"
 
-#include "evolution/observables/OnsiteOccupations.h"
+#include "core/observables/OnsiteOccupations.h"
 #include "core/FockBasisGenerator.h"
 
 TEST_CASE("OnsiteOccupations") {

@@ -11,8 +11,8 @@
 
 #include "Parameters.h"
 #include "core/FockBasis.h"
-#include "evolution/PrimaryObservable.h"
-#include "evolution/SecondaryObservable.h"
+#include "core/PrimaryObservable.h"
+#include "core/SecondaryObservable.h"
 
 /**
  * @brief A class building PrimaryObservables, SecondaryObservables and stored Observable -s lists from string

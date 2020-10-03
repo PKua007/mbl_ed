@@ -4,9 +4,9 @@
 
 #include <catch2/catch.hpp>
 
-#include "evolution/observables/Correlations.h"
-#include "evolution/observables/OnsiteOccupations.h"
-#include "evolution/observables/OnsiteOccupationsSquared.h"
+#include "core/observables/Correlations.h"
+#include "core/observables/OnsiteOccupations.h"
+#include "core/observables/OnsiteOccupationsSquared.h"
 
 namespace {
     class MockOnsiteOccupations : public OnsiteOccupations {
