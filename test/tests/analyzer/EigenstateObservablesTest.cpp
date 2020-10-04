@@ -10,6 +10,8 @@
 
 #include "mocks/PrimaryObservableMock.h"
 #include "mocks/SecondaryObservableMock.h"
+#include "mocks/OstringStreamMock.h"
+#include "mocks/FileUtilsMock.h"
 
 #include "analyzer/tasks/EigenstateObservables.h"
 
@@ -17,6 +19,15 @@ using trompeloeil::_;
 
 
 TEST_CASE("EigenstateObservables: single set") {
+    arma::mat expectedStoredObservables = {{1, 4},
+                                           {2, 5},
+                                           {3, 6}};
+    std::ostringstream expectedStoreOstringstream;
+    expectedStoredObservables.save(expectedStoreOstringstream, arma::arma_binary);
+    auto storeOut = std::make_unique<OstringStreamMock>(expectedStoreOstringstream.str());
+    auto ostreamProvider = std::make_unique<FileOstreamProviderMock>();
+    REQUIRE_CALL(*ostreamProvider, openOutputFile("signature_0_obs.bin", _)).LR_RETURN(std::move(storeOut));
+
     // Primary observable "p" giving values: { mean{1, 2} = 1.5, mean{3} = 3} }
     // see eigenstateObservables range and passed eigensystem
     trompeloeil::sequence seq1;
@@ -44,6 +55,7 @@ TEST_CASE("EigenstateObservables: single set") {
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
     EigenstateObservables eigenstateObservables(2, {primary}, {secondary}, {primary, secondary});
+    eigenstateObservables.startStoringObservables("signature", std::move(ostreamProvider));
 
 
     eigenstateObservables.analyze(Eigensystem({0, 0.3, 1},
