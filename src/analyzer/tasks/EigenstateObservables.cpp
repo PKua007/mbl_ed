@@ -45,29 +45,7 @@ auto EigenstateObservables::calculateBinRange(std::size_t binIdx, std::size_t nu
 void EigenstateObservables::analyze(const Eigensystem &eigensystem, [[maybe_unused]] Logger &logger) {
     Expects(eigensystem.hasEigenvectors());
 
-    arma::mat observables(eigensystem.size(), this->numValues);
-    for (std::size_t i{}; i < eigensystem.size(); i++) {
-        arma::vec doubleState = eigensystem.getEigenstate(i);
-        arma::cx_vec state(arma::size(doubleState));
-        std::copy(doubleState.begin(), doubleState.end(), state.begin());
-
-        for (auto &primaryObservable : primaryObservables)
-            primaryObservable->calculateForState(state);
-        for (auto &secondaryObservable : secondaryObservables)
-            secondaryObservable->calculateForObservables(primaryObservables);
-
-        std::size_t offset{};
-        for (const auto &storedObservable : storedObservables) {
-            auto singleObservableValues = arma::rowvec(storedObservable->getValues());
-            arma::rowvec singleObservableValuesArma(singleObservableValues.size());
-            Assert(offset + singleObservableValues.size() <= numValues);
-            observables(i, arma::span(offset, offset + singleObservableValues.size() - 1))
-                = singleObservableValues;
-            offset += singleObservableValues.size();
-        }
-        Assert(offset == numValues);
-    }
-
+    arma::mat observables = this->calculateObservables(eigensystem);
     if (this->ostreamProvider != nullptr) {
         auto ostream = this->ostreamProvider->openOutputFile(
             this->fileSignature + "_" + std::to_string(this->eigensystemIdx) + "_obs.bin"
@@ -91,6 +69,32 @@ void EigenstateObservables::analyze(const Eigensystem &eigensystem, [[maybe_unus
     }
 
     this->eigensystemIdx++;
+}
+
+arma::mat EigenstateObservables::calculateObservables(const Eigensystem &eigensystem) const {
+    arma::mat observables(eigensystem.size(), numValues);
+    for (std::size_t i{}; i < eigensystem.size(); i++) {
+        arma::vec doubleState = eigensystem.getEigenstate(i);
+        arma::cx_vec state(arma::size(doubleState));
+        std::copy(doubleState.begin(), doubleState.end(), state.begin());
+
+        for (auto &primaryObservable : primaryObservables)
+            primaryObservable->calculateForState(state);
+        for (auto &secondaryObservable : secondaryObservables)
+            secondaryObservable->calculateForObservables(primaryObservables);
+
+        std::size_t offset{};
+        for (const auto &storedObservable : storedObservables) {
+            auto singleObservableValues = arma::rowvec(storedObservable->getValues());
+            arma::rowvec singleObservableValuesArma(singleObservableValues.size());
+            Assert(offset + singleObservableValues.size() <= numValues);
+            observables(i, arma::span(offset, offset + singleObservableValues.size() - 1))
+                = singleObservableValues;
+            offset += singleObservableValues.size();
+        }
+        Assert(offset == numValues);
+    }
+    return observables;
 }
 
 std::vector<double>

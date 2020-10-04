@@ -26,9 +26,7 @@ private:
         std::vector<std::vector<double>> observableValues;
 
         void storeState(std::ostream &binaryOut) const override;
-
         void joinRestoredState(std::istream &binaryIn) override;
-
         void clear() override;
     };
 
@@ -48,6 +46,7 @@ private:
 
     [[nodiscard]] std::string generateStoredObservablesHeader() const;
     [[nodiscard]] std::size_t countStoredObservableValues() const;
+    [[nodiscard]] arma::mat calculateObservables(const Eigensystem &eigensystem) const;
 
     [[nodiscard]] std::vector<double>
     calculateMeanObservableValuesForBand(const arma::mat &observables,
