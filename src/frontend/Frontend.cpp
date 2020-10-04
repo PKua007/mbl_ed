@@ -53,8 +53,9 @@ void Frontend::ed(int argc, char **argv) {
              cxxopts::value<std::filesystem::path>(outputFilename))
             ("t,task", "task(s) to be performed on the fly while simulating",
              cxxopts::value<std::vector<std::string>>(onTheFlyTasks))
-            ("d,directory", "where to put eigenenergies and eigenstates. Note, that this option does not "
-                            "affect --output path nor analyzer result files",
+            ("d,directory", "where to put eigenenergies and auxiliary analyzer files (like per-eigensystem observable"
+                            "values). Note, that this option does not affect --output path nor bulk analyzer result "
+                            "files",
              cxxopts::value<std::filesystem::path>(directory)->default_value("."))
             ("p,print_parameter", "parameters to be included in inline results",
              cxxopts::value<std::vector<std::string>>(paramsToPrint)
@@ -109,7 +110,7 @@ void Frontend::ed(int argc, char **argv) {
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
     auto rnd = std::make_unique<RND>();
     auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, basis, *rnd);
-    auto analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, basis);
+    auto analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, basis, directory);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run simulations
@@ -232,7 +233,7 @@ void Frontend::analyze(int argc, char **argv) {
     logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Load eigenenergies and analyze them
-    auto analyzer = AnalyzerBuilder{}.build(tasks, params, basis);
+    auto analyzer = AnalyzerBuilder{}.build(tasks, params, basis, directory);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())

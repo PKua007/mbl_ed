@@ -28,7 +28,8 @@
 
 
 std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
-                                                 std::shared_ptr<FockBasis> fockBasis)
+                                                 const std::shared_ptr<FockBasis>& fockBasis,
+                                                 const std::filesystem::path &auxiliaryDir)
 {
     auto analyzer = std::make_unique<Analyzer>();
     for (const auto &task : tasks) {
@@ -140,19 +141,31 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             Validate(numBins > 0);
             analyzer->addTask(std::make_unique<BulkMeanGapRatio>(numBins));
         } else if (taskName == "obs") {
+            bool store{};
+            if (taskStream.str().find("store") != std::string::npos) {
+                std::string storeString;
+                taskStream >> storeString;
+                ValidateMsg(taskStream && storeString == "store", "Wrong format, use: obs (store) [number of bins] "
+                                                                  "[obs. 1] [obs. 1 params] [obs. 2] "
+                                                                  "[obs. 2 params];...");
+                store = true;
+            }
             std::size_t numBins;
             taskStream >> numBins;
-            ValidateMsg(taskStream, "Wrong format, use: obs [number of bins] (obs. 1) (obs. 1 params);"
-                                    "(obs. 2) (obs. 2 params);...");
+            ValidateMsg(taskStream, "Wrong format, use: obs (store) [number of bins] [obs. 1] [obs. 1 params];"
+                                    "[obs. 2] [obs. 2 params];...");
             std::string observablesString;
             std::getline(taskStream, observablesString);
             std::vector<std::string> observablesParams = explode(observablesString, ';');
             ObservablesBuilder builder;
             builder.build(observablesParams, params, fockBasis);
-            analyzer->addTask(std::make_unique<EigenstateObservables>(
+            auto eigenstateObservables = std::make_unique<EigenstateObservables>(
                 numBins, builder.releasePrimaryObservables(), builder.releaseSecondaryObservables(),
-                builder.releaseStoredObservables())
+                builder.releaseStoredObservables()
             );
+            if (store)
+                eigenstateObservables->startStoringObservables(auxiliaryDir / params.getOutputFileSignature());
+            analyzer->addTask(std::move(eigenstateObservables));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
         }

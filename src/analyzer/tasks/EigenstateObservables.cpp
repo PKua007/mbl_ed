@@ -45,30 +45,9 @@ auto EigenstateObservables::calculateBinRange(std::size_t binIdx, std::size_t nu
 void EigenstateObservables::analyze(const Eigensystem &eigensystem, [[maybe_unused]] Logger &logger) {
     Expects(eigensystem.hasEigenvectors());
 
-    std::size_t numBins = this->binEntries.size();
-    for (std::size_t binIdx{}; binIdx < numBins; binIdx++) {
-        auto [binMid, binMargin] = this->calculateBinRange(binIdx, numBins);
-        auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(binMid, binMargin);
-        if (bandIndices.empty())
-            continue;
-
-        std::vector<double> observableValues = this->calculateMeanObservableValuesForBand(eigensystem, bandIndices);
-        for (std::size_t i{}; i < observableValues.size(); i++) {
-            auto &binObservableValues = this->binEntries[binIdx].observableValues;
-            Assert(binObservableValues.size() == observableValues.size());
-            binObservableValues[i].push_back(observableValues[i]);
-        }
-    }
-}
-
-std::vector<double>
-EigenstateObservables::calculateMeanObservableValuesForBand(const Eigensystem &eigensystem,
-                                                            const std::vector<std::size_t> &bandIndices) const
-{
-    std::vector<double> observableValues(numValues);
-    for (std::size_t bandIdx : bandIndices) {
-        // Change arma::vec into cx_vec. Yup, armadillo is that annoying...
-        arma::vec doubleState = eigensystem.getEigenstate(bandIdx);
+    arma::mat observables(eigensystem.size(), this->numValues);
+    for (std::size_t i{}; i < eigensystem.size(); i++) {
+        arma::vec doubleState = eigensystem.getEigenstate(i);
         arma::cx_vec state(arma::size(doubleState));
         std::copy(doubleState.begin(), doubleState.end(), state.begin());
 
@@ -79,16 +58,51 @@ EigenstateObservables::calculateMeanObservableValuesForBand(const Eigensystem &e
 
         std::size_t offset{};
         for (const auto &storedObservable : storedObservables) {
-            auto singleObservableValues = storedObservable->getValues();
+            auto singleObservableValues = arma::rowvec(storedObservable->getValues());
+            arma::rowvec singleObservableValuesArma(singleObservableValues.size());
             Assert(offset + singleObservableValues.size() <= numValues);
-            std::transform(singleObservableValues.begin(), singleObservableValues.end(),
-                           observableValues.begin() + offset, observableValues.begin() + offset,
-                           std::plus<>{});
+            observables(i, arma::span(offset, offset + singleObservableValues.size() - 1))
+                = singleObservableValues;
             offset += singleObservableValues.size();
         }
         Assert(offset == numValues);
     }
 
+    if (this->ostreamProvider != nullptr) {
+        auto ostream = this->ostreamProvider->openOutputFile(
+            this->fileSignature + "_" + std::to_string(this->eigensystemIdx) + "_obs.bin"
+        );
+        observables.save(*ostream, arma::arma_binary);
+    }
+
+    std::size_t numBins = this->binEntries.size();
+    for (std::size_t binIdx{}; binIdx < numBins; binIdx++) {
+        auto [binMid, binMargin] = this->calculateBinRange(binIdx, numBins);
+        auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(binMid, binMargin);
+        if (bandIndices.empty())
+            continue;
+
+        std::vector<double> observableValues = this->calculateMeanObservableValuesForBand(observables, bandIndices);
+        for (std::size_t i{}; i < observableValues.size(); i++) {
+            auto &binObservableValues = this->binEntries[binIdx].observableValues;
+            Assert(binObservableValues.size() == observableValues.size());
+            binObservableValues[i].push_back(observableValues[i]);
+        }
+    }
+
+    this->eigensystemIdx++;
+}
+
+std::vector<double>
+EigenstateObservables::calculateMeanObservableValuesForBand(const arma::mat &observables,
+                                                            const std::vector<std::size_t> &bandIndices) const
+{
+    std::vector<double> observableValues(numValues);
+    for (std::size_t bandIdx : bandIndices) {
+        std::transform(observables.begin_row(bandIdx), observables.end_row(bandIdx),
+                       observableValues.begin(), observableValues.begin(),
+                       std::plus<>{});
+    }
     for (double &value : observableValues)
         value /= bandIndices.size();
     return observableValues;

@@ -6,6 +6,7 @@
 #define MBL_ED_ANALYZERBUILDER_H
 
 #include <vector>
+#include <filesystem>
 
 #include "analyzer/Analyzer.h"
 #include "Parameters.h"
@@ -20,7 +21,8 @@ public:
      * @brief Prepares the Analyzer. Parsing @a tasks includes also validation and throwing exceptions if needed.
      */
     std::unique_ptr<Analyzer> build(const std::vector<std::string> &tasks, const Parameters &params,
-                                    std::shared_ptr<FockBasis> fockBasis);
+                                    const std::shared_ptr<FockBasis>& fockBasis,
+                                    const std::filesystem::path &auxiliaryDir = std::filesystem::current_path());
 };
 
 
