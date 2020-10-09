@@ -86,7 +86,6 @@ arma::mat EigenstateObservables::calculateObservables(const Eigensystem &eigensy
         std::size_t offset{};
         for (const auto &storedObservable : storedObservables) {
             auto singleObservableValues = arma::rowvec(storedObservable->getValues());
-            arma::rowvec singleObservableValuesArma(singleObservableValues.size());
             Assert(offset + singleObservableValues.size() <= numValues);
             observables(i, arma::span(offset, offset + singleObservableValues.size() - 1))
                 = singleObservableValues;

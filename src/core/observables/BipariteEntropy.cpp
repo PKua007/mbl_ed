@@ -12,7 +12,7 @@ void BipariteEntropy::calculateForState(const arma::cx_vec &state) {
     for (std::size_t particlesOnHalf{}; particlesOnHalf <= this->numOfParticles; particlesOnHalf++) {
         std::size_t particlesOnOtherHalf = this->numOfParticles - particlesOnHalf;
         const auto &halfFockBasis = *this->halfFockBases[particlesOnHalf];
-        const auto &otherHalfFockBasis = *this->halfFockBases[particlesOnOtherHalf];
+        const auto &otherHalfFockBasis = *this->otherHalfFockBases[particlesOnOtherHalf];
         arma::cx_mat productBasisMatrix(halfFockBasis.size(), otherHalfFockBasis.size());
 
         for (std::size_t i{}; i < halfFockBasis.size(); i++) {
@@ -32,11 +32,22 @@ void BipariteEntropy::calculateForState(const arma::cx_vec &state) {
 
 BipariteEntropy::BipariteEntropy(std::shared_ptr<FockBasis> fockBasis) : fockBasis{std::move(fockBasis)} {
     std::size_t numOfSites = this->fockBasis->getNumberOfSites();
-    Expects(numOfSites % 2 == 0);
 
     this->numOfParticles = this->fockBasis->getNumberOfParticles();
     std::size_t halfNumOfSites = numOfSites / 2;
+    std::size_t otherHalfNumOfSites = numOfSites - halfNumOfSites;
     this->halfFockBases.resize(this->numOfParticles + 1);
+    this->otherHalfFockBases.resize(this->numOfParticles + 1);
+
     for (std::size_t particlesOnHalf{}; particlesOnHalf <= this->numOfParticles; particlesOnHalf++)
         this->halfFockBases[particlesOnHalf] = FockBasisGenerator{}.generate(particlesOnHalf, halfNumOfSites);
+
+    if (halfNumOfSites == otherHalfNumOfSites) {
+        this->otherHalfFockBases = this->halfFockBases;
+    } else {
+        for (std::size_t particlesOnOtherHalf{}; particlesOnOtherHalf <= this->numOfParticles; particlesOnOtherHalf++) {
+            this->otherHalfFockBases[particlesOnOtherHalf]
+                = FockBasisGenerator{}.generate(particlesOnOtherHalf, otherHalfNumOfSites);
+        }
+    }
 }

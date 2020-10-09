@@ -9,7 +9,7 @@
 #include "core/observables/BipariteEntropy.h"
 #include "core/FockBasisGenerator.h"
 
-TEST_CASE("BipariteEntropy") {
+TEST_CASE("BipariteEntropy: even number of sites") {
     auto fockBase = std::shared_ptr<FockBasis>(FockBasisGenerator{}.generate(2, 4));
     BipariteEntropy bipariteEntropy(fockBase);
 
@@ -36,4 +36,16 @@ TEST_CASE("BipariteEntropy") {
         REQUIRE(bipariteEntropy.getValues().size() == 1);
         REQUIRE(bipariteEntropy.getValues().front() == Approx(0.3446104320908521));
     }
+}
+
+TEST_CASE("BipariteEntropy: odd number of sites") {
+    auto fockBase = std::shared_ptr<FockBasis>(FockBasisGenerator{}.generate(2, 3));
+    BipariteEntropy bipariteEntropy(fockBase);
+    arma::cx_vec vec = {1, 2, 3, 4, 5, 6};
+    vec = arma::normalise(vec);
+
+    bipariteEntropy.calculateForState(vec);
+
+    REQUIRE(bipariteEntropy.getValues().size() == 1);
+    REQUIRE(bipariteEntropy.getValues().front() == Approx(0.4689105050912057));
 }
