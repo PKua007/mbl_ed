@@ -238,6 +238,8 @@ void Frontend::analyze(int argc, char **argv) {
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())
         die("No eigenenergy files were found.", logger);
+    else
+        logger.info() << "Found " << energiesFilenames.size() << " eigenenergy files" << std::endl;
 
     for (const auto &energiesFilename : energiesFilenames) {
         std::ifstream energiesFile(energiesFilename);
@@ -246,7 +248,10 @@ void Frontend::analyze(int argc, char **argv) {
 
         Eigensystem eigensystem;
         eigensystem.restore(energiesFile, basis);
+        logger.verbose() << "Analyzing " << energiesFilename << " started... " << std::endl;
+        timer.tic();
         analyzer->analyze(eigensystem, logger);
+        logger.info() << "Analyzing " << energiesFilename << " done (" << timer.toc() << " s)." << std::endl;
     }
 
     // Save results
