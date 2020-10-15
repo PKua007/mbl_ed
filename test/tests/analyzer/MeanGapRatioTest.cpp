@@ -8,14 +8,14 @@
 #include "analyzer/tasks/MeanGapRatio.h"
 
 TEST_CASE("GapRadioCalculator: names") {
-    MeanGapRatio ratioCalculator(0.5, 0.1);
+    MeanGapRatio ratioCalculator(MeanGapRatio::EpsilonRange(0.5, 0.1));
 
     REQUIRE(ratioCalculator.getName() == "mgr");
     REQUIRE(ratioCalculator.getResultHeader() == std::vector<std::string>{"meanGapRatio", "meanGapRatioError"});
 }
 
-TEST_CASE("MeanGapRatio: single energy set (number)") {
-    MeanGapRatio ratioCalculator(0.5, 0.4);
+TEST_CASE("MeanGapRatio: single energy set (epsilon range)") {
+    MeanGapRatio ratioCalculator(MeanGapRatio::EpsilonRange(0.5, 0.4));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -25,9 +25,20 @@ TEST_CASE("MeanGapRatio: single energy set (number)") {
     REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"0.611111", "0"});
 }
 
+TEST_CASE("MeanGapRatio: single energy set (cdf range)") {
+    MeanGapRatio ratioCalculator(MeanGapRatio::CDFRange(0.5, 0.375));
+    std::ostringstream loggerStream;
+    Logger logger(loggerStream);
+
+    // So we are averaging for: 0.5, 0.6, 0.7
+    ratioCalculator.analyze(Eigensystem({0, 0.2, 0.5, 0.6, 0.7, 0.9, 0.95, 1.0}), logger);
+
+    REQUIRE(ratioCalculator.getResultFields() == std::vector<std::string>{"0.611111", "0"});
+}
+
 TEST_CASE("MeanGapRatio: single energy set (around vector)") {
     auto base = std::shared_ptr<FockBasis>(FockBasisGenerator{}.generate(7, 2));
-    MeanGapRatio ratioCalculator(FockBasis::Vector{5, 2}, 0.3);
+    MeanGapRatio ratioCalculator(MeanGapRatio::VectorRange(FockBasis::Vector{5, 2}, 0.3));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -50,7 +61,7 @@ TEST_CASE("MeanGapRatio: single energy set (around vector)") {
 }
 
 TEST_CASE("MeanGapRatio: normalization") {
-    MeanGapRatio ratioCalculator(0.5, 0.4);
+    MeanGapRatio ratioCalculator(MeanGapRatio::EpsilonRange(0.5, 0.4));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -60,7 +71,7 @@ TEST_CASE("MeanGapRatio: normalization") {
 }
 
 TEST_CASE("MeanGapRatio: calculating mean") {
-    MeanGapRatio ratioCalculator(0.5, 0.4);
+    MeanGapRatio ratioCalculator(MeanGapRatio::EpsilonRange(0.5, 0.4));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 

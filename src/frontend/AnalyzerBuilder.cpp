@@ -56,13 +56,13 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             }
 
             if (middleVector.has_value()) {
-                analyzer->addTask(std::make_unique<MeanGapRatio>(*middleVector, mgrMargin));
+                analyzer->addTask(std::make_unique<MeanGapRatio>(MeanGapRatio::VectorRange(*middleVector, mgrMargin)));
             } else {
                 double mgrCenter = std::stod(mgrCenterString);
                 Validate(mgrCenter > 0 && mgrCenter < 1);
                 Validate(mgrMargin > 0 && mgrMargin <= 1);
                 Validate(mgrCenter - mgrMargin / 2 >= 0 && mgrCenter + mgrMargin / 2 <= 1);
-                analyzer->addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
+                analyzer->addTask(std::make_unique<MeanGapRatio>(MeanGapRatio::EpsilonRange(mgrCenter, mgrMargin)));
             }
         } else if (taskName == "mipr") {
             double mgrCenter, mgrMargin;
