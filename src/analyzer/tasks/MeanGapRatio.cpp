@@ -11,41 +11,7 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
     static_cast<void>(logger);
 
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
-    std::vector<std::size_t> bandIndices;
-    if (std::holds_alternative<VectorRange>(this->range)) {
-        const auto &vectorRange = std::get<VectorRange>(this->range);
-        double relativeMiddleEnergy = calculateEnergyOfFockState(vectorRange.middleVector, eigensystem);
-        double relativeMargin = vectorRange.epsilonMargin;
-        if (relativeMiddleEnergy - relativeMargin / 2 <= 0 || relativeMiddleEnergy + relativeMargin / 2 >= 1) {
-            throw std::runtime_error(
-                "Margin " + std::to_string(relativeMargin) + " is to big around the given vector of the energy "
-                + std::to_string(relativeMiddleEnergy)
-            );
-        }
-
-        logger.info() << "Mgr calculated around: " << relativeMiddleEnergy << ". " << std::endl;
-        bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(relativeMiddleEnergy, relativeMargin);
-    } else if (std::holds_alternative<EpsilonRange>(this->range)) {
-        const auto &epsilonRange = std::get<EpsilonRange>(this->range);
-        bandIndices
-            = eigensystem.getIndicesOfNormalizedEnergiesInBand(epsilonRange.epsilonMiddle, epsilonRange.epsilonMargin);
-    } else if (std::holds_alternative<CDFRange>(this->range)) {
-        const auto &cdfRange = std::get<CDFRange>(this->range);
-        double relativeIndexStart = cdfRange.cdfMiddle - cdfRange.cdfMargin / 2;
-        double relativeIndexEnd = cdfRange.cdfMiddle + cdfRange.cdfMargin / 2;
-        auto indexStart = static_cast<std::size_t>(eigensystem.size() * relativeIndexStart);
-        auto indexEnd = static_cast<std::size_t>(eigensystem.size() * relativeIndexEnd);
-        Assert(indexEnd < eigensystem.size());
-        Assert(indexEnd > indexStart);
-        bandIndices.resize(indexEnd - indexStart);
-        std::iota(bandIndices.begin(), bandIndices.end(), indexStart);
-
-        logger.info() << "Mgr calculated for: [" << normalizedEnergies[bandIndices.front()] << ", ";
-        logger << normalizedEnergies[bandIndices.back()] << ")." << std::endl;
-    } else {
-        throw std::runtime_error("Internal error");
-    }
-
+    std::vector<std::size_t> bandIndices = this->getBandIndices(eigensystem, normalizedEnergies, logger);
     if (!bandIndices.empty() && bandIndices.front() == 0)
         bandIndices.erase(bandIndices.begin());
     if (!bandIndices.empty() && bandIndices.back() == eigensystem.size() - 1)
@@ -62,6 +28,46 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
     }
     if (numEntries > 0)
         this->gapRatios.push_back(singleGapRatio / numEntries);
+}
+
+std::vector<std::size_t> MeanGapRatio::getBandIndices(const Eigensystem &eigensystem,
+                                                      const arma::vec &normalizedEnergies, Logger &logger) const
+{
+    if (std::holds_alternative<VectorRange>(this->range)) {
+        const auto &vectorRange = std::get<VectorRange>(this->range);
+        double relativeMiddleEnergy = calculateEnergyOfFockState(vectorRange.middleVector, eigensystem);
+        double relativeMargin = vectorRange.epsilonMargin;
+        if (relativeMiddleEnergy - relativeMargin / 2 <= 0 || relativeMiddleEnergy + relativeMargin / 2 >= 1) {
+            throw std::runtime_error(
+                "Margin " + std::to_string(relativeMargin) + " is to big around the given vector of the energy "
+                + std::to_string(relativeMiddleEnergy)
+            );
+        }
+
+        logger.info() << "Mgr calculated around: " << relativeMiddleEnergy << ". " << std::endl;
+        return eigensystem.getIndicesOfNormalizedEnergiesInBand(relativeMiddleEnergy, relativeMargin);
+    } else if (std::holds_alternative<EpsilonRange>(this->range)) {
+        const auto &epsilonRange = std::get<EpsilonRange>(this->range);
+        return eigensystem.getIndicesOfNormalizedEnergiesInBand(epsilonRange.epsilonMiddle, epsilonRange.epsilonMargin);
+    } else if (std::holds_alternative<CDFRange>(this->range)) {
+        const auto &cdfRange = std::get<CDFRange>(this->range);
+        double relativeIndexStart = cdfRange.cdfMiddle - cdfRange.cdfMargin / 2;
+        double relativeIndexEnd = cdfRange.cdfMiddle + cdfRange.cdfMargin / 2;
+        auto indexStart = static_cast<std::size_t>(eigensystem.size() * relativeIndexStart);
+        auto indexEnd = static_cast<std::size_t>(eigensystem.size() * relativeIndexEnd);
+        Assert(indexEnd < eigensystem.size());
+        Assert(indexEnd > indexStart);
+
+        std::vector<std::size_t> bandIndices(indexEnd - indexStart);
+        std::iota(bandIndices.begin(), bandIndices.end(), indexStart);
+
+        logger.info() << "Mgr calculated for: [" << normalizedEnergies[bandIndices.front()] << ", ";
+        logger << normalizedEnergies[bandIndices.back()] << ")." << std::endl;
+
+        return bandIndices;
+    } else {
+        throw std::runtime_error("Internal error");
+    }
 }
 
 double MeanGapRatio::calculateEnergyOfFockState(const FockBasis::Vector &state, const Eigensystem &eigensystem) const {

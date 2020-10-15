@@ -27,6 +27,25 @@
 #include "core/observables/OnsiteFluctuations.h"
 
 
+namespace {
+    struct ParseDoubleException : public std::runtime_error {
+        explicit ParseDoubleException(const std::string &what) : std::runtime_error(what) { }
+    };
+
+    double parse_double(std::string str) {
+        try {
+            trim(str);
+            std::size_t offset = 0;
+            double result = std::stod(str, &offset);
+            if (offset != str.size())
+                throw ParseDoubleException("Additional characters found while parsing double");
+            return result;
+        } catch (const std::invalid_argument &e) {
+            throw ParseDoubleException(e.what());
+        }
+    }
+}
+
 std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
                                                  const std::shared_ptr<FockBasis>& fockBasis,
                                                  const std::filesystem::path &auxiliaryDir)
@@ -58,22 +77,24 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
                 double epsilonMargin{};
                 taskStream >> epsilonMargin;
                 ValidateMsg(taskStream, usage);
+
+                // First, try form [epsilon center] [epsilon margin]
                 try {
-                    std::size_t offset = 0;
-                    double epsilonMiddle = std::stod(middle, &offset);
-                    if (offset != middle.size())
-                        throw std::invalid_argument("");
+                    double epsilonMiddle = parse_double(middle);
                     Validate(epsilonMiddle > 0 && epsilonMiddle < 1);
                     Validate(epsilonMargin > 0);
                     Validate(epsilonMiddle - epsilonMargin / 2 >= 0 && epsilonMiddle + epsilonMargin / 2 <= 1);
                     analyzer->addTask(
                         std::make_unique<MeanGapRatio>(MeanGapRatio::EpsilonRange(epsilonMiddle, epsilonMargin))
                     );
-                } catch (std::invalid_argument &) {
+                } catch (ParseDoubleException &) {
                     FockBasis::Vector middleVector;
+
+                    // Next, try form dw|unif [epsilon margin]
                     try {
                         middleVector = FockBasis::Vector(params.K, middle);
                     } catch (FockVectorParseException &) {
+                        // Last chance - 1.2.0.0 [epsilon margin], otherwise error
                         try {
                             middleVector = FockBasis::Vector(middle);
                         } catch (std::invalid_argument &) {

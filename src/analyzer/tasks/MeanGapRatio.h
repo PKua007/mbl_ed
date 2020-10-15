@@ -34,6 +34,9 @@
  */
 class MeanGapRatio : public InlineAnalyzerTask {
 public:
+    /**
+     * @brief Range in the epsilon version - band of energies normalized to [0, 1]
+     */
     struct EpsilonRange {
         EpsilonRange() = default;
         EpsilonRange(double epsilonMiddle, double epsilonMargin);
@@ -42,6 +45,9 @@ public:
         double epsilonMargin{};
     };
 
+    /**
+     * @brief Range in the vector version - band of energies normalized to [0, 1], middle given by @a middleVector
+     */
     struct VectorRange {
         VectorRange() = default;
         VectorRange(FockBasis::Vector middleVector, double epsilonMargin);
@@ -50,6 +56,9 @@ public:
         double epsilonMargin{};
     };
 
+    /**
+     * @brief Rande in the CDF version - energies given by quantiles determined by @a cdfMiddle and @a cdfMargin
+     */
     struct CDFRange {
         CDFRange() = default;
         CDFRange(double cdfMiddle, double cdfMargin);
@@ -64,6 +73,8 @@ private:
     Range range;
     std::vector<double> gapRatios{};
 
+    std::vector<size_t> getBandIndices(const Eigensystem &eigensystem, const arma::vec &normalizedEnergies,
+                                       Logger &logger) const;
     [[nodiscard]] double calculateEnergyOfFockState(const FockBasis::Vector &state,
                                                     const Eigensystem &eigensystem) const;
     [[nodiscard]] Quantity calculateMean() const;
