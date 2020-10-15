@@ -23,7 +23,7 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
             );
         }
 
-        logger << "mgr calculated around: " << relativeMiddleEnergy << ". ";
+        logger.info() << "Mgr calculated around: " << relativeMiddleEnergy << ". " << std::endl;
         bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(relativeMiddleEnergy, relativeMargin);
     } else if (std::holds_alternative<EpsilonRange>(this->range)) {
         const auto &epsilonRange = std::get<EpsilonRange>(this->range);
@@ -35,9 +35,13 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
         double relativeIndexEnd = cdfRange.cdfMiddle + cdfRange.cdfMargin / 2;
         auto indexStart = static_cast<std::size_t>(eigensystem.size() * relativeIndexStart);
         auto indexEnd = static_cast<std::size_t>(eigensystem.size() * relativeIndexEnd);
-        Assert(indexEnd <= eigensystem.size());
+        Assert(indexEnd < eigensystem.size());
+        Assert(indexEnd > indexStart);
         bandIndices.resize(indexEnd - indexStart);
         std::iota(bandIndices.begin(), bandIndices.end(), indexStart);
+
+        logger.info() << "Mgr calculated for: [" << normalizedEnergies[bandIndices.front()] << ", ";
+        logger << normalizedEnergies[bandIndices.back()] << ")." << std::endl;
     } else {
         throw std::runtime_error("Internal error");
     }
