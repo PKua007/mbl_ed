@@ -27,6 +27,25 @@
 #include "core/observables/OnsiteFluctuations.h"
 
 
+namespace {
+    struct ParseDoubleException : public std::runtime_error {
+        explicit ParseDoubleException(const std::string &what) : std::runtime_error(what) { }
+    };
+
+    double parse_double(std::string str) {
+        try {
+            trim(str);
+            std::size_t offset = 0;
+            double result = std::stod(str, &offset);
+            if (offset != str.size())
+                throw ParseDoubleException("Additional characters found while parsing double");
+            return result;
+        } catch (const std::invalid_argument &e) {
+            throw ParseDoubleException(e.what());
+        }
+    }
+}
+
 std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
                                                  const std::shared_ptr<FockBasis>& fockBasis,
                                                  const std::filesystem::path &auxiliaryDir)
@@ -37,32 +56,56 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
         std::string taskName;
         taskStream >> taskName;
         if (taskName == "mgr") {
-            std::string mgrCenterString;
-            double mgrMargin;
-            taskStream >> mgrCenterString >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: mgr [epsilon center - number or 'unif' or 'dw']"
-                                    " [epsilon margin]");
+            std::string firstArg;
+            taskStream >> firstArg;
+            std::string usage = "Wrong format, use one of:\n"
+                                "mgr [epsilon center] [epsilon margin]\n"
+                                "mgr dw|unif|2.1.0.0 [epsilon margin]\n"
+                                "mgr cdf [cdf center] [cdf margin]";
+            ValidateMsg(taskStream, usage);
 
-            std::optional<FockBasis::Vector> middleVector;
-            if (mgrCenterString == "unif") {
-                ValidateMsg(params.K == params.N, "'unif' and 'dw' are only for a unity filling");
-                middleVector = FockBasis::Vector(params.K, 1);
-            } else if (mgrCenterString == "dw") {
-                ValidateMsg(params.K == params.N, "'unif' and 'dw' are only for a unity filling");
-                ValidateMsg(params.K % 2 == 0, "'dw' is only available for even number of sites");
-                middleVector = FockBasis::Vector(params.K);
-                for (std::size_t i{}; i < middleVector->size(); i += 2)
-                    (*middleVector)[i] = 2;
-            }
-
-            if (middleVector.has_value()) {
-                analyzer->addTask(std::make_unique<MeanGapRatio>(*middleVector, mgrMargin));
+            if (firstArg == "cdf") {
+                double cdfMiddle{}, cdfMargin{};
+                taskStream >> cdfMiddle >> cdfMargin;
+                ValidateMsg(taskStream, usage);
+                Validate(cdfMiddle > 0 && cdfMiddle < 1);
+                Validate(cdfMargin > 0 && cdfMargin <= 1);
+                Validate(cdfMiddle - cdfMargin / 2 >= 0 && cdfMiddle + cdfMargin / 2 <= 1);
+                analyzer->addTask(std::make_unique<MeanGapRatio>(MeanGapRatio::CDFRange(cdfMiddle, cdfMargin)));
             } else {
-                double mgrCenter = std::stod(mgrCenterString);
-                Validate(mgrCenter > 0 && mgrCenter < 1);
-                Validate(mgrMargin > 0 && mgrMargin <= 1);
-                Validate(mgrCenter - mgrMargin / 2 >= 0 && mgrCenter + mgrMargin / 2 <= 1);
-                analyzer->addTask(std::make_unique<MeanGapRatio>(mgrCenter, mgrMargin));
+                const std::string &middle = firstArg;
+                double epsilonMargin{};
+                taskStream >> epsilonMargin;
+                ValidateMsg(taskStream, usage);
+
+                // First, try form [epsilon center] [epsilon margin]
+                try {
+                    double epsilonMiddle = parse_double(middle);
+                    Validate(epsilonMiddle > 0 && epsilonMiddle < 1);
+                    Validate(epsilonMargin > 0);
+                    Validate(epsilonMiddle - epsilonMargin / 2 >= 0 && epsilonMiddle + epsilonMargin / 2 <= 1);
+                    analyzer->addTask(
+                        std::make_unique<MeanGapRatio>(MeanGapRatio::EpsilonRange(epsilonMiddle, epsilonMargin))
+                    );
+                } catch (ParseDoubleException &) {
+                    FockBasis::Vector middleVector;
+
+                    // Next, try form dw|unif [epsilon margin]
+                    try {
+                        middleVector = FockBasis::Vector(params.K, middle);
+                    } catch (FockVectorParseException &) {
+                        // Last chance - 1.2.0.0 [epsilon margin], otherwise error
+                        try {
+                            middleVector = FockBasis::Vector(middle);
+                        } catch (std::invalid_argument &) {
+                            throw ValidationException(usage);
+                        }
+                    }
+
+                    analyzer->addTask(
+                        std::make_unique<MeanGapRatio>(MeanGapRatio::VectorRange(middleVector, epsilonMargin))
+                    );
+                }
             }
         } else if (taskName == "mipr") {
             double mgrCenter, mgrMargin;

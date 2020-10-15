@@ -6,7 +6,9 @@
 #define MBL_ED_MEANGAPRATIO_H
 
 
+#include <utility>
 #include <vector>
+#include <variant>
 
 #include "core/Eigensystem.h"
 #include "utils/Quantity.h"
@@ -31,31 +33,54 @@
  * second average.
  */
 class MeanGapRatio : public InlineAnalyzerTask {
+public:
+    /**
+     * @brief Range in the epsilon version - band of energies normalized to [0, 1]
+     */
+    struct EpsilonRange {
+        EpsilonRange() = default;
+        EpsilonRange(double epsilonMiddle, double epsilonMargin);
+
+        double epsilonMiddle{};
+        double epsilonMargin{};
+    };
+
+    /**
+     * @brief Range in the vector version - band of energies normalized to [0, 1], middle given by @a middleVector
+     */
+    struct VectorRange {
+        VectorRange() = default;
+        VectorRange(FockBasis::Vector middleVector, double epsilonMargin);
+
+        FockBasis::Vector middleVector{};
+        double epsilonMargin{};
+    };
+
+    /**
+     * @brief Rande in the CDF version - energies given by quantiles determined by @a cdfMiddle and @a cdfMargin
+     */
+    struct CDFRange {
+        CDFRange() = default;
+        CDFRange(double cdfMiddle, double cdfMargin);
+
+        double cdfMiddle{};
+        double cdfMargin{};
+    };
+
+    using Range = std::variant<EpsilonRange, VectorRange, CDFRange>;
+
 private:
-    std::optional<FockBasis::Vector> middleVector;
-    double relativeMiddleEnergy{};
-    double relativeMargin{};
+    Range range;
     std::vector<double> gapRatios{};
 
-    double calculateEnergyOfFockState(const FockBasis::Vector &state, const Eigensystem &eigensystem) const;
+    std::vector<size_t> getBandIndices(const Eigensystem &eigensystem, const arma::vec &normalizedEnergies,
+                                       Logger &logger) const;
+    [[nodiscard]] double calculateEnergyOfFockState(const FockBasis::Vector &state,
+                                                    const Eigensystem &eigensystem) const;
     [[nodiscard]] Quantity calculateMean() const;
 
 public:
-    /**
-     * @brief Constructs the class, which will compute mean gap ratio only for normalized eigenenergies from a specific
-     * energy band.
-     * @param relativeMiddleEnergy the middle of the band (in the [0, 1] regime)
-     * @param relativeMargin the width of the band (also in the [0, 1] regime)
-     */
-    MeanGapRatio(double relativeMiddleEnergy, double relativeMargin);
-
-    /**
-     * @brief Constructs the class, which will compute mean gap ratio only for normalized eigenerergies around a
-     * specific vector.
-     * @param middleVector vector around which we should compute mgr
-     * @param relativeMargin relativeMargin the width of the band (in the [0, 1] regime)
-     */
-    MeanGapRatio(const FockBasis::Vector &middleVector, double relativeMargin);
+    explicit MeanGapRatio(Range range) : range{std::move(range)} { }
 
     /**
      * @brief Adds value for a given @a eigensystem to the average mean gap ratio.
