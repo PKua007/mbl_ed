@@ -27,6 +27,7 @@
 #include "utils/Utils.h"
 #include "utils/Assertions.h"
 #include "utils/OMPMacros.h"
+#include "simulation/RandomStateObservables.h"
 
 
 void Frontend::ed(int argc, char **argv) {
@@ -287,7 +288,7 @@ void Frontend::chebyshev(int argc, char **argv) {
                                     "of steps 1] [time 2] [number of steps 2] ... . For example, '1 2 5 4' divides 0-1 "
                                     "in 2 and 1-5 in 4, giving times: 0, 0.5, 1, 2, 3, 4, 5",
              cxxopts::value<std::string>(timeSegmentation))
-            ("o,observable", "which observables should be calculated and stored. One or more of: "
+            ("O,observable", "which observables should be calculated and stored. One or more of: "
                              "n_j - onsite occupations; "
                              "n_iN_j - products of 2 onsite occupations; "
                              "G_d [margin size] - site averaged correlations, without including [margin size] sites on "
@@ -535,6 +536,102 @@ void Frontend::quench(int argc, char **argv) {
         io.printInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields);
         if (!outputFilename.empty())
             io.storeInlineResults(quenchParams, paramsToPrint, resultHeader, resultFields, outputFilename);
+    }
+}
+
+void Frontend::randomStates(int argc, char **argv) {
+    // Parse options
+    cxxopts::Options options(argv[0], "Mode calculating mean observable values for random Gaussian states.");
+
+    std::string inputFilename;
+    std::filesystem::path outputFilename;
+    std::vector<std::string> paramsToPrint;
+    std::vector<std::string> overridenParams;
+    std::vector<std::string> observableStrings;
+    std::string verbosity;
+
+    options.add_options()
+            ("h,help", "prints help for this mode")
+            ("i,input", "file with parameters. See input.ini for parameters description",
+             cxxopts::value<std::string>(inputFilename))
+            ("o,output", "when specified, results will be printed to this file",
+             cxxopts::value<std::filesystem::path>(outputFilename))
+            ("O,observable", "which observables should be calculated and stored. One or more of: "
+                             "n_j - onsite occupations; "
+                             "n_iN_j - products of 2 onsite occupations; "
+                             "G_d [margin size] - site averaged correlations, without including [margin size] sites on "
+                             "both ends; "
+                             "rho_i - fluctiations;",
+             cxxopts::value<std::vector<std::string>>(observableStrings)->default_value("G_d 0, rho_i, n_i"))
+            ("p,print_parameter", "parameters to be included in inline results",
+             cxxopts::value<std::vector<std::string>>(paramsToPrint)->default_value("N,K"))
+            ("P,set_param", "overrides the value of the parameter loaded as --input. More precisely, doing "
+                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of input"
+                            "file. To override or even add some hamiltonian terms use -P termName.paramName=value",
+             cxxopts::value<std::vector<std::string>>(overridenParams))
+            ("V,verbosity", "how verbose the output should be. Allowed values, with increasing verbosity: "
+                            "error, warn, info, verbose, debug",
+             cxxopts::value<std::string>(verbosity)->default_value("info"));
+
+    auto parsedOptions = options.parse(argc, argv);
+    if (parsedOptions.count("help")) {
+        this->out << options.help() << std::endl;
+        exit(0);
+    }
+
+    Logger logger(this->out);
+    this->setOverridenParamsAsAdditionalText(logger, overridenParams);
+    this->setVerbosityLevel(logger, verbosity);
+
+    // Validate parsed options
+    std::string cmd(argv[0]);
+    if (argc != 1)
+        die("Unexpected positional arguments. See " + cmd + " --help", logger);
+    if (!parsedOptions.count("input"))
+        die("Input file must be specified with option -i [input file name]", logger);
+
+    // Prepare parameters
+    IO io(logger);
+    Parameters params = io.loadParameters(inputFilename, overridenParams);
+    params.print(logger);
+    logger << std::endl;
+    for (const auto &param : paramsToPrint)
+        if (!params.hasParam(param))
+            die("Parameters to print: parameter " + param + " is unknown", logger);
+
+    // OpenMP info
+    logger.info() << "Using " << _OMP_MAXTHREADS << " OpenMP threads" << std::endl;
+
+    // Generate Fock basis
+    FockBasisGenerator basisGenerator;
+    logger.verbose() << "Preparing Fock basis started... " << std::endl;
+    arma::wall_clock timer;
+    timer.tic();
+    auto basis = std::shared_ptr<FockBasis>(basisGenerator.generate(params.N, params.K));
+    logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
+
+    // Prepare simulation classes
+    auto rnd = std::make_unique<RND>();
+
+    ObservablesBuilder observablesBuilder;
+    observablesBuilder.build(observableStrings, params, basis);
+    RandomStateObservables simulation(std::move(rnd), std::move(basis), observablesBuilder.releasePrimaryObservables(),
+                                      observablesBuilder.releaseSecondaryObservables(),
+                                      observablesBuilder.releaseStoredObservables());
+
+    SimulationsSpan simulationsSpan;
+    simulationsSpan.from = params.from;
+    simulationsSpan.to = params.to;
+    simulationsSpan.total = params.totalSimulations;
+    RestorableSimulationExecutor restorableSimulationExecutor(simulationsSpan, params.getOutputFileSignatureWithRange(),
+                                                              params.splitWorkload, params.secureSimulationState);
+    restorableSimulationExecutor.performSimulations(simulation, params.seed, logger);
+
+    // Save results
+    if (restorableSimulationExecutor.shouldSaveSimulation()) {
+        io.printInlineResults(params, paramsToPrint, simulation.getHeader(), simulation.getValues());
+        if (!outputFilename.empty())
+            io.storeInlineResults(params, paramsToPrint, simulation.getHeader(), simulation.getValues(), outputFilename);
     }
 }
 
