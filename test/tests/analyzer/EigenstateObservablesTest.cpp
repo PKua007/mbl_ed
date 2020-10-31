@@ -34,11 +34,11 @@ TEST_CASE("EigenstateObservables: single set") {
     auto primary = std::make_shared<PrimaryObservableMock>();
     ALLOW_CALL(*primary, getHeader()).RETURN(std::vector<std::string>{"p"});
     REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{1, 0, 0}))).IN_SEQUENCE(seq1);
-    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{1});
+    ALLOW_CALL(*primary, getValues()).IN_SEQUENCE(seq1).RETURN(std::vector<double>{1});
     REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{0, 1, 0}))).IN_SEQUENCE(seq1);
-    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{2});
+    ALLOW_CALL(*primary, getValues()).IN_SEQUENCE(seq1).RETURN(std::vector<double>{2});
     REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{0, 0, 1}))).IN_SEQUENCE(seq1);
-    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{3});
+    ALLOW_CALL(*primary, getValues()).IN_SEQUENCE(seq1).RETURN(std::vector<double>{3});
 
     // Secondary observable "p" giving values: { mean{4, 5} = 4.5, mean{6} = 6} }
     // see eigenstateObservables range and passed eigensystem
@@ -46,11 +46,11 @@ TEST_CASE("EigenstateObservables: single set") {
     auto secondary = std::make_shared<SecondaryObservableMock>();
     ALLOW_CALL(*secondary, getHeader()).RETURN(std::vector<std::string>{"s"});
     REQUIRE_CALL(*secondary, calculateForObservables(first_observable_values_eq({1}))).IN_SEQUENCE(seq2);
-    REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq2).RETURN(std::vector<double>{4});
+    ALLOW_CALL(*secondary, getValues()).IN_SEQUENCE(seq2).RETURN(std::vector<double>{4});
     REQUIRE_CALL(*secondary, calculateForObservables(first_observable_values_eq({2}))).IN_SEQUENCE(seq2);
-    REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq2).RETURN(std::vector<double>{5});
+    ALLOW_CALL(*secondary, getValues()).IN_SEQUENCE(seq2).RETURN(std::vector<double>{5});
     REQUIRE_CALL(*secondary, calculateForObservables(first_observable_values_eq({3}))).IN_SEQUENCE(seq2);
-    REQUIRE_CALL(*secondary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq2).RETURN(std::vector<double>{6});
+    ALLOW_CALL(*secondary, getValues()).IN_SEQUENCE(seq2).RETURN(std::vector<double>{6});
 
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
@@ -80,18 +80,18 @@ TEST_CASE("EigenstateObservables: two sets - averaging") {
     auto primary = std::make_shared<PrimaryObservableMock>();
     ALLOW_CALL(*primary, getHeader()).RETURN(std::vector<std::string>{"p"});
     REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{1, 0, 0}))).IN_SEQUENCE(seq1);
-    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{1});
+    ALLOW_CALL(*primary, getValues()).IN_SEQUENCE(seq1).RETURN(std::vector<double>{1});
     REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{0, 1, 0}))).IN_SEQUENCE(seq1);
-    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{2});
+    ALLOW_CALL(*primary, getValues()).IN_SEQUENCE(seq1).RETURN(std::vector<double>{2});
     REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{0, 0, 1}))).IN_SEQUENCE(seq1);
-    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{3});
+    ALLOW_CALL(*primary, getValues()).IN_SEQUENCE(seq1).RETURN(std::vector<double>{3});
 
     REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{1, 0, 0}))).IN_SEQUENCE(seq1);
-    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{4});
+    ALLOW_CALL(*primary, getValues()).IN_SEQUENCE(seq1).RETURN(std::vector<double>{4});
     REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{0, 1, 0}))).IN_SEQUENCE(seq1);
-    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{5});
+    ALLOW_CALL(*primary, getValues()).IN_SEQUENCE(seq1).RETURN(std::vector<double>{5});
     REQUIRE_CALL(*primary, calculateForState(arma_eq(arma::cx_vec{0, 0, 1}))).IN_SEQUENCE(seq1);
-    REQUIRE_CALL(*primary, getValues()).TIMES(AT_LEAST(1)).IN_SEQUENCE(seq1).RETURN(std::vector<double>{6});
+    ALLOW_CALL(*primary, getValues()).IN_SEQUENCE(seq1).RETURN(std::vector<double>{6});
 
     std::ostringstream loggerStream;
     Logger logger(loggerStream);

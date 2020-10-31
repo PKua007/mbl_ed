@@ -34,14 +34,12 @@ namespace {
 
 TEST_CASE("HamiltonianGenerator: non-periodic hop") {
     auto hopping = std::make_unique<HoppingTermMock>();
-    REQUIRE_CALL(*hopping, calculate(_, _))
-        .WITH(HopBetween(_1) == HopBetween(0, 1))
-        .RETURN(1)
-        .TIMES(AT_LEAST(1));
-    REQUIRE_CALL(*hopping, calculate(_, _))
+    ALLOW_CALL(*hopping, calculate(_, _))
+         .WITH(HopBetween(_1) == HopBetween(0, 1))
+        .RETURN(1);
+    ALLOW_CALL(*hopping, calculate(_, _))
         .WITH(HopBetween(_1) == HopBetween(1, 2))
-        .RETURN(1)
-        .TIMES(AT_LEAST(1));
+        .RETURN(1);
     FockBasisGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 3);
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
@@ -60,10 +58,9 @@ TEST_CASE("HamiltonianGenerator: non-periodic hop") {
 
 TEST_CASE("HamiltonianGenerator: double hop 2 on 2") {
     auto hopping = std::make_unique<DoubleHoppingTermMock>();
-    REQUIRE_CALL(*hopping, calculate(_, _, _))
+    ALLOW_CALL(*hopping, calculate(_, _, _))
             .WITH(_3.getSiteDistance(_1.fromSite, _1.toSite) == 1 && _3.getSiteDistance(_2.fromSite, _2.toSite) == 1)
-            .RETURN(1)
-            .TIMES(AT_LEAST(1));
+            .RETURN(1);
     FockBasisGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 2);
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
@@ -79,10 +76,9 @@ TEST_CASE("HamiltonianGenerator: double hop 2 on 2") {
 
 TEST_CASE("HamiltonianGenerator: double hop 2 on 3") {
     auto hopping = std::make_unique<DoubleHoppingTermMock>();
-    REQUIRE_CALL(*hopping, calculate(_, _, _))
+    ALLOW_CALL(*hopping, calculate(_, _, _))
             .WITH(_3.getSiteDistance(_1.fromSite, _1.toSite) == 1 && _3.getSiteDistance(_2.fromSite, _2.toSite) == 1)
-            .RETURN(1)
-            .TIMES(AT_LEAST(1));
+            .RETURN(1);
     FockBasisGenerator baseGenerator;
     auto fockBase = baseGenerator.generate(2, 3);
     HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
@@ -136,10 +132,9 @@ TEST_CASE("HamiltonianGenerator: diagonalization") {
     SECTION("off-diagonal") {
         // Simple zeros on diagonal and ones off diagonal
         auto hopping = std::make_unique<HoppingTermMock>();
-        REQUIRE_CALL(*hopping, calculate(_, _))
+        ALLOW_CALL(*hopping, calculate(_, _))
                 .WITH(HopBetween(_1) == HopBetween(0, 1))
-                .RETURN(1)
-                .TIMES(AT_LEAST(1));
+                .RETURN(1);
         FockBasisGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(1, 2);
         HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
@@ -159,18 +154,15 @@ TEST_CASE("HamiltonianGenerator: diagonalization") {
 TEST_CASE("HamiltonianGenerator: PBC") {
     SECTION("Periodic BC - periodic hopping should be present") {
         auto hopping = std::make_unique<HoppingTermMock>();
-        REQUIRE_CALL(*hopping, calculate(_, _))
+        ALLOW_CALL(*hopping, calculate(_, _))
                 .WITH(HopBetween(_1) == HopBetween(0, 1))
-                .RETURN(-1)
-                .TIMES(AT_LEAST(1));
-        REQUIRE_CALL(*hopping, calculate(_, _))
+                .RETURN(-1);
+        ALLOW_CALL(*hopping, calculate(_, _))
                 .WITH(HopBetween(_1) == HopBetween(1, 2))
-                .RETURN(-1)
-                .TIMES(AT_LEAST(1));
-        REQUIRE_CALL(*hopping, calculate(_, _))
+                .RETURN(-1);
+        ALLOW_CALL(*hopping, calculate(_, _))
                 .WITH(HopBetween(_1) == HopBetween(0, 2))
-                .RETURN(-1)
-                .TIMES(AT_LEAST(1));
+                .RETURN(-1);
         FockBasisGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(2, 3);
         HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), true);
@@ -181,14 +173,12 @@ TEST_CASE("HamiltonianGenerator: PBC") {
 
     SECTION("Non periodic BC - periodic hopping should not be present") {
         auto hopping = std::make_unique<HoppingTermMock>();
-        REQUIRE_CALL(*hopping, calculate(_, _))
+        ALLOW_CALL(*hopping, calculate(_, _))
                 .WITH(HopBetween(_1) == HopBetween(0, 1))
-                .RETURN(-1)
-                .TIMES(AT_LEAST(1));
-        REQUIRE_CALL(*hopping, calculate(_, _))
+                .RETURN(-1);
+        ALLOW_CALL(*hopping, calculate(_, _))
                 .WITH(HopBetween(_1) == HopBetween(1, 2))
-                .RETURN(-1)
-                .TIMES(AT_LEAST(1));
+                .RETURN(-1);
         FockBasisGenerator baseGenerator;
         auto fockBase = baseGenerator.generate(2, 3);
         HamiltonianGenerator hamiltonianGenerator(std::move(fockBase), false);
