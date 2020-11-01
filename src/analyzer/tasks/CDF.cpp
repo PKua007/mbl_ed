@@ -11,23 +11,21 @@
 #include "CDF.h"
 #include "simulation/RestorableHelper.h"
 
-void CDF::analyze(const Eigensystem &eigensystem, Logger &logger) {
-    static_cast<void>(logger);
-
-    for (auto &cdfEntry : this->cdfTable)
-        cdfEntry.push_back(0);
+void CDF::analyze(const Eigensystem &eigensystem, [[maybe_unused]] Logger &logger) {
+    std::size_t numBins = this->cdfTable.size();
+    std::vector<double> binsValue(numBins, 0);
 
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
     std::size_t steps = this->cdfTable.size();
     for (auto energy : normalizedEnergies) {
-        auto it = this->cdfTable.begin();
-        while(static_cast<double>(it - this->cdfTable.begin()) / static_cast<double>(steps - 1) < energy)
+        auto it = binsValue.begin();
+        while(static_cast<double>(it - binsValue.begin()) / static_cast<double>(steps - 1) < energy)
             it++;
-        std::for_each(it, this->cdfTable.end(), [](auto &entry) { entry.back()++; });
+        std::for_each(it, binsValue.end(), [](auto &binValue) { binValue++; });
     }
 
-    for (auto &cdfEntry : this->cdfTable)
-        cdfEntry.back() /= eigensystem.size();
+    for (std::size_t i{}; i < this->cdfTable.size(); i++)
+        this->cdfTable[i].push_back(binsValue[i] / eigensystem.size());
 }
 
 std::string CDF::getName() const {
