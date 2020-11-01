@@ -13,6 +13,7 @@
 #include "analyzer/Analyzer.h"
 #include "analyzer/tasks/BulkMeanGapRatio.h"
 #include "analyzer/tasks/CDF.h"
+#include "analyzer/tasks/PDF.h"
 #include "analyzer/tasks/DressedStatesFinder.h"
 #include "analyzer/tasks/InverseParticipationRatio.h"
 #include "analyzer/tasks/MeanGapRatio.h"
@@ -87,6 +88,17 @@ namespace {
         CDF generateRestorable() { return CDF(4); }
         void addFirstEntry(CDF &cdf) { cdf.analyze(this->eigensystem1, this->logger); }
         void addSecondEntry(CDF &cdf) { cdf.analyze(this->eigensystem2, this->logger); }
+    };
+
+    template<>
+    struct RestorableAccessor<PDF> : public WithHubbardQuasiperiodicEigensystems,
+                                     public WithGetResultForBulkAnalyzerTask, public WithLogger
+    {
+        RestorableAccessor() : WithHubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
+
+        PDF generateRestorable() { return PDF(4); }
+        void addFirstEntry(PDF &cdf) { cdf.analyze(this->eigensystem1, this->logger); }
+        void addSecondEntry(PDF &cdf) { cdf.analyze(this->eigensystem2, this->logger); }
     };
 
 
@@ -212,7 +224,7 @@ namespace {
     };
 }
 
-TEMPLATE_TEST_CASE("Restorable: contract test", "", BulkMeanGapRatio, CDF, DressedStatesFinder,
+TEMPLATE_TEST_CASE("Restorable: contract test", "", BulkMeanGapRatio, CDF, PDF, DressedStatesFinder,
                    InverseParticipationRatio, MeanGapRatio, MeanInverseParticipationRatio, Analyzer,
                    EigenstateObservables)
 {

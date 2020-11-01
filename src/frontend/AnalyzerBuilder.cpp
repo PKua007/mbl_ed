@@ -13,6 +13,7 @@
 #include "utils/Utils.h"
 
 #include "analyzer/tasks/CDF.h"
+#include "analyzer/tasks/PDF.h"
 #include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/InverseParticipationRatio.h"
@@ -129,6 +130,12 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             ValidateMsg(taskStream, "Wrong format, use: cdf [number of bins]");
             Validate(bins >= 2);
             analyzer->addTask(std::make_unique<CDF>(bins));
+        } else if (taskName == "pdf") {
+            std::size_t bins;
+            taskStream >> bins;
+            ValidateMsg(taskStream, "Wrong format, use: pdf [number of bins]");
+            Validate(bins >= 2);
+            analyzer->addTask(std::make_unique<PDF>(bins));
         } else if (taskName == "evolution") {
             if (params.N != params.K || params.K % 2 != 0)
                 throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
