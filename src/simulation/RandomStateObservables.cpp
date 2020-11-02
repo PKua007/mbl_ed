@@ -30,12 +30,18 @@ void RandomStateObservables::performSimulation([[maybe_unused]] std::size_t simu
                                                [[maybe_unused]] std::size_t totalSimulations,
                                                Logger &logger)
 {
+    logger.verbose() << "Simulation " << simulationIndex << " started..." << std::endl;
+    arma::wall_clock timer;
+    timer.tic();
+
     std::size_t size = this->basis->size();
     arma::cx_vec state(size);
     std::generate(state.begin(), state.end(), [this, size]() { return this->nextGaussian(1./size); });
 
     this->addStateToObservables(state, this->notNormalizedValues);
     this->addStateToObservables(arma::normalise(state), this->normalizedValues);
+
+    logger.info() << "Simulation " << simulationIndex << " done (" << timer.toc() << " s)." << std::endl;
 }
 
 void RandomStateObservables::addStateToObservables(const arma::cx_vec &state,
