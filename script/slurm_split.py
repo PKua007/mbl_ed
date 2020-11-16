@@ -1,4 +1,4 @@
-#!python
+#!/usr/bin/python3
 
 import os
 import sys
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     fromParam = 0
     fullCommand = ""
     for node in range(nodes):
-        srunCommand = "srun -N1 --ntasks={} bash -c '\n".format(tasks_per_node)
+        srunCommand = "srun -N 1 -n 1 -c {} bash -c '\n".format(tasks_per_node)
         for task in range(tasks_per_node):
             toParam = min(fromParam + simulations_per_task, totalParam)
             srunCommand += "    {} -P from={} -P to={} &\n".format(command, int(round(fromParam)), int(round(toParam)))
