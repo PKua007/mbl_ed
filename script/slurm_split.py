@@ -5,36 +5,36 @@ import sys
 
 if __name__ == "__main__":
     if len(sys.argv) < 5:
-        print("Usage: {} [nodes] [tasks per node] [total] (command)".format(sys.argv[0]))
+        print("Usage: {} [nodes] [tasks per node] [total] (mbl command)".format(sys.argv[0]))
         sys.exit(1)
 
     nodes = int(sys.argv[1])
-    tasks_per_node = int(sys.argv[2])
+    processesPerNode = int(sys.argv[2])
     totalParam = int(sys.argv[3])
 
-    if nodes <= 0 or tasks_per_node <= 0 or totalParam <= 0:
+    if nodes <= 0 or processesPerNode <= 0 or totalParam <= 0:
         print("Incorrect arguments")
         sys.exit(1)
 
-    total_tasks = nodes * tasks_per_node
-    if total_tasks > totalParam:
+    totalProcesses = nodes * processesPerNode
+    if totalProcesses > totalParam:
         print("To many tasks for the job")
         sys.exit(1)
 
-    command = ""
+    mblCommand = ""
     for arg in sys.argv[4:]:
         arg = arg.replace(" ", "\\ ")
-        command += arg + " "
+        mblCommand += arg + " "
 
-    simulations_per_task = totalParam/total_tasks
+    simulationsPerProcess = totalParam/totalProcesses
     fromParam = 0
     fullCommand = ""
     for node in range(nodes):
-        srunCommand = "srun -N 1 -n 1 -c {} bash -c '\n".format(tasks_per_node)
-        for task in range(tasks_per_node):
-            toParam = min(fromParam + simulations_per_task, totalParam)
-            srunCommand += "    {} -P from={} -P to={} &\n".format(command, int(round(fromParam)), int(round(toParam)))
-            fromParam += simulations_per_task
+        srunCommand = "srun -N 1 -n 1 -c {} bash -c '\n".format(processesPerNode)
+        for process in range(processesPerNode):
+            toParam = min(fromParam + simulationsPerProcess, totalParam)
+            srunCommand += "    {} -P from={} -P to={} &\n".format(mblCommand, int(round(fromParam)), int(round(toParam)))
+            fromParam += simulationsPerProcess
         srunCommand += "    wait\n' &\n\n"
         fullCommand += srunCommand
     fullCommand += "wait\n"
