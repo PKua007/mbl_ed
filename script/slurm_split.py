@@ -4,7 +4,7 @@ import os
 import sys
 
 if __name__ == "__main__":
-    if len(sys.argv) < 5:
+    if len(sys.argv) < 6:
         print("Usage: {} [nodes] [processes per node] [cores per process] [total] (mbl command)".format(sys.argv[0]))
         sys.exit(1)
 
