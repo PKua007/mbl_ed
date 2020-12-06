@@ -35,6 +35,7 @@ public:
     double calculate(const FockBasis::Vector &vector, const HamiltonianGenerator &generator) override;
 
     void setPhi0(double phi0_);
+    [[nodiscard]] double calculateCosineForSite(std::size_t siteIdx) const;
 };
 
 

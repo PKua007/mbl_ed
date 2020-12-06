@@ -49,6 +49,7 @@ namespace {
 
 std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
                                                  const std::shared_ptr<FockBasis>& fockBasis,
+                                                 std::optional<std::reference_wrapper<const HamiltonianGenerator>> hamiltonianGenerator,
                                                  const std::filesystem::path &auxiliaryDir)
 {
     auto analyzer = std::make_unique<Analyzer>();
@@ -208,7 +209,7 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             std::getline(taskStream, observablesString);
             std::vector<std::string> observablesParams = explode(observablesString, ';');
             ObservablesBuilder builder;
-            builder.build(observablesParams, params, fockBasis);
+            builder.build(observablesParams, params, fockBasis, hamiltonianGenerator);
             auto eigenstateObservables = std::make_unique<EigenstateObservables>(
                 numBins, builder.releasePrimaryObservables(), builder.releaseSecondaryObservables(),
                 builder.releaseStoredObservables()

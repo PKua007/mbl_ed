@@ -81,19 +81,19 @@ public:
     void addDoubleHoppingTerm(std::shared_ptr<DoubleHoppingTerm> term);
 
     /**
-     * @brief Returns modyfiable list of diagonal terms.
+     * @brief Returns list of modifiable diagonal terms.
      */
-    [[nodiscard]] const std::vector<std::shared_ptr<DiagonalTerm>> &getDiagonalTerms();
+    [[nodiscard]] const std::vector<std::shared_ptr<DiagonalTerm>> &getDiagonalTerms() const;
 
     /**
-     * @brief Returns modyfiable list of hopping terms.
+     * @brief Returns list of modifiable hopping terms.
      */
-    [[nodiscard]] const std::vector<std::shared_ptr<HoppingTerm>> &getHoppingTerms();
+    [[nodiscard]] const std::vector<std::shared_ptr<HoppingTerm>> &getHoppingTerms() const;
 
     /**
-     * @brief Returns modyfiable list of double hopping terms.
+     * @brief Returns list of modifiable double hopping terms.
      */
-    [[nodiscard]] const std::vector<std::shared_ptr<DoubleHoppingTerm>> &getDoubleHoppingTerms();
+    [[nodiscard]] const std::vector<std::shared_ptr<DoubleHoppingTerm>> &getDoubleHoppingTerms() const;
 
     [[nodiscard]] const std::shared_ptr<const FockBasis> &getFockBasis() const { return this->fockBasis; };
     [[nodiscard]] bool usingPBC() const { return this->usePBC; }

@@ -10,6 +10,7 @@
 
 #include "analyzer/Analyzer.h"
 #include "Parameters.h"
+#include "core/HamiltonianGenerator.h"
 
 /**
  * @brief A class responsible for building the Analyzer class based on the vector of given tasks and Parameters.
@@ -22,6 +23,7 @@ public:
      */
     std::unique_ptr<Analyzer> build(const std::vector<std::string> &tasks, const Parameters &params,
                                     const std::shared_ptr<FockBasis>& fockBasis,
+                                    std::optional<std::reference_wrapper<const HamiltonianGenerator>> hamiltonianGenerator,
                                     const std::filesystem::path &auxiliaryDir = std::filesystem::current_path());
 };
 

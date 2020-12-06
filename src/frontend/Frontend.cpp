@@ -111,7 +111,7 @@ void Frontend::ed(int argc, char **argv) {
     // Prepare HamiltonianGenerator, Analyzer and AveragingModel
     auto rnd = std::make_unique<RND>();
     auto hamiltonianGenerator = HamiltonianGeneratorBuilder{}.build(params, basis, *rnd);
-    auto analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, basis, directory);
+    auto analyzer = AnalyzerBuilder{}.build(onTheFlyTasks, params, basis, *hamiltonianGenerator, directory);
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run simulations
@@ -234,7 +234,7 @@ void Frontend::analyze(int argc, char **argv) {
     logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
 
     // Load eigenenergies and analyze them
-    auto analyzer = AnalyzerBuilder{}.build(tasks, params, basis, directory);
+    auto analyzer = AnalyzerBuilder{}.build(tasks, params, basis, std::nullopt, directory);
     std::string fileSignature = params.getOutputFileSignature();
     std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
     if (energiesFilenames.empty())
@@ -379,7 +379,7 @@ void Frontend::chebyshev(int argc, char **argv) {
     evolutionParams.setVectorsToEvolveFromTags(vectorsToEvolveTags); // This one also does the validation
 
     ObservablesBuilder observablesBuilder;
-    observablesBuilder.build(observableStrings, params, basis);
+    observablesBuilder.build(observableStrings, params, basis, *hamiltonianGenerator);
     evolutionParams.primaryObservables = observablesBuilder.releasePrimaryObservables();
     evolutionParams.secondaryObservables = observablesBuilder.releaseSecondaryObservables();
     evolutionParams.storedObservables = observablesBuilder.releaseStoredObservables();
@@ -614,7 +614,7 @@ void Frontend::randomStates(int argc, char **argv) {
     auto rnd = std::make_unique<RND>();
 
     ObservablesBuilder observablesBuilder;
-    observablesBuilder.build(observableStrings, params, basis);
+    observablesBuilder.build(observableStrings, params, basis, std::nullopt);
     RandomStateObservables simulation(std::move(rnd), std::move(basis), observablesBuilder.releasePrimaryObservables(),
                                       observablesBuilder.releaseSecondaryObservables(),
                                       observablesBuilder.releaseStoredObservables());

@@ -13,6 +13,7 @@
 #include "core/FockBasis.h"
 #include "core/PrimaryObservable.h"
 #include "core/SecondaryObservable.h"
+#include "core/HamiltonianGenerator.h"
 
 /**
  * @brief A class building PrimaryObservables, SecondaryObservables and stored Observable -s lists from string
@@ -33,7 +34,8 @@ public:
      * explicitly, but needed by SecondaryObservables.
      */
     void build(const std::vector<std::string> &observables, const Parameters &params,
-               const std::shared_ptr<FockBasis> &fockBasis);
+               const std::shared_ptr<FockBasis> &fockBasis,
+               std::optional<std::reference_wrapper<const HamiltonianGenerator>> hamiltonianGenerator);
 
     /**
      * @brief Returns the list of PrimaryObservables and releases it from the memory of the class.

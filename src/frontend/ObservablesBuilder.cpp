@@ -10,9 +10,12 @@
 #include "core/observables/OnsiteFluctuations.h"
 #include "core/observables/Correlations.h"
 #include "core/observables/BipariteEntropy.h"
+#include "core/observables/CavityOnsiteOccupations.h"
+#include "core/observables/CavityOnsiteOccupationsSquared.h"
 
 void ObservablesBuilder::build(const std::vector<std::string> &observables, const Parameters &params,
-                               const std::shared_ptr<FockBasis> &fockBasis)
+                               const std::shared_ptr<FockBasis> &fockBasis,
+                               std::optional<std::reference_wrapper<const HamiltonianGenerator>> hamiltonianGenerator)
 {
     this->primaryObservables.clear();
     this->secondaryObservables.clear();
@@ -22,6 +25,8 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
     std::shared_ptr<OnsiteOccupations> occupations;
     std::shared_ptr<OnsiteOccupationsSquared> occupations2;
     std::shared_ptr<BipariteEntropy> bipariteEntropy;
+    std::shared_ptr<CavityOnsiteOccupations> cavityOccupations;
+    std::shared_ptr<CavityOnsiteOccupationsSquared> cavityOccupationsSquared;
 
     for (const auto &observable : observables) {
         std::istringstream observableStream(observable);
@@ -59,6 +64,38 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
         } else if (observableName == "S") {
             bipariteEntropy = std::make_shared<BipariteEntropy>(fockBasis);
             this->storedObservables.push_back(bipariteEntropy);
+        } else if (observableName == "n_i_cos") {
+            if (!hamiltonianGenerator.has_value())
+                throw std::runtime_error("HamiltonianGenerator is needed to create CavityOccupations");
+
+            std::shared_ptr<CavityLongInteraction> cavityLongInteraction;
+            for (const auto &term : hamiltonianGenerator->get().getDiagonalTerms()) {
+                cavityLongInteraction = std::dynamic_pointer_cast<CavityLongInteraction>(term);
+                if (cavityLongInteraction)
+                    break;
+            }
+            if (!cavityLongInteraction)
+                throw std::runtime_error("CavityLongInteraction term not found for CavityOccupations");
+
+            cavityOccupations = std::make_shared<CavityOnsiteOccupations>(fockBasis, cavityLongInteraction);
+            this->storedObservables.push_back(cavityOccupations);
+        } else if (observableName == "n_iN_j_cos") {
+            if (!hamiltonianGenerator.has_value())
+                throw std::runtime_error("HamiltonianGenerator is needed to create CavityOccupationsSquared");
+
+            std::shared_ptr<CavityLongInteraction> cavityLongInteraction;
+            for (const auto &term : hamiltonianGenerator->get().getDiagonalTerms()) {
+                cavityLongInteraction = std::dynamic_pointer_cast<CavityLongInteraction>(term);
+                if (cavityLongInteraction)
+                    break;
+            }
+            if (!cavityLongInteraction)
+                throw std::runtime_error("CavityLongInteraction term not found for CavityOccupationsSquared");
+
+            cavityOccupationsSquared = std::make_shared<CavityOnsiteOccupationsSquared>(
+                fockBasis, cavityLongInteraction
+            );
+            this->storedObservables.push_back(cavityOccupationsSquared);
         } else {
             throw ValidationException("Unknown observable: " + observable);
         }
@@ -69,5 +106,9 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
             this->primaryObservables.push_back(occupations2);
         if (bipariteEntropy != nullptr)
             this->primaryObservables.push_back(bipariteEntropy);
+        if (cavityOccupations != nullptr)
+            this->primaryObservables.push_back(cavityOccupations);
+        if (cavityOccupationsSquared != nullptr)
+            this->primaryObservables.push_back(cavityOccupationsSquared);
     }
 }

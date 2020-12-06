@@ -120,15 +120,15 @@ size_t HamiltonianGenerator::getSiteDistance(std::size_t fromSite, std::size_t t
     return distance;
 }
 
-const std::vector<std::shared_ptr<DiagonalTerm>> &HamiltonianGenerator::getDiagonalTerms() {
+const std::vector<std::shared_ptr<DiagonalTerm>> &HamiltonianGenerator::getDiagonalTerms() const {
     return this->diagonalTerms;
 }
 
-const std::vector<std::shared_ptr<HoppingTerm>> &HamiltonianGenerator::getHoppingTerms() {
+const std::vector<std::shared_ptr<HoppingTerm>> &HamiltonianGenerator::getHoppingTerms() const {
     return this->hoppingTerms;
 }
 
-const std::vector<std::shared_ptr<DoubleHoppingTerm>> &HamiltonianGenerator::getDoubleHoppingTerms() {
+const std::vector<std::shared_ptr<DoubleHoppingTerm>> &HamiltonianGenerator::getDoubleHoppingTerms() const {
     return this->doubleHoppingTerms;
 }
 
