@@ -12,6 +12,8 @@
 #include "core/observables/BipariteEntropy.h"
 #include "core/observables/CavityOnsiteOccupations.h"
 #include "core/observables/CavityOnsiteOccupationsSquared.h"
+#include "core/observables/CavityElectricField.h"
+#include "core/observables/CavityLightIntensity.h"
 
 void ObservablesBuilder::build(const std::vector<std::string> &observables, const Parameters &params,
                                const std::shared_ptr<FockBasis> &fockBasis,
@@ -96,6 +98,46 @@ void ObservablesBuilder::build(const std::vector<std::string> &observables, cons
                 fockBasis, cavityLongInteraction
             );
             this->storedObservables.push_back(cavityOccupationsSquared);
+        } else if (observableName == "a") {
+            if (cavityOccupations == nullptr) {
+                if (!hamiltonianGenerator.has_value())
+                    throw std::runtime_error("HamiltonianGenerator is needed to create CavityOccupations");
+
+                std::shared_ptr<CavityLongInteraction> cavityLongInteraction;
+                for (const auto &term : hamiltonianGenerator->get().getDiagonalTerms()) {
+                    cavityLongInteraction = std::dynamic_pointer_cast<CavityLongInteraction>(term);
+                    if (cavityLongInteraction)
+                        break;
+                }
+                if (!cavityLongInteraction)
+                    throw std::runtime_error("CavityLongInteraction term not found for CavityOccupations");
+                cavityOccupations = std::make_shared<CavityOnsiteOccupations>(fockBasis, cavityLongInteraction);
+            }
+
+            auto cavityElectricField = std::make_shared<CavityElectricField>();
+            this->secondaryObservables.push_back(cavityElectricField);
+            this->storedObservables.push_back(cavityElectricField);
+        } else if (observableName == "ada") {
+            if (cavityOccupationsSquared == nullptr) {
+                if (!hamiltonianGenerator.has_value())
+                    throw std::runtime_error("HamiltonianGenerator is needed to create CavityOccupationsSquared");
+
+                std::shared_ptr<CavityLongInteraction> cavityLongInteraction;
+                for (const auto &term : hamiltonianGenerator->get().getDiagonalTerms()) {
+                    cavityLongInteraction = std::dynamic_pointer_cast<CavityLongInteraction>(term);
+                    if (cavityLongInteraction)
+                        break;
+                }
+                if (!cavityLongInteraction)
+                    throw std::runtime_error("CavityLongInteraction term not found for CavityOccupationsSquared");
+                cavityOccupationsSquared = std::make_shared<CavityOnsiteOccupationsSquared>(
+                    fockBasis, cavityLongInteraction
+                );
+            }
+
+            auto cavityLightIntensity = std::make_shared<CavityLightIntensity>();
+            this->secondaryObservables.push_back(cavityLightIntensity);
+            this->storedObservables.push_back(cavityLightIntensity);
         } else {
             throw ValidationException("Unknown observable: " + observable);
         }
