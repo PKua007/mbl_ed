@@ -120,27 +120,27 @@ size_t HamiltonianGenerator::getSiteDistance(std::size_t fromSite, std::size_t t
     return distance;
 }
 
-std::vector<std::unique_ptr<DiagonalTerm>> &HamiltonianGenerator::getDiagonalTerms() {
+const std::vector<std::shared_ptr<DiagonalTerm>> &HamiltonianGenerator::getDiagonalTerms() {
     return this->diagonalTerms;
 }
 
-std::vector<std::unique_ptr<HoppingTerm>> &HamiltonianGenerator::getHoppingTerms() {
+const std::vector<std::shared_ptr<HoppingTerm>> &HamiltonianGenerator::getHoppingTerms() {
     return this->hoppingTerms;
 }
 
-std::vector<std::unique_ptr<DoubleHoppingTerm>> &HamiltonianGenerator::getDoubleHoppingTerms() {
+const std::vector<std::shared_ptr<DoubleHoppingTerm>> &HamiltonianGenerator::getDoubleHoppingTerms() {
     return this->doubleHoppingTerms;
 }
 
-void HamiltonianGenerator::addDiagonalTerm(std::unique_ptr<DiagonalTerm> term) {
+void HamiltonianGenerator::addDiagonalTerm(std::shared_ptr<DiagonalTerm> term) {
     this->diagonalTerms.push_back(std::move(term));
 }
 
-void HamiltonianGenerator::addHoppingTerm(std::unique_ptr<HoppingTerm> term) {
+void HamiltonianGenerator::addHoppingTerm(std::shared_ptr<HoppingTerm> term) {
     this->hoppingTerms.push_back(std::move(term));
 }
 
-void HamiltonianGenerator::addDoubleHoppingTerm(std::unique_ptr<DoubleHoppingTerm> term) {
+void HamiltonianGenerator::addDoubleHoppingTerm(std::shared_ptr<DoubleHoppingTerm> term) {
     this->doubleHoppingTerms.push_back(std::move(term));
 }
 

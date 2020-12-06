@@ -38,9 +38,9 @@ class HamiltonianGenerator {
 private:
     const bool usePBC;
     std::shared_ptr<const FockBasis> fockBasis;
-    std::vector<std::unique_ptr<DiagonalTerm>> diagonalTerms;
-    std::vector<std::unique_ptr<HoppingTerm>> hoppingTerms;
-    std::vector<std::unique_ptr<DoubleHoppingTerm>> doubleHoppingTerms;
+    std::vector<std::shared_ptr<DiagonalTerm>> diagonalTerms;
+    std::vector<std::shared_ptr<HoppingTerm>> hoppingTerms;
+    std::vector<std::shared_ptr<DoubleHoppingTerm>> doubleHoppingTerms;
 
     [[nodiscard]] std::optional<HopData>
     hoppingAction(const FockBasis::Vector &fromVector, std::size_t fromSite, std::size_t toSite) const;
@@ -76,24 +76,24 @@ public:
      */
     [[nodiscard]] size_t getSiteDistance(std::size_t fromSite, std::size_t toIdx) const;
 
-    void addDiagonalTerm(std::unique_ptr<DiagonalTerm> term);
-    void addHoppingTerm(std::unique_ptr<HoppingTerm> term);
-    void addDoubleHoppingTerm(std::unique_ptr<DoubleHoppingTerm> term);
+    void addDiagonalTerm(std::shared_ptr<DiagonalTerm> term);
+    void addHoppingTerm(std::shared_ptr<HoppingTerm> term);
+    void addDoubleHoppingTerm(std::shared_ptr<DoubleHoppingTerm> term);
 
     /**
      * @brief Returns modyfiable list of diagonal terms.
      */
-    [[nodiscard]] std::vector<std::unique_ptr<DiagonalTerm>> &getDiagonalTerms();
+    [[nodiscard]] const std::vector<std::shared_ptr<DiagonalTerm>> &getDiagonalTerms();
 
     /**
      * @brief Returns modyfiable list of hopping terms.
      */
-    [[nodiscard]] std::vector<std::unique_ptr<HoppingTerm>> &getHoppingTerms();
+    [[nodiscard]] const std::vector<std::shared_ptr<HoppingTerm>> &getHoppingTerms();
 
     /**
      * @brief Returns modyfiable list of double hopping terms.
      */
-    [[nodiscard]] std::vector<std::unique_ptr<DoubleHoppingTerm>> &getDoubleHoppingTerms();
+    [[nodiscard]] const std::vector<std::shared_ptr<DoubleHoppingTerm>> &getDoubleHoppingTerms();
 
     [[nodiscard]] const std::shared_ptr<const FockBasis> &getFockBasis() const { return this->fockBasis; };
     [[nodiscard]] bool usingPBC() const { return this->usePBC; }
