@@ -7,6 +7,15 @@
 
 #include "core/SecondaryObservable.h"
 
+/**
+ * @brief An observable representing a cavity output electric field, so a linear combination of occupation operators
+ * with cosines appearing in cavity long interactions term.
+ * @details It is given by
+ *
+ * \f[ \sum_{i=1}^K \cos(2\pi\beta i+\phi_0) \hat{n}_i. \f]
+ *
+ * For notation see CavityLongInteraction class.
+ */
 class CavityElectricField : public SecondaryObservable {
 private:
     double electricField{};

@@ -15,7 +15,9 @@
 #include "core/terms/CavityLongInteraction.h"
 
 /**
- * @brief Expected values of all combinations of 2 occupation operators <n_j n_j>.
+ * @brief Products of all pairs of onsite mean occupations multiplied by a cosine like in cavity long interaction.
+ * @details It is defined as
+ * \f[ \langle \hat{n}_i \hat{n}_j \rangle \cos(2\pi\beta i + \phi_0) \cos(2\pi\beta j + \phi_0). \f]
  */
 class CavityOnsiteOccupationsSquared : public PrimaryObservable {
 private:
@@ -32,8 +34,8 @@ public:
                                             std::shared_ptr<CavityLongInteraction> cavityLongInteractions);
 
     /**
-     * @brief Returns the names of fields in format n_iN_j, where i, j = 1, ..., (number of sites).
-     * @details The order is dictated by SymmetricMatrix class, namely n_iN_j correspond to
+     * @brief Returns the names of fields in format n_iN_j_cos, where i, j = 1, ..., (number of sites).
+     * @details The order is dictated by SymmetricMatrix class, namely n_iN_j_cos correspond to
      * SymmetricMatrix::operator()(i, j) and the order is taken from SymmetricMatrix iterator.
      */
     [[nodiscard]] std::vector<std::string> getHeader() const override;

@@ -10,7 +10,9 @@
 #include "core/terms/CavityLongInteraction.h"
 
 /**
- * @brief Onsite mean occupations for all sites defined as <n_i>.
+ * @brief Onsite mean occupations multiplied by a cosine like in cavity long interaction for all sites.
+ * @details It is defined as
+ * \f[ \langle \hat{n}_i \rangle \cos(2\pi\beta i + \phi_0). \f]
  */
 class CavityOnsiteOccupations : public PrimaryObservable {
 private:
@@ -26,7 +28,7 @@ public:
                             std::shared_ptr<CavityLongInteraction> cavityLongInteractions);
 
     /**
-     * @brief Returns the names of fields in format n_i, where i = 1, ..., (number of sites)
+     * @brief Returns the names of fields in format n_i_cos, where i = 1, ..., (number of sites)
      */
     [[nodiscard]] std::vector<std::string> getHeader() const override;
 

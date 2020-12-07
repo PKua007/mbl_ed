@@ -20,10 +20,13 @@ class AnalyzerBuilder {
 public:
     /**
      * @brief Prepares the Analyzer. Parsing @a tasks includes also validation and throwing exceptions if needed.
+     * @detail Optional HamiltonianGenerator may come handy for some tasks, for example using observables relying
+     * on specific Hamiltonian terms.
      */
     std::unique_ptr<Analyzer> build(const std::vector<std::string> &tasks, const Parameters &params,
                                     const std::shared_ptr<FockBasis>& fockBasis,
-                                    std::optional<std::reference_wrapper<const HamiltonianGenerator>> hamiltonianGenerator,
+                                    std::optional<std::reference_wrapper<const HamiltonianGenerator>>
+                                    hamiltonianGenerator,
                                     const std::filesystem::path &auxiliaryDir = std::filesystem::current_path());
 };
 

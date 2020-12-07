@@ -16,8 +16,7 @@ CavityOnsiteOccupationsSquared(std::shared_ptr<FockBasis> fockBasis,
             for (std::size_t fockIdx{}; fockIdx < this->fockBasis->size(); fockIdx++) {
                 this->diagonalObservables(i, j)[fockIdx] =
                         (*this->fockBasis)[fockIdx][i] * (*this->fockBasis)[fockIdx][j];
-                this->headerStrings(i, j) = "n_" + std::to_string(i + 1) + "N_" + std::to_string(j + 1)
-                                            + "_cos";
+                this->headerStrings(i, j) = "n_" + std::to_string(i + 1) + "N_" + std::to_string(j + 1) + "_cos";
             }
         }
     }

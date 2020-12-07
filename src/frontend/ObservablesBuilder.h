@@ -31,7 +31,8 @@ public:
      * @brief Bulids the lists of observables.
      * @details All observables represented by @a observables are of course stored Observables, irregardless if they
      * are primary or secondary. Only the minimal set of required PrimaryObservables is creating if not specified
-     * explicitly, but needed by SecondaryObservables.
+     * explicitly, but needed by SecondaryObservables. HamiltonianGenerator may be optionally passed to enable
+     * additional observables - cavity output ones as of now.
      */
     void build(const std::vector<std::string> &observables, const Parameters &params,
                const std::shared_ptr<FockBasis> &fockBasis,

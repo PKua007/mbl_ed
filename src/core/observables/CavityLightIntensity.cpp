@@ -13,11 +13,9 @@ std::vector<double> CavityLightIntensity::getValues() const {
     return {this->lightIntensity};
 }
 
-void CavityLightIntensity::
-calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObservables)
-{
+void CavityLightIntensity::calculateForObservables(const std::vector<std::shared_ptr<PrimaryObservable>> &primaryObs) {
     const auto &onsiteOccupationsSquared
-        = findObservable<CavityOnsiteOccupationsSquared>(primaryObservables).getOccupationsSquared();
+        = findObservable<CavityOnsiteOccupationsSquared>(primaryObs).getOccupationsSquared();
     this->lightIntensity = 0;
     for (std::size_t i{}; i < onsiteOccupationsSquared.size(); i++)
         for (std::size_t j{}; j < onsiteOccupationsSquared.size(); j++)
