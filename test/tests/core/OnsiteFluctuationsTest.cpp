@@ -1,6 +1,7 @@
 //
 // Created by Piotr Kubala on 23/09/2020.
 //
+
 #include <catch2/catch.hpp>
 
 #include "core/observables/OnsiteFluctuations.h"
