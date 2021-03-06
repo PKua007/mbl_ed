@@ -26,6 +26,7 @@ add_executable(tests TestMain.cpp tests/core/FockBaseGeneratorTest.cpp tests/cor
         matchers/ArmaApproxEqualTrompeloeilMatcher.h matchers/FirstObservableValuesTrompeloeilMatcher.h
         tests/analyzer/PDFTest.cpp tests/simulation/RandomStateObservablesTest.cpp
         tests/core/CavityOnsiteOccupationsTest.cpp tests/core/CavityOnsiteOccupationsSquaredTest.cpp
-        tests/core/CavityElectricFieldTest.cpp tests/core/CavityLightIntensityTest.cpp)
+        tests/core/CavityElectricFieldTest.cpp tests/core/CavityLightIntensityTest.cpp
+        tests/analyzer/ParticipationEntropyTest.cpp)
 target_link_libraries(tests PRIVATE mbl_ed_src Catch2::Catch2 trompeloeil)
 target_include_directories(tests PRIVATE ../test)

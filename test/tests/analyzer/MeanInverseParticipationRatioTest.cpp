@@ -5,12 +5,7 @@
 #include <catch2/catch.hpp>
 
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
-
-#include "core/FockBasisGenerator.h"
-#include "core/terms/HubbardHop.h"
-#include "core/terms/HubbardOnsite.h"
 #include "core/terms/QuasiperiodicDisorder.h"
-#include "core/averaging_models/UniformPhi0AveragingModel.h"
 
 TEST_CASE("MeanInverseParticipationRatio: names") {
     MeanInverseParticipationRatio ratioCalculator(0.5, 0.1);

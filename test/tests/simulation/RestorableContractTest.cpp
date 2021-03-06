@@ -19,6 +19,7 @@
 #include "analyzer/tasks/MeanGapRatio.h"
 #include "analyzer/tasks/MeanInverseParticipationRatio.h"
 #include "analyzer/tasks/EigenstateObservables.h"
+#include "analyzer/tasks/ParticipationEntropy.h"
 
 #include "core/observables/OnsiteOccupationsSquared.h"
 #include "core/observables/OnsiteOccupations.h"
@@ -222,11 +223,22 @@ namespace {
         void addFirstEntry(EigenstateObservables &eo) { eo.analyze(this->eigensystem1, this->logger); }
         void addSecondEntry(EigenstateObservables &eo) { eo.analyze(this->eigensystem2, this->logger); }
     };
+
+    template<>
+    struct RestorableAccessor<ParticipationEntropy> : public WithHubbardQuasiperiodicEigensystems, public WithLogger
+    {
+        RestorableAccessor() : WithHubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
+
+        ParticipationEntropy generateRestorable() { return ParticipationEntropy(1.5, 0.5, 0.3); }
+        void addFirstEntry(ParticipationEntropy &pe) { pe.analyze(this->eigensystem1, this->logger); }
+        void addSecondEntry(ParticipationEntropy &pe) { pe.analyze(this->eigensystem2, this->logger); }
+        auto getResult(const ParticipationEntropy &pe) { return pe.getResultFields(); }
+    };
 }
 
 TEMPLATE_TEST_CASE("Restorable: contract test", "", BulkMeanGapRatio, CDF, PDF, DressedStatesFinder,
                    InverseParticipationRatio, MeanGapRatio, MeanInverseParticipationRatio, Analyzer,
-                   EigenstateObservables)
+                   EigenstateObservables, ParticipationEntropy)
 {
     RestorableAccessor<TestType> restorableAccessor;
     TestType restorable = restorableAccessor.generateRestorable();

@@ -21,6 +21,7 @@
 #include "analyzer/tasks/DressedStatesFinder.h"
 #include "analyzer/tasks/BulkMeanGapRatio.h"
 #include "analyzer/tasks/EigenstateObservables.h"
+#include "analyzer/tasks/ParticipationEntropy.h"
 
 #include "core/observables/OnsiteOccupations.h"
 #include "core/observables/OnsiteOccupationsSquared.h"
@@ -217,6 +218,15 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             if (store)
                 eigenstateObservables->startStoringObservables(auxiliaryDir / params.getOutputFileSignature());
             analyzer->addTask(std::move(eigenstateObservables));
+        } else if (taskName == "pe") {
+            double q, mgrCenter, mgrMargin;
+            taskStream >> q >> mgrCenter >> mgrMargin;
+            ValidateMsg(taskStream, "Wrong format, use: pe [q parameter] [epsilon center] [epsilon margin]");
+            Validate(mgrCenter > 0 && mgrCenter < 1);
+            Validate(mgrMargin > 0 && mgrMargin <= 1);
+            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
+            Validate(q > 0);
+            analyzer->addTask(std::make_unique<ParticipationEntropy>(q, mgrCenter, mgrMargin));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
         }
