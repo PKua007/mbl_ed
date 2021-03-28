@@ -36,19 +36,38 @@ std::vector<std::size_t> MeanGapRatio::getBandIndices(const Eigensystem &eigensy
     if (std::holds_alternative<VectorRange>(this->range)) {
         const auto &vectorRange = std::get<VectorRange>(this->range);
         double relativeMiddleEnergy = calculateEnergyOfFockState(vectorRange.middleVector, eigensystem);
-        double relativeMargin = vectorRange.epsilonMargin;
-        if (relativeMiddleEnergy - relativeMargin / 2 <= 0 || relativeMiddleEnergy + relativeMargin / 2 >= 1) {
-            throw std::runtime_error(
-                "Margin " + std::to_string(relativeMargin) + " is to big around the given vector of the energy "
-                + std::to_string(relativeMiddleEnergy)
-            );
-        }
 
-        logger.info() << "Mgr calculated around: " << relativeMiddleEnergy << ". " << std::endl;
-        return eigensystem.getIndicesOfNormalizedEnergiesInBand(relativeMiddleEnergy, relativeMargin);
+        if (std::holds_alternative<WidthMargin>(vectorRange.epsilonMargin)) {
+            double relativeMargin = std::get<WidthMargin>(vectorRange.epsilonMargin);
+            if (relativeMiddleEnergy - relativeMargin / 2 <= 0 || relativeMiddleEnergy + relativeMargin / 2 >= 1) {
+                throw std::runtime_error(
+                    "Margin " + std::to_string(relativeMargin) + " is to big around the given vector of the energy "
+                    + std::to_string(relativeMiddleEnergy)
+                );
+            }
+
+            logger.info() << "Mgr calculated around: " << relativeMiddleEnergy << ". " << std::endl;
+            return eigensystem.getIndicesOfNormalizedEnergiesInBand(relativeMiddleEnergy, relativeMargin);
+        } else { // holds alternative NumberOfEnergiesMargin
+            std::size_t numE = std::get<NumberOfEnergiesMargin>(vectorRange.epsilonMargin);
+            auto bandIndices = eigensystem.getIndicesOfNumberOfNormalizedEnergies(relativeMiddleEnergy, numE);
+            logger.info() << "Mgr calculated around: " << relativeMiddleEnergy << ", for: [";
+            logger << normalizedEnergies[bandIndices.front()] << ", " << normalizedEnergies[bandIndices.back()] << "].";
+            logger << std::endl;
+            return bandIndices;
+        }
     } else if (std::holds_alternative<EpsilonRange>(this->range)) {
         const auto &epsilonRange = std::get<EpsilonRange>(this->range);
-        return eigensystem.getIndicesOfNormalizedEnergiesInBand(epsilonRange.epsilonMiddle, epsilonRange.epsilonMargin);
+        if (std::holds_alternative<WidthMargin>(epsilonRange.epsilonMargin)) {
+            double margin = std::get<WidthMargin>(epsilonRange.epsilonMargin);
+            return eigensystem.getIndicesOfNormalizedEnergiesInBand(epsilonRange.epsilonMiddle, margin);
+        } else { // holds alternative NumberOfEnergiesMargin
+            std::size_t numE = std::get<NumberOfEnergiesMargin>(epsilonRange.epsilonMargin);
+            auto bandIndices = eigensystem.getIndicesOfNumberOfNormalizedEnergies(epsilonRange.epsilonMiddle, numE);
+            logger.info() << "Mgr calculated for: [" << normalizedEnergies[bandIndices.front()] << ", ";
+            logger << normalizedEnergies[bandIndices.back()] << "]." << std::endl;
+            return bandIndices;
+        }
     } else if (std::holds_alternative<CDFRange>(this->range)) {
         const auto &cdfRange = std::get<CDFRange>(this->range);
         double relativeIndexStart = cdfRange.cdfMiddle - cdfRange.cdfMargin / 2;
@@ -130,17 +149,23 @@ void MeanGapRatio::clear() {
     this->gapRatios.clear();
 }
 
-MeanGapRatio::EpsilonRange::EpsilonRange(double epsilonMiddle, double epsilonMargin)
+MeanGapRatio::EpsilonRange::EpsilonRange(double epsilonMiddle, Margin epsilonMargin)
         : epsilonMiddle{epsilonMiddle}, epsilonMargin{epsilonMargin}
 {
-    Expects(epsilonMargin > 0);
-    Expects(epsilonMiddle - epsilonMargin/2 > 0 && epsilonMiddle + epsilonMargin/2 < 1);
+    if (std::holds_alternative<WidthMargin>(epsilonMargin)) {
+        double margin = std::get<WidthMargin>(epsilonMargin);
+        Expects(margin > 0);
+        Expects(epsilonMiddle - margin / 2 > 0 && epsilonMiddle + margin / 2 < 1);
+    }
 }
 
-MeanGapRatio::VectorRange::VectorRange(FockBasis::Vector middleVector, double epsilonMargin)
+MeanGapRatio::VectorRange::VectorRange(FockBasis::Vector middleVector, Margin epsilonMargin)
         : middleVector{std::move(middleVector)}, epsilonMargin{epsilonMargin}
 {
-    Expects(epsilonMargin > 0);
+    if (std::holds_alternative<WidthMargin>(epsilonMargin)) {
+        double margin = std::get<WidthMargin>(epsilonMargin);
+        Expects(margin > 0);
+    }
 }
 
 MeanGapRatio::CDFRange::CDFRange(double cdfMiddle, double cdfMargin) : cdfMiddle(cdfMiddle), cdfMargin(cdfMargin) {

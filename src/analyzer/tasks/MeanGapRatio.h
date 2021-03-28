@@ -34,15 +34,20 @@
  */
 class MeanGapRatio : public InlineAnalyzerTask {
 public:
+    using WidthMargin = double;
+    using NumberOfEnergiesMargin = std::size_t;
+
+    using Margin = std::variant<WidthMargin, NumberOfEnergiesMargin>;
+
     /**
      * @brief Range in the epsilon version - band of energies normalized to [0, 1]
      */
     struct EpsilonRange {
         EpsilonRange() = default;
-        EpsilonRange(double epsilonMiddle, double epsilonMargin);
+        EpsilonRange(double epsilonMiddle, Margin epsilonMargin);
 
         double epsilonMiddle{};
-        double epsilonMargin{};
+        Margin epsilonMargin{};
     };
 
     /**
@@ -50,10 +55,10 @@ public:
      */
     struct VectorRange {
         VectorRange() = default;
-        VectorRange(FockBasis::Vector middleVector, double epsilonMargin);
+        VectorRange(FockBasis::Vector middleVector, Margin epsilonMargin);
 
         FockBasis::Vector middleVector{};
-        double epsilonMargin{};
+        Margin epsilonMargin{};
     };
 
     /**

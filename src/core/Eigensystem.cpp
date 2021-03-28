@@ -136,6 +136,29 @@ std::vector<std::size_t> Eigensystem::getIndicesOfNormalizedEnergiesInBand(doubl
     return indices;
 }
 
+std::vector<std::size_t> Eigensystem::getIndicesOfNumberOfNormalizedEnergies(double epsilon,
+                                                                             std::size_t numEnergies) const
+{
+    Expects(epsilon > 0 && epsilon < 1);
+    Expects(numEnergies > 0);
+    Expects(numEnergies <= this->eigenenergies.size());
+
+    auto normalizedEnergies = this->getNormalizedEigenenergies();
+    std::vector<double> distances(normalizedEnergies.size());
+    std::transform(normalizedEnergies.begin(), normalizedEnergies.end(), distances.begin(),
+                   [epsilon](double e) { return std::abs(e - epsilon); });
+
+    std::vector<std::size_t> indices(this->eigenenergies.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    auto distZipped = Zip(distances, indices);
+    std::sort(distZipped.begin(), distZipped.end());
+
+    indices.resize(numEnergies);
+    std::sort(indices.begin(), indices.end());
+    return indices;
+}
+
 const FockBasis &Eigensystem::getFockBasis() const {
     return *(this->fockBasis);
 }

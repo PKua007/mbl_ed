@@ -49,7 +49,7 @@ namespace {
 }
 
 std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
-                                                 const std::shared_ptr<FockBasis>& fockBasis,
+                                                 const std::shared_ptr<FockBasis> &fockBasis,
                                                  std::optional<std::reference_wrapper<const HamiltonianGenerator>>
                                                  hamiltonianGenerator, const std::filesystem::path &auxiliaryDir)
 {
@@ -62,8 +62,8 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             std::string firstArg;
             taskStream >> firstArg;
             std::string usage = "Wrong format, use one of:\n"
-                                "mgr [epsilon center] [epsilon margin]\n"
-                                "mgr dw|unif|2.1.0.0 [epsilon margin]\n"
+                                "mgr [epsilon center] [epsilon margin]|{n [number of energies]}\n"
+                                "mgr dw|unif|2.1.0.0 [epsilon margin]|{n [number of energies]}\n"
                                 "mgr cdf [cdf center] [cdf margin]";
             ValidateMsg(taskStream, usage);
 
@@ -77,19 +77,38 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
                 analyzer->addTask(std::make_unique<MeanGapRatio>(MeanGapRatio::CDFRange(cdfMiddle, cdfMargin)));
             } else {
                 const std::string &middle = firstArg;
-                double epsilonMargin{};
-                taskStream >> epsilonMargin;
+                std::string marginToken{};
+                taskStream >> marginToken;
                 ValidateMsg(taskStream, usage);
+
+                double epsilonMargin{};
+                std::size_t numEnergies{};
+
+                if (marginToken == "n") {
+                    taskStream >> numEnergies;
+                    ValidateMsg(taskStream, usage);
+                    Validate(numEnergies > 0);
+                    Validate(numEnergies <= fockBasis->size());
+                } else {
+                    epsilonMargin = parse_double(marginToken);
+                    Validate(epsilonMargin > 0 && epsilonMargin <= 1);
+                }
 
                 // First, try form [epsilon center] [epsilon margin]
                 try {
                     double epsilonMiddle = parse_double(middle);
                     Validate(epsilonMiddle > 0 && epsilonMiddle < 1);
-                    Validate(epsilonMargin > 0);
-                    Validate(epsilonMiddle - epsilonMargin / 2 >= 0 && epsilonMiddle + epsilonMargin / 2 <= 1);
-                    analyzer->addTask(
-                        std::make_unique<MeanGapRatio>(MeanGapRatio::EpsilonRange(epsilonMiddle, epsilonMargin))
-                    );
+
+                    if (marginToken == "n") {
+                        analyzer->addTask(
+                            std::make_unique<MeanGapRatio>(MeanGapRatio::EpsilonRange(epsilonMiddle, numEnergies))
+                        );
+                    } else {
+                        Validate(epsilonMiddle - epsilonMargin / 2 >= 0 && epsilonMiddle + epsilonMargin / 2 <= 1);
+                        analyzer->addTask(
+                            std::make_unique<MeanGapRatio>(MeanGapRatio::EpsilonRange(epsilonMiddle, epsilonMargin))
+                        );
+                    }
                 } catch (ParseDoubleException &) {
                     FockBasis::Vector middleVector;
 
@@ -105,9 +124,15 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
                         }
                     }
 
-                    analyzer->addTask(
-                        std::make_unique<MeanGapRatio>(MeanGapRatio::VectorRange(middleVector, epsilonMargin))
-                    );
+                    if (marginToken == "n") {
+                        analyzer->addTask(
+                            std::make_unique<MeanGapRatio>(MeanGapRatio::VectorRange(middleVector, numEnergies))
+                        );
+                    } else {
+                        analyzer->addTask(
+                            std::make_unique<MeanGapRatio>(MeanGapRatio::VectorRange(middleVector, epsilonMargin))
+                        );
+                    }
                 }
             }
         } else if (taskName == "mipr") {
