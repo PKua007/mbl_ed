@@ -61,6 +61,18 @@ private:
 
     static double calculateEnergyOfFockState(const FockBasis::Vector &state, const Eigensystem &eigensystem);
 
+    std::vector<std::size_t> getIndicesForVectorRange(const Eigensystem &eigensystem,
+                                                      const arma::vec &normalizedEnergies,
+                                                      const VectorRange &vectorRange, Logger &logger) const;
+
+    std::vector<std::size_t> getIndicesForEpsilonRange(const Eigensystem &eigensystem,
+                                                       const arma::vec &normalizedEnergies,
+                                                       const EpsilonRange &epsilonRange, Logger &logger) const;
+
+    std::vector<std::size_t> getIndicesForVectorRange(const Eigensystem &eigensystem,
+                                                      const arma::vec &normalizedEnergies,
+                                                      const CDFRange &cdfRange, Logger &logger) const;
+
 public:
     explicit BandExtractor(Range range, std::string taskName = "Task")
             : range{std::move(range)}, taskName{std::move(taskName)}
