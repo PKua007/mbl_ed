@@ -11,12 +11,16 @@
 #include "analyzer/Analyzer.h"
 #include "Parameters.h"
 #include "core/HamiltonianGenerator.h"
+#include "analyzer/BandExtractor.h"
 
 /**
  * @brief A class responsible for building the Analyzer class based on the vector of given tasks and Parameters.
  * @details Extracted from Frontend mainly to reduce compilation times.
  */
 class AnalyzerBuilder {
+private:
+    BandExtractor::Range parseBand(std::size_t numSites, std::size_t basisDim, std::istringstream &taskStream,
+                                   const std::string &taskName) const;
 public:
     /**
      * @brief Prepares the Analyzer. Parsing @a tasks includes also validation and throwing exceptions if needed.
