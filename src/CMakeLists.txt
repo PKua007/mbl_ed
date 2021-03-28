@@ -35,7 +35,8 @@ add_library(mbl_ed_src STATIC utils/Assertions.h core/FockBasisGenerator.cpp cor
         core/observables/BipariteEntropy.cpp analyzer/tasks/EigenstateObservables.cpp analyzer/tasks/PDF.cpp
         simulation/RandomStateObservables.cpp core/observables/CavityOnsiteOccupations.cpp
         core/observables/CavityOnsiteOccupationsSquared.cpp core/observables/CavityElectricField.cpp
-        core/observables/CavityLightIntensity.cpp analyzer/tasks/ParticipationEntropy.cpp)
+        core/observables/CavityLightIntensity.cpp analyzer/tasks/ParticipationEntropy.cpp
+        analyzer/EigenvaluesExtractor.cpp)
 
 target_include_directories(mbl_ed_src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(mbl_ed_src PUBLIC ../extern/ZipIterator)

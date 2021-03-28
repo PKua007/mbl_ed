@@ -131,7 +131,7 @@ namespace {
     struct RestorableAccessor<MeanGapRatio> : public WithHubbardQuasiperiodicEigensystems, public WithLogger {
         RestorableAccessor() : WithHubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
-        MeanGapRatio generateRestorable() { return MeanGapRatio(MeanGapRatio::EpsilonRange(0.5, 0.3)); }
+        MeanGapRatio generateRestorable() { return MeanGapRatio(EigenvaluesExtractor::EpsilonRange(0.5, 0.3)); }
         void addFirstEntry(MeanGapRatio &mgr) { mgr.analyze(this->eigensystem1, this->logger); }
         void addSecondEntry(MeanGapRatio &mgr) { mgr.analyze(this->eigensystem2, this->logger); }
         auto getResult(const MeanGapRatio &mgr) { return mgr.getResultFields(); }

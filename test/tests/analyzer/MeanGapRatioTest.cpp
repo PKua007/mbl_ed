@@ -8,14 +8,14 @@
 #include "analyzer/tasks/MeanGapRatio.h"
 
 TEST_CASE("GapRadioCalculator: names") {
-    MeanGapRatio ratioCalculator(MeanGapRatio::EpsilonRange(0.5, 0.1));
+    MeanGapRatio ratioCalculator(EigenvaluesExtractor::EpsilonRange(0.5, 0.1));
 
     REQUIRE(ratioCalculator.getName() == "mgr");
     REQUIRE(ratioCalculator.getResultHeader() == std::vector<std::string>{"meanGapRatio", "meanGapRatioError"});
 }
 
 TEST_CASE("MeanGapRatio: single energy set (epsilon range)") {
-    MeanGapRatio ratioCalculator(MeanGapRatio::EpsilonRange(0.5, 0.4));
+    MeanGapRatio ratioCalculator(EigenvaluesExtractor::EpsilonRange(0.5, 0.4));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -26,7 +26,7 @@ TEST_CASE("MeanGapRatio: single energy set (epsilon range)") {
 }
 
 TEST_CASE("MeanGapRatio: single energy set (cdf range)") {
-    MeanGapRatio ratioCalculator(MeanGapRatio::CDFRange(0.5, 0.375));
+    MeanGapRatio ratioCalculator(EigenvaluesExtractor::CDFRange(0.5, 0.375));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -38,7 +38,7 @@ TEST_CASE("MeanGapRatio: single energy set (cdf range)") {
 
 TEST_CASE("MeanGapRatio: single energy set (around vector)") {
     auto base = std::shared_ptr<FockBasis>(FockBasisGenerator{}.generate(7, 2));
-    MeanGapRatio ratioCalculator(MeanGapRatio::VectorRange(FockBasis::Vector{5, 2}, 0.3));
+    MeanGapRatio ratioCalculator(EigenvaluesExtractor::VectorRange(FockBasis::Vector{5, 2}, 0.3));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -61,7 +61,7 @@ TEST_CASE("MeanGapRatio: single energy set (around vector)") {
 }
 
 TEST_CASE("MeanGapRatio: normalization") {
-    MeanGapRatio ratioCalculator(MeanGapRatio::EpsilonRange(0.5, 0.4));
+    MeanGapRatio ratioCalculator(EigenvaluesExtractor::EpsilonRange(0.5, 0.4));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -71,7 +71,7 @@ TEST_CASE("MeanGapRatio: normalization") {
 }
 
 TEST_CASE("MeanGapRatio: calculating mean") {
-    MeanGapRatio ratioCalculator(MeanGapRatio::EpsilonRange(0.5, 0.4));
+    MeanGapRatio ratioCalculator(EigenvaluesExtractor::EpsilonRange(0.5, 0.4));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 

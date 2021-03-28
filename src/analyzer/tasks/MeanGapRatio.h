@@ -13,6 +13,7 @@
 #include "core/Eigensystem.h"
 #include "utils/Quantity.h"
 #include "analyzer/InlineAnalyzerTask.h"
+#include "analyzer/EigenvaluesExtractor.h"
 
 /**
  * @brief InlineAnalyzerTask which computer mean gap ratio of eigenenergies normalized to [0, 1] from a specific energy
@@ -33,59 +34,14 @@
  * second average.
  */
 class MeanGapRatio : public InlineAnalyzerTask {
-public:
-    using WidthMargin = double;
-    using NumberOfEnergiesMargin = std::size_t;
-
-    using Margin = std::variant<WidthMargin, NumberOfEnergiesMargin>;
-
-    /**
-     * @brief Range in the epsilon version - band of energies normalized to [0, 1]
-     */
-    struct EpsilonRange {
-        EpsilonRange() = default;
-        EpsilonRange(double epsilonMiddle, Margin epsilonMargin);
-
-        double epsilonMiddle{};
-        Margin epsilonMargin{};
-    };
-
-    /**
-     * @brief Range in the vector version - band of energies normalized to [0, 1], middle given by @a middleVector
-     */
-    struct VectorRange {
-        VectorRange() = default;
-        VectorRange(FockBasis::Vector middleVector, Margin epsilonMargin);
-
-        FockBasis::Vector middleVector{};
-        Margin epsilonMargin{};
-    };
-
-    /**
-     * @brief Rande in the CDF version - energies given by quantiles determined by @a cdfMiddle and @a cdfMargin
-     */
-    struct CDFRange {
-        CDFRange() = default;
-        CDFRange(double cdfMiddle, double cdfMargin);
-
-        double cdfMiddle{};
-        double cdfMargin{};
-    };
-
-    using Range = std::variant<EpsilonRange, VectorRange, CDFRange>;
-
 private:
-    Range range;
+    EigenvaluesExtractor extractor;
     std::vector<double> gapRatios{};
 
-    std::vector<size_t> getBandIndices(const Eigensystem &eigensystem, const arma::vec &normalizedEnergies,
-                                       Logger &logger) const;
-    [[nodiscard]] double calculateEnergyOfFockState(const FockBasis::Vector &state,
-                                                    const Eigensystem &eigensystem) const;
     [[nodiscard]] Quantity calculateMean() const;
 
 public:
-    explicit MeanGapRatio(Range range) : range{std::move(range)} { }
+    explicit MeanGapRatio(EigenvaluesExtractor::Range range) : extractor(std::move(range), "Mgr") { }
 
     /**
      * @brief Adds value for a given @a eigensystem to the average mean gap ratio.
