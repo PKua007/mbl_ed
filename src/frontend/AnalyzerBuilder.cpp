@@ -62,21 +62,11 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             auto band = this->parseBand(params.K, fockBasis->size(), taskStream, "mgr");
             analyzer->addTask(std::make_unique<MeanGapRatio>(band));
         } else if (taskName == "mipr") {
-            double mgrCenter, mgrMargin;
-            taskStream >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: mipr [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer->addTask(std::make_unique<MeanInverseParticipationRatio>(mgrCenter, mgrMargin));
+            auto band = this->parseBand(params.K, fockBasis->size(), taskStream, "mipr");
+            analyzer->addTask(std::make_unique<MeanInverseParticipationRatio>(band));
         } else if (taskName == "ipr") {
-            double mgrCenter, mgrMargin;
-            taskStream >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: ipr [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
-            analyzer->addTask(std::make_unique<InverseParticipationRatio>(mgrCenter, mgrMargin));
+            auto band = this->parseBand(params.K, fockBasis->size(), taskStream, "ipr");
+            analyzer->addTask(std::make_unique<InverseParticipationRatio>(band));
         } else if (taskName == "cdf") {
             std::size_t bins;
             taskStream >> bins;
@@ -128,15 +118,12 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
                 std::make_unique<EDTimeEvolution>(evolutionParams, std::move(occupationEvolution))
             );
         } else if (taskName == "dressed") {
-            double mgrCenter, mgrMargin, coeffThreshold;
-            taskStream >> mgrCenter >> mgrMargin >> coeffThreshold;
-            ValidateMsg(taskStream, "Wrong format, use: dressed [epsilon center] [epsilon margin] "
-                                    "[coefficient threshold > 1/sqrt(2)");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin / 2 >= 0 && mgrCenter + mgrMargin / 2 <= 1);
+            double coeffThreshold;
+            taskStream >> coeffThreshold;
             Validate(coeffThreshold > M_SQRT1_2);
-            analyzer->addTask(std::make_unique<DressedStatesFinder>(mgrCenter, mgrMargin, coeffThreshold));
+            auto band = this->parseBand(params.K, fockBasis->size(), taskStream,
+                                        "dressed [coefficient threshold > 1/sqrt(2)]");
+            analyzer->addTask(std::make_unique<DressedStatesFinder>(coeffThreshold, band));
         } else if (taskName == "mgrs") {
             std::size_t numBins;
             taskStream >> numBins;
@@ -170,14 +157,11 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
                 eigenstateObservables->startStoringObservables(auxiliaryDir / params.getOutputFileSignature());
             analyzer->addTask(std::move(eigenstateObservables));
         } else if (taskName == "pe") {
-            double q, mgrCenter, mgrMargin;
-            taskStream >> q >> mgrCenter >> mgrMargin;
-            ValidateMsg(taskStream, "Wrong format, use: pe [q parameter] [epsilon center] [epsilon margin]");
-            Validate(mgrCenter > 0 && mgrCenter < 1);
-            Validate(mgrMargin > 0 && mgrMargin <= 1);
-            Validate(mgrCenter - mgrMargin/2 >= 0 && mgrCenter + mgrMargin/2 <= 1);
+            double q;
+            taskStream >> q;
             Validate(q > 0);
-            analyzer->addTask(std::make_unique<ParticipationEntropy>(q, mgrCenter, mgrMargin));
+            auto band = this->parseBand(params.K, fockBasis->size(), taskStream,"pe [q parameter]");
+            analyzer->addTask(std::make_unique<ParticipationEntropy>(q, band));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
         }

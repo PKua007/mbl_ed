@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <utility>
 
 #include "DressedStatesFinder.h"
 
@@ -15,7 +16,7 @@ void DressedStatesFinder::analyze(const Eigensystem &eigensystem, Logger &logger
 
     const auto &basis = eigensystem.getFockBasis();
     arma::mat normalizedEnergies = eigensystem.getNormalizedEigenenergies();
-    auto indices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy, this->relativeMargin);
+    auto indices = this->extractor.getBandIndices(eigensystem, logger);
 
     std::size_t numOfStatesFound{};
     for (std::size_t eigvecIdx : indices) {
@@ -44,13 +45,9 @@ void DressedStatesFinder::storeResult(std::ostream &out) const {
     std::copy(this->result.begin(), this->result.end(), std::ostream_iterator<Entry>(out, "\n"));
 }
 
-DressedStatesFinder::DressedStatesFinder(double relativeMiddleEnergy, double relativeMargin,
-                                         double coefficientThreshold)
-        : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin},
-          coefficientThreshold{coefficientThreshold}
+DressedStatesFinder::DressedStatesFinder(double coefficientThreshold, BandExtractor::Range range)
+        : extractor(std::move(range), "Dressed states "), coefficientThreshold{coefficientThreshold}
 {
-    Expects(relativeMargin > 0);
-    Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
     Expects(coefficientThreshold > M_SQRT1_2);
 }
 

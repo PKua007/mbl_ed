@@ -6,6 +6,7 @@
 #define MBL_ED_PARTICIPATIONENTROPY_H
 
 #include "analyzer/InlineAnalyzerTask.h"
+#include "analyzer/BandExtractor.h"
 #include "utils/Quantity.h"
 
 /**
@@ -18,8 +19,7 @@
  */
 class ParticipationEntropy : public InlineAnalyzerTask {
 private:
-    double relativeMiddleEnergy{};
-    double relativeMargin{};
+    BandExtractor extractor;
     double q{};
     std::vector<double> entropies{};
 
@@ -32,7 +32,7 @@ public:
      * @param relativeMiddleEnergy the middle of the band (in the [0, 1] regime)
      * @param relativeMargin the width of the band (also in the [0, 1] regime)
      */
-    ParticipationEntropy(double q, double relativeMiddleEnergy, double relativeMargin);
+    ParticipationEntropy(double q, BandExtractor::Range range);
 
     /**
      * @brief Adds another S_q point to the average from a given @a eigensystem.

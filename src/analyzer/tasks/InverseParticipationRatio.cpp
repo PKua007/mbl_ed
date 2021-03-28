@@ -10,21 +10,13 @@
 #include "simulation/RestorableHelper.h"
 
 
-InverseParticipationRatio::InverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin)
-        : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
-{
-    Expects(relativeMargin > 0);
-    Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
-}
-
 void InverseParticipationRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
     static_cast<void>(logger);
 
     Expects(eigensystem.hasEigenvectors());
 
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
-    auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
-                                                                        this->relativeMargin);
+    auto bandIndices = this->extractor.getBandIndices(eigensystem, logger);
 
     this->entries.reserve(bandIndices.size());
     for (auto i : bandIndices) {

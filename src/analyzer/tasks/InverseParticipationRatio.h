@@ -6,6 +6,7 @@
 #define MBL_ED_INVERSEPARTICIPATIONRATIO_H
 
 #include "analyzer/BulkAnalyzerTask.h"
+#include "analyzer/BandExtractor.h"
 
 /**
  * @brief BulkAnalyzerTask which plots inverse participation ratio for indivudial eigenvectors vs corresponding
@@ -30,8 +31,7 @@ private:
 
     friend std::ostream &operator<<(std::ostream &out, const Entry &entry);
 
-    double relativeMiddleEnergy{};
-    double relativeMargin{};
+    BandExtractor extractor;
     std::vector<Entry> entries{};
 
 public:
@@ -41,7 +41,7 @@ public:
      * @param relativeMiddleEnergy the middle point of the band
      * @param relativeMargin the width of the band
      */
-    InverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin);
+    explicit InverseParticipationRatio(BandExtractor::Range range) : extractor(std::move(range), "Ipr ") { };
 
     /**
      * @brief Adds points to individual eigenvectors vs corresponding eigenenergies plot from given @a eigensystem.

@@ -8,7 +8,7 @@
 #include "core/terms/QuasiperiodicDisorder.h"
 
 TEST_CASE("ParticipationEntropy: names") {
-    ParticipationEntropy participationEntropy(2, 0.5, 0.1);
+    ParticipationEntropy participationEntropy(2, BandExtractor::EpsilonRange(0.5, 0.1));
 
     REQUIRE(participationEntropy.getName() == "pe");
     REQUIRE(participationEntropy.getResultHeader() == std::vector<std::string>{"participationEntropy",
@@ -30,7 +30,7 @@ TEST_CASE("ParticipationEntropy: single energy set") {
     Logger logger(loggerStream);
 
     SECTION("q = 1") {
-        ParticipationEntropy participationEntropy(1, 0.4, 0.7);
+        ParticipationEntropy participationEntropy(1, BandExtractor::EpsilonRange(0.4, 0.7));
 
         participationEntropy.analyze(eigensystem, logger);
 
@@ -42,7 +42,7 @@ TEST_CASE("ParticipationEntropy: single energy set") {
     }
 
     SECTION("q = 2") {
-        ParticipationEntropy participationEntropy(2, 0.4, 0.7);
+        ParticipationEntropy participationEntropy(2, BandExtractor::EpsilonRange(0.4, 0.7));
 
         participationEntropy.analyze(eigensystem, logger);
 
@@ -55,7 +55,7 @@ TEST_CASE("ParticipationEntropy: single energy set") {
 }
 
 TEST_CASE("ParticipationEntropy: calculating mean") {
-    ParticipationEntropy participationEntropy(2, 0.5, 0.3);
+    ParticipationEntropy participationEntropy(2, BandExtractor::EpsilonRange(0.5, 0.3));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -74,6 +74,6 @@ TEST_CASE("ParticipationEntropy: calculating mean") {
 TEST_CASE("ParticipationEntropy: requires eigenvectors") {
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
-    REQUIRE_THROWS_WITH(ParticipationEntropy(2, 0.5, 0.1).analyze(Eigensystem({0, 1, 2, 3}), logger),
-                        Catch::Contains("hasEigenvectors"));
+    auto pe = ParticipationEntropy(2, BandExtractor::EpsilonRange(0.5, 0.1));
+    REQUIRE_THROWS_WITH(pe.analyze(Eigensystem({0, 1, 2, 3}), logger), Catch::Contains("hasEigenvectors"));
 }

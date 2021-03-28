@@ -7,19 +7,16 @@
 #include "ParticipationEntropy.h"
 #include "simulation/RestorableHelper.h"
 
-ParticipationEntropy::ParticipationEntropy(double q, double relativeMiddleEnergy, double relativeMargin)
-        : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}, q{q}
+ParticipationEntropy::ParticipationEntropy(double q, BandExtractor::Range range)
+        : extractor(std::move(range), "Participation entropy"), q{q}
 {
-    Expects(relativeMargin > 0);
-    Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
     Expects(q > 0);
 }
 
 void ParticipationEntropy::analyze(const Eigensystem &eigensystem, [[maybe_unused]] Logger &logger) {
     Expects(eigensystem.hasEigenvectors());
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
-    auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
-                                                                        this->relativeMargin);
+    auto bandIndices = this->extractor.getBandIndices(eigensystem, logger);
 
     double singleEntropy{};
     std::size_t numEntries{};
