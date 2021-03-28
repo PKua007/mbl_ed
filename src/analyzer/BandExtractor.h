@@ -2,8 +2,8 @@
 // Created by Piotr Kubala on 28/03/2021.
 //
 
-#ifndef MBL_ED_EIGENVALUESEXTRACTOR_H
-#define MBL_ED_EIGENVALUESEXTRACTOR_H
+#ifndef MBL_ED_BANDEXTRACTOR_H
+#define MBL_ED_BANDEXTRACTOR_H
 
 #include <utility>
 #include <variant>
@@ -13,7 +13,7 @@
 #include "core/Eigensystem.h"
 #include "utils/Logger.h"
 
-class EigenvaluesExtractor {
+class BandExtractor {
 public:
     using WidthMargin = double;
     using NumberOfEnergiesMargin = std::size_t;
@@ -62,7 +62,7 @@ private:
     static double calculateEnergyOfFockState(const FockBasis::Vector &state, const Eigensystem &eigensystem);
 
 public:
-    explicit EigenvaluesExtractor(Range range, std::string taskName)
+    explicit BandExtractor(Range range, std::string taskName = "Task")
             : range{std::move(range)}, taskName{std::move(taskName)}
     { }
 
@@ -70,4 +70,4 @@ public:
 };
 
 
-#endif //MBL_ED_EIGENVALUESEXTRACTOR_H
+#endif //MBL_ED_BANDEXTRACTOR_H

@@ -74,7 +74,7 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
                 Validate(cdfMiddle > 0 && cdfMiddle < 1);
                 Validate(cdfMargin > 0 && cdfMargin <= 1);
                 Validate(cdfMiddle - cdfMargin / 2 >= 0 && cdfMiddle + cdfMargin / 2 <= 1);
-                analyzer->addTask(std::make_unique<MeanGapRatio>(EigenvaluesExtractor::CDFRange(cdfMiddle, cdfMargin)));
+                analyzer->addTask(std::make_unique<MeanGapRatio>(BandExtractor::CDFRange(cdfMiddle, cdfMargin)));
             } else {
                 const std::string &middle = firstArg;
                 std::string marginToken{};
@@ -101,12 +101,12 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
 
                     if (marginToken == "n") {
                         analyzer->addTask(
-                            std::make_unique<MeanGapRatio>(EigenvaluesExtractor::EpsilonRange(epsilonMiddle, numEnergies))
+                            std::make_unique<MeanGapRatio>(BandExtractor::EpsilonRange(epsilonMiddle, numEnergies))
                         );
                     } else {
                         Validate(epsilonMiddle - epsilonMargin / 2 >= 0 && epsilonMiddle + epsilonMargin / 2 <= 1);
                         analyzer->addTask(
-                            std::make_unique<MeanGapRatio>(EigenvaluesExtractor::EpsilonRange(epsilonMiddle, epsilonMargin))
+                            std::make_unique<MeanGapRatio>(BandExtractor::EpsilonRange(epsilonMiddle, epsilonMargin))
                         );
                     }
                 } catch (ParseDoubleException &) {
@@ -126,11 +126,11 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
 
                     if (marginToken == "n") {
                         analyzer->addTask(
-                            std::make_unique<MeanGapRatio>(EigenvaluesExtractor::VectorRange(middleVector, numEnergies))
+                            std::make_unique<MeanGapRatio>(BandExtractor::VectorRange(middleVector, numEnergies))
                         );
                     } else {
                         analyzer->addTask(
-                            std::make_unique<MeanGapRatio>(EigenvaluesExtractor::VectorRange(middleVector, epsilonMargin))
+                            std::make_unique<MeanGapRatio>(BandExtractor::VectorRange(middleVector, epsilonMargin))
                         );
                     }
                 }

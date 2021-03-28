@@ -13,7 +13,7 @@
 #include "core/Eigensystem.h"
 #include "utils/Quantity.h"
 #include "analyzer/InlineAnalyzerTask.h"
-#include "analyzer/EigenvaluesExtractor.h"
+#include "analyzer/BandExtractor.h"
 
 /**
  * @brief InlineAnalyzerTask which computer mean gap ratio of eigenenergies normalized to [0, 1] from a specific energy
@@ -35,13 +35,13 @@
  */
 class MeanGapRatio : public InlineAnalyzerTask {
 private:
-    EigenvaluesExtractor extractor;
+    BandExtractor extractor;
     std::vector<double> gapRatios{};
 
     [[nodiscard]] Quantity calculateMean() const;
 
 public:
-    explicit MeanGapRatio(EigenvaluesExtractor::Range range) : extractor(std::move(range), "Mgr") { }
+    explicit MeanGapRatio(BandExtractor::Range range) : extractor(std::move(range), "Mgr") { }
 
     /**
      * @brief Adds value for a given @a eigensystem to the average mean gap ratio.

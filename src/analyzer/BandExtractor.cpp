@@ -2,10 +2,10 @@
 // Created by Piotr Kubala on 28/03/2021.
 //
 
-#include "EigenvaluesExtractor.h"
+#include "BandExtractor.h"
 #include "utils/Assertions.h"
 
-EigenvaluesExtractor::EpsilonRange::EpsilonRange(double epsilonMiddle, Margin epsilonMargin)
+BandExtractor::EpsilonRange::EpsilonRange(double epsilonMiddle, Margin epsilonMargin)
         : epsilonMiddle{epsilonMiddle}, epsilonMargin{epsilonMargin}
 {
     if (std::holds_alternative<WidthMargin>(epsilonMargin)) {
@@ -15,7 +15,7 @@ EigenvaluesExtractor::EpsilonRange::EpsilonRange(double epsilonMiddle, Margin ep
     }
 }
 
-EigenvaluesExtractor::VectorRange::VectorRange(FockBasis::Vector middleVector, Margin epsilonMargin)
+BandExtractor::VectorRange::VectorRange(FockBasis::Vector middleVector, Margin epsilonMargin)
         : middleVector{std::move(middleVector)}, epsilonMargin{epsilonMargin}
 {
     if (std::holds_alternative<WidthMargin>(epsilonMargin)) {
@@ -24,14 +24,14 @@ EigenvaluesExtractor::VectorRange::VectorRange(FockBasis::Vector middleVector, M
     }
 }
 
-EigenvaluesExtractor::CDFRange::CDFRange(double cdfMiddle, double cdfMargin)
+BandExtractor::CDFRange::CDFRange(double cdfMiddle, double cdfMargin)
         : cdfMiddle(cdfMiddle), cdfMargin(cdfMargin)
 {
     Expects(cdfMargin > 0);
     Expects(cdfMiddle - cdfMargin/2 > 0 && cdfMiddle + cdfMargin/2 < 1);
 }
 
-std::vector<std::size_t> EigenvaluesExtractor::getBandIndices(const Eigensystem &eigensystem, Logger &logger) const {
+std::vector<std::size_t> BandExtractor::getBandIndices(const Eigensystem &eigensystem, Logger &logger) const {
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
 
     if (std::holds_alternative<VectorRange>(this->range)) {
@@ -90,8 +90,8 @@ std::vector<std::size_t> EigenvaluesExtractor::getBandIndices(const Eigensystem 
     }
 }
 
-double EigenvaluesExtractor::calculateEnergyOfFockState(const FockBasis::Vector &state,
-                                                        const Eigensystem &eigensystem)
+double BandExtractor::calculateEnergyOfFockState(const FockBasis::Vector &state,
+                                                 const Eigensystem &eigensystem)
 {
     Assert(eigensystem.hasFockBasis());
     Assert(eigensystem.hasEigenvectors());
