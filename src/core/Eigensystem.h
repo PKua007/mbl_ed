@@ -74,7 +74,10 @@ public:
      */
     [[nodiscard]] std::vector<std::size_t> getIndicesOfNormalizedEnergiesInBand(double epsilon, double delta) const;
 
-
+    /**
+     * @brief Returns the ascending indices of @a numEnergies energies closest to a normalized to [0, 1] energy
+     * @a epsilon
+     */
     [[nodiscard]] std::vector<std::size_t> getIndicesOfNumberOfNormalizedEnergies(double epsilon,
                                                                                   std::size_t numEnergies) const;
 

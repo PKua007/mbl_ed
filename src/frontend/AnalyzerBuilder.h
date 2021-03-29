@@ -18,9 +18,6 @@
  * @details Extracted from Frontend mainly to reduce compilation times.
  */
 class AnalyzerBuilder {
-private:
-    BandExtractor::Range parseBand(std::size_t numSites, std::size_t basisDim, std::istringstream &taskStream,
-                                   const std::string &taskName) const;
 public:
     /**
      * @brief Prepares the Analyzer. Parsing @a tasks includes also validation and throwing exceptions if needed.

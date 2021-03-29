@@ -38,8 +38,7 @@ public:
     /**
      * @brief The constructor, which specifies the band of eigenenergies normalized to [0, 1] from which we will take
      * points to the plot
-     * @param relativeMiddleEnergy the middle point of the band
-     * @param relativeMargin the width of the band
+     * @param range the range to choose eigenstates from
      */
     explicit InverseParticipationRatio(BandExtractor::Range range) : extractor(std::move(range), "Ipr ") { };
 

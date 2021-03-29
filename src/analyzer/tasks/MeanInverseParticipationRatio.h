@@ -30,8 +30,7 @@ public:
     /**
      * @brief Constructs the class, which will compute inverse participation ratio only for normalized eigenenergies
      * from a specific energy band.
-     * @param relativeMiddleEnergy the middle of the band (in the [0, 1] regime)
-     * @param relativeMargin the width of the band (also in the [0, 1] regime)
+     * @param range the range to choose eigenstates from
      */
     explicit MeanInverseParticipationRatio(BandExtractor::Range range) : extractor(std::move(range), "Mean ipr") { }
 

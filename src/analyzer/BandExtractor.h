@@ -13,9 +13,21 @@
 #include "core/Eigensystem.h"
 #include "utils/Logger.h"
 
+/**
+ * @brief A helper class performing extraction of energies from a selected band.
+ * @details The band can be specified in a variety of ways, see Range variant. The class is extracted to be used in a
+ * uniform way in many places.
+ */
 class BandExtractor {
 public:
+    /**
+     * @brief Margin specified as a width of epsilon.
+     */
     using WidthMargin = double;
+
+    /**
+     * @brief Margin specified as a number of energies around central value.
+     */
     using NumberOfEnergiesMargin = std::size_t;
 
     using Margin = std::variant<WidthMargin, NumberOfEnergiesMargin>;
@@ -69,15 +81,24 @@ private:
                                                        const arma::vec &normalizedEnergies,
                                                        const EpsilonRange &epsilonRange, Logger &logger) const;
 
-    std::vector<std::size_t> getIndicesForVectorRange(const Eigensystem &eigensystem,
-                                                      const arma::vec &normalizedEnergies,
-                                                      const CDFRange &cdfRange, Logger &logger) const;
+    std::vector<std::size_t> getIndicesForCDFRange(const Eigensystem &eigensystem,
+                                                   const arma::vec &normalizedEnergies,
+                                                   const CDFRange &cdfRange, Logger &logger) const;
 
 public:
+    /**
+     * @brief Constructs the extractor using a given band specification
+     * @param range band specification, see Range variant and many of its components.
+     * @param taskName name, given with first capital letter to inform about calculated ranges in getBandIndices() via
+     * @a logger
+     */
     explicit BandExtractor(Range range, std::string taskName = "Task")
             : range{std::move(range)}, taskName{std::move(taskName)}
     { }
 
+    /**
+     * @brief Returns the (subsequent) indices of states in @a eigensystem in the band specified in a constructor.
+     */
     std::vector<std::size_t> getBandIndices(const Eigensystem &eigensystem,  Logger &logger) const;
 };
 

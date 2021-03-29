@@ -40,8 +40,7 @@ private:
 public:
     /**
      * @brief Constructs the class.
-     * @param relativeMiddleEnergy the middle of the band of normalized (to [0, 1]) eigenenergies
-     * @param relativeMargin the width of the band
+     * @param range the range to choose eigenstates from
      * @param coefficientThreshold the threshold, above which one of coefficient of eigenvector has to be to be deemed
      * the dressed state. It has to be higher than sqrt(2)
      */

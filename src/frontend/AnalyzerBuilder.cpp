@@ -30,6 +30,9 @@
 
 
 namespace {
+    // All parsing facilities are global functions, not (static) methods, because we have AnalyzerBuilder mainly for
+    // a "compilation wall" in the Frontend - it doesn't have to be compiled after every alteration
+
     struct ParseDoubleException : public std::runtime_error {
         explicit ParseDoubleException(const std::string &what) : std::runtime_error(what) { }
     };
@@ -46,6 +49,86 @@ namespace {
             throw ParseDoubleException(e.what());
         }
     }
+
+    BandExtractor::Margin parse_margin(std::istringstream &taskStream, std::size_t basisDim, const std::string &usage) {
+        BandExtractor::Margin margin;
+
+        std::string secondArg{};
+        taskStream >> secondArg;
+        ValidateMsg(taskStream, usage);
+
+        if (secondArg == "n") {
+            std::size_t numEnergies{};
+            taskStream >> numEnergies;
+            ValidateMsg(taskStream, usage);
+            Validate(numEnergies > 0);
+            Validate(numEnergies <= basisDim);
+            margin = BandExtractor::NumberOfEnergiesMargin(numEnergies);
+        } else {
+            double epsilonMargin{parse_double(secondArg)};
+            Validate(epsilonMargin > 0 && epsilonMargin <= 1);
+            margin = BandExtractor::WidthMargin(epsilonMargin);
+        }
+        return margin;
+    }
+
+    FockVector parse_fock_vector(std::size_t numSites, const std::string &vectorString, const std::string &usage) {
+        FockBasis::Vector middleVector;
+
+        try {
+            // Try form dw|unif [epsilon margin]
+            middleVector = FockBasis::Vector(numSites, vectorString);
+        } catch (FockVectorParseException &) {
+            // Last chance - 1.2.0.0 [epsilon margin], otherwise error
+            try {
+                middleVector = FockBasis::Vector(vectorString);
+            } catch (std::invalid_argument &) {
+                throw ValidationException(usage);
+            }
+        }
+        return middleVector;
+    }
+
+    BandExtractor::Range parse_band(std::size_t numSites, std::size_t basisDim, std::istringstream &taskStream,
+                                    const std::string &taskName)
+    {
+        BandExtractor::Range range = BandExtractor::EpsilonRange(0.5, 0.1);
+
+        std::string firstArg;
+        taskStream >> firstArg;
+        std::string usage = "Wrong format, use one of:\n"
+                            + taskName + " [epsilon center] [epsilon margin]|{n [number of energies]}\n"    // case 1
+                            + taskName + " dw|unif|2.1.0.0 [epsilon margin]|{n [number of energies]}\n"     // case 2
+                            + taskName + " cdf [cdf center] [cdf margin]";                                  // case 3
+        ValidateMsg(taskStream, usage);
+
+        if (firstArg == "cdf") {
+            // case 3
+            double cdfMiddle{}, cdfMargin{};
+            taskStream >> cdfMiddle >> cdfMargin;
+            ValidateMsg(taskStream, usage);
+            Validate(cdfMiddle > 0 && cdfMiddle < 1);
+            Validate(cdfMargin > 0 && cdfMargin <= 1);
+            Validate(cdfMiddle - cdfMargin / 2 >= 0 && cdfMiddle + cdfMargin / 2 <= 1);
+            range = BandExtractor::CDFRange(cdfMiddle, cdfMargin);
+        } else {
+            // case 1 or case 2
+            BandExtractor::Margin margin = parse_margin(taskStream, basisDim, usage);
+
+            const std::string &middleEnergyMarker = firstArg;
+            try {
+                // First, try form [epsilon center] [epsilon margin]
+                double epsilonMiddle = parse_double(middleEnergyMarker);
+                Validate(epsilonMiddle > 0 && epsilonMiddle < 1);
+                range = BandExtractor::EpsilonRange(epsilonMiddle, margin);
+            } catch (ParseDoubleException &) {
+                // If not, try parsing vector
+                FockVector middleVector = parse_fock_vector(numSites, middleEnergyMarker, usage);
+                range = BandExtractor::VectorRange(middleVector, margin);
+            }
+        }
+        return range;
+    }
 }
 
 std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> &tasks, const Parameters &params,
@@ -59,13 +142,13 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
         std::string taskName;
         taskStream >> taskName;
         if (taskName == "mgr") {
-            auto band = this->parseBand(params.K, fockBasis->size(), taskStream, "mgr");
+            auto band = parse_band(params.K, fockBasis->size(), taskStream, "mgr");
             analyzer->addTask(std::make_unique<MeanGapRatio>(band));
         } else if (taskName == "mipr") {
-            auto band = this->parseBand(params.K, fockBasis->size(), taskStream, "mipr");
+            auto band = parse_band(params.K, fockBasis->size(), taskStream, "mipr");
             analyzer->addTask(std::make_unique<MeanInverseParticipationRatio>(band));
         } else if (taskName == "ipr") {
-            auto band = this->parseBand(params.K, fockBasis->size(), taskStream, "ipr");
+            auto band = parse_band(params.K, fockBasis->size(), taskStream, "ipr");
             analyzer->addTask(std::make_unique<InverseParticipationRatio>(band));
         } else if (taskName == "cdf") {
             std::size_t bins;
@@ -121,8 +204,8 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             double coeffThreshold;
             taskStream >> coeffThreshold;
             Validate(coeffThreshold > M_SQRT1_2);
-            auto band = this->parseBand(params.K, fockBasis->size(), taskStream,
-                                        "dressed [coefficient threshold > 1/sqrt(2)]");
+            auto band = parse_band(params.K, fockBasis->size(), taskStream,
+                                   "dressed [coefficient threshold > 1/sqrt(2)]");
             analyzer->addTask(std::make_unique<DressedStatesFinder>(coeffThreshold, band));
         } else if (taskName == "mgrs") {
             std::size_t numBins;
@@ -160,86 +243,11 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             double q;
             taskStream >> q;
             Validate(q > 0);
-            auto band = this->parseBand(params.K, fockBasis->size(), taskStream,"pe [q parameter]");
+            auto band = parse_band(params.K, fockBasis->size(), taskStream,"pe [q parameter]");
             analyzer->addTask(std::make_unique<ParticipationEntropy>(q, band));
         } else {
             throw ValidationException("Unknown analyzer task: " + taskName);
         }
     }
     return analyzer;
-}
-
-BandExtractor::Range AnalyzerBuilder::parseBand(std::size_t numSites, std::size_t basisDim,
-                                                std::istringstream &taskStream, const std::string &taskName) const
-{
-    BandExtractor::Range range = BandExtractor::EpsilonRange(0.5, 0.1);
-
-    std::string firstArg;
-    taskStream >> firstArg;
-    std::string usage = "Wrong format, use one of:\n"
-                        + taskName + " [epsilon center] [epsilon margin]|{n [number of energies]}\n"
-                        + taskName + " dw|unif|2.1.0.0 [epsilon margin]|{n [number of energies]}\n"
-                        + taskName + " cdf [cdf center] [cdf margin]";
-    ValidateMsg(taskStream, usage);
-
-    if (firstArg == "cdf") {
-        double cdfMiddle{}, cdfMargin{};
-        taskStream >> cdfMiddle >> cdfMargin;
-        ValidateMsg(taskStream, usage);
-        Validate(cdfMiddle > 0 && cdfMiddle < 1);
-        Validate(cdfMargin > 0 && cdfMargin <= 1);
-        Validate(cdfMiddle - cdfMargin / 2 >= 0 && cdfMiddle + cdfMargin / 2 <= 1);
-        range = BandExtractor::CDFRange(cdfMiddle, cdfMargin);
-    } else {
-        const std::string &middle = firstArg;
-        std::string marginToken{};
-        taskStream >> marginToken;
-        ValidateMsg(taskStream, usage);
-
-        double epsilonMargin{};
-        std::size_t numEnergies{};
-
-        if (marginToken == "n") {
-            taskStream >> numEnergies;
-            ValidateMsg(taskStream, usage);
-            Validate(numEnergies > 0);
-            Validate(numEnergies <= basisDim);
-        } else {
-            epsilonMargin = parse_double(marginToken);
-            Validate(epsilonMargin > 0 && epsilonMargin <= 1);
-        }
-
-        // First, try form [epsilon center] [epsilon margin]
-        try {
-            double epsilonMiddle = parse_double(middle);
-            Validate(epsilonMiddle > 0 && epsilonMiddle < 1);
-
-            if (marginToken == "n") {
-                range = BandExtractor::EpsilonRange(epsilonMiddle, numEnergies);
-            } else {
-                Validate(epsilonMiddle - epsilonMargin / 2 >= 0 && epsilonMiddle + epsilonMargin / 2 <= 1);
-                range = BandExtractor::EpsilonRange(epsilonMiddle, epsilonMargin);
-            }
-        } catch (ParseDoubleException &) {
-            FockBasis::Vector middleVector;
-
-            // Next, try form dw|unif [epsilon margin]
-            try {
-                middleVector = FockBasis::Vector(numSites, middle);
-            } catch (FockVectorParseException &) {
-                // Last chance - 1.2.0.0 [epsilon margin], otherwise error
-                try {
-                    middleVector = FockBasis::Vector(middle);
-                } catch (std::invalid_argument &) {
-                    throw ValidationException(usage);
-                }
-            }
-
-            if (marginToken == "n")
-                range = BandExtractor::VectorRange(middleVector, numEnergies);
-            else
-                range = BandExtractor::VectorRange(middleVector, epsilonMargin);
-        }
-    }
-    return range;
 }

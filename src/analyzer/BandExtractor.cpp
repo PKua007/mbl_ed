@@ -39,15 +39,15 @@ std::vector<std::size_t> BandExtractor::getBandIndices(const Eigensystem &eigens
     else if (std::holds_alternative<EpsilonRange>(this->range))
         return this->getIndicesForEpsilonRange(eigensystem, normalizedEnergies, std::get<EpsilonRange>(range), logger);
     else if (std::holds_alternative<CDFRange>(this->range))
-        return getIndicesForVectorRange(eigensystem, normalizedEnergies, std::get<CDFRange>(range), logger);
+        return this->getIndicesForCDFRange(eigensystem, normalizedEnergies, std::get<CDFRange>(range), logger);
     else
         throw std::runtime_error("Internal error");
 }
 
-std::vector<std::size_t> BandExtractor::getIndicesForVectorRange(const Eigensystem &eigensystem,
-                                                                 const arma::vec &normalizedEnergies,
-                                                                 const BandExtractor::CDFRange &cdfRange,
-                                                                 Logger &logger) const
+std::vector<std::size_t> BandExtractor::getIndicesForCDFRange(const Eigensystem &eigensystem,
+                                                              const arma::vec &normalizedEnergies,
+                                                              const BandExtractor::CDFRange &cdfRange,
+                                                              Logger &logger) const
 {
     double relativeIndexStart = cdfRange.cdfMiddle - cdfRange.cdfMargin / 2;
     double relativeIndexEnd = cdfRange.cdfMiddle + cdfRange.cdfMargin / 2;
