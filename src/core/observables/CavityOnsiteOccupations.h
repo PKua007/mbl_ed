@@ -5,6 +5,8 @@
 #ifndef MBL_ED_CAVITYONSITEOCCUPATIONS_H
 #define MBL_ED_CAVITYONSITEOCCUPATIONS_H
 
+#include <memory>
+
 #include "core/PrimaryObservable.h"
 #include "core/FockBasis.h"
 #include "core/terms/CavityLongInteraction.h"
