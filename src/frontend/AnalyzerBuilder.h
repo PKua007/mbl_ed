@@ -11,6 +11,7 @@
 #include "analyzer/Analyzer.h"
 #include "Parameters.h"
 #include "core/HamiltonianGenerator.h"
+#include "analyzer/BandExtractor.h"
 
 /**
  * @brief A class responsible for building the Analyzer class based on the vector of given tasks and Parameters.

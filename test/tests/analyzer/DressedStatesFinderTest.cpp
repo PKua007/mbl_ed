@@ -23,7 +23,7 @@ TEST_CASE("DressedStatesFinder: single diagonalization") {
                              {0,   0,    0, M_SQRT2, -M_SQRT2},
                              {0,   0,    0, M_SQRT2,  M_SQRT2}},
                             std::move(base));
-    DressedStatesFinder finder(0.5, 0.8, 0.75);
+    DressedStatesFinder finder(0.75, BandExtractor::EpsilonRange(0.5, 0.8));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -50,7 +50,7 @@ TEST_CASE("DressedStatesFinder: 2 diagonalizations") {
                               {1,  0, 0},
                               {0,  0, 1}},
                              base);
-    DressedStatesFinder finder(0.5, 0.3, 0.8);
+    DressedStatesFinder finder(0.8, BandExtractor::EpsilonRange(0.5, 0.3));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 

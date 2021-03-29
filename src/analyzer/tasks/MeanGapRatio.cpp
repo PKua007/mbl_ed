@@ -11,7 +11,7 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
     static_cast<void>(logger);
 
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
-    std::vector<std::size_t> bandIndices = this->getBandIndices(eigensystem, normalizedEnergies, logger);
+    std::vector<std::size_t> bandIndices = this->extractor.getBandIndices(eigensystem, logger);
     if (!bandIndices.empty() && bandIndices.front() == 0)
         bandIndices.erase(bandIndices.begin());
     if (!bandIndices.empty() && bandIndices.back() == eigensystem.size() - 1)
@@ -28,70 +28,6 @@ void MeanGapRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
     }
     if (numEntries > 0)
         this->gapRatios.push_back(singleGapRatio / numEntries);
-}
-
-std::vector<std::size_t> MeanGapRatio::getBandIndices(const Eigensystem &eigensystem,
-                                                      const arma::vec &normalizedEnergies, Logger &logger) const
-{
-    if (std::holds_alternative<VectorRange>(this->range)) {
-        const auto &vectorRange = std::get<VectorRange>(this->range);
-        double relativeMiddleEnergy = calculateEnergyOfFockState(vectorRange.middleVector, eigensystem);
-        double relativeMargin = vectorRange.epsilonMargin;
-        if (relativeMiddleEnergy - relativeMargin / 2 <= 0 || relativeMiddleEnergy + relativeMargin / 2 >= 1) {
-            throw std::runtime_error(
-                "Margin " + std::to_string(relativeMargin) + " is to big around the given vector of the energy "
-                + std::to_string(relativeMiddleEnergy)
-            );
-        }
-
-        logger.info() << "Mgr calculated around: " << relativeMiddleEnergy << ". " << std::endl;
-        return eigensystem.getIndicesOfNormalizedEnergiesInBand(relativeMiddleEnergy, relativeMargin);
-    } else if (std::holds_alternative<EpsilonRange>(this->range)) {
-        const auto &epsilonRange = std::get<EpsilonRange>(this->range);
-        return eigensystem.getIndicesOfNormalizedEnergiesInBand(epsilonRange.epsilonMiddle, epsilonRange.epsilonMargin);
-    } else if (std::holds_alternative<CDFRange>(this->range)) {
-        const auto &cdfRange = std::get<CDFRange>(this->range);
-        double relativeIndexStart = cdfRange.cdfMiddle - cdfRange.cdfMargin / 2;
-        double relativeIndexEnd = cdfRange.cdfMiddle + cdfRange.cdfMargin / 2;
-        auto indexStart = static_cast<std::size_t>(eigensystem.size() * relativeIndexStart);
-        auto indexEnd = static_cast<std::size_t>(eigensystem.size() * relativeIndexEnd);
-        Assert(indexEnd < eigensystem.size());
-        Assert(indexEnd > indexStart);
-
-        std::vector<std::size_t> bandIndices(indexEnd - indexStart);
-        std::iota(bandIndices.begin(), bandIndices.end(), indexStart);
-
-        logger.info() << "Mgr calculated for: [" << normalizedEnergies[bandIndices.front()] << ", ";
-        logger << normalizedEnergies[bandIndices.back()] << ")." << std::endl;
-
-        return bandIndices;
-    } else {
-        throw std::runtime_error("Internal error");
-    }
-}
-
-double MeanGapRatio::calculateEnergyOfFockState(const FockBasis::Vector &state, const Eigensystem &eigensystem) const {
-    Assert(eigensystem.hasFockBasis());
-    Assert(eigensystem.hasEigenvectors());
-
-    const auto &basis = eigensystem.getFockBasis();
-    std::size_t basisIndex = *basis.findIndex(state);
-    arma::vec fockVector(eigensystem.size(), arma::fill::zeros);
-    fockVector[basisIndex] = 1;
-
-    const arma::mat &eigvec = eigensystem.getEigenstates();
-    const arma::vec &eigval = eigensystem.getEigenenergies();
-    arma::vec diagonalVector = eigvec.t() * fockVector;
-
-    double energy{};
-    for (std::size_t i{}; i < diagonalVector.size(); i++)
-        energy += std::pow(diagonalVector[i], 2) * eigval[i];
-
-    double low = eigval.front();
-    double high = eigval.back();
-    double relativeEnergy = (energy - low) / (high - low);
-
-    return relativeEnergy;
 }
 
 Quantity MeanGapRatio::calculateMean() const {
@@ -128,22 +64,4 @@ void MeanGapRatio::joinRestoredState(std::istream &binaryIn) {
 
 void MeanGapRatio::clear() {
     this->gapRatios.clear();
-}
-
-MeanGapRatio::EpsilonRange::EpsilonRange(double epsilonMiddle, double epsilonMargin)
-        : epsilonMiddle{epsilonMiddle}, epsilonMargin{epsilonMargin}
-{
-    Expects(epsilonMargin > 0);
-    Expects(epsilonMiddle - epsilonMargin/2 > 0 && epsilonMiddle + epsilonMargin/2 < 1);
-}
-
-MeanGapRatio::VectorRange::VectorRange(FockBasis::Vector middleVector, double epsilonMargin)
-        : middleVector{std::move(middleVector)}, epsilonMargin{epsilonMargin}
-{
-    Expects(epsilonMargin > 0);
-}
-
-MeanGapRatio::CDFRange::CDFRange(double cdfMiddle, double cdfMargin) : cdfMiddle(cdfMiddle), cdfMargin(cdfMargin) {
-    Expects(cdfMargin > 0);
-    Expects(cdfMiddle - cdfMargin/2 > 0 && cdfMiddle + cdfMargin/2 < 1);
 }

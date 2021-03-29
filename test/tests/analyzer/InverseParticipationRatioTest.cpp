@@ -13,13 +13,13 @@
 #include "core/averaging_models/UniformPhi0AveragingModel.h"
 
 TEST_CASE("InverseParticipationRatio: names") {
-    InverseParticipationRatio ratioCalculator(0.5, 0.1);
+    InverseParticipationRatio ratioCalculator(BandExtractor::EpsilonRange(0.5, 0.1));
 
     REQUIRE(ratioCalculator.getName() == "ipr");
 }
 
 TEST_CASE("InverseParticipationRatio: single energy set") {
-    InverseParticipationRatio ratioCalculator(0.5, 0.7);
+    InverseParticipationRatio ratioCalculator(BandExtractor::EpsilonRange(0.5, 0.7));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -47,7 +47,7 @@ TEST_CASE("InverseParticipationRatio: single energy set") {
 }
 
 TEST_CASE("InverseParticipationRatio: multiple simulations") {
-    InverseParticipationRatio ratioCalculator(0.5, 0.2);
+    InverseParticipationRatio ratioCalculator(BandExtractor::EpsilonRange(0.5, 0.2));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -74,6 +74,6 @@ TEST_CASE("InverseParticipationRatio: multiple simulations") {
 TEST_CASE("InverseParticipationRatio: requires eigenvectors") {
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
-    REQUIRE_THROWS_WITH(InverseParticipationRatio(0.5, 0.1).analyze(Eigensystem({0, 1, 2, 3}), logger),
-                        Catch::Contains("hasEigenvectors"));
+    auto ipr = InverseParticipationRatio(BandExtractor::EpsilonRange(0.5, 0.1));
+    REQUIRE_THROWS_WITH(ipr.analyze(Eigensystem({0, 1, 2, 3}), logger), Catch::Contains("hasEigenvectors"));
 }

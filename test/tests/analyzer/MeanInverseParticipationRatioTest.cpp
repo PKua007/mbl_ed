@@ -8,7 +8,7 @@
 #include "core/terms/QuasiperiodicDisorder.h"
 
 TEST_CASE("MeanInverseParticipationRatio: names") {
-    MeanInverseParticipationRatio ratioCalculator(0.5, 0.1);
+    MeanInverseParticipationRatio ratioCalculator(BandExtractor::EpsilonRange(0.5, 0.1));
 
     REQUIRE(ratioCalculator.getName() == "mipr");
     REQUIRE(ratioCalculator.getResultHeader() == std::vector<std::string>{"inverseParticipationRatio",
@@ -16,7 +16,7 @@ TEST_CASE("MeanInverseParticipationRatio: names") {
 }
 
 TEST_CASE("MeanInverseParticipationRatio: single energy set") {
-    MeanInverseParticipationRatio ratioCalculator(0.5, 0.7);
+    MeanInverseParticipationRatio ratioCalculator(BandExtractor::EpsilonRange(0.5, 0.7));
 
     // We are interested in 0.4, 0.5, 0.6, 0.8
     Eigensystem eigensystem(
@@ -42,7 +42,7 @@ TEST_CASE("MeanInverseParticipationRatio: single energy set") {
 }
 
 TEST_CASE("MeanInverseParticipationRatio: calculating mean") {
-    MeanInverseParticipationRatio ratioCalculator(0.5, 0.3);
+    MeanInverseParticipationRatio ratioCalculator(BandExtractor::EpsilonRange(0.5, 0.3));
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
 
@@ -61,6 +61,6 @@ TEST_CASE("MeanInverseParticipationRatio: calculating mean") {
 TEST_CASE("MeanInverseParticipationRatio: requires eigenvectors") {
     std::ostringstream loggerStream;
     Logger logger(loggerStream);
-    REQUIRE_THROWS_WITH(MeanInverseParticipationRatio(0.5, 0.1).analyze(Eigensystem({0, 1, 2, 3}), logger),
-                        Catch::Contains("hasEigenvectors"));
+    auto mipr = MeanInverseParticipationRatio(BandExtractor::EpsilonRange(0.5, 0.1));
+    REQUIRE_THROWS_WITH(mipr.analyze(Eigensystem({0, 1, 2, 3}), logger), Catch::Contains("hasEigenvectors"));
 }

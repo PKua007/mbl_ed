@@ -7,20 +7,13 @@
 #include "utils/Quantity.h"
 #include "simulation/RestorableHelper.h"
 
-MeanInverseParticipationRatio::MeanInverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin)
-        : relativeMiddleEnergy{relativeMiddleEnergy}, relativeMargin{relativeMargin}
-{
-    Expects(relativeMargin > 0);
-    Expects(relativeMiddleEnergy - relativeMargin/2 > 0 && relativeMiddleEnergy + relativeMargin/2 < 1);
-}
 
 void MeanInverseParticipationRatio::analyze(const Eigensystem &eigensystem, Logger &logger) {
     static_cast<void>(logger);
 
     Expects(eigensystem.hasEigenvectors());
     auto normalizedEnergies = eigensystem.getNormalizedEigenenergies();
-    auto bandIndices = eigensystem.getIndicesOfNormalizedEnergiesInBand(this->relativeMiddleEnergy,
-                                                                        this->relativeMargin);
+    auto bandIndices = this->extractor.getBandIndices(eigensystem, logger);
 
     double singleRatio{};
     std::size_t numEntries{};

@@ -6,6 +6,7 @@
 #define MBL_ED_MEANINVERSEPARTICIPATIONRATIO_H
 
 #include "analyzer/InlineAnalyzerTask.h"
+#include "analyzer/BandExtractor.h"
 #include "utils/Quantity.h"
 
 /**
@@ -20,8 +21,7 @@
  */
 class MeanInverseParticipationRatio : public InlineAnalyzerTask {
 private:
-    double relativeMiddleEnergy{};
-    double relativeMargin{};
+    BandExtractor extractor;
     std::vector<double> ratios{};
 
     [[nodiscard]] Quantity calculateMean() const;
@@ -30,10 +30,9 @@ public:
     /**
      * @brief Constructs the class, which will compute inverse participation ratio only for normalized eigenenergies
      * from a specific energy band.
-     * @param relativeMiddleEnergy the middle of the band (in the [0, 1] regime)
-     * @param relativeMargin the width of the band (also in the [0, 1] regime)
+     * @param range the range to choose eigenstates from
      */
-    MeanInverseParticipationRatio(double relativeMiddleEnergy, double relativeMargin);
+    explicit MeanInverseParticipationRatio(BandExtractor::Range range) : extractor(std::move(range), "Mean ipr") { }
 
     /**
      * @brief Adds a value for a given @a eigensystem to the average inverse participation ratio.

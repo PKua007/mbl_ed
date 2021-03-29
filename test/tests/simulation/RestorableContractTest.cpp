@@ -109,7 +109,9 @@ namespace {
     {
         RestorableAccessor() : WithHubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
-        DressedStatesFinder generateRestorable() { return DressedStatesFinder(0.5, 0.3, 0.9); }
+        DressedStatesFinder generateRestorable() {
+            return DressedStatesFinder(0.9, BandExtractor::EpsilonRange(0.5, 0.3));
+        }
         void addFirstEntry(DressedStatesFinder &dsf) { dsf.analyze(this->eigensystem1, this->logger); }
         void addSecondEntry(DressedStatesFinder &dsf) { dsf.analyze(this->eigensystem2, this->logger); }
     };
@@ -121,7 +123,9 @@ namespace {
     {
         RestorableAccessor() : WithHubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
-        InverseParticipationRatio generateRestorable() { return InverseParticipationRatio(0.5, 0.3); }
+        InverseParticipationRatio generateRestorable() {
+            return InverseParticipationRatio(BandExtractor::EpsilonRange(0.5, 0.3));
+        }
         void addFirstEntry(InverseParticipationRatio &ipr) { ipr.analyze(this->eigensystem1, this->logger); }
         void addSecondEntry(InverseParticipationRatio &ipr) { ipr.analyze(this->eigensystem2, this->logger); }
     };
@@ -131,7 +135,7 @@ namespace {
     struct RestorableAccessor<MeanGapRatio> : public WithHubbardQuasiperiodicEigensystems, public WithLogger {
         RestorableAccessor() : WithHubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
-        MeanGapRatio generateRestorable() { return MeanGapRatio(MeanGapRatio::EpsilonRange(0.5, 0.3)); }
+        MeanGapRatio generateRestorable() { return MeanGapRatio(BandExtractor::EpsilonRange(0.5, 0.3)); }
         void addFirstEntry(MeanGapRatio &mgr) { mgr.analyze(this->eigensystem1, this->logger); }
         void addSecondEntry(MeanGapRatio &mgr) { mgr.analyze(this->eigensystem2, this->logger); }
         auto getResult(const MeanGapRatio &mgr) { return mgr.getResultFields(); }
@@ -144,7 +148,9 @@ namespace {
     {
         RestorableAccessor() : WithHubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
-        MeanInverseParticipationRatio generateRestorable() { return MeanInverseParticipationRatio(0.5, 0.3); }
+        MeanInverseParticipationRatio generateRestorable() {
+            return MeanInverseParticipationRatio(BandExtractor::EpsilonRange(0.5, 0.3));
+        }
         void addFirstEntry(MeanInverseParticipationRatio &mipr) { mipr.analyze(this->eigensystem1, this->logger); }
         void addSecondEntry(MeanInverseParticipationRatio &mipr) { mipr.analyze(this->eigensystem2, this->logger); }
         auto getResult(const MeanInverseParticipationRatio &mipr) { return mipr.getResultFields(); }
@@ -229,7 +235,9 @@ namespace {
     {
         RestorableAccessor() : WithHubbardQuasiperiodicEigensystems(4, 4, 1, 1, 10, 0.3, 0) {}
 
-        ParticipationEntropy generateRestorable() { return ParticipationEntropy(1.5, 0.5, 0.3); }
+        ParticipationEntropy generateRestorable() {
+            return ParticipationEntropy(1.5, BandExtractor::EpsilonRange(0.5, 0.3));
+        }
         void addFirstEntry(ParticipationEntropy &pe) { pe.analyze(this->eigensystem1, this->logger); }
         void addSecondEntry(ParticipationEntropy &pe) { pe.analyze(this->eigensystem2, this->logger); }
         auto getResult(const ParticipationEntropy &pe) { return pe.getResultFields(); }

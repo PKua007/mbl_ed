@@ -73,12 +73,21 @@ public:
      * @param delta the width of the band
      */
     [[nodiscard]] std::vector<std::size_t> getIndicesOfNormalizedEnergiesInBand(double epsilon, double delta) const;
+
+    /**
+     * @brief Returns the ascending indices of @a numEnergies energies closest to a normalized to [0, 1] energy
+     * @a epsilon
+     */
+    [[nodiscard]] std::vector<std::size_t> getIndicesOfNumberOfNormalizedEnergies(double epsilon,
+                                                                                  std::size_t numEnergies) const;
+
     void store(std::ostream &eigenenergiesOut) const;
     void restore(std::istream &in, std::shared_ptr<const FockBasis> newFockBasis = nullptr);
 
     friend bool operator==(const Eigensystem &lhs, const Eigensystem &rhs);
     friend bool operator!=(const Eigensystem &lhs, const Eigensystem &rhs);
     friend std::ostream &operator<<(std::ostream &out, const Eigensystem &eigensystem);
+
 };
 
 #endif //MBL_ED_EIGENSYSTEM_H
