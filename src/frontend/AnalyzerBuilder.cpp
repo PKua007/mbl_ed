@@ -5,6 +5,7 @@
 #include <memory>
 #include <iterator>
 #include <algorithm>
+#include <ZipIterator.hpp>
 
 #include "AnalyzerBuilder.h"
 #include "ObservablesBuilder.h"
@@ -166,40 +167,73 @@ std::unique_ptr<Analyzer> AnalyzerBuilder::build(const std::vector<std::string> 
             if (params.N != params.K || params.K % 2 != 0)
                 throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
 
+            std::array<std::string, 3> fields = {std::string(" time "), std::string(" obs "), std::string(" vec ")};
+            std::array<std::size_t, 3> idxs{};
+
+            for (std::size_t i{}; i < fields.size(); i++) {
+                const auto &field = fields[i];
+                std::size_t idx = task.find(field);
+                ValidateMsg(idx != std::string::npos, "Malformed evolution params - missing field: " + field);
+                idxs[i] = idx;
+            }
+
+            auto zipped = Zip(idxs, fields);
+            std::sort(zipped.begin(), zipped.end());
+
+            std::array<std::string, 3> fieldValues{};
+            for (std::size_t i{}; i < fields.size(); i++) {
+                const auto &field = fields[i];
+                auto idx = idxs[i];
+                auto &fieldValue = fieldValues[i];
+
+                std::size_t beg = idx + field.length();
+                if (i == fields.size() - 1) {
+                    ValidateMsg(beg < task.length(), "Missing field value for: " + field);
+                    fieldValue = task.substr(beg);
+                    trim(fieldValue);
+                } else {
+                    std::size_t end = idxs[i + 1];
+                    ValidateMsg(beg < end, "Missing gield value for: " + field);
+                    fieldValue = task.substr(beg, end - beg);
+                    trim(fieldValue);
+                }
+                Validate(!fieldValue.empty());
+            }
+
             TimeEvolutionParameters evolutionParams;
             evolutionParams.fockBasis = fockBasis;
             evolutionParams.numberOfSites = params.K;
+            ObservablesBuilder observablesBuilder;
 
-            double maxTime;
-            std::size_t numSteps;
-            std::size_t marginSize;
-            taskStream >> maxTime >> numSteps >> marginSize;
-            evolutionParams.timeSegmentation.emplace_back(EvolutionTimeSegment{maxTime, numSteps});
-            ValidateMsg(taskStream, "Wrong format, use: evolution [max time] [number of steps] [margin size] "
-                                    "[space-separated vectors to evolve - unif/dw/1.0.4.0]");
-            std::vector<std::string> tags;
-            std::copy(std::istream_iterator<std::string>(taskStream), std::istream_iterator<std::string>(),
-                      std::back_inserter(tags));
-            Validate(evolutionParams.timeSegmentation[0].maxTime > 0);
-            Validate(evolutionParams.timeSegmentation[0].numSteps >= 2);
-            Validate(marginSize * 2 < params.K);
+            for (std::size_t i{}; i < fields.size(); i++) {
+                const auto &field = fields[i];
+                const auto &fieldValue = fieldValues[i];
 
-            evolutionParams.setVectorsToEvolveFromTags(tags);
+                if (field == " time ") {
+                    std::istringstream timeSegmentationStream(fieldValue);
+                    std::copy(std::istream_iterator<EvolutionTimeSegment>(timeSegmentationStream),
+                              std::istream_iterator<EvolutionTimeSegment>(),
+                              std::back_inserter(evolutionParams.timeSegmentation));
+                } else if (field == " obs ") {
+                    std::vector<std::string> observablesParams = explode(fieldValue, ';');
+                    observablesBuilder.build(observablesParams, params, fockBasis, hamiltonianGenerator);
+                } else if (field == " vec ") {
+                    std::istringstream tagsStream(fieldValue);
+                    std::vector<std::string> tags;
+                    std::copy(std::istream_iterator<std::string>(tagsStream), std::istream_iterator<std::string>(),
+                              std::back_inserter(tags));
+                    evolutionParams.setVectorsToEvolveFromTags(tags);
+                } else {
+                    throw std::runtime_error(field);
+                }
+            }
 
-            auto occupations = std::make_shared<OnsiteOccupations>(fockBasis);
-            auto occupationsSquared = std::make_shared<OnsiteOccupationsSquared>(fockBasis);
-            auto correlations = std::make_shared<Correlations>(params.K, 0);
-            auto borderlessCorrelations = std::make_shared<Correlations>(params.K, marginSize);
-            auto fluctuations = std::make_shared<OnsiteFluctuations>(params.K);
-            evolutionParams.primaryObservables = {occupations, occupationsSquared};
-            evolutionParams.secondaryObservables = {correlations, borderlessCorrelations, fluctuations};
-            evolutionParams.storedObservables = {correlations, borderlessCorrelations, fluctuations, occupations};
+            evolutionParams.primaryObservables = observablesBuilder.releasePrimaryObservables();
+            evolutionParams.secondaryObservables = observablesBuilder.releaseSecondaryObservables();
+            evolutionParams.storedObservables = observablesBuilder.releaseStoredObservables();
 
-            auto occupationEvolution = std::make_unique<OservablesTimeEvolution>();
-
-            analyzer->addTask(
-                std::make_unique<EDTimeEvolution>(evolutionParams, std::move(occupationEvolution))
-            );
+            auto observablesEvolution = std::make_unique<OservablesTimeEvolution>();
+            analyzer->addTask(std::make_unique<EDTimeEvolution>(evolutionParams, std::move(observablesEvolution)));
         } else if (taskName == "dressed") {
             double coeffThreshold;
             taskStream >> coeffThreshold;
