@@ -12,8 +12,7 @@ void LookupCavityYZ::changeRealisation(std::size_t index) {
     this->currentRealisation = this->cavityConstants[index];
 }
 
-double LookupCavityYZ::calculate(const HopData &hopData, const HamiltonianGenerator &generator)
-{
+double LookupCavityYZ::calculate(const HopData &hopData, const HamiltonianGenerator &generator) const {
     Expects(generator.getSiteDistance(hopData.fromSite, hopData.toSite) == 1);
     if (generator.usingPBC())
         throw std::runtime_error("LookupCavityYZ: PBC not supported");

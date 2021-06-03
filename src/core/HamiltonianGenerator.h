@@ -47,7 +47,7 @@ private:
     [[nodiscard]] auto calculateDoubleHopMatrixElement(const HopData &firstHop, const HopData &secondHop) const;
     void performSecondHop(arma::sp_mat &result, std::size_t fromIdx, const HopData &firstHop) const;
     void addDiagonalTerms(arma::sp_mat &result, std::size_t vectorIdx) const;
-    void addHoppingTerms(arma::sp_mat &result, std::size_t fromIdx) const;
+    void addHoppingTerm(arma::sp_mat &result, std::size_t fromIdx, const HoppingTerm &hoppingTerm) const;
     void addDoubleHoppingTerms(arma::sp_mat &result, std::size_t fromIdx) const;
 
 public:

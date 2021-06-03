@@ -41,8 +41,8 @@ arma::sp_mat HamiltonianGenerator::generate() const {
     for (std::size_t vectorIdx = 0; vectorIdx < this->fockBasis->size(); vectorIdx++) {
         if (!this->diagonalTerms.empty())
             this->addDiagonalTerms(result, vectorIdx);
-        if (!this->hoppingTerms.empty())
-            this->addHoppingTerms(result, vectorIdx);
+        for (const auto &hoppingTerm : this->hoppingTerms)
+            this->addHoppingTerm(result, vectorIdx, *hoppingTerm);
         if (!this->doubleHoppingTerms.empty())
             this->addDoubleHoppingTerms(result, vectorIdx);
     }
@@ -54,21 +54,24 @@ void HamiltonianGenerator::addDiagonalTerms(arma::sp_mat &result, std::size_t ve
         result(vectorIdx, vectorIdx) += diagonalTerm->calculate((*this->fockBasis)[vectorIdx], *this);
 }
 
-void HamiltonianGenerator::addHoppingTerms(arma::sp_mat &result, std::size_t fromIdx) const {
-    for (std::size_t fromSite = 0; fromSite < this->fockBasis->getNumberOfSites(); fromSite++) {
-        auto hopData = this->hoppingAction((*this->fockBasis)[fromIdx], fromSite, fromSite + 1);
-        if (hopData == std::nullopt)
-            continue;
+void HamiltonianGenerator::addHoppingTerm(arma::sp_mat &result, std::size_t fromIdx,
+                                          const HoppingTerm &hoppingTerm) const
+{
+    for (std::size_t hoppingDistance : hoppingTerm.getHoppingDistances()) {
+        for (std::size_t fromSite = 0; fromSite < this->fockBasis->getNumberOfSites(); fromSite++) {
+            auto hopData = this->hoppingAction((*this->fockBasis)[fromIdx], fromSite, fromSite + hoppingDistance);
+            if (hopData == std::nullopt)
+                continue;
 
-        double matrixElement{};
-        for (auto &hoppingTerm : this->hoppingTerms)
-            matrixElement += hoppingTerm->calculate(*hopData, *this);
+            double matrixElement{};
+            matrixElement += hoppingTerm.calculate(*hopData, *this);
 
-        matrixElement *= hopData->ladderConstant;
-        std::size_t toIdx = *(this->fockBasis->findIndex(hopData->toVector));
+            matrixElement *= hopData->ladderConstant;
+            std::size_t toIdx = *(this->fockBasis->findIndex(hopData->toVector));
 
-        result(fromIdx, toIdx) += matrixElement;
-        result(toIdx, fromIdx) += matrixElement;
+            result(fromIdx, toIdx) += matrixElement;
+            result(toIdx, fromIdx) += matrixElement;
+        }
     }
 }
 

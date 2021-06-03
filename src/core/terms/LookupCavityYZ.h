@@ -49,13 +49,15 @@ public:
      * @brief Calculates the hop elements for @a hopData. CavityConstants from the constructor must have enough sites
      * defined.
      */
-    double calculate(const HopData &hopData, const HamiltonianGenerator &generator) override;
+    double calculate(const HopData &hopData, const HamiltonianGenerator &generator) const override;
 
     /**
      * @brief Changes the realisation, i.e. phi0 and wanniers, to the one pointed by @a index in CavityConstants from
      * the constructor.
      */
     void changeRealisation(std::size_t index);
+
+    [[nodiscard]] std::vector<std::size_t> getHoppingDistances() const override { return {1}; }
 };
 
 
