@@ -22,6 +22,7 @@ HubbardHop::HubbardHop(double J) : Js{J}, hoppingDistances{1} {
 
 HubbardHop::HubbardHop(std::vector<double> Js) : Js{std::move(Js)} {
     Expects(!this->Js.empty());
+    Expects(std::any_of(this->Js.begin(), this->Js.end(), [](double J) { return J != 0; }));
     this->hoppingDistances.resize(this->Js.size());
     std::iota(this->hoppingDistances.begin(), this->hoppingDistances.end(), 1);
 }
@@ -30,6 +31,7 @@ HubbardHop::HubbardHop(std::vector<std::size_t> hoppingDistances, std::vector<do
         : Js{std::move(Js)}, hoppingDistances{std::move(hoppingDistances)}
 {
     Expects(!this->Js.empty());
+    Expects(std::any_of(this->Js.begin(), this->Js.end(), [](double J) { return J != 0; }));
     Expects(this->Js.size() == this->hoppingDistances.size());
     Expects(std::all_of(this->hoppingDistances.begin(), this->hoppingDistances.end(),
                         [](std::size_t dist) { return dist > 0; }));

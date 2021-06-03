@@ -42,9 +42,10 @@ public:
     /**
      * @brief Returns constant -J for a hop between neighbouring sites (according to PBC or OBC).
      */
-    double calculate(const HopData &hopData, const HamiltonianGenerator &generator) const override;
+    [[nodiscard]] double calculate(const HopData &hopData, const HamiltonianGenerator &generator) const override;
 
     [[nodiscard]] std::vector<std::size_t> getHoppingDistances() const override { return this->hoppingDistances; }
+    [[nodiscard]] const std::vector<double> &getJs() const { return this->Js; }
 };
 
 #endif //MBL_ED_HUBBARDHOP_H

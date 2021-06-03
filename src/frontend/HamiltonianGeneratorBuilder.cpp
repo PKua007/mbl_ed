@@ -2,6 +2,8 @@
 // Created by pkua on 08.06.2020.
 //
 
+#include <ZipIterator.hpp>
+
 #include "HamiltonianGeneratorBuilder.h"
 
 #include "utils/Assertions.h"
@@ -20,6 +22,29 @@
 
 #include "core/disorder_generators/UniformGenerator.h"
 
+namespace {
+    std::unique_ptr<HubbardHop> parse_J_for_hubbard_hop(const Config &termParams) {
+        std::vector<std::size_t> distances;
+        std::vector<double> Js;
+
+        for (const auto &key : termParams.getKeys()) {
+            Validate(startsWith(key, "J"));
+            std::size_t distance{};
+            if (key == "J")
+                distance = 1;
+            else
+                distance = std::stoul(key.substr(1));
+            Validate(distance > 0);
+            distances.push_back(distance);
+            Js.push_back(termParams.getDouble(key));
+        }
+
+        Validate(std::any_of(Js.begin(), Js.end(), [](double J) { return J != 0; }));
+
+        return std::make_unique<HubbardHop>(distances, Js);
+    }
+}
+
 std::unique_ptr<HamiltonianGenerator>
 HamiltonianGeneratorBuilder::build(const Parameters &params, std::shared_ptr<FockBasis> fockBasis, RND &rnd)
 {
@@ -30,9 +55,7 @@ HamiltonianGeneratorBuilder::build(const Parameters &params, std::shared_ptr<Foc
         std::string termName = term.first;
         const auto &termParams = term.second;
         if (termName == "hubbardHop") {
-            double J = termParams.getDouble("J");
-            Validate(J >= 0);
-            generator->addHoppingTerm(std::make_unique<HubbardHop>(J));
+            generator->addHoppingTerm(parse_J_for_hubbard_hop(termParams));
         } else if (termName == "hubbardOnsite") {
             double U = termParams.getDouble("U");
             Validate(U >= 0);
