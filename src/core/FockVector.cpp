@@ -41,9 +41,13 @@ FockVector::FockVector(std::size_t sites, const std::string &tag) {
             throw FockVectorParseException("dw Fock vector available only for even number of sites");
 
         this->data.clear();
-        this->data.resize(sites);
+        this->data.resize(sites, 0);
         for (std::size_t i{}; i < sites; i += 2)
             this->data[i] = 2;
+    } else if (tag == "central") {
+        this->data.clear();
+        this->data.resize(sites, 0);
+        this->data[(sites - 1)/2] = 1;
     } else {
         throw FockVectorParseException("unknown tag: " + tag);
     }

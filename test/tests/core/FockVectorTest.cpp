@@ -24,10 +24,14 @@ TEST_CASE("FockVector: tag representation") {
     SECTION("ok") {
         FockVector unif(5, "unif");
         FockVector dw(6, "dw");
+        FockVector centralEven(6, "central");
+        FockVector centralOdd(5, "central");
         FockVector empty(0, "Mumbo Jumbo you are afk!");
 
         REQUIRE(unif == FockVector{1, 1, 1, 1, 1});
         REQUIRE(dw == FockVector{2, 0, 2, 0, 2, 0});
+        REQUIRE(centralEven == FockVector{0, 0, 1, 0, 0, 0});
+        REQUIRE(centralOdd == FockVector{0, 0, 1, 0, 0});
         REQUIRE(empty.empty());
     }
 
