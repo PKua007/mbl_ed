@@ -173,8 +173,8 @@ namespace {
     build_evolution_task(const Parameters &params, const std::string &task, const std::shared_ptr<FockBasis> &fockBasis,
                          std::optional<std::reference_wrapper<const HamiltonianGenerator>> hamiltonianGenerator)
     {
-        if (params.N != params.K || params.K % 2 != 0)
-            throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
+        //if (params.N != params.K || params.K % 2 != 0)
+        //    throw ValidationException("evolution mode is only for even number of sites with 1:1 filling");
 
         auto fieldsMap = parse_fields({" time: ", " obs: ", " vec: "}, task);
 

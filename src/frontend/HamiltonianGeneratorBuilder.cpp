@@ -2,8 +2,6 @@
 // Created by pkua on 08.06.2020.
 //
 
-#include <ZipIterator.hpp>
-
 #include "HamiltonianGeneratorBuilder.h"
 
 #include "utils/Assertions.h"
@@ -19,6 +17,7 @@
 #include "core/terms/LookupCavityZ2.h"
 #include "core/terms/LookupCavityYZ.h"
 #include "core/terms/LookupCavityY2.h"
+#include "core/terms/ConstantForce.h"
 
 #include "core/disorder_generators/UniformGenerator.h"
 
@@ -139,6 +138,10 @@ HamiltonianGeneratorBuilder::build(const Parameters &params, std::shared_ptr<Foc
             generator->addDiagonalTerm(std::make_unique<LookupCavityZ2>(U1, cavityConstants));
             generator->addHoppingTerm(std::make_unique<LookupCavityYZ>(U1, cavityConstants));
             generator->addDoubleHoppingTerm(std::make_unique<LookupCavityY2>(U1, cavityConstants));
+        } else if (termName == "constantForce") {
+            double F = termParams.getDouble("F");
+            Validate(F != 0);
+            generator->addDiagonalTerm(std::make_unique<ConstantForce>(F));
         } else {
             throw ValidationException("Unknown hamiltonian term: " + termName);
         }
