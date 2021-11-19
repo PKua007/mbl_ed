@@ -14,7 +14,7 @@
 #include "core/FockBasis.h"
 
 /**
- * @brief Expected values of all combinations of 2 occupation operators <n_j n_j>.
+ * @brief Expected values of all combinations of 2 occupation operators \<n_j n_j\>.
  */
 class OnsiteOccupationsSquared : public PrimaryObservable {
 private:

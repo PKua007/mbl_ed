@@ -9,9 +9,10 @@
 
 /**
  * @brief Site-averaged correlations for all sites apart from @a marginSize sites on the border.
- * @details Correlations are defined as G(i, i+d) = <n_i n_{i+d}> - <n_i> <n_{i+d}>. The class outputs correlations for
- * all d-s which are plausible - namely at least one valule will go to site averaging. As an example, for 6 sites and
- * margin 1, we have: G_1 as an average of G(2, 3), G(3, 4), G(4, 5); G_2 - G(2, 4), G(3, 5); G_3 - G(2, 5).
+ * @details Correlations are defined as G(i, i+d) = \<n_i n_{i+d}\> - \<n_i\> \<n_{i+d}\>. The class outputs
+ * correlations for all d-s which are plausible - namely at least one valule will go to site averaging. As an example,
+ * for 6 sites and margin 1, we have: G_1 as an average of G(2, 3), G(3, 4), G(4, 5); G_2 - G(2, 4), G(3, 5);
+ * G_3 - G(2, 5).
  */
 class Correlations : public SecondaryObservable {
 private:

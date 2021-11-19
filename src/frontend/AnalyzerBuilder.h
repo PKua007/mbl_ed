@@ -21,7 +21,7 @@ class AnalyzerBuilder {
 public:
     /**
      * @brief Prepares the Analyzer. Parsing @a tasks includes also validation and throwing exceptions if needed.
-     * @detail Optional HamiltonianGenerator may come handy for some tasks, for example using observables relying
+     * @details Optional HamiltonianGenerator may come handy for some tasks, for example using observables relying
      * on specific Hamiltonian terms.
      */
     std::unique_ptr<Analyzer> build(const std::vector<std::string> &tasks, const Parameters &params,

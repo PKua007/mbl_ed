@@ -30,6 +30,7 @@ public:
      * @brief Constructs the class, which will compute participation entropy only for normalized eigenenergies from a
      * specific energy band.
      * @param range the range to choose eigenstates from
+     * @param q participation entropy rank
      */
     ParticipationEntropy(double q, BandExtractor::Range range);
 

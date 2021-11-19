@@ -8,7 +8,7 @@
 #include "core/SecondaryObservable.h"
 
 /**
- * @brief Onsite fluctuations for all sites defined as rho(i) = <n_i^2> - <n_i>^2.
+ * @brief Onsite fluctuations for all sites defined as rho(i) = \<n_i^2\> - \<n_i\>^2.
  */
 class OnsiteFluctuations : public SecondaryObservable {
 private:

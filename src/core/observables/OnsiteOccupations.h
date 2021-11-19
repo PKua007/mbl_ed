@@ -13,7 +13,7 @@
 #include "core/FockBasis.h"
 
 /**
- * @brief Onsite mean occupations for all sites defined as <n_i>.
+ * @brief Onsite mean occupations for all sites defined as \<n_i\>.
  */
 class OnsiteOccupations : public PrimaryObservable {
 private:
