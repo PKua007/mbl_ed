@@ -34,6 +34,8 @@ int main(int argc, char **argv) {
         frontend.quench(argc, argv);
     } else if (mode == "random_states") {
         frontend.randomStates(argc, argv);
+    } else if (mode == "preview") {
+        frontend.preview(argc, argv);
     } else {
         die("Unknown mode " + mode);
     }

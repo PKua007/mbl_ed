@@ -564,7 +564,7 @@ void Frontend::quench(int argc, char **argv) {
     quenchParams.printHamiltonianTerms(logger);
     logger << std::endl;
     logger.info() << "Final Hamiltonian:" << std::endl;
-    params.printHamiltonianTerms(this->out);
+    params.printHamiltonianTerms(logger);
     logger << std::endl;
 
     // Generate Fock basis
@@ -702,6 +702,82 @@ void Frontend::randomStates(int argc, char **argv) {
     }
 }
 
+void Frontend::preview(int argc, char **argv) {
+    // Parse options
+    cxxopts::Options options(argv[0], "Auxiliary mode to preview different stuff.");
+
+    std::string inputFilename;
+    std::vector<std::string> overridenParams;
+    std::string verbosity;
+
+    options.add_options()
+            ("h,help", "prints help for this mode")
+            ("i,input", "file with parameters, needed when some other options are specified. See input.ini for "
+                        "parameters description",
+             cxxopts::value<std::string>(inputFilename))
+            ("P,set-param", "overrides the value of the parameter loaded as --input. More precisely, doing "
+                            "-P N=1 (-PN=1 does not work) act as one would append N=1 to [general] section of the "
+                            "input file. To override or even add some hamiltonian terms use -P termName.paramName=value",
+             cxxopts::value<std::vector<std::string>>(overridenParams))
+            ("F,preview-fock-basis", "when specified, Fock basis will be printed (in raw format). --input option needs "
+                                     "to be specified")
+            ("V,verbosity", "how verbose the output should be. Allowed values, with increasing verbosity: "
+                            "error, warn, info, verbose, debug",
+             cxxopts::value<std::string>(verbosity)->default_value("info"))
+            ("c,clear-output", "only the proper output is printed, without logging info, except for errors. "
+                               "Overrides --verbosity.");
+
+    auto parsedOptions = options.parse(argc, argv);
+    if (parsedOptions.count("help")) {
+        this->out << options.help() << std::endl;
+        exit(0);
+    }
+
+    Logger logger(this->out);
+    this->setOverridenParamsAsAdditionalText(logger, overridenParams);
+    this->setVerbosityLevel(logger, verbosity);
+    if (parsedOptions.count("clear-output"))
+        logger.setVerbosityLevel(Logger::LogType::ERROR);
+
+    // Validate parsed options
+    std::string cmd(argv[0]);
+    if (argc != 1)
+        die("Unexpected positional arguments. See " + cmd + " --help", logger);
+
+    // Load parameters (if specified)
+    std::optional<Parameters> params;
+    if (parsedOptions.count("input")) {
+        IO io(logger);
+        params = io.loadParameters(inputFilename, overridenParams);
+        if (!parsedOptions.count("clear-output")) {
+            params->print(logger);
+            logger << std::endl;
+        }
+    }
+
+    // Fock basis preview mode
+    if (parsedOptions.count("preview-fock-basis")) {
+        if (!parsedOptions.count("input"))
+            die("To preview the Fock basis, --input option must be specified");
+        Assert(params.has_value());
+
+        FockBasisGenerator basisGenerator;
+        logger.verbose() << "Preparing Fock basis started... " << std::endl;
+        arma::wall_clock timer;
+        timer.tic();
+        auto basis = std::shared_ptr<FockBasis>(basisGenerator.generate(params->N, params->K));
+        logger.info() << "Preparing Fock basis done (" << timer.toc() << " s)." << std::endl;
+
+        std::ostream &rawLogger = logger;
+        for (const auto &fockVector : *basis)
+            rawLogger << fockVector << std::endl;
+
+        return;
+    }
+
+    die("No preview mode specified. See " + cmd + " --help");
+}
+
 void Frontend::printGeneralHelp(const std::string &cmd) {
     this->out << Fold("Program performing exact diagonalization of Hubbard-like hamiltonians with analyzing "
                       "facilities. ").width(80) << std::endl;
@@ -720,6 +796,12 @@ void Frontend::printGeneralHelp(const std::string &cmd) {
                  .width(80).margin(4) << std::endl;
     this->out << "quench" << std::endl;
     this->out << Fold("Performs quantum quench from some initial to final Hamiltonian and print energy info.")
+                 .width(80).margin(4) << std::endl;
+    this->out << "random-states" << std::endl;
+    this->out << Fold("Calculates mean observable values for random Gaussian states.")
+                 .width(80).margin(4) << std::endl;
+    this->out << "preview" << std::endl;
+    this->out << Fold("Auxiliary mode to preview different stuff.")
                  .width(80).margin(4) << std::endl;
     this->out << std::endl;
     this->out << "Type " + cmd + " [mode] --help to get help on the specific mode." << std::endl;

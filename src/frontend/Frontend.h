@@ -43,6 +43,7 @@ public:
     void chebyshev(int argc, char **argv);
     void quench(int argc, char **argv);
     void randomStates(int argc, char **argv);
+    void preview(int argc, char **argv);
 
     void printGeneralHelp(const std::string &cmd);
 
