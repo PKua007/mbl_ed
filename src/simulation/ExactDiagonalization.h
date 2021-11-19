@@ -45,12 +45,26 @@ private:
     std::unique_ptr<Analyzer_t> analyzer;
     ExactDiagonalizationParameters params;
 
-    void doSaveEigenenergies(const Eigensystem &eigensystem, std::size_t index) const {
-        std::ostringstream filenameStream;
-        filenameStream << this->params.fileSignature << "_" << index << "_nrg.bin";
-        std::string filename = filenameStream.str();
-        auto out = this->ostreamProvider->openOutputFile(filename);
-        eigensystem.store(*out);
+    void doSaveEigensystem(const Eigensystem &eigensystem, std::size_t index) const {
+        std::ostringstream filenamePrefixStream;
+        filenamePrefixStream << this->params.fileSignature << "_" << index;
+        std::string filename = filenamePrefixStream.str();
+
+        switch (this->params.storeLevel) {
+            case ExactDiagonalizationParameters::StoreLevel::NONE:
+                break;
+            case ExactDiagonalizationParameters::StoreLevel::EIGENENERGIES: {
+                auto out = this->ostreamProvider->openOutputFile(filename + "_nrg.bin");
+                eigensystem.store(*out);
+                break;
+            }
+            case ExactDiagonalizationParameters::StoreLevel::EIGENSYSTEM: {
+                auto energyOut = this->ostreamProvider->openOutputFile(filename + "_nrg.bin");
+                auto vectorOut = this->ostreamProvider->openOutputFile(filename + "_st.bin");
+                eigensystem.store(*energyOut, *vectorOut);
+                break;
+            }
+        }
     }
 
 public:
@@ -109,8 +123,7 @@ public:
         logger.verbose() << "Performing analysis started..." << std::endl;
         timer.tic();
         this->analyzer->analyze(eigensystem, logger);
-        if (this->params.saveEigenenergies)
-            this->doSaveEigenenergies(eigensystem, simulationIndex);
+        this->doSaveEigensystem(eigensystem, simulationIndex);
         double analyzingTime = timer.toc();
 
         logger.info() << "Diagonalization " << simulationIndex << " done (diagonalization: " << diagonalizationTime;

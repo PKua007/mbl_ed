@@ -11,20 +11,27 @@
  * @brief The paramaters of Simulation.
  */
 struct ExactDiagonalizationParameters {
+    enum class StoreLevel {
+        NONE,
+        EIGENENERGIES,
+        EIGENSYSTEM
+    };
+
     /**
      * @brief If true, the diagonalization will produce both eigenvalues and eigenvectors.
      */
     bool calculateEigenvectors{};
 
     /**
-     * @brief If true, after each diagonalization eigenenergies will be saved to a file.
+     * @brief How much should be stored to file(s).
      */
-    bool saveEigenenergies{};
+    StoreLevel storeLevel = StoreLevel::NONE;
 
     /**
      * @brief A prefix for all output files produces by the simulation.
      */
     std::string fileSignature{};
+
 };
 
 #endif //MBL_ED_EXACTDIAGONALIZATIONPARAMETERS_H

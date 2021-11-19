@@ -115,10 +115,7 @@ void Frontend::ed(int argc, char **argv) {
     auto averagingModel = AveragingModelFactory{}.create(params.averagingModel);
 
     // Prepare and run simulations
-    ExactDiagonalizationParameters simulationParams;
-    simulationParams.calculateEigenvectors = params.calculateEigenvectors;
-    simulationParams.saveEigenenergies = params.saveEigenenergies;
-    simulationParams.fileSignature = directory / params.getOutputFileSignature();
+    ExactDiagonalizationParameters simulationParams = this->prepareExactDiagonalizationParameters(directory, params);
     ExactDiagonalization simulation(std::move(hamiltonianGenerator), std::move(averagingModel), std::move(rnd),
                                     simulationParams, std::move(analyzer));
 
@@ -140,6 +137,25 @@ void Frontend::ed(int argc, char **argv) {
         else
             io.storeAnalyzerResults(params, analyzerRef, paramsToPrint, outputFilename);
     }
+}
+
+ExactDiagonalizationParameters Frontend::prepareExactDiagonalizationParameters(const std::filesystem::path &directory,
+                                                                               const Parameters &params) const
+{
+    ExactDiagonalizationParameters simulationParams;
+    simulationParams.calculateEigenvectors = params.calculateEigenvectors;
+
+    if (!params.saveEigenenergies && !params.saveEigenstates)
+        simulationParams.storeLevel = ExactDiagonalizationParameters::StoreLevel::NONE;
+    else if (params.saveEigenenergies && !params.saveEigenstates)
+        simulationParams.storeLevel = ExactDiagonalizationParameters::StoreLevel::EIGENENERGIES;
+    else if (params.saveEigenenergies && params.saveEigenstates)
+        simulationParams.storeLevel = ExactDiagonalizationParameters::StoreLevel::EIGENSYSTEM;
+    else
+        throw std::runtime_error("");
+
+    simulationParams.fileSignature = directory / params.getOutputFileSignature();
+    return simulationParams;
 }
 
 void Frontend::setOverridenParamsAsAdditionalText(Logger &logger, std::vector<std::string> overridenParams) const {
@@ -236,19 +252,29 @@ void Frontend::analyze(int argc, char **argv) {
     // Load eigenenergies and analyze them
     auto analyzer = AnalyzerBuilder{}.build(tasks, params, basis, std::nullopt, directory);
     std::string fileSignature = params.getOutputFileSignature();
-    std::vector<std::string> energiesFilenames = io.findEigenenergyFiles(directory, fileSignature);
-    if (energiesFilenames.empty())
-        die("No eigenenergy files were found.", logger);
-    else
-        logger.info() << "Found " << energiesFilenames.size() << " eigenenergy files" << std::endl;
+    std::vector<std::string> energiesFilenames = io.findFiles(directory, fileSignature, "nrg.bin");
+    std::vector<std::string> statesFilenames = io.findFiles(directory, fileSignature, "st.bin");
+    this->validateEigensystemFiles(logger, energiesFilenames, statesFilenames);
 
-    for (const auto &energiesFilename : energiesFilenames) {
+    Assert(statesFilenames.empty() || energiesFilenames.size() == statesFilenames.size());
+    for (std::size_t i{}; i < energiesFilenames.size(); i++) {
+        const auto &energiesFilename = energiesFilenames[i];
         std::ifstream energiesFile(energiesFilename);
         if (!energiesFile)
             die("Cannot open " + energiesFilename + " to read eigenenergies from", logger);
 
         Eigensystem eigensystem;
-        eigensystem.restore(energiesFile, basis);
+        if (statesFilenames.empty()) {
+            eigensystem.restore(energiesFile, basis);
+        } else {
+            const auto &statesFilename = statesFilenames[i];
+            std::ifstream statesFile(statesFilename);
+            if (!energiesFile)
+                die("Cannot open " + statesFilename + " to read eigenstates from", logger);
+
+            eigensystem.restore(energiesFile, statesFile, basis);
+        }
+
         logger.verbose() << "Analyzing " << energiesFilename << " started... " << std::endl;
         timer.tic();
         analyzer->analyze(eigensystem, logger);
@@ -261,6 +287,30 @@ void Frontend::analyze(int argc, char **argv) {
         io.storeAnalyzerResults(params, *analyzer, paramsToPrint, std::nullopt);
     else
         io.storeAnalyzerResults(params, *analyzer, paramsToPrint, outputFilename);
+}
+
+void Frontend::validateEigensystemFiles(Logger &logger, const std::vector<std::string> &energiesFilenames,
+                                        const std::vector<std::string> &statesFilenames)
+{
+    if (energiesFilenames.empty()) {
+        die("No eigenenergy files were found.", logger);
+    } else if (!statesFilenames.empty()) {
+        std::vector<std::string> notMatching;
+        this->appendNotMatchingSignatures(notMatching, energiesFilenames, "nrg.bin", statesFilenames, "st.bin");
+        this->appendNotMatchingSignatures(notMatching, statesFilenames, "st.bin", energiesFilenames, "nrg.bin");
+
+        if (!notMatching.empty()) {
+            logger.error() << "Both eigenenergy and eigenstate files were found, but the signatures of the following ";
+            logger << "files don't match:" << std::endl;
+            for (const auto &signature : notMatching)
+                logger << ">> " << signature << std::endl;
+            die("");
+        }
+
+        logger.info() << "Found " << energiesFilenames.size() << " eigenenergy and eigenstate files" << std::endl;
+    } else {
+        logger.info() << "Found " << energiesFilenames.size() << " eigenenergy files" << std::endl;
+    }
 }
 
 void Frontend::chebyshev(int argc, char **argv) {
@@ -671,4 +721,16 @@ void Frontend::setVerbosityLevel(Logger &logger, const std::string &verbosityLev
         logger.setVerbosityLevel(Logger::DEBUG);
     else
         die("Unknown verbosity level: " + verbosityLevelName, logger);
+}
+
+void Frontend::appendNotMatchingSignatures(std::vector<std::string> &notMatchingSignatures,
+                                           const std::vector<std::string> &filenames1, const std::string &suffix1,
+                                           const std::vector<std::string> &filenames2, const std::string &suffix2)
+{
+    for (const auto &filename : filenames1) {
+        Assert(endsWith(filename, suffix1));
+        std::string filenameSuffix2 = filename.substr(0, filename.length() - suffix1.length()) + suffix2;
+        if (std::find(filenames2.begin(), filenames2.end(), filenameSuffix2) == filenames2.end())
+            notMatchingSignatures.push_back(filename);
+    }
 }

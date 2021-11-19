@@ -40,9 +40,11 @@ public:
     Parameters loadParameters(const std::string &inputFilename, const std::vector<std::string> &overridenParams);
 
     /**
-     * @brief Return paths to all files starting with @a fileSignature within @a directory directory
+     * @brief Return paths to all files starting with @a fileSignature and ending with @a fileSuffix within @a directory
+     * directory
      */
-    std::vector<std::string> findEigenenergyFiles(const std::string &directory, const std::string &fileSignature);
+    std::vector<std::string> findFiles(const std::string &directory, const std::string &fileSignature,
+                                       const std::string &fileSuffix);
 
     /**
      * @brief Prints inline results to @a logger from the constructor.

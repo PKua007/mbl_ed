@@ -37,7 +37,7 @@ public:
      * Eigenvalues are sorted in ascending order and eigenvectors are normalized to unity. @a fockBasis can be omitted,
      * but when it's not, the size must match the number of eigenvalues.
      */
-    Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::shared_ptr<const FockBasis> fockBasis = nullptr);
+    Eigensystem(arma::vec eigenvalues, arma::mat eigenstates, std::shared_ptr<const FockBasis> fockBasis = nullptr);
 
     /**
      * @brief Constructs a system without eigenvectors: eigenvalues are entries in @a eigengenvalues.
@@ -82,7 +82,10 @@ public:
                                                                                   std::size_t numEnergies) const;
 
     void store(std::ostream &eigenenergiesOut) const;
-    void restore(std::istream &in, std::shared_ptr<const FockBasis> newFockBasis = nullptr);
+    void store(std::ostream &eigenenergiesOut, std::ostream &eigenstatesOut) const;
+    void restore(std::istream &eigenenergiesIn, std::shared_ptr<const FockBasis> newFockBasis = nullptr);
+    void restore(std::istream &eigenEnergiesIn, std::istream &eigenstatesIn,
+                 std::shared_ptr<const FockBasis> newFockBasis = nullptr);
 
     friend bool operator==(const Eigensystem &lhs, const Eigensystem &rhs);
     friend bool operator!=(const Eigensystem &lhs, const Eigensystem &rhs);

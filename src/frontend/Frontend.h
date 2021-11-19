@@ -23,6 +23,16 @@ private:
     void setOverridenParamsAsAdditionalText(Logger &logger, std::vector<std::string> overridenParams) const;
     void setVerbosityLevel(Logger &logger, const std::string &verbosityLevelName) const;
 
+    [[nodiscard]] ExactDiagonalizationParameters
+    prepareExactDiagonalizationParameters(const std::filesystem::path &directory, const Parameters &params) const;
+
+    void appendNotMatchingSignatures(std::vector<std::string> &notMatchingSignatures,
+                                     const std::vector<std::string> &filenames1, const std::string &suffix1,
+                                     const std::vector<std::string> &filenames2, const std::string &suffix2);
+
+    void validateEigensystemFiles(Logger &logger, const std::vector<std::string> &energiesFilenames,
+                                  const std::vector<std::string> &statesFilenames);
+
 public:
     explicit Frontend(std::ostream &out) : out{out} { }
 

@@ -125,12 +125,14 @@ Parameters IO::loadParameters(const std::string &inputFilename, const std::vecto
     return Parameters(paramsStream);
 }
 
-std::vector<std::string> IO::findEigenenergyFiles(const std::string &directory, const std::string &fileSignature) {
+std::vector<std::string> IO::findFiles(const std::string &directory, const std::string &fileSignature,
+                                       const std::string &fileSuffix)
+{
     std::vector<std::string> files;
     for (const auto &entry : std::filesystem::directory_iterator(directory)) {
         const std::filesystem::path &filePath = entry.path();
         std::string prefix = fileSignature + "_";
-        if (startsWith(filePath.filename(), prefix) && endsWith(filePath.filename(), "_nrg.bin"))
+        if (startsWith(filePath.filename(), prefix) && endsWith(filePath.filename(), "_" + fileSuffix))
             files.push_back(filePath);
     }
 

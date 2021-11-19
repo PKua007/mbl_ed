@@ -10,8 +10,8 @@
 #include "utils/Assertions.h"
 #include "Eigensystem.h"
 
-Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenvectors, std::shared_ptr<const FockBasis> fockBasis)
-        : eigenenergies{std::move(eigenvalues)}, eigenstates{std::move(eigenvectors)}, hasEigenvectors_{true},
+Eigensystem::Eigensystem(arma::vec eigenvalues, arma::mat eigenstates, std::shared_ptr<const FockBasis> fockBasis)
+        : eigenenergies{std::move(eigenvalues)}, eigenstates{std::move(eigenstates)}, hasEigenvectors_{true},
           fockBasis{std::move(fockBasis)}
 {
     std::size_t size = this->eigenenergies.size();
@@ -79,14 +79,33 @@ arma::vec Eigensystem::getNormalizedEigenenergies() const {
 
 void Eigensystem::store(std::ostream &eigenenergiesOut) const {
     if (!this->eigenenergies.save(eigenenergiesOut))
-        throw std::runtime_error("Store procedure failed");
+        throw std::runtime_error("Eigenenergies store procedure failed");
 }
 
-void Eigensystem::restore(std::istream &in, std::shared_ptr<const FockBasis> newFockBasis) {
+void Eigensystem::store(std::ostream &eigenenergiesOut, std::ostream &eigenstatesOut) const {
+    if (!this->eigenenergies.save(eigenenergiesOut))
+        throw std::runtime_error("Eigenenergies store procedure failed");
+    if (!this->eigenstates.save(eigenstatesOut))
+        throw std::runtime_error("Eigenstates store procedure failed");
+}
+
+void Eigensystem::restore(std::istream &eigenenergiesIn, std::shared_ptr<const FockBasis> newFockBasis) {
     arma::vec newEigenenergies;
-    if (!newEigenenergies.load(in))
-        throw std::runtime_error("Restore procedure failed");
+    if (!newEigenenergies.load(eigenenergiesIn))
+        throw std::runtime_error("Eigenenergies restore procedure failed");
     *this = Eigensystem(newEigenenergies, std::move(newFockBasis));
+}
+
+void Eigensystem::restore(std::istream &eigenenergiesIn, std::istream &eigenstatesIn,
+                          std::shared_ptr<const FockBasis> newFockBasis)
+{
+    arma::vec newEigenenergies;
+    arma::mat newEigenstates;
+    if (!newEigenenergies.load(eigenenergiesIn))
+        throw std::runtime_error("Eigenenergies restore procedure failed");
+    if (!newEigenstates.load(eigenstatesIn))
+        throw std::runtime_error("Eigenstates restore procedure failed");
+    *this = Eigensystem(newEigenenergies, newEigenstates, std::move(newFockBasis));
 }
 
 bool operator==(const Eigensystem &lhs, const Eigensystem &rhs) {

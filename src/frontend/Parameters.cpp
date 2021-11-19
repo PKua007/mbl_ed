@@ -31,6 +31,8 @@ Parameters::Parameters(std::istream &input) {
             this->calculateEigenvectors = generalConfig.getBoolean("calculateEigenvectors");
         else if (key == "saveEigenenergies")
             this->saveEigenenergies = generalConfig.getBoolean("saveEigenenergies");
+        else if (key == "saveEigenstates")
+            this->saveEigenstates = generalConfig.getBoolean("saveEigenstates");
         else if (key == "from")
             this->from = generalConfig.getUnsignedLong("from");
         else if (key == "to")
@@ -75,6 +77,10 @@ void Parameters::autocompleteAndValidate() {
     Validate(K > 0);
     if (this->splitWorkload)
         ValidateMsg(this->secureSimulationState, "If splitWorkoload = true, secureSimulationState should also be true");
+
+    ValidateMsg(!this->saveEigenstates || this->saveEigenenergies,
+                "Eigenstates cannot be stored without eigenenergies");
+    ValidateMsg(!this->saveEigenstates || this->calculateEigenvectors, "Eigenvectors must be calculated to be stored");
 }
 
 void Parameters::printGeneral(std::ostream &out) const {
@@ -85,6 +91,7 @@ void Parameters::printGeneral(std::ostream &out) const {
     out << "usePeriodicBC         : " << (this->usePeriodicBC ? "true" : "false") << std::endl;
     out << "calculateEigenvectors : " << (this->calculateEigenvectors ? "true" : "false") << std::endl;
     out << "saveEigenenergies     : " << (this->saveEigenenergies ? "true" : "false") << std::endl;
+    out << "saveEigenstates       : " << (this->saveEigenstates ? "true" : "false") << std::endl;
     out << "from                  : " << this->from << std::endl;
     out << "to                    : " << this->to << std::endl;
     out << "totalSimulations      : " << this->totalSimulations << std::endl;
@@ -121,6 +128,8 @@ std::string Parameters::getByName(const std::string &name) const {
         return this->calculateEigenvectors ? "true" : "false";
     else if (name == "saveEigenenergies")
         return this->saveEigenenergies ? "true" : "false";
+    else if (name == "saveEigenstates")
+        return this->saveEigenstates ? "true" : "false";
     else if (name == "from")
         return std::to_string(this->from);
     else if (name == "to")

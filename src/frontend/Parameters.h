@@ -38,6 +38,7 @@ public:
     bool usePeriodicBC{};
     bool calculateEigenvectors = true;
     bool saveEigenenergies = false;
+    bool saveEigenstates = false;
     std::string averagingModel{};
     std::size_t to{};
     std::size_t from = 0;
