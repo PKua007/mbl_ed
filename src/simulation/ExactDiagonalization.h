@@ -123,11 +123,14 @@ public:
         logger.verbose() << "Performing analysis started..." << std::endl;
         timer.tic();
         this->analyzer->analyze(eigensystem, logger);
-        this->doSaveEigensystem(eigensystem, simulationIndex);
         double analyzingTime = timer.toc();
 
+        timer.tic();
+        this->doSaveEigensystem(eigensystem, simulationIndex);
+        double storeTime = timer.toc();
+
         logger.info() << "Diagonalization " << simulationIndex << " done (diagonalization: " << diagonalizationTime;
-        logger << "s, analysis: " << analyzingTime << " s)." << std::endl;
+        logger << " s, analysis: " << analyzingTime << " s, store: " << storeTime << " s)." << std::endl;
     }
 
     [[nodiscard]] std::string getTagName() const override {
