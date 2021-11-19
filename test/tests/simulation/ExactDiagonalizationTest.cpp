@@ -38,7 +38,7 @@ namespace {
 TEST_CASE("ExactDiagonlization: 3 'random' hamiltonians") {
     ExactDiagonalizationParameters params;
     params.calculateEigenvectors = true;
-    params.saveEigenenergies = false;
+    params.storeLevel = ExactDiagonalizationParameters::StoreLevel::NONE;
     params.fileSignature = "";
     Eigensystem eigensystem({-1, 1, 2}, {{1, 0, 0}, {0, 0, 1}, {0, 1, 0}});
 

@@ -15,6 +15,7 @@ void Analyzer::addTask(std::unique_ptr<AnalyzerTask> task) {
 }
 
 void Analyzer::analyze(const Eigensystem &eigensystem, Logger &logger) {
+    logger.debug() << "Analyzing eigensystem:" << std::endl << eigensystem << std::endl;
     for (auto &task : this->tasks)
         task->analyze(eigensystem, logger);
 }

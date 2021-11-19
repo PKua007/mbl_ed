@@ -104,14 +104,33 @@ TEST_CASE("Eigensystem: orthonormality check") {
 }
 
 TEST_CASE("Eigensystem: store/restore") {
-    Eigensystem toStore({0, 0.25, 0.5, 1});
-    Eigensystem toRestore({0, 0.1, 0.8, 1});
+    SECTION("only eigenenergies") {
+        Eigensystem toStore({0, 0.25, 0.5, 1});
+        Eigensystem toRestore({0, 0.1, 0.8, 1});
 
-    std::stringstream inout;
-    toStore.store(inout);
-    toRestore.restore(inout);
+        std::stringstream inout;
+        toStore.store(inout);
+        toRestore.restore(inout);
 
-    REQUIRE(toStore == toRestore);
+        CHECK(toStore == toRestore);
+        CHECK_FALSE(toRestore.hasEigenvectors());
+    }
+
+    SECTION("eigenenergies and eigenstates") {
+        Eigensystem toStore({0, 0.25, 0.5, 1},
+                            {{0, -1,         0,          0},
+                             {1,  0,         0,          0},
+                             {0,  0, M_SQRT1_2, -M_SQRT1_2},
+                             {0,  0, M_SQRT1_2,  M_SQRT1_2}});
+        Eigensystem toRestore({0, 0.1, 0.8, 1});
+
+        std::stringstream inoutEnergies, inoutStates;
+        toStore.store(inoutEnergies, inoutStates);
+        toRestore.restore(inoutEnergies, inoutStates);
+
+        REQUIRE(toStore == toRestore);
+        REQUIRE(toRestore.hasEigenvectors());
+    }
 }
 
 TEST_CASE("Eigensystem: normalized energies") {

@@ -26,6 +26,8 @@ private:
     [[nodiscard]] ExactDiagonalizationParameters
     prepareExactDiagonalizationParameters(const std::filesystem::path &directory, const Parameters &params) const;
 
+    [[nodiscard]] std::string stripSuffix(const std::string &string, const std::string &suffix) const;
+
     void appendNotMatchingSignatures(std::vector<std::string> &notMatchingSignatures,
                                      const std::vector<std::string> &filenames1, const std::string &suffix1,
                                      const std::vector<std::string> &filenames2, const std::string &suffix2);
@@ -43,6 +45,10 @@ public:
     void randomStates(int argc, char **argv);
 
     void printGeneralHelp(const std::string &cmd);
+
+    Eigensystem
+    restoreEigensystem(const std::string &energiesFilename, bool restoreEigenstates, std::shared_ptr<FockBasis> basis,
+                       Logger &logger) const;
 };
 
 

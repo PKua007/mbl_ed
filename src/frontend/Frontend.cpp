@@ -256,25 +256,9 @@ void Frontend::analyze(int argc, char **argv) {
     std::vector<std::string> statesFilenames = io.findFiles(directory, fileSignature, "st.bin");
     this->validateEigensystemFiles(logger, energiesFilenames, statesFilenames);
 
-    Assert(statesFilenames.empty() || energiesFilenames.size() == statesFilenames.size());
-    for (std::size_t i{}; i < energiesFilenames.size(); i++) {
-        const auto &energiesFilename = energiesFilenames[i];
-        std::ifstream energiesFile(energiesFilename);
-        if (!energiesFile)
-            die("Cannot open " + energiesFilename + " to read eigenenergies from", logger);
-
-        Eigensystem eigensystem;
-        if (statesFilenames.empty()) {
-            eigensystem.restore(energiesFile, basis);
-        } else {
-            const auto &statesFilename = statesFilenames[i];
-            std::ifstream statesFile(statesFilename);
-            if (!energiesFile)
-                die("Cannot open " + statesFilename + " to read eigenstates from", logger);
-
-            eigensystem.restore(energiesFile, statesFile, basis);
-        }
-
+    for (const auto &energiesFilename : energiesFilenames) {
+        bool restoreEigenstates = !statesFilenames.empty();
+        Eigensystem eigensystem = this->restoreEigensystem(energiesFilename, restoreEigenstates, basis, logger);
         logger.verbose() << "Analyzing " << energiesFilename << " started... " << std::endl;
         timer.tic();
         analyzer->analyze(eigensystem, logger);
@@ -287,6 +271,28 @@ void Frontend::analyze(int argc, char **argv) {
         io.storeAnalyzerResults(params, *analyzer, paramsToPrint, std::nullopt);
     else
         io.storeAnalyzerResults(params, *analyzer, paramsToPrint, outputFilename);
+}
+
+Eigensystem Frontend::restoreEigensystem(const std::string &energiesFilename, bool restoreEigenstates,
+                                         std::shared_ptr<FockBasis> basis, Logger &logger) const
+{
+    std::ifstream energiesFile(energiesFilename);
+    if (!energiesFile)
+        die("Cannot open " + energiesFilename + " to read eigenenergies from", logger);
+
+    Eigensystem eigensystem;
+    if (restoreEigenstates) {
+        auto statesFilename = this->stripSuffix(energiesFilename, "nrg.bin") + "st.bin";
+        std::ifstream statesFile(statesFilename);
+        if (!energiesFile)
+            die("Cannot open " + statesFilename + " to read eigenstates from", logger);
+
+        eigensystem.restore(energiesFile, statesFile, basis);
+    } else {
+        eigensystem.restore(energiesFile, basis);
+    }
+
+    return eigensystem;
 }
 
 void Frontend::validateEigensystemFiles(Logger &logger, const std::vector<std::string> &energiesFilenames,
@@ -727,10 +733,15 @@ void Frontend::appendNotMatchingSignatures(std::vector<std::string> &notMatching
                                            const std::vector<std::string> &filenames1, const std::string &suffix1,
                                            const std::vector<std::string> &filenames2, const std::string &suffix2)
 {
-    for (const auto &filename : filenames1) {
-        Assert(endsWith(filename, suffix1));
-        std::string filenameSuffix2 = filename.substr(0, filename.length() - suffix1.length()) + suffix2;
+    for (const auto &filename1 : filenames1) {
+        Assert(endsWith(filename1, suffix1));
+        std::string filenameSuffix2 = this->stripSuffix(filename1, suffix1) + suffix2;
         if (std::find(filenames2.begin(), filenames2.end(), filenameSuffix2) == filenames2.end())
-            notMatchingSignatures.push_back(filename);
+            notMatchingSignatures.push_back(filename1);
     }
+}
+
+std::string Frontend::stripSuffix(const std::string &string, const std::string &suffix) const {
+    Assert(endsWith(string, suffix));
+    return string.substr(0, string.length() - suffix.length());
 }
