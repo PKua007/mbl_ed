@@ -81,8 +81,10 @@ public:
     [[nodiscard]] std::vector<std::size_t> getIndicesOfNumberOfNormalizedEnergies(double epsilon,
                                                                                   std::size_t numEnergies) const;
 
-    void store(std::ostream &eigenenergiesOut) const;
-    void store(std::ostream &eigenenergiesOut, std::ostream &eigenstatesOut) const;
+    void store(std::ostream &eigenenergiesOut, arma::file_type fileType = arma::arma_binary) const;
+    void store(std::ostream &eigenenergiesOut, std::ostream &eigenstatesOut,
+               arma::file_type fileType = arma::arma_binary) const;
+
     void restore(std::istream &eigenenergiesIn, std::shared_ptr<const FockBasis> newFockBasis = nullptr);
     void restore(std::istream &eigenEnergiesIn, std::istream &eigenstatesIn,
                  std::shared_ptr<const FockBasis> newFockBasis = nullptr);

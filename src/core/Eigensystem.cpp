@@ -77,15 +77,15 @@ arma::vec Eigensystem::getNormalizedEigenenergies() const {
     return (this->eigenenergies - low) / (high - low);
 }
 
-void Eigensystem::store(std::ostream &eigenenergiesOut) const {
-    if (!this->eigenenergies.save(eigenenergiesOut))
+void Eigensystem::store(std::ostream &eigenenergiesOut, arma::file_type fileType) const {
+    if (!this->eigenenergies.save(eigenenergiesOut, fileType))
         throw std::runtime_error("Eigenenergies store procedure failed");
 }
 
-void Eigensystem::store(std::ostream &eigenenergiesOut, std::ostream &eigenstatesOut) const {
-    if (!this->eigenenergies.save(eigenenergiesOut))
+void Eigensystem::store(std::ostream &eigenenergiesOut, std::ostream &eigenstatesOut, arma::file_type fileType) const {
+    if (!this->eigenenergies.save(eigenenergiesOut, fileType))
         throw std::runtime_error("Eigenenergies store procedure failed");
-    if (!this->eigenstates.save(eigenstatesOut))
+    if (!this->eigenstates.save(eigenstatesOut, fileType))
         throw std::runtime_error("Eigenstates store procedure failed");
 }
 

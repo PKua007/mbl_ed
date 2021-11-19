@@ -154,6 +154,17 @@ ExactDiagonalizationParameters Frontend::prepareExactDiagonalizationParameters(c
     else
         throw std::runtime_error("");
 
+    if (params.storeFormat.empty() || params.storeFormat == "arma_binary" || params.storeFormat == "default")
+        simulationParams.fileType = arma::arma_binary;
+    else if (params.storeFormat == "arma_ascii")
+        simulationParams.fileType = arma::arma_ascii;
+    else if (params.storeFormat == "raw_ascii")
+        simulationParams.fileType = arma::raw_ascii;
+    else if (params.storeFormat == "csv_ascii")
+        simulationParams.fileType = arma::csv_ascii;
+    else
+        throw ValidationException("Unknown store format: " + params.storeFormat);
+
     simulationParams.fileSignature = directory / params.getOutputFileSignature();
     return simulationParams;
 }

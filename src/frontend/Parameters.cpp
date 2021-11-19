@@ -33,6 +33,8 @@ Parameters::Parameters(std::istream &input) {
             this->saveEigenenergies = generalConfig.getBoolean("saveEigenenergies");
         else if (key == "saveEigenstates")
             this->saveEigenstates = generalConfig.getBoolean("saveEigenstates");
+        else if (key == "storeFormat")
+            this->storeFormat = generalConfig.getString("storeFormat");
         else if (key == "from")
             this->from = generalConfig.getUnsignedLong("from");
         else if (key == "to")
@@ -92,6 +94,7 @@ void Parameters::printGeneral(std::ostream &out) const {
     out << "calculateEigenvectors : " << (this->calculateEigenvectors ? "true" : "false") << std::endl;
     out << "saveEigenenergies     : " << (this->saveEigenenergies ? "true" : "false") << std::endl;
     out << "saveEigenstates       : " << (this->saveEigenstates ? "true" : "false") << std::endl;
+    out << "storeFormat           : " << this->storeFormat << std::endl;
     out << "from                  : " << this->from << std::endl;
     out << "to                    : " << this->to << std::endl;
     out << "totalSimulations      : " << this->totalSimulations << std::endl;

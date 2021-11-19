@@ -5,6 +5,8 @@
 #ifndef MBL_ED_EXACTDIAGONALIZATIONPARAMETERS_H
 #define MBL_ED_EXACTDIAGONALIZATIONPARAMETERS_H
 
+#include <armadillo>
+
 #include "SimulationsSpan.h"
 
 /**
@@ -32,6 +34,10 @@ struct ExactDiagonalizationParameters {
      */
     std::string fileSignature{};
 
+    /**
+     * @brief Format in which eigensystem should be stored, as passed to Armadillo @a .save method
+     */
+     arma::file_type fileType = arma::arma_binary;
 };
 
 #endif //MBL_ED_EXACTDIAGONALIZATIONPARAMETERS_H

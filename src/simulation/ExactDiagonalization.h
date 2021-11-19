@@ -55,13 +55,13 @@ private:
                 break;
             case ExactDiagonalizationParameters::StoreLevel::EIGENENERGIES: {
                 auto out = this->ostreamProvider->openOutputFile(filename + "_nrg.bin");
-                eigensystem.store(*out);
+                eigensystem.store(*out, this->params.fileType);
                 break;
             }
             case ExactDiagonalizationParameters::StoreLevel::EIGENSYSTEM: {
                 auto energyOut = this->ostreamProvider->openOutputFile(filename + "_nrg.bin");
                 auto vectorOut = this->ostreamProvider->openOutputFile(filename + "_st.bin");
-                eigensystem.store(*energyOut, *vectorOut);
+                eigensystem.store(*energyOut, *vectorOut, this->params.fileType);
                 break;
             }
         }

@@ -39,6 +39,7 @@ public:
     bool calculateEigenvectors = true;
     bool saveEigenenergies = false;
     bool saveEigenstates = false;
+    std::string storeFormat = "arma_binary";
     std::string averagingModel{};
     std::size_t to{};
     std::size_t from = 0;
