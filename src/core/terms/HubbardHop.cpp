@@ -2,6 +2,7 @@
 // Created by Piotr Kubala on 09/02/2020.
 //
 
+#include <iterator>
 #include <ZipIterator.hpp>
 
 #include "HubbardHop.h"

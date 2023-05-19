@@ -5,6 +5,8 @@
 #ifndef MBL_ED_FIRSTOBSERVABLEVALUESTROMPELOEILMATCHER_H
 #define MBL_ED_FIRSTOBSERVABLEVALUESTROMPELOEILMATCHER_H
 
+#include <iterator>
+
 #include <catch2/trompeloeil.hpp>
 
 #include "core/PrimaryObservable.h"
